@@ -9,7 +9,7 @@ import type {
 export const fieldOpsApi = {
   listActive: async (orgId: string): Promise<AgentLiveStatusResponse[]> => {
     const response = await axiosInstance.get<ApiResponse<AgentLiveStatusResponse[]>>(
-      '/api/v1/agents/active',
+      '/api/v1/agent/active',
       { params: { orgId } },
     );
     return response.data.data;
