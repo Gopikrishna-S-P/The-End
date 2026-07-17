@@ -23,7 +23,7 @@ export const fieldOpsApi = {
   }): Promise<PagedResponse<IncidentReportResponse>> => {
     const response = await axiosInstance.get<
       ApiResponse<PagedResponse<IncidentReportResponse>>
-    >('/api/v1/incidents', { params });
+    >('/api/v1/agent/incidents', { params });
     return response.data.data;
   },
 
