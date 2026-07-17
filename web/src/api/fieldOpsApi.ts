@@ -29,7 +29,7 @@ export const fieldOpsApi = {
 
   resolveIncident: async (id: string, notes?: string): Promise<IncidentReportResponse> => {
     const response = await axiosInstance.patch<ApiResponse<IncidentReportResponse>>(
-      `/api/v1/incidents/${id}/resolve`,
+      `/api/v1/agent/incidents/${id}/resolve`,
       { notes },
     );
     return response.data.data;
