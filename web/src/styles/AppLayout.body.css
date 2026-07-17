@@ -1,0 +1,281 @@
+/* ── Right column — topbar + content, beside the sidebar ──────────────────── */
+.app-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+
+/* ── Body row: main content · Lucien panel ─────────────────────────────────── */
+.app-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Main content ──────────────────────────────────────────────────────────── */
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-canvas);
+  scroll-behavior: smooth;
+  min-width: 0;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.app-main::-webkit-scrollbar { width: 4px; }
+.app-main::-webkit-scrollbar-track { background: transparent; }
+.app-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+/* Main content layering */
+.app-main > .app-route-view { position: relative; z-index: 1; }
+
+/* ── Skeleton loaders ──────────────────────────────────────────────────────── */
+.app-skel {
+  background: linear-gradient(90deg, var(--bg-subtle) 0%, var(--border) 50%, var(--bg-subtle) 100%);
+  background-size: 200% 100%;
+  border-radius: 3px;
+  animation: app-skel-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes app-skel-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ── Page route transition (Phase 12 #55) ──────────────────────────────────
+   - tx-fade: across-section navigation (Dashboard → Reports)
+   - tx-slide-left: forward within a section (Loans → Assignments)
+   - tx-slide-right: backward within a section (Assignments → Loans) */
+.app-route-view { height: 100%; }
+.app-route-view.tx-fade        { animation: app-route-fade        140ms var(--ease) both; }
+.app-route-view.tx-slide-left  { animation: app-route-slide-left  160ms var(--ease) both; }
+.app-route-view.tx-slide-right { animation: app-route-slide-right 160ms var(--ease) both; }
+
+@keyframes app-route-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes app-route-slide-left {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes app-route-slide-right {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Help modal ────────────────────────────────────────────────────────────── */
+.app-help-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--shadow-overlay-scrim);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: app-help-fade 180ms var(--ease) both;
+}
+@keyframes app-help-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.app-help-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--elevation-4);
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+  animation: app-help-slide 220ms var(--ease) both;
+}
+@keyframes app-help-slide {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+.app-help-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.app-help-modal-title {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+.app-help-close-btn {
+  width: 28px; height: 28px;
+  border: none; border-radius: 6px;
+  background: none; cursor: pointer;
+  color: var(--ink-tertiary);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition), color var(--transition);
+}
+.app-help-close-btn:hover { background: var(--bg-subtle); color: var(--ink-primary); }
+.app-help-modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+.app-help-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.app-help-row:last-child { border-bottom: none; }
+
+.app-help-modal-footer {
+  padding: 12px 20px 16px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.app-help-customize {
+  background: transparent;
+  border: none;
+  color: var(--ink-solid);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 140ms, color 140ms;
+}
+.app-help-customize:hover {
+  background: var(--bg-hover);
+}
+.app-help-desc { color: var(--ink-secondary); }
+.app-help-keys { display: flex; align-items: center; gap: 4px; }
+.app-help-sep  { color: var(--ink-tertiary); font-size: 11px; margin: 0 2px; }
+.app-help-kbd {
+  display: inline-flex; align-items: center;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-tertiary); background: var(--bg-subtle);
+  line-height: 1.6;
+  box-shadow: 0 2px 0 var(--border);
+}
+
+/* ── App-level fullscreen (CSS-only zen mode) ──────────────────────────────
+   No JS Fullscreen API → no "Press Esc to exit" browser overlay. The
+   topbar collapses upward and the sidebar collapses leftward; main content
+   stretches into the freed space. Reverses smoothly on toggle off. */
+
+/* Animate the dimensions that release space to main. */
+.app-layout .app-topbar { transition:
+  transform 320ms var(--ease),
+  opacity   240ms var(--ease),
+  height    320ms var(--ease),
+  min-height 320ms var(--ease),
+  padding   320ms var(--ease),
+  box-shadow 240ms var(--ease); }
+
+.app-layout.is-app-fullscreen .app-topbar {
+  height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.app-layout.is-app-fullscreen .asb-root {
+  width: 0 !important;
+  min-width: 0 !important;
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    width 360ms var(--ease),
+    transform 360ms var(--ease),
+    opacity 240ms var(--ease);
+}
+
+/* Main content stretches into the released space without flicker. */
+.app-layout.is-app-fullscreen .app-main {
+  transition: padding 320ms var(--ease);
+}
+
+/* Floating exit chip — fades in after the collapse animation begins. */
+.app-fs-exit {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: var(--rp-bg-glass, var(--tb-bg));
+  border: 1px solid var(--border);
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--elevation-2);
+  animation: app-fs-exit-in 280ms 200ms var(--ease) both;
+  transition: color var(--transition), border-color var(--transition), transform 180ms var(--ease);
+}
+.app-fs-exit:hover {
+  color: var(--ink-primary);
+  border-color: var(--border-strong);
+  transform: translateY(1px);
+}
+.app-fs-exit-kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-tertiary);
+  background: var(--bg-subtle);
+  line-height: 1.4;
+}
+@keyframes app-fs-exit-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-layout .app-topbar,
+  .app-layout.is-app-fullscreen .asb-root,
+  .app-layout.is-app-fullscreen .app-main { transition: none; }
+  .app-fs-exit { animation: none; }
+}
+
+/* ── Logout fade ───────────────────────────────────────────────────────────── */
+.app-layout.is-logging-out {
+  animation: app-layout-fadeout 350ms var(--ease) forwards;
+  pointer-events: none;
+}
+@keyframes app-layout-fadeout {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.95) translateY(-6px); }
+}
+

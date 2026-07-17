@@ -1,0 +1,104 @@
+/* ── LoadingSplash — full-bleed post-login overlay ─────────────────────────── */
+
+.app-loading-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--text-primary);
+  overflow: hidden;
+  animation: app-loading-splash-in var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-loading-splash-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Radial vignette — fades dots toward center so content stays crisp */
+.app-loading-splash::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 65% at 50% 50%,
+    rgba(255,255,255,0.92) 0%,
+    rgba(255,255,255,0.45) 55%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-loading-splash-glow,
+.app-loading-splash-grid { display: none; }
+
+.app-loading-splash-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  animation: app-loading-splash-rise var(--dur-slow) 80ms var(--ease-out) both;
+}
+@keyframes app-loading-splash-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-loading-splash-logo { /* no halo */ }
+
+/* Indeterminate progress bar */
+.app-loading-splash-bar {
+  position: relative;
+  width: 220px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  overflow: hidden;
+}
+.app-loading-splash-bar-fill {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 36%;
+  background: var(--text-secondary);
+  border-radius: var(--radius-full);
+  animation: app-loading-splash-bar-slide 1.4s cubic-bezier(0.65,0,0.35,1) infinite;
+}
+@keyframes app-loading-splash-bar-slide {
+  0%   { left: -36%; }
+  100% { left: 100%; }
+}
+
+.app-loading-splash-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.app-loading-splash-spin {
+  color: var(--text-secondary);
+  animation: app-loading-splash-rotate 0.9s linear infinite;
+}
+@keyframes app-loading-splash-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loading-splash,
+  .app-loading-splash-content { animation: none; }
+  .app-loading-splash-bar-fill {
+    animation: none;
+    left: 32%;
+    width: 36%;
+  }
+  .app-loading-splash-spin { animation: none; }
+}

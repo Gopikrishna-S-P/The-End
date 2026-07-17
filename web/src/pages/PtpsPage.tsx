@@ -1,0 +1,534 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { apiClient, unwrapApiResponse } from '../client';
+import { ptpsApi } from '../api/ptpsApi';
+import { useAuth } from '../AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
+import type { PtpResponse, PtpStatus, PagedResponse } from '../types';
+import {
+  Phone, RefreshCw, ChevronLeft, ChevronRight, Search, X, Download, SlidersHorizontal, Plus,
+  Clock, CheckCircle2, AlertTriangle, Activity
+} from 'lucide-react';
+import PtpDetailDrawer from './PtpDetailDrawer';
+import { PtpCreateModal } from './PtpCreateModal';
+import { STATUS_ICON, PtpRow } from './PtpsHelpers';
+import '../styles/AppPage.css';
+import './Dashboard.css';
+
+const PAGE_SIZE = 25;
+
+const ALL_STATUSES: PtpStatus[] = ['PENDING', 'FULFILLED', 'PARTIALLY_FULFILLED', 'BROKEN', 'CANCELLED'];
+const STATUS_OPTIONS: Array<{ value: PtpStatus | ''; label: string }> = [
+  { value: '',                    label: 'All' },
+  { value: 'PENDING',             label: 'Pending' },
+  { value: 'FULFILLED',           label: 'Fulfilled' },
+  { value: 'PARTIALLY_FULFILLED', label: 'Partially fulfilled' },
+  { value: 'BROKEN',              label: 'Broken' },
+  { value: 'CANCELLED',           label: 'Cancelled' },
+];
+
+function csvDownload(filename: string, csv: string) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+const todayIso      = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+const monthStartIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; };
+const yearStartIso  = () => `${new Date().getFullYear()}-01-01`;
+
+// ── Motion variants ────────────────────────────────────────────────────────────
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.40, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+};
+
+const fadeIn: Variants = {
+  hidden: { opacity: 0 },
+  show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
+};
+
+// ── Ripple hook ────────────────────────────────────────────────────────────────
+
+function useRipple<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const fire = useCallback((e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2.2;
+    const span = document.createElement('span');
+    span.className = 'db-ripple';
+    span.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
+    el.appendChild(span);
+    span.addEventListener('animationend', () => span.remove(), { once: true });
+  }, []);
+  return { ref, fire };
+}
+
+// ── Count-up animation ────────────────────────────────────────────────────────
+
+function useCountUp(target: number, duration = 900) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setVal(0); return; }
+    let start: number | null = null;
+    const frame = (ts: number) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(eased * target));
+      if (p < 1) requestAnimationFrame(frame);
+    };
+    const id = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(id);
+  }, [target, duration]);
+  return val;
+}
+
+// ── KPI card ──────────────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, footer, icon: Icon, accent, warn, danger, onClick }: {
+  label: string; value: string | number;
+  footer?: React.ReactNode;
+  icon?: React.ElementType; accent?: boolean; warn?: boolean; danger?: boolean;
+  onClick?: () => void;
+}) {
+  const { ref, fire } = useRipple<HTMLButtonElement>();
+  return (
+    <motion.button ref={ref} type="button" variants={fadeUp}
+      className={`db-kpi2-card${accent ? ' is-accent' : ''}${warn ? ' is-warn' : ''}${danger ? ' is-danger' : ''}${onClick ? ' is-hoverable' : ''}`}
+      onClick={e => { fire(e); onClick?.(); }} disabled={!onClick}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+    >
+      <div className="db-kpi2-top">
+        <span className="db-kpi2-label">{label}</span>
+        {Icon && <span className="db-kpi2-icon"><Icon size={14} aria-hidden="true" /></span>}
+      </div>
+      <div className="db-kpi2-value-row">
+        <span className="db-kpi2-value">{value}</span>
+      </div>
+      {footer && <div className="db-kpi2-footer">{footer}</div>}
+    </motion.button>
+  );
+}
+
+export default function PtpsPage() {
+  const location = useLocation();
+  const { user } = useAuth();
+  const isBankView  = location.pathname.startsWith('/bank');
+  const isAgentView = location.pathname.startsWith('/agent');
+  const { hasPermission } = usePermissions();
+  const canUpdate = !isBankView && hasPermission('PTP_CREATE');
+
+  const [ptps, setPtps]                   = useState<PtpResponse[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [page, setPage]                   = useState(0);
+  const [totalPages, setTotalPages]       = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [filterStatus, setFilterStatus]   = useState<PtpStatus | ''>('');
+  const [searchInput, setSearchInput]     = useState('');
+  const [searchTerm, setSearchTerm]       = useState('');
+  const [filterOpen, setFilterOpen]       = useState(false);
+  const [selectedPtp, setSelectedPtp]     = useState<PtpResponse | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [exporting, setExporting]         = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [customFrom, setCustomFrom]       = useState('');
+  const [customTo, setCustomTo]           = useState('');
+
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+  const inputRef      = useRef<HTMLInputElement>(null);
+  const abortRef      = useRef<AbortController | null>(null);
+
+  const organizationId = user?.organizationId || '';
+
+  // "/" focuses search
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      e.preventDefault(); inputRef.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Escape closes filter modal + export menu
+  useEffect(() => {
+    if (!filterOpen && !showExportMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setFilterOpen(false); setShowExportMenu(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [filterOpen, showExportMenu]);
+
+  // Click-outside closes export menu
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (exportMenuRef.current?.contains(e.target as Node)) return;
+      setShowExportMenu(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [showExportMenu]);
+
+  // Debounce search input
+  useEffect(() => {
+    const t = window.setTimeout(() => { setSearchTerm(searchInput.trim()); setPage(0); }, 300);
+    return () => window.clearTimeout(t);
+  }, [searchInput]);
+
+  const fetchPtps = useCallback(async () => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('page', String(page));
+      params.append('size', String(PAGE_SIZE));
+      if (filterStatus)   params.append('status', filterStatus);
+      if (searchTerm)     params.append('searchTerm', searchTerm);
+      if (organizationId) params.append('orgId', organizationId);
+      if (isAgentView && user?.agentId) params.append('agentId', user.agentId);
+      const endpoint = isBankView ? '/api/v1/ptps/bank' : '/api/v1/ptps';
+      const { data } = await apiClient.get(endpoint, { params, signal: controller.signal });
+      const response = unwrapApiResponse<PagedResponse<PtpResponse>>(data);
+      setPtps(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+    } catch (err: any) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED' || err?.name === 'AbortError') return;
+    } finally {
+      if (abortRef.current === controller) setLoading(false);
+    }
+  }, [page, filterStatus, searchTerm, organizationId, isBankView, isAgentView, user?.agentId]);
+
+  useEffect(() => { fetchPtps(); }, [fetchPtps]);
+
+  const statusCounts = ptps.reduce(
+    (acc, p) => ({ ...acc, [p.status]: (acc[p.status] || 0) + 1 }),
+    {} as Record<string, number>,
+  );
+
+  const hasFilters = Boolean(searchTerm || filterStatus);
+  const clearFilters = () => { setSearchInput(''); setSearchTerm(''); setFilterStatus(''); setPage(0); };
+
+  const handleExport = useCallback(async (fromDate?: string, toDate?: string) => {
+    setExporting(true); setShowExportMenu(false);
+    try {
+      const csv = await ptpsApi.exportCsv(fromDate || toDate ? { fromDate, toDate } : undefined);
+      csvDownload('ptps.csv', csv);
+    } catch { /* silent */ } finally { setExporting(false); }
+  }, []);
+
+  const startIdx = page * PAGE_SIZE;
+  const endIdx   = Math.min(startIdx + ptps.length, totalElements);
+
+  // Animations for KPI metrics (showing stats across current page as a proxy)
+  const pendingCount = useCountUp(statusCounts['PENDING'] || 0);
+  const fulfilledCount = useCountUp((statusCounts['FULFILLED'] || 0) + (statusCounts['PARTIALLY_FULFILLED'] || 0));
+  const brokenCount = useCountUp(statusCounts['BROKEN'] || 0);
+
+  return (
+    <div className="db-root">
+      <div className="db-content">
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
+          {(!loading && ptps.length > 0) && (
+            <div className="db-kpi-band">
+              <KpiCard label="Pending" value={pendingCount.toLocaleString('en-IN')} warn
+                icon={Clock} footer={<span className="db-kpi2-foot-meta">Awaiting payment</span>}
+                onClick={() => { setFilterStatus('PENDING'); setPage(0); }} />
+              <KpiCard label="Fulfilled" value={fulfilledCount.toLocaleString('en-IN')} accent
+                icon={CheckCircle2} footer={<span className="db-kpi2-foot-meta">Successfully collected</span>}
+                onClick={() => { setFilterStatus('FULFILLED'); setPage(0); }} />
+              <KpiCard label="Broken" value={brokenCount.toLocaleString('en-IN')}
+                icon={AlertTriangle} footer={<span className="db-kpi2-foot-meta">Promises breached</span>}
+                onClick={() => { setFilterStatus('BROKEN'); setPage(0); }} />
+            </div>
+          )}
+
+          <AnimatePresence>
+            {hasFilters && (
+              <motion.div variants={fadeUp} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                {filterStatus && (
+                  <span className="ds-pill is-accent">
+                    {STATUS_OPTIONS.find(o => o.value === filterStatus)?.label ?? filterStatus}
+                    <button type="button" onClick={() => setFilterStatus('')} aria-label="Clear status filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+                <button type="button" onClick={clearFilters} className="db-customize-btn" style={{ padding: '0 8px', fontSize: 11 }}>
+                  Clear all
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0 }}>
+            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h2 className="db-card-title">Promise-to-Pay</h2>
+                {!loading && totalElements > 0 && (
+                  <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>
+                    / {totalElements.toLocaleString('en-IN')} commitments
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 'auto' }}>
+                <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
+                  <input
+                    ref={inputRef}
+                    type="search"
+                    value={searchInput}
+                    onChange={e => setSearchInput(e.target.value)}
+                    placeholder="Search loan number or borrower…"
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label="Search PTPs"
+                    style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 260 }}
+                  />
+                  <AnimatePresence>
+                    {searchInput && (
+                      <motion.button type="button" onClick={() => setSearchInput('')}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex' }}
+                        initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.12 }}>
+                        <X size={12} />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {canUpdate && !isBankView && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateModal(true)}
+                      className="ds-btn is-primary"
+                      style={{ height: 36 }}
+                    >
+                      <Plus size={14} /> New PTP
+                    </button>
+                  )}
+                  <div ref={exportMenuRef} style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowExportMenu(v => !v)}
+                      disabled={exporting}
+                      className="ds-btn is-secondary"
+                      style={{ padding: '0 12px', height: 36 }}
+                    >
+                      <Download size={14} style={{ marginRight: 6 }} />
+                      {exporting ? 'Exporting…' : 'Export'}
+                    </button>
+                    <AnimatePresence>
+                      {showExportMenu && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }}
+                          style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, boxShadow: 'var(--shadow-md)', zIndex: 100 }}
+                        >
+                          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Date range</p>
+                          <button type="button" onClick={() => handleExport()} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">All time</button>
+                          <button type="button" onClick={() => handleExport(todayIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">Today</button>
+                          <button type="button" onClick={() => handleExport(monthStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This month</button>
+                          <button type="button" onClick={() => handleExport(yearStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This year</button>
+                          <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0' }} />
+                          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Custom range</p>
+                          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="ds-input" style={{ width: '100%', marginBottom: 4, height: 32, fontSize: 12 }} />
+                          <input type="date" value={customTo}   onChange={e => setCustomTo(e.target.value)}   className="ds-input" style={{ width: '100%', marginBottom: 8, height: 32, fontSize: 12 }} />
+                          <button type="button" onClick={() => handleExport(customFrom || undefined, customTo || undefined)}
+                            className="ds-btn is-primary is-sm" style={{ width: '100%' }}>
+                            Export custom range
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setFilterOpen(true)}
+                    className="ds-btn is-secondary"
+                    style={{ background: filterOpen || filterStatus ? 'var(--ink-solid)' : 'transparent', color: filterOpen || filterStatus ? 'var(--bg-surface)' : 'inherit', position: 'relative' }}
+                  >
+                    <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+                    Filter
+                    {filterStatus && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
+                  </button>
+
+                  <button type="button" onClick={fetchPtps} disabled={loading}
+                    className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
+                    <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <div className="ds-table-wrap" style={{ border: 'none' }}>
+              <table className="ds-table">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Loan #</th>
+                    <th style={{ padding: '12px 16px' }}>Borrower</th>
+                    <th style={{ padding: '12px 16px' }}>Agent</th>
+                    <th style={{ padding: '12px 16px' }}>Promised date</th>
+                    <th className="is-right" style={{ padding: '12px 16px' }}>Amount</th>
+                    <th className="is-right" style={{ padding: '12px 16px' }}>Collected</th>
+                    <th style={{ padding: '12px 16px' }}>Status</th>
+                    <th className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>View</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} style={{ opacity: 1 - i * 0.1, borderBottom: '1px solid var(--border-subtle)' }}>
+                        <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
+                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 110, display: 'block' }} /></td>
+                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
+                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 88, display: 'block' }} /></td>
+                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 64, marginLeft: 'auto', display: 'block' }} /></td>
+                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 64, marginLeft: 'auto', display: 'block' }} /></td>
+                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 80, borderRadius: 999, display: 'block' }} /></td>
+                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 22, width: 28, borderRadius: 6, marginLeft: 'auto', display: 'block' }} /></td>
+                      </tr>
+                    ))
+                  ) : ptps.length === 0 ? (
+                    <tr>
+                      <td colSpan={8}>
+                        <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                          <Phone size={32} className="ds-empty-icon" />
+                          <span className="ds-empty-title">No PTP records found</span>
+                          <span className="ds-empty-sub">
+                            {hasFilters
+                              ? 'No matches for the current filters. Try clearing them.'
+                              : 'PTPs will appear here once field officers record promise-to-pay commitments from borrowers.'}
+                          </span>
+                          {hasFilters && (
+                            <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                              <button type="button" onClick={clearFilters} className="ds-btn is-secondary">Clear filters</button>
+                            </div>
+                          )}
+                        </motion.div>
+                      </td>
+                    </tr>
+                  ) : (
+                    ptps.map((ptp, idx) => (
+                      <PtpRow
+                        key={ptp.id}
+                        ptp={ptp}
+                        isSelected={selectedPtp?.id === ptp.id}
+                        onSelect={setSelectedPtp}
+                        variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.03 } } }}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Pagination ── */}
+            {totalPages > 1 && !loading && (
+              <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+                <span className="up-page-meta">
+                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalElements.toLocaleString('en-IN')}</strong> records
+                </span>
+                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} aria-label="Previous page">
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} aria-label="Next page">
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.section>
+        </motion.div>
+      </div>
+
+      {/* ── Filter modal ── */}
+      <AnimatePresence>
+        {filterOpen && (
+          <motion.div className="ds-modal-overlay" onClick={() => setFilterOpen(false)}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <motion.div className="ds-modal" onClick={e => e.stopPropagation()}
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.15 }}>
+              <div className="ds-modal-header">
+                <span className="ds-modal-title">Filter PTPs</span>
+                <button type="button" onClick={() => setFilterOpen(false)} className="ds-modal-close" aria-label="Close">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <span className="ds-label" style={{ display: 'block', marginBottom: 10 }}>Status</span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {STATUS_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`ds-btn is-sm ${filterStatus === opt.value ? 'is-primary' : 'is-secondary'}`}
+                    style={filterStatus === opt.value ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}}
+                    onClick={() => { setFilterStatus(opt.value as PtpStatus | ''); setPage(0); }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="ds-modal-actions">
+                <button type="button" onClick={() => { clearFilters(); setFilterOpen(false); }} className="ds-btn is-secondary">
+                  Clear
+                </button>
+                <button type="button" onClick={() => setFilterOpen(false)} className="ds-btn is-primary">
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Detail drawer ── */}
+      <AnimatePresence>
+        {selectedPtp && (
+          <PtpDetailDrawer
+            ptp={selectedPtp}
+            onClose={() => setSelectedPtp(null)}
+            onChanged={() => { setSelectedPtp(null); fetchPtps(); }}
+            canUpdate={canUpdate}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Create PTP modal ── */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <PtpCreateModal
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={() => { setShowCreateModal(false); fetchPtps(); }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

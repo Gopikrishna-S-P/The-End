@@ -1,0 +1,36 @@
+@import './FieldOpsHeader.css';
+@import './FieldOpsMap.css';
+@import './FieldOpsPanel.css';
+@import './FieldOpsCards.css';
+
+/* ── Error banner ── */
+.fo-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: var(--error-subtle);
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
+  border-radius: 10px;
+  color: var(--error);
+  font-family: var(--sans);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.fo-error-icon { flex-shrink: 0; margin-top: 1px; }
+.fo-error-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.fo-error-title { font-weight: 600; font-size: 12px; }
+.fo-error-sub   { font-size: 11px; opacity: 0.8; }
+.fo-error-retry {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--error);
+  cursor: pointer;
+}
+.fo-error-retry:hover { background: color-mix(in srgb, var(--error) 12%, transparent); }

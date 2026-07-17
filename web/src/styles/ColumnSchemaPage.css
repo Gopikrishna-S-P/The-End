@@ -1,0 +1,155 @@
+/* ── Column schema page ───────────────────────────────────────────────────── */
+
+.app-page.cs-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 32px;
+  min-height: 100%;
+  background: var(--bg-canvas);
+}
+
+/* ── Toolbar ── */
+.cs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.cs-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.cs-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Error banner ── */
+.cs-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-size: 13px;
+}
+.cs-banner.is-error {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+}
+.cs-banner > span { flex: 1; }
+.cs-banner-x {
+  border: none; background: none; color: inherit;
+  cursor: pointer; opacity: 0.6; padding: 0; display: flex;
+}
+.cs-banner-x:hover { opacity: 1; }
+
+/* ── Table ── */
+.cs-table-card { padding: 0; overflow: hidden; }
+
+.cs-name-pill {
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.cs-check.is-accent { color: var(--text-primary); }
+.cs-check.is-info   { color: var(--info); }
+
+.cs-dash { color: var(--text-tertiary); font-size: 12px; }
+
+.cs-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cs-delete-btn { color: var(--danger); }
+.cs-delete-btn:hover:not(:disabled) { background: var(--danger-subtle); color: var(--danger); }
+
+/* ── Summary ── */
+.cs-summary {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.cs-summary strong { color: var(--text-secondary); font-weight: 600; }
+
+/* ── Inline row form ── */
+.cs-row-form { background: var(--bg-subtle); }
+.cs-row-form-cell { padding: 14px !important; }
+
+.cs-row-form-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.cs-row-form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.cs-row-field { gap: 4px; }
+.cs-row-field .ds-label { font-size: 11px; }
+
+.cs-row-name-input    { width: 180px; font-family: var(--font-mono); }
+.cs-row-display-input { width: 180px; }
+.cs-row-type-select   { min-width: 140px; }
+.cs-row-sort-input    { width: 80px; }
+
+.cs-row-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding-bottom: 8px;
+}
+
+.cs-row-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  padding-bottom: 4px;
+}

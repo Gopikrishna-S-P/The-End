@@ -1,0 +1,214 @@
+/* ── Allocations — page-specific layout only ───────────────────────────────
+   All card, search, filter-button, pill, modal, table, skeleton chrome is
+   supplied by ds-*. This file only owns the page composition (toolbar row,
+   active-filter chips, error banner, sort indicators).
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Error banner ── */
+.alloc-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: var(--error-subtle);
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
+  border-radius: 10px;
+  color: var(--error);
+  font-family: var(--sans);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.alloc-error-icon { flex-shrink: 0; margin-top: 1px; }
+.alloc-error-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.alloc-error-title { font-weight: 600; font-size: 12px; }
+.alloc-error-sub   { font-size: 11px; opacity: 0.8; }
+.alloc-error-retry {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--error);
+  cursor: pointer;
+}
+.alloc-error-retry:hover { background: color-mix(in srgb, var(--error) 12%, transparent); }
+
+.alloc-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-page.alloc-page { background: var(--bg-canvas); }
+
+/* ── Toolbar row ─────────────────────────────────────────────────────────── */
+
+.alloc-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.alloc-toolbar-row .ds-filter-btn { padding: 0 20px; gap: 8px; height: var(--ds-ctl-h); font-size: 13px; margin-left: auto; }
+
+/* ── Search pill — mirrors dd-cp-search ──────────────────────────────────── */
+
+.alloc-search {
+  width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-surface);
+  color: var(--ink-tertiary);
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+
+.alloc-search:hover { background: var(--bg-subtle); }
+
+.alloc-search:focus-within {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+
+.alloc-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.alloc-search-input::placeholder { color: var(--ink-tertiary); }
+
+.alloc-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+.alloc-search-clear:hover { color: var(--ink-primary); }
+
+/* ── Active-filter chips row ─────────────────────────────────────────────── */
+
+.alloc-active-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  margin-top: -4px;
+}
+
+.alloc-active-filters .ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.alloc-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 120ms var(--ease);
+}
+.alloc-chip-x:hover { opacity: 1; }
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+
+.alloc-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: var(--error);
+  font-size: 13px;
+  border-color: color-mix(in srgb, var(--error) 30%, var(--border));
+}
+.alloc-error > span { flex: 1; }
+
+/* ── Table — sort indicators ─────────────────────────────────────────────── */
+
+.alloc-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 120ms var(--ease);
+}
+.alloc-table th.is-sortable:hover { color: var(--ink-primary); }
+.alloc-table th.is-sorted        { color: var(--ink-primary); }
+
+.alloc-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Pagination — flex-shrink so it does not collapse on narrow viewports ── */
+
+.alloc-pagination {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+/* ── Filter modal — status option pills ──────────────────────────────────── */
+
+.alloc-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.alloc-filter-option {
+  padding: 6px 14px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--ink-secondary);
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease);
+}
+.alloc-filter-option:hover {
+  border-color: var(--border-strong);
+  color: var(--ink-primary);
+}
+.alloc-filter-option.is-active {
+  background: var(--bg-active);
+  border-color: var(--ink-solid);
+  color: var(--ink-solid);
+  font-weight: 500;
+}

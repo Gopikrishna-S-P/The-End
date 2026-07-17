@@ -1,0 +1,141 @@
+/* ── AppPage — shared styles for list/data pages, scoped under .app-page ─── */
+
+/* ── Design system (canonical primitives) ───────────────────────────────── */
+@import './ds/ds.css';
+
+/* ── Legacy partials — being progressively replaced by ds/*. ────────────── */
+@import './AppPage.buttons.css';
+@import './AppPage.forms.css';
+@import './AppPage.overlays.css';
+@import './AppPage.components.css';
+@import './AppPage.detail.css';
+@import './AppPage.detail-panels.css';
+@import './AppPage.drawer.css';
+@import './AppPage.table.css';
+@import './AppPage.dark.css';
+@import './AppPage.dark-fieldops.css';
+@import './AppPage.hero.css';
+
+.app-page {
+  /* Inherits --bg-canvas, --sans/serif/mono, --ease from .app-layout scope.  */
+  /* Maps remaining aliases to --rp-* primitives — cool-slate, not warm-stone. */
+  --bg-surface:    var(--rp-bg-surface);
+  --bg-subtle:     var(--rp-bg-subtle);
+  --border:        var(--rp-border);
+  --ink-primary:   var(--rp-ink-1);
+  --ink-secondary: var(--rp-ink-2);
+  --ink-tertiary:  var(--rp-ink-3);
+  --error:         var(--rp-error);
+  --error-subtle:  var(--rp-error-subtle);
+  --warn:          var(--rp-warn-ink);
+  --warn-subtle:   var(--rp-warn-bg);
+  --success:       var(--rp-success);
+
+  min-height: 100%;
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+  font-family: var(--sans);
+  font-size: var(--text-body);       /* enforce 13px baseline across all pages */
+  line-height: var(--lh-normal);     /* enforce 1.55 baseline */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
+}
+
+.app-page *,
+.app-page *::before,
+.app-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Shell card ──────────────────────────────────────── */
+.app-page-shell {
+  margin: 8px;
+  padding: 24px 24px 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* ── Page header ─────────────────────────────────────── */
+.app-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.app-page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 12px;
+}
+.app-page-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.app-page-title {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: var(--ink-primary);
+  margin-bottom: 6px;
+}
+.app-page-title em {
+  font-style: italic;
+  color: var(--ink-primary);
+}
+
+.app-page-sub {
+  font-size: 13.5px;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-page-sub-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-primary);
+  background: var(--bg-subtle);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* ── Daily Dispatch header ──────────────────────────── */
+.dd-header-title {
+  font-family: var(--rp-font);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  margin-bottom: 3px;
+}
+.dd-header-meta {
+  font-size: 12.5px;
+  color: var(--ink-secondary);
+}
+
+.app-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

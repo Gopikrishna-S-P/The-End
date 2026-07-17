@@ -1,0 +1,103 @@
+/* ── Page layout ─────────────────────────────────────────────────────────────── */
+
+.app-page.ud-page {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--bg-canvas);
+  overflow: hidden;
+}
+
+/* ── Context strip below hero ─────────────────────────────────────────────────── */
+
+.ud-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.ud-topbar-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.ud-topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ud-topbar-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ud-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Topbar icon ── */
+.ud-topbar-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────────── */
+
+.ud-body {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-surface);
+  min-height: 0;
+}
+
+/* ── Pagination strong ── */
+.ud-pagination-strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Skeleton heights ── */
+.ud-skel-th       { height: 10px; }
+.ud-skel-row-num  { height: 14px; }
+.ud-skel-cell     { height: 14px; }
+.ud-skel-action   { height: 24px; }
+
+/* ── Column header — hover-only delete ───────────────────────────────────────── */
+
+.ud-col-header {
+  position: relative;
+}
+
+.ud-col-header .ud-col-del {
+  opacity: 0;
+  transition: opacity var(--dur-instant);
+}
+
+.ud-col-header:hover .ud-col-del {
+  opacity: 1;
+}
+
+/* ── Row hover ─────────────────────────────────────────────────────────────────── */
+.ud-data-row:hover {
+  background: var(--bg-hover);
+}

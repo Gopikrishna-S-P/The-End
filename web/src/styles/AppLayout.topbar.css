@@ -1,0 +1,304 @@
+/* ── Topbar — content-column header; stable height, carries system status ─── */
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+
+  /* Notch-aware horizontal padding via env(safe-area-inset-left/right). */
+  padding:
+    0
+    max(24px, env(safe-area-inset-right))
+    0
+    max(24px, env(safe-area-inset-left));
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: var(--z-topbar);
+  flex-shrink: 0;
+  transition: box-shadow .18s ease, border-color .18s ease;
+  overflow: visible;
+  position: relative;
+}
+
+/* Depth cue once content scrolls — strengthen the border, no shadow (border already carries it). */
+.app-topbar.is-elevated {
+  box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+
+/* ── Topbar three-zone layout ──────────────────────────────────────────────
+   left (page title + status) · center (search) · right (icon actions).
+   left and right share equal flex so the center search stays truly centred. */
+.app-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+/* Page title — bold, single line */
+.app-topbar-page-title {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  color: #111;
+  background: linear-gradient(135deg, #111, #444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Topbar right zone — icon cluster ──────────────────────────────────────── */
+/* Thin separator between the search pill and the icon action cluster.
+   Targets the help menu wrap which is the first icon after the search trigger. */
+.app-topbar-right .app-help-menu-wrap {
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+  margin-left: 8px;
+}
+
+/* ── Brand logo — top-left of the full-width topbar ────────────────────────── */
+.app-topbar-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.app-topbar-logo img { display: block; }
+
+/* ── History nav (back / forward) ──────────────────────────────────────────── */
+.app-history-nav {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
+.app-history-nav .app-history-btn + .app-history-btn { border-radius: 12px; }
+.app-history-nav .app-history-btn:first-child { border-radius: 12px; }
+
+.app-history-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-secondary);
+  transition:
+    background-color .18s ease,
+    color .18s ease,
+    border-color .18s ease;
+}
+.app-history-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--ink-primary);
+}
+.app-history-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.app-history-btn:disabled:hover { background: transparent; }
+.app-history-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+/* ── Breadcrumb — desktop · static page location ───────────────────────────── */
+.app-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-tertiary);
+  min-width: 0;
+  overflow: hidden;
+}
+.app-breadcrumb-sep {
+  color: var(--border-strong);
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1;
+  user-select: none;
+}
+.app-breadcrumb-segment {
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.app-breadcrumb-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  min-width: 0;
+  
+  color: #111;
+  background: linear-gradient(135deg, #111, #444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.app-breadcrumb-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(40vw, 320px);
+}
+
+/* ── Breadcrumb URL filter chips (Phase 10 #17) ───────────────────────────── */
+.app-breadcrumb-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.app-breadcrumb-filters-sep {
+  color: var(--border-strong);
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.app-breadcrumb-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 7px;
+  background: var(--bg-subtle);
+  border: 1px solid color-mix(in srgb, var(--ink-solid) 28%, transparent);
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-solid);
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  max-width: 220px;
+  animation: app-breadcrumb-filter-in .18s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes app-breadcrumb-filter-in {
+  from { opacity: 0; transform: translateY(-2px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes app-breadcrumb-filter-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.8); }
+}
+.app-breadcrumb-filter[data-removing] {
+  animation: app-breadcrumb-filter-out .18s ease forwards;
+  pointer-events: none;
+}
+.app-breadcrumb-filter-key {
+  color: color-mix(in srgb, var(--ink-solid) 75%, transparent);
+  font-weight: 500;
+}
+.app-breadcrumb-filter-val {
+  font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-breadcrumb-filter-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: color-mix(in srgb, var(--ink-solid) 18%, transparent);
+  border: none;
+  border-radius: 50%;
+  color: var(--ink-solid);
+  cursor: pointer;
+  transition:
+    background-color .18s ease,
+    color .18s ease,
+    transform .18s cubic-bezier(0.16,1,0.3,1);
+}
+.app-breadcrumb-filter-x:hover {
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  transform: rotate(90deg);
+}
+
+/* CVD-safe (colour-vision-deficiency) overrides — replace accent teal with unambiguous blue */
+.app-layout.cvd-safe .app-breadcrumb-filter {
+  color: #2563eb;
+  border-color: rgba(37,99,235,0.28);
+  background: rgba(37,99,235,0.08);
+}
+.app-layout.cvd-safe .app-breadcrumb-filter-key {
+  color: rgba(37,99,235,0.75);
+}
+.app-layout.cvd-safe .app-breadcrumb-filter-x {
+  color: #2563eb;
+  background: rgba(37,99,235,0.18);
+}
+.app-layout.cvd-safe .app-breadcrumb-filter-x:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+.app-breadcrumb-filter-clear {
+  padding: 2px 7px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  margin-left: 2px;
+  transition:
+    color .18s ease,
+    background-color .18s ease,
+    border-color .18s ease;
+}
+.app-breadcrumb-filter-clear:hover {
+  color: var(--error);
+  background: var(--error-subtle);
+  border-color: color-mix(in srgb, var(--error) 28%, transparent);
+}
+
+/* ── Page-help trigger next to breadcrumb (Phase 14 #94) ─────────────────── */
+.app-pagehelp-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+  margin-left: 4px;
+  transition:
+    background-color .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    transform .18s cubic-bezier(0.16,1,0.3,1);
+  flex-shrink: 0;
+}
+.app-pagehelp-trigger:hover {
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+  border-color: color-mix(in srgb, var(--ink-solid) 38%, transparent);
+  transform: scale(1.08);
+}
+
+

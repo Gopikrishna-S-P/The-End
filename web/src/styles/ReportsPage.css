@@ -1,0 +1,375 @@
+/* ── Reports — page-specific layout only ───────────────────────────────────
+   ────────────────────────────────────────────────────────────────────────── */
+
+.rpt-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  min-height: 100%;
+}
+
+.app-page.rpt-page { background: var(--bg-canvas); }
+
+/* ── Hero action row ─────────────────────────────────────────────────────── */
+
+.rpt-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rpt-generate-btn {
+  padding: 0 14px;
+  height: var(--ds-ctl-h);
+  font-size: 13px;
+  gap: 6px;
+}
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+
+.rpt-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  margin-bottom: 10px;
+}
+.rpt-banner > span { flex: 1; }
+.rpt-banner-x { opacity: 0.6; flex-shrink: 0; }
+
+/* ── Job grid ────────────────────────────────────────────────────────────── */
+
+.rpt-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.rpt-job-card {
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.rpt-job-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.rpt-job-icon.is-pdf  { background: var(--danger-subtle);  color: var(--danger); }
+.rpt-job-icon.is-xlsx { background: var(--bg-subtle); color: var(--ink-solid); }
+
+.rpt-job-icon-skel {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: block;
+}
+
+.rpt-job-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+  line-height: 1.3;
+}
+
+.rpt-job-meta {
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ink-tertiary);
+  margin-top: 3px;
+  margin-bottom: 12px;
+}
+
+.rpt-job-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.rpt-job-error {
+  padding: 8px 10px;
+  background: var(--danger-subtle);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  border-radius: var(--ds-radius-sm);
+  color: var(--danger);
+  font-size: 11.5px;
+  margin-top: 8px;
+}
+
+.rpt-empty-card { padding: 16px; }
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+
+.rpt-pagination {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+/* ── Generate modal ──────────────────────────────────────────────────────── */
+
+/* Overlay — full-screen frosted blur + DS token re-declaration for portal context */
+.rpt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+
+  /* Re-declare .app-page DS tokens — this element is portaled to document.body
+     and sits outside .app-page, so var(--ds-*) would otherwise resolve to nothing. */
+  --ds-radius-sm:    6px;
+  --ds-radius:       8px;
+  --ds-radius-lg:   16px;
+  --ds-radius-pill: 999px;
+  --ds-row-h:       44px;
+  --ds-ctl-h:       36px;
+  --ds-ctl-h-sm:    28px;
+  --ds-font-body:   var(--sans);
+  --ds-font-label:  var(--mono);
+  --ds-font-num:    var(--mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(16, 24, 40, 0.40);
+  animation: rpt-overlay-in 180ms var(--ease) both;
+}
+@keyframes rpt-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Modal card */
+.rpt-modal {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  max-height: min(88vh, 640px);
+  overflow: visible; /* allow absolute dropdown to escape clipping */
+  animation: rpt-modal-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes rpt-modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.rpt-modal .app-page-modal-header { padding: 20px 24px 16px; flex-shrink: 0; }
+.rpt-modal .app-page-modal-body   { padding: 20px 24px; gap: 16px; flex: 1; overflow: visible; min-height: 0; }
+
+/* Footer — always visible, never squeezed */
+.rpt-modal-footer {
+  flex-shrink: 0;
+  padding: 14px 24px 20px !important;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+}
+.rpt-footer-btn {
+  flex: 1;
+  height: var(--ds-ctl-h);
+  padding: 0 14px;
+  font-size: 13px;
+  justify-content: center;
+}
+
+/* Format row — equal-width format toggle */
+.rpt-format-row {
+  display: flex;
+  gap: 8px;
+}
+.rpt-format-btn {
+  flex: 1;
+  height: var(--ds-ctl-h);
+  padding: 0 14px;
+  font-size: 13px;
+  justify-content: center;
+}
+
+.rpt-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.rpt-select-wrap > .ds-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+}
+
+/* ── Report type multi-select ────────────────────────────────────────────── */
+
+.rpt-select { position: relative; }
+
+.rpt-select-trigger {
+  width: 100%;
+  height: var(--ds-ctl-h);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+  cursor: pointer;
+  transition: border-color 120ms, box-shadow 120ms;
+  font-family: var(--ds-font-body);
+}
+.rpt-select-trigger:hover  { border-color: var(--border-strong); }
+.rpt-select-trigger.is-open {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-solid) 12%, transparent);
+}
+
+.rpt-select-value {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink-primary);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rpt-select-placeholder {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink-tertiary);
+  text-align: left;
+}
+.rpt-select-caret {
+  flex-shrink: 0;
+  color: var(--ink-tertiary);
+  transition: transform 150ms;
+  margin-left: 8px;
+}
+.rpt-select-caret.is-open { transform: rotate(180deg); }
+
+.rpt-select-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.rpt-select-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 80ms;
+}
+.rpt-select-option + .rpt-select-option { border-top: 1px solid var(--border); }
+.rpt-select-option:hover { background: color-mix(in srgb, var(--ink-primary) 4%, transparent); }
+.rpt-select-option.is-checked {
+  background: var(--bg-active);
+}
+
+.rpt-opt-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.rpt-opt-date_range .rpt-opt-icon { background: var(--bg-subtle); color: var(--ink-solid); }
+.rpt-opt-month_year .rpt-opt-icon { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
+
+.rpt-opt-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rpt-opt-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  line-height: 1.3;
+}
+.rpt-opt-desc {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  line-height: 1.4;
+}
+
+.rpt-opt-badge {
+  font-size: 10px;
+  font-family: var(--mono, monospace);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.rpt-opt-date_range .rpt-opt-badge { background: var(--bg-subtle); color: var(--ink-solid); }
+.rpt-opt-month_year .rpt-opt-badge { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
+
+/* ── Parameters section ──────────────────────────────────────────────────── */
+
+.rpt-params-section {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rpt-params-label {
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.rpt-params-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Error */
+.rpt-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--ds-radius);
+  background: var(--danger-subtle);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border));
+  color: var(--danger);
+  font-size: 12.5px;
+  line-height: 1.4;
+}

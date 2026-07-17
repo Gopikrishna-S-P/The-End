@@ -1,0 +1,52 @@
+/* ── OfflineChip — surfaces while navigator.onLine is false ───────────────── */
+
+.app-offline-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  flex-shrink: 0;
+  animation: app-offline-in var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-offline-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-offline-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+.app-offline-icon-ghost {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  animation: app-offline-ghost 1.6s ease-in-out infinite;
+}
+@keyframes app-offline-ghost {
+  0%, 100% { transform: scale(1);   opacity: 0.35; }
+  50%      { transform: scale(1.6); opacity: 0; }
+}
+
+@media (max-width: 640px) {
+  .app-offline-label { display: none; }
+  .app-offline-chip { padding: 0 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-offline-chip,
+  .app-offline-icon-ghost { animation: none; }
+}

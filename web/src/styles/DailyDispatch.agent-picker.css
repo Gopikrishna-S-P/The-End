@@ -1,0 +1,502 @@
+/* ── Agent panel ─────────────────────────────────────────────────────────────── */
+
+.dd-agent-panel {
+  position: relative;
+}
+
+/* Header — mirrors asn-fo-header */
+.dd-ap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  min-height: 44px;
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-tertiary);
+  border-bottom: none;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+/* --- Header Search State --- */
+.dd-ap-header-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-secondary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 150ms, background 150ms;
+}
+
+.dd-ap-header-search-btn:hover {
+  color: var(--ink-primary);
+  background: var(--bg-subtle);
+}
+
+.dd-agent-search-active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+}
+
+.dd-agent-search-active input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-primary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.dd-agent-search-active input:focus,
+.dd-agent-search-active input:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.dd-agent-search-active input::placeholder {
+  color: var(--ink-tertiary);
+  font-weight: 400;
+}
+
+.dd-agent-search-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+
+.dd-agent-search-close:hover {
+  color: var(--ink-primary);
+}
+
+.dd-ap-header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dd-ap-header-label svg { color: var(--ink-solid); }
+
+/* FO avatar — matches db-att-chip (32px, 8px radius, bordered) */
+.dd-fo-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--ink-secondary);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-agent-row.is-active .dd-fo-avatar {
+  background: var(--bg-subtle);
+  border-color: var(--border);
+  color: var(--ink-secondary);
+}
+
+/* Skeleton row — matches dd-case-skel */
+.dd-agent-skel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Select wrap */
+.dd-agent-select-wrap {
+  flex-shrink: 0;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dd-agent-select {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.dd-agent-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-canvas);
+  margin-top: 8px;
+  transition: border-color 150ms;
+}
+
+.dd-agent-search:focus-within { border-color: var(--ink-solid); }
+.dd-agent-search-icon { color: var(--ink-tertiary); flex-shrink: 0; }
+
+.dd-agent-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--ink-primary);
+}
+
+.dd-agent-search input::placeholder { color: var(--ink-tertiary); }
+
+.dd-agent-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  transition: color 120ms;
+}
+.dd-agent-search-clear:hover { color: var(--ink-primary); }
+
+/* Card head */
+.dd-agent-list-head {
+  padding: 12px 18px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+.dd-agent-list-count {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--ink-tertiary);
+  font-family: var(--mono, monospace);
+}
+
+/* Agent list — full-bleed, matches dd-cp-list */
+.dd-agent-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px 0;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.dd-agent-list:hover { scrollbar-color: var(--border) transparent; }
+.dd-agent-list::-webkit-scrollbar { width: 4px; }
+.dd-agent-list::-webkit-scrollbar-track { background: transparent; }
+.dd-agent-list::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+.dd-agent-list:hover::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* Agent row — matches dd-case-row / db-att-row */
+.dd-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 8px);
+  margin: 0 4px;
+  padding: 0 12px;
+  height: 40px;
+  border: none;
+  border-bottom: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-primary);
+  text-align: left;
+  transition: background 100ms;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.dd-agent-row:hover { background: var(--bg-hover); }
+
+.dd-agent-row.is-active {
+  background: var(--brand-subtle);
+  color: var(--text-primary);
+  font-weight: 550;
+  border-radius: 6px;
+  margin: 0 4px;
+  width: calc(100% - 8px);
+  border-bottom: none;
+  box-shadow: none;
+}
+
+.dd-agent-row.is-active:hover { background: var(--brand-subtle); }
+
+.dd-agent-row-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dd-agent-row-check { flex-shrink: 0; color: var(--ink-solid); }
+
+/* Stats footer — matches right card bottom strip rhythm */
+.dd-agent-stats-footer {
+  flex-shrink: 0;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Picker section (legacy — kept for ap-label reuse) */
+.dd-ap-section {
+  padding: 14px 16px 12px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+.dd-ap-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-tertiary);
+  margin-bottom: 8px;
+}
+
+/* Picker widget */
+.dd-ap-picker {
+  position: relative;
+}
+
+.dd-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-primary);
+  text-align: left;
+  box-sizing: border-box;
+  transition: border-color 150ms, background 150ms;
+}
+
+.dd-picker-trigger:hover {
+  background: var(--bg-subtle);
+}
+
+.dd-picker-trigger.is-open {
+  background: var(--bg-surface);
+}
+
+.dd-picker-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.dd-picker-selected-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.dd-picker-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  background: var(--bg-canvas);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms, background 120ms, border-color 120ms;
+}
+
+.dd-picker-clear:hover {
+  color: var(--error);
+  background: var(--error-subtle);
+  border-color: color-mix(in srgb, var(--error) 25%, transparent);
+}
+
+.dd-picker-caret {
+  margin-left: auto;
+  color: var(--ink-tertiary);
+  flex-shrink: 0;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dd-picker-trigger.is-open .dd-picker-caret { transform: rotate(180deg); }
+
+/* Dropdown */
+.dd-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  z-index: 400;
+  overflow: hidden;
+  animation: dd-drop-in 140ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dd-drop-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dd-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-tertiary);
+}
+
+.dd-picker-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-primary);
+}
+
+.dd-picker-search input:focus,
+.dd-picker-search input:focus-visible { outline: none; border: none; box-shadow: none; }
+
+.dd-picker-search input::placeholder { color: var(--ink-tertiary); }
+
+.dd-picker-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.dd-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-primary);
+  text-align: left;
+  box-sizing: border-box;
+  transition: background 100ms;
+}
+
+.dd-picker-option:hover          { background: var(--bg-subtle); }
+.dd-picker-option.is-selected    { background: var(--bg-subtle); font-weight: 500; }
+
+.dd-picker-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.dd-picker-empty-icon {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--border-strong);
+  margin-bottom: 4px;
+}
+
+.dd-picker-empty-title {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.dd-picker-empty-sub {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+}
+
+.dd-picker-check {
+  margin-left: auto;
+  color: var(--ink-secondary);
+  flex-shrink: 0;
+}
+

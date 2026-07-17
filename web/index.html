@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Recoverpro - Loan Recovery Platform</title>
+    <meta name="description" content="Recoverpro is a loan recovery and field collections operations platform — case dispatch, agent tracking, and recovery reporting in one place." />
+    <link rel="canonical" href="https://recoverpro.in/" />
+    <!--
+      Content-Security-Policy — tightened per audit item 7.
+      Vite dev server injects inline scripts; for production the Vite build
+      should inject a nonce or hash via the vite-plugin-csp community plugin.
+      This meta-tag CSP is a defence-in-depth fallback (HTTP header CSP from
+      the reverse proxy / CDN takes precedence when present).
+
+      'unsafe-eval' is required for:
+        - Recharts (d3-format / d3-time-format use Function() for fast formatters)
+        - Vite HMR / Fast Refresh in dev mode
+      The HTTP-header CSP at the edge SHOULD drop 'unsafe-eval' in production
+      after migrating to a chart lib that doesn't rely on Function().
+    -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-eval' https://unpkg.com;
+                   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
+                   font-src 'self' https://fonts.gstatic.com;
+                   img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://*.amazonaws.com;
+                   connect-src 'self' ws://localhost:* wss://localhost:*;
+                   frame-ancestors 'none';
+                   base-uri 'self';
+                   form-action 'self';" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=DM+Serif+Display&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
+    <!--
+      Boot splash — shown instantly on page load, before the JS bundle parses,
+      so a refresh inside the app never flashes a blank page. Styled to match the
+      React <BrandedLoader fullbleed> so the handoff when React mounts is seamless.
+      main.tsx removes it on mount; a failsafe timer removes it even if mount fails.
+    -->
+    <style>
+      @keyframes _rp-bar { 0% { left: -36%; } 100% { left: 100%; } }
+      @keyframes _rp-spin { to { transform: rotate(360deg); } }
+      #app-boot-splash {
+        position: fixed; inset: 0; z-index: 99998;
+        display: flex; align-items: center; justify-content: center;
+        background-color: #ffffff;
+        background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+        background-size: 28px 28px;
+        overflow: hidden;
+      }
+      #app-boot-splash::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(ellipse 70% 65% at 50% 50%,
+          rgba(255,255,255,0.92) 0%,
+          rgba(255,255,255,0.45) 55%,
+          transparent 100%);
+        pointer-events: none; z-index: 0;
+      }
+      #app-boot-splash .rp-boot-content { position: relative; z-index: 1; }
+      #app-boot-splash .rp-boot-content {
+        display: flex; flex-direction: column; align-items: center; gap: 28px;
+      }
+      #app-boot-splash .rp-boot-logo { height: 56px; width: auto; display: block; }
+      #app-boot-splash .rp-boot-bar {
+        position: relative; width: 220px; height: 2px;
+        border-radius: 9999px; background: #eaecf0; overflow: hidden;
+      }
+      #app-boot-splash .rp-boot-bar-fill {
+        position: absolute; top: 0; bottom: 0; width: 36%;
+        background: #667085; border-radius: 9999px;
+        animation: _rp-bar 1.4s cubic-bezier(0.65,0,0.35,1) infinite;
+      }
+      #app-boot-splash .rp-boot-text {
+        display: inline-flex; align-items: center; gap: 8px; margin: 0;
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+        text-transform: uppercase; color: #98a2b3;
+      }
+      #app-boot-splash .rp-boot-spin {
+        width: 14px; height: 14px; color: #667085;
+        animation: _rp-spin 0.9s linear infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #app-boot-splash .rp-boot-bar-fill { animation: none; left: 32%; }
+        #app-boot-splash .rp-boot-spin { animation: none; }
+      }
+    </style>
+    <!-- Leaflet — used by LiveTrackPage for the supervisor real-time map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqDo=" crossorigin=""></script>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-950">
+    <!--
+      Boot splash lives INSIDE #root. React replaces the entire contents of the
+      root node on its first render, so this is removed automatically the moment
+      the app mounts — no JS removal, no timers, nothing to get stuck on, and it
+      needs no inline script (which the page CSP would block anyway).
+    -->
+    <div id="root">
+      <div id="app-boot-splash">
+        <div class="rp-boot-content">
+          <img class="rp-boot-logo" src="/src/assets/images/logo.png" alt="Recoverpro" fetchpriority="high" />
+          <div class="rp-boot-bar"><div class="rp-boot-bar-fill"></div></div>
+          <p class="rp-boot-text">
+            <svg class="rp-boot-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            <span>Restoring session</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

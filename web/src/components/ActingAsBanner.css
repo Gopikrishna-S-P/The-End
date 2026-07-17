@@ -1,0 +1,117 @@
+/* ── ActingAsBanner — sticky impersonation indicator ──────────────────────── */
+
+.app-acting-as {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 22px;
+  background: var(--warning-subtle);
+  border-bottom: 1px solid var(--warning-border);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--warning);
+  flex-shrink: 0;
+  z-index: 110;
+  animation: app-acting-as-in var(--dur-slow) var(--ease-out) both;
+}
+@keyframes app-acting-as-in {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-acting-as-shield {
+  color: var(--warning);
+  flex-shrink: 0;
+  animation: app-acting-as-pulse 2.4s ease-in-out infinite;
+}
+@keyframes app-acting-as-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.18); }
+}
+
+.app-acting-as-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.app-acting-as-prefix {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warning);
+}
+.app-acting-as-text strong {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.005em;
+}
+.app-acting-as-role {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+.app-acting-as-meta {
+  font-size: 11px;
+  color: var(--warning);
+  font-weight: 400;
+  opacity: 0.8;
+}
+.app-acting-as-reason {
+  font-style: italic;
+  font-size: 11px;
+  color: var(--warning);
+  opacity: 0.75;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-acting-as-exit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--warning);
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--dur-fast), transform var(--dur-base) var(--ease-out);
+}
+.app-acting-as-exit:hover {
+  background: color-mix(in srgb, var(--warning) 85%, black);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .app-acting-as { padding: 8px 12px; gap: 8px; }
+  .app-acting-as-meta,
+  .app-acting-as-reason { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-acting-as,
+  .app-acting-as-shield { animation: none; }
+}

@@ -1,0 +1,26 @@
+/* ── Route progress bar — top-of-viewport indicator ───────────────────────── */
+.app-route-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+  background: transparent;
+}
+.app-route-progress.is-visible { opacity: 1; }
+
+.app-route-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--text-secondary);
+  transition: width var(--dur-base) var(--ease-out);
+  border-bottom-right-radius: 2px;
+  border-top-right-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-route-progress,
+  .app-route-progress-bar { transition: none; }
+}

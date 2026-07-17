@@ -1,0 +1,184 @@
+/* ── Send bar (pinned to bottom of case panel) ───────────────────────────────── */
+
+/* Command dock — a floating action bar (Linear/Superhuman register): lifts off
+   the canvas with float-grade elevation so it reads as a transient command
+   surface, not an inline strip. */
+.dd-send-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+  flex-shrink: 0;
+  box-shadow: var(--ds-shadow-float);
+  animation: dd-sendbar-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes dd-sendbar-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dd-send-bar-agent {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dd-send-bar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--ink-secondary);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-send-bar-agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dd-send-bar-to {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-tertiary);
+}
+
+.dd-send-bar-name {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.dd-send-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.dd-send-bar-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.dd-send-bar-value {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.dd-send-bar-warn {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border: 1px solid var(--warning-border);
+  padding: 3px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.02em;
+}
+
+.dd-send-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.dd-bar-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.dd-bar-btn-cancel:hover {
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+}
+
+.dd-bar-btn-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  height: 34px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms, opacity 120ms, transform 100ms;
+}
+
+.dd-bar-btn-confirm:hover    { background: var(--ink-solid-hover); }
+.dd-bar-btn-confirm:active   { transform: translateY(1px); }
+.dd-bar-btn-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Keyboard-shortcut hint baked into the primary action — translucent white
+   chip on the accent fill. Mirrors the topbar ⌘K cue: the dock advertises its
+   own hotkey. */
+.dd-bar-kbd {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text-on-solid) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-on-solid) 28%, transparent);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-on-solid);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+
+/* ── Responsive: stack below 960px ──────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .dd-body        { flex-direction: column; overflow-y: auto; }
+  .dd-agent-panel { flex: none; border-right: none; border-bottom: 1px solid var(--border); }
+  .dd-case-panel  { flex: none; min-height: 500px; }
+  .dd-cp-list     { overflow: visible; }
+}

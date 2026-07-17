@@ -1,0 +1,57 @@
+/* ── Tabs primitive ───────────────────────────────────────────────────────── */
+
+.ds-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  height: var(--ds-row-h);
+  flex-shrink: 0;
+}
+
+.ds-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-tertiary);
+  border-bottom: 2px solid transparent;
+  transition: color var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
+}
+.ds-tab:hover { color: var(--text-secondary); }
+.ds-tab:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.ds-tab.is-active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ds-tab-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-feature-settings: 'tnum','zero';
+}
+
+.ds-tab.is-active .ds-tab-count {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}

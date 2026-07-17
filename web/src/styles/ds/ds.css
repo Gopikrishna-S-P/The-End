@@ -1,0 +1,21 @@
+/* ── DS — app-wide design system ───────────────────────────────────────────
+   Single import surface. Every primitive here resolves from .app-layout
+   aliases (which themselves resolve from --rp-* primitives), so themes
+   flip automatically. No raw hex values in any ds-* file.
+   ────────────────────────────────────────────────────────────────────────── */
+
+@import './ds.tokens.css';
+
+@import './ds.section.css';
+@import './ds.card.css';
+@import './ds.toolbar.css';
+@import './ds.table.css';
+@import './ds.tabs.css';
+@import './ds.pill.css';
+@import './ds.button.css';
+@import './ds.form.css';
+@import './ds.skeleton.css';
+@import './ds.empty.css';
+@import './ds.toast.css';
+@import './ds.modal.css';
+@import './ds.drawer.css';

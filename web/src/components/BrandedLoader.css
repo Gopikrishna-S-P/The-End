@@ -1,0 +1,99 @@
+/* ── BrandedLoader — page/section loading state ───────────────────────────── */
+
+.branded-loader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  animation: branded-loader-in var(--dur-base) var(--ease-out) both;
+}
+
+.branded-loader.branded-loader-fullbleed {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  border-radius: 0;
+}
+
+.branded-loader.branded-loader-inline {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+@keyframes branded-loader-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Decorative layers removed — no glow, no dot grid */
+.branded-loader-glow,
+.branded-loader-grid { display: none; }
+
+.branded-loader-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  animation: branded-loader-rise var(--dur-slow) var(--ease-out) both;
+}
+@keyframes branded-loader-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.branded-loader-logo { /* no halo */ }
+
+/* ── Circle spinner — neutral ink arc ─────────────────────────────────────── */
+.branded-loader-spinner {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+.branded-loader-spinner-track,
+.branded-loader-spinner-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  mask: radial-gradient(circle, transparent 20px, #000 21px, #000 24px, transparent 25px);
+  -webkit-mask: radial-gradient(circle, transparent 20px, #000 21px, #000 24px, transparent 25px);
+}
+.branded-loader-spinner-track {
+  background: var(--border);
+}
+.branded-loader-spinner-sweep {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 80deg,
+    var(--text-secondary) 360deg
+  );
+  animation: branded-loader-spin 800ms linear infinite;
+}
+@keyframes branded-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+.branded-loader-text {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branded-loader,
+  .branded-loader-content { animation: none; }
+  .branded-loader-spinner-sweep {
+    animation: none;
+    transform: rotate(120deg);
+  }
+}

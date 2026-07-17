@@ -1,0 +1,195 @@
+/* â”€â”€ RIGHT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .right {
+  background: #ffffff;
+  padding: 48px 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: signin-fadeUp 400ms var(--ease) 100ms forwards;
+}
+
+.signin-page .form-wrap {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.signin-page .form-header { margin-bottom: 32px; }
+.signin-page .form-title {
+  font-family: var(--sans);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.signin-page .form-sub {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-secondary);
+}
+
+/* â”€â”€ FIELDS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .field-group { margin-bottom: 20px; }
+
+.signin-page .field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.signin-page .field-label {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  line-height: 1.4;
+  transition: color 150ms var(--ease);
+}
+.signin-page .field-group:focus-within .field-label { color: #0AA550; }
+
+.signin-page .input-wrap { position: relative; }
+
+.signin-page .input {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  padding: 9px 44px 9px 12px;
+  font-size: 13px;
+  font-family: var(--sans);
+  color: var(--ink-primary);
+  outline: none;
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+  -webkit-appearance: none;
+}
+.signin-page .input::placeholder { color: var(--ink-tertiary); }
+.signin-page .input:hover { border-color: #667085; }
+.signin-page .input:focus,
+.signin-page .input:focus-visible {
+  border-color: #0AA550;
+  outline: none;
+}
+.signin-page .input.error {
+  border-color: var(--error);
+}
+
+.signin-page .input-suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.signin-page .pw-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 150ms var(--ease);
+  min-width: 28px;
+  min-height: 28px;
+  justify-content: center;
+}
+.signin-page .pw-toggle:hover { color: var(--ink-primary); }
+.signin-page .pw-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.signin-page .field-helper {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin-top: 6px;
+  line-height: 1.4;
+  display: none;
+  align-items: center;
+  gap: 5px;
+}
+.signin-page .field-helper.visible { display: flex; }
+.signin-page .field-helper.error  { color: var(--error); }
+.signin-page .field-helper.muted  { color: var(--ink-tertiary); }
+.signin-page .field-helper svg { flex-shrink: 0; }
+.signin-page .field-helper a {
+  color: var(--ink-solid);
+  text-decoration: none;
+  font-weight: 500;
+}
+.signin-page .field-helper a:hover { text-decoration: underline; }
+
+/* Step counter — mono label above form-title on multi-step forms */
+.signin-page .rp-step-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 10px;
+}
+
+.signin-page .row-below-pw {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0 24px;
+  gap: 16px;
+}
+
+.signin-page .checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+}
+.signin-page .checkbox-input { position: absolute; opacity: 0; width: 0; height: 0; }
+.signin-page .checkbox-box {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 150ms var(--ease), background 150ms var(--ease);
+}
+.signin-page .checkbox-input:checked ~ .checkbox-box {
+  background: #0AA550;
+  border-color: #0AA550;
+}
+.signin-page .checkbox-input:focus-visible ~ .checkbox-box { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.signin-page .checkbox-check {
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 150ms var(--ease), transform 150ms var(--ease);
+}
+.signin-page .checkbox-input:checked ~ .checkbox-box .checkbox-check {
+  opacity: 1;
+  transform: scale(1);
+}
+.signin-page .checkbox-label { font-size: 13px; color: var(--ink-secondary); line-height: 1.4; }
+
+.signin-page .forgot-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0AA550;
+  text-decoration: none;
+  transition: opacity 150ms var(--ease);
+  white-space: nowrap;
+}
+.signin-page .forgot-link:hover { opacity: 0.7; }
+.signin-page .forgot-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 2px; }
+

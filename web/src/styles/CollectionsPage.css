@@ -1,0 +1,419 @@
+/* ── Collections — page-specific layout only ────────────────────────────────
+   All card, search, filter-button, pill, modal, table, skeleton chrome is
+   supplied by ds-*. This file only owns the page composition.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.coll-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  min-height: 100%;
+}
+
+.app-page.coll-page { background: var(--bg-canvas); }
+
+.coll-pending-pill {
+  cursor: pointer;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--warning-border);
+  font-size: 11px;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+/* ── Toolbar row ─────────────────────────────────────────────────────────── */
+
+.coll-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.coll-toolbar-row .ds-filter-btn { padding: 0 20px; gap: 8px; height: var(--ds-ctl-h); font-size: 13px; }
+.coll-toolbar-row .coll-export-wrap { margin-left: auto; margin-right: 4px; }
+
+/* ── Search pill ─────────────────────────────────────────────────────────── */
+
+.coll-search {
+  width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-surface);
+  color: var(--ink-tertiary);
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+
+.coll-search:hover { background: var(--bg-subtle); }
+
+.coll-search:focus-within {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+
+.coll-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.coll-search-input::placeholder { color: var(--ink-tertiary); }
+
+.coll-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+.coll-search-clear:hover { color: var(--ink-primary); }
+
+/* ── Export button + dropdown ────────────────────────────────────────────── */
+
+.coll-export-wrap {
+  position: relative;
+}
+
+.coll-export-btn {
+  padding: 0 14px;
+  height: var(--ds-ctl-h);
+  font-size: 13px;
+  gap: 6px;
+}
+
+.coll-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-dropdown, 200);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+  box-shadow: var(--ds-shadow-float);
+  padding: 10px;
+  min-width: 240px;
+}
+
+.coll-export-section-label {
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.coll-export-item {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-primary);
+  border-radius: var(--ds-radius-sm);
+  cursor: pointer;
+  transition: background 120ms var(--ease);
+}
+.coll-export-item:hover { background: var(--bg-subtle); }
+
+.coll-export-divider {
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+
+.coll-export-date {
+  width: 100%;
+  height: 32px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+/* ── Active-filter chips row ─────────────────────────────────────────────── */
+
+.coll-active-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  margin-top: -4px;
+}
+
+.coll-active-filters .ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coll-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 120ms var(--ease);
+}
+.coll-chip-x:hover { opacity: 1; }
+
+/* ── Table column widths ─────────────────────────────────────────────────── */
+
+.coll-table th:nth-child(1),
+.coll-table td:nth-child(1) { width: 100px; white-space: nowrap; }   /* Loan # */
+
+.coll-table th:nth-child(4),
+.coll-table td:nth-child(4) { width: 110px; white-space: nowrap; }   /* Date */
+
+.coll-table th:nth-child(6),
+.coll-table td:nth-child(6) { width: 90px;  white-space: nowrap; }   /* Mode */
+
+.coll-table th:nth-child(7),
+.coll-table td:nth-child(7) { width: 140px; white-space: nowrap; }   /* Status */
+
+/* ── Table cells ─────────────────────────────────────────────────────────── */
+
+.coll-loan-cell {
+  color: var(--ink-solid);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.coll-borrower-cell {
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.coll-em-dash {
+  color: var(--ink-tertiary);
+  font-weight: 400;
+}
+
+/* ── Row actions ─────────────────────────────────────────────────────────── */
+
+.coll-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.coll-row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  font-family: var(--ds-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  border-radius: var(--ds-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms var(--ease), color 120ms var(--ease);
+}
+.coll-row-action:hover { background: var(--bg-subtle); }
+.coll-row-action.is-accent { color: var(--ink-solid); }
+.coll-row-action.is-accent:hover { background: var(--bg-hover); }
+.coll-row-action.is-error  { color: var(--error); }
+.coll-row-action.is-error:hover  { background: var(--error-subtle); }
+
+/* ── Filter modal options ────────────────────────────────────────────────── */
+
+.coll-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.coll-filter-option {
+  padding: 6px 14px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--ink-secondary);
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease);
+}
+.coll-filter-option:hover {
+  border-color: var(--border-strong);
+  color: var(--ink-primary);
+}
+.coll-filter-option.is-active {
+  background: var(--bg-active);
+  border-color: var(--ink-solid);
+  color: var(--ink-solid);
+  font-weight: 500;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+
+.coll-pagination {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+/* ── Drawer ──────────────────────────────────────────────────────────────── */
+
+.coll-drawer-title-col {
+  min-width: 0;
+  flex: 1;
+}
+
+.coll-drawer-amount {
+  font-family: var(--ds-font-num);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  font-feature-settings: 'tnum','zero';
+  line-height: 1.1;
+}
+
+.coll-drawer-sub {
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+
+.coll-drawer-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.coll-drawer-group + .coll-drawer-group {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.coll-drawer-group-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 8px;
+}
+.coll-drawer-group-label > svg { color: var(--ink-tertiary); }
+
+.coll-drawer-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coll-drawer-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+}
+
+.coll-drawer-no-proof {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  font-style: italic;
+  margin: 0;
+}
+
+.coll-drawer-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coll-drawer-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-solid);
+  text-decoration: none;
+  transition: text-decoration 120ms var(--ease);
+}
+.coll-drawer-doc-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.coll-drawer-doc-size {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+}
+
+.coll-drawer-footer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.coll-drawer-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--error);
+}
+
+.coll-drawer-action-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Modal-internal error banner ─────────────────────────────────────────── */
+
+.coll-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--ds-radius);
+  background: color-mix(in srgb, var(--error) 8%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--error) 30%, var(--border));
+  color: var(--error);
+  font-size: 12.5px;
+  line-height: 1.4;
+}

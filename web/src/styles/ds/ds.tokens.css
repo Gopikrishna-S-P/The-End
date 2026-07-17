@@ -1,0 +1,214 @@
+/* ── RecoverPro Design-System Foundation Tokens ─────────────────────────────
+   Single :root source of truth for the light-mode remake.
+   All primitives live here; every ds-* file and page CSS consumes var(--…).
+   No raw hex values anywhere else. No dark-mode variants — light only.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --bg-canvas:   #F7F8FA;   /* app background; white cards read as raised */
+  --bg-surface:  #FFFFFF;   /* raised surface: cards, panels, inputs, popovers */
+  --bg-subtle:   #F2F4F7;   /* sunken fill: table header, zebra-alt, disabled */
+  --bg-hover:    #E8EBF0;   /* row/item hover — distinct from subtle (was identical) */
+  --bg-active:   var(--brand-subtle);   /* selected row; green tint */
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --border:        #E4E7EC; /* default 1px hairline */
+  --border-strong: #D0D5DD; /* hovered/focused card, active row, input hover */
+  --border-subtle: #F0F1F4; /* faintest internal divider */
+
+  /* ── Text ─────────────────────────────────────────────────────────────── */
+  --text-primary:     #101828; /* headings, primary values, money — 15.9:1 */
+  --text-secondary:   #475467; /* body copy, labels — 7.8:1 */
+  --text-tertiary:    #667085; /* captions, metadata — 4.9:1 */
+  --text-placeholder: #98A2B3; /* placeholders, disabled affordances */
+  --text-on-solid:    #FFFFFF; /* text on dark/solid fills */
+
+  /* ── Solid emphasis (primary button, active states, action elements) ─── */
+  --ink-solid:       #0AA550;
+  --ink-solid-hover: #088A42;
+
+  /* ── Brand — sparse use: links, active-nav indicator only ────────────── */
+  --brand:        #0AA550; /* Primary green */
+  --brand-subtle: #E7F4EC; /* selected nav item full-fill; no left bar */
+
+  /* ── Focus ring — neutral blue, distinct from brand and status ────────── */
+  --focus-ring: #2563EB;
+
+  /* ── Semantic status ──────────────────────────────────────────────────── */
+  --success:        #067647;
+  --success-subtle: #ECFDF3;
+  --success-border: #ABEFC6;
+
+  --warning:        #B54708;
+  --warning-subtle: #FFFAEB;
+  --warning-border: #FEDF89;
+
+  --danger:         #B42318;
+  --danger-subtle:  #FEF3F2;
+  --danger-border:  #FECDCA;
+  --danger-solid:   #D92D20;
+
+  --info:        #175CD3;
+  --info-subtle: #EFF8FF;
+  --info-border: #B2DDFF;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  /* Keep legacy aliases alive so --sans/--mono still resolve */
+  --sans: var(--font-sans);
+  --mono: var(--font-mono);
+
+  /* ── Type scale — use these everywhere, don't hardcode px ────────────── */
+  --text-2xs:  10px;  /* badge labels, kbd hints */
+  --text-xs:   11px;  /* mono caps, eyebrows */
+  --text-sm:   12px;  /* table meta, captions */
+  --text-body: 13px;  /* default body, table cells */
+  --text-md:   14px;  /* section labels, sub-headings */
+  --text-lg:   16px;  /* card titles */
+  --text-xl:   20px;  /* page sub-headers */
+  --text-2xl:  24px;  /* page titles */
+  --text-3xl:  30px;  /* dashboard KPI numbers */
+
+  /* ── Line heights ─────────────────────────────────────────────────────── */
+  --lh-tight:  1.25;
+  --lh-snug:   1.4;
+  --lh-normal: 1.55;
+  --lh-loose:  1.7;
+
+  /* ── Spacing (8px grid, 4px half-step for dense interiors) ───────────── */
+  --space-1:  2px;
+  --space-2:  4px;
+  --space-3:  6px;
+  --space-4:  8px;
+  --space-5:  12px;
+  --space-6:  16px;
+  --space-7:  20px;
+  --space-8:  24px;
+  --space-9:  32px;
+  --space-10: 48px;
+
+  /* Legacy --rp-s* aliases so existing code doesn't break */
+  --rp-s1: var(--space-2);
+  --rp-s2: var(--space-4);
+  --rp-s3: var(--space-5);
+  --rp-s4: var(--space-6);
+  --rp-s5: var(--space-8);
+  --rp-s6: var(--space-9);
+
+  /* ── Radius ───────────────────────────────────────────────────────────── */
+  --radius-xs:   4px;   /* badges, chips, tags, checkboxes */
+  --radius-sm:   6px;   /* buttons, inputs, segmented controls */
+  --radius-md:   8px;   /* cards, panels, table outer frame, popovers */
+  --radius-lg:   12px;  /* modals, large containers, empty-state cards */
+  --radius-full: 999px; /* avatars, status dots, pill toggles */
+
+  /* Legacy ds-* aliases */
+  --ds-radius-sm:   var(--radius-sm);
+  --ds-radius:      var(--radius-md);
+  --ds-radius-lg:   var(--radius-lg);
+  --ds-radius-pill: var(--radius-full);
+
+  /* Legacy rp-r-* aliases */
+  --rp-r-sm: var(--radius-xs);
+  --rp-r-md: var(--radius-md);
+  --rp-r-lg: var(--radius-lg);
+  --rp-r-xl: var(--radius-lg);
+
+  /* ── Elevation — borders carry structure; shadows only for true floats ── */
+  --shadow-none: none;
+  --shadow-xs:   0 1px 2px rgba(16,24,40,0.05);
+  --shadow-sm:   0 1px 3px rgba(16,24,40,0.10), 0 1px 2px rgba(16,24,40,0.06);
+  --shadow-md:   0 4px 8px -2px rgba(16,24,40,0.10), 0 2px 4px -2px rgba(16,24,40,0.06);
+  --shadow-lg:   0 12px 16px -4px rgba(16,24,40,0.08), 0 4px 6px -2px rgba(16,24,40,0.03);
+  --shadow-overlay-scrim: rgba(16,24,40,0.40);
+
+  /* Legacy elevation aliases */
+  --rp-e1: var(--shadow-xs);
+  --rp-e2: var(--shadow-sm);
+  --rp-e3: var(--shadow-md);
+  --rp-e4: var(--shadow-lg);
+
+  /* ds-* shadow aliases (static cards get shadow-none; only floats get shadow) */
+  --ds-shadow-card:       var(--shadow-none);
+  --ds-shadow-card-hover: var(--shadow-sm);
+  --ds-shadow-float:      var(--shadow-md);
+  --ds-shadow-overlay:    var(--shadow-lg);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --dur-instant: 80ms;
+  --dur-fast:    140ms;
+  --dur-base:    200ms;
+  --dur-slow:    280ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:       cubic-bezier(0.4, 0, 1, 1);
+
+  /* Legacy motion aliases */
+  --ease:   var(--ease-out);
+  --rp-ease: var(--ease-out);
+  --rp-t:   var(--dur-fast) var(--ease-out);
+  --rp-t-lg: var(--dur-slow) var(--ease-out);
+  --transition: var(--rp-t);
+
+  /* ── Control sizes (compact default) ─────────────────────────────────── */
+  --ds-row-h:    44px;
+  --ds-ctl-h:    32px;
+  --ds-ctl-h-sm: 28px;
+
+  /* ── Spacing shorthands ───────────────────────────────────────────────── */
+  --ds-gap-row:      8px;
+  --ds-gap-section: 12px;
+  --ds-card-px:     16px;
+  --ds-card-py:     12px;
+  --ds-page-px:     32px;
+  --ds-page-py:     24px;
+
+  /* ── Font references (used by ds-* as --ds-font-body / --ds-font-label) ─ */
+  --ds-font-body:  var(--font-sans);
+  --ds-font-label: var(--font-mono);
+  --ds-font-num:   var(--font-mono);
+
+  /* ── Z-index scale ────────────────────────────────────────────────────── */
+  --z-topbar:   100;
+  --z-sidebar:   90;
+  --z-dropdown: 200;
+  --z-elevated: 300;
+  --z-modal:    500;
+  --z-toast:    800;
+  --z-palette: 9000;
+  --z-skip:   10000;
+
+  /* ── Layout dimensions ────────────────────────────────────────────────── */
+  --rp-tb-h:     56px;
+  --rp-sb-off:   64px;
+  --rp-sb-on:   256px;
+  --rp-lucien-w: 340px;
+
+  /* ── Forward compat: anything still referencing old rp-* ink/surface ──── */
+  --rp-bg-surface: var(--bg-surface);
+  --rp-bg-subtle:  var(--bg-subtle);
+  --rp-ink-1: var(--text-primary);
+  --rp-ink-2: var(--text-secondary);
+  --rp-ink-3: var(--text-tertiary);
+  --rp-white: #ffffff;
+
+  /* Legacy error/warn aliases so existing AppPage.css doesn't break */
+  --error:         var(--danger);
+  --error-subtle:  var(--danger-subtle);
+  --rp-error:      var(--danger);
+  --rp-error-subtle: var(--danger-subtle);
+  --rp-success:    var(--success);
+  --rp-success-subtle: var(--success-subtle);
+  --rp-warn-ink:   var(--warning);
+  --rp-warn-bg:    var(--warning-subtle);
+  --rp-warn-border: var(--warning-border);
+
+  /* Legacy ink aliases */
+  --ink-primary:   var(--text-primary);
+  --ink-secondary: var(--text-secondary);
+  --ink-tertiary:  var(--text-tertiary);
+  --icon-color:    var(--text-secondary);
+}

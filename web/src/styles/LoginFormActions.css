@@ -1,0 +1,280 @@
+/* â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .btn-primary {
+  width: 100%;
+  background: #0AA550;
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  text-decoration: none;
+  margin-top: var(--rp-s2);
+  margin-bottom: 24px;
+  position: relative;
+  transition: background 150ms var(--ease), box-shadow 150ms var(--ease), transform 150ms var(--ease);
+  box-shadow: 0 2px 6px color-mix(in srgb, #0AA550 20%, transparent),
+              0 4px 16px color-mix(in srgb, #0AA550 12%, transparent);
+}
+.signin-page .btn-primary:hover:not(:disabled) {
+  background: #088a42;
+  box-shadow: 0 4px 12px color-mix(in srgb, #0AA550 28%, transparent),
+              0 8px 24px color-mix(in srgb, #0AA550 16%, transparent);
+  transform: translateY(-1px);
+}
+.signin-page .btn-primary:active:not(:disabled) { transform: translateY(0); }
+.signin-page .btn-primary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.signin-page .btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
+.signin-page .btn-primary-text { font-size: 14px; font-weight: 600; }
+.signin-page .btn-primary.loading {
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Keyboard shortcut hint inside primary button */
+.signin-page .btn-kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--text-on-solid) 60%, transparent);
+  border: none;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Spinner container in loading state — inline flex to match button alignment */
+.signin-page .btn-spinner-abs {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* â”€â”€ OR DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .or-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.signin-page .or-line { flex: 1; height: 1px; background: var(--border); }
+.signin-page .or-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+
+/* â”€â”€ SSO BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .sso-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.signin-page .btn-sso {
+  height: 44px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--sans);
+  color: var(--ink-secondary);
+  transition: border-color 150ms var(--ease), background 150ms var(--ease), color 150ms var(--ease);
+}
+.signin-page .btn-sso:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+}
+.signin-page .btn-sso:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.signin-page .sso-enterprise { text-align: center; margin-bottom: 24px; }
+.signin-page .sso-enterprise a {
+  font-size: 13px;
+  color: var(--ink-secondary);
+  text-decoration: none;
+  transition: color 150ms;
+}
+.signin-page .sso-enterprise a:hover { color: var(--ink-solid); }
+
+/* â”€â”€ FORM FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .form-footer {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.signin-page .form-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.signin-page .form-footer-row span {
+  font-size: 13px;
+  color: var(--ink-tertiary);
+}
+.signin-page .form-footer-row a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-solid);
+  text-decoration: none;
+  transition: opacity 150ms;
+}
+.signin-page .form-footer-row a:hover { opacity: 0.7; }
+.signin-page .request-access-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-solid);
+  font-family: var(--sans);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: opacity 150ms;
+}
+.signin-page .request-access-btn:hover { opacity: 0.7; }
+.signin-page .form-footer-legal {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  text-align: center;
+  line-height: 1.5;
+}
+.signin-page .form-footer-legal a {
+  color: var(--ink-tertiary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 150ms;
+}
+.signin-page .form-footer-legal a:hover { color: var(--ink-secondary); }
+
+/* â”€â”€ BANNERS (server error / reason) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.signin-page .banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  border: 1px solid;
+}
+.signin-page .banner svg { flex-shrink: 0; margin-top: 2px; }
+.signin-page .banner-error {
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.signin-page .banner-success {
+  background: var(--success-subtle);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+.signin-page .banner-warn {
+  background: var(--warning-subtle);
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+
+/* â”€â”€ MFA stage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* The verification step reads as a distinct, roomy panel â€” wider than
+   the credentials form, lifted off the surface with generous padding. */
+.signin-page .form-wrap.is-mfa { max-width: 472px; }
+
+.signin-page .mfa-stage {
+  padding: 40px 40px 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+.signin-page .mfa-stage .form-header { margin-bottom: 28px; }
+
+.signin-page .mfa-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.signin-page .mfa-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #EDF7F2;
+  border: 1px solid #C8E6D4;
+  color: #0AA550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.signin-page .mfa-email {
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.signin-page .otp-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.signin-page .otp-box {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--ink-primary);
+  outline: none;
+  transition: border-color 150ms var(--ease);
+}
+.signin-page .otp-box:focus,
+.signin-page .otp-box:focus-visible {
+  border-color: var(--ink-solid);
+  outline: none;
+}
+.signin-page .otp-box:disabled { opacity: 0.5; }
+
+.signin-page .link-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  font-family: var(--sans);
+  text-decoration: none;
+  transition: color 150ms var(--ease);
+  margin-top: 4px;
+}
+.signin-page .link-back:hover { color: var(--ink-primary); }
+

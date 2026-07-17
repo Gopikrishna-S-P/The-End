@@ -1,0 +1,331 @@
+/* ── Table cell action group (multiple icon-buttons in a cell) ─── */
+.app-page-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  justify-content: flex-end;
+}
+.app-page-row-action.is-info:hover    { background: rgba(0, 0, 0, 0.04); color: var(--ink-primary); }
+.app-page-row-action.is-warn:hover    { background: var(--warning-subtle); color: var(--warning); }
+.app-page-row-action.is-error:hover   { background: var(--error-subtle); color: var(--error); }
+.app-page-row-action.is-text {
+  width: auto;
+  padding: 0 8px;
+  height: 28px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--sans);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Section card (for non-table content) ────────────── */
+.app-page-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+.app-page-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.app-page-section-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+.app-page-section-counter {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  background: var(--bg-subtle);
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+.app-page-section-body {
+  padding: 24px;
+}
+.app-page-section-empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+}
+
+/* ── Inline toggle (checkbox + text) ─────────────────── */
+.app-page-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.app-page-toggle:hover { color: var(--ink-primary); }
+.app-page-toggle .app-page-checkbox { width: 14px; height: 14px; }
+.app-page-toggle .app-page-checkbox:checked::after {
+  width: 7px;
+  height: 3px;
+}
+
+/* ── Incident card (SOS / field-ops alerts) ──────────── */
+.app-page-incident {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  background: var(--bg-surface);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.app-page-incident.is-open {
+  border-color: rgba(185, 28, 28, 0.25);
+  background: var(--error-subtle);
+}
+.app-page-incident + .app-page-incident { margin-top: 10px; }
+
+.app-page-incident-body { min-width: 0; flex: 1; }
+
+.app-page-incident-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.app-page-incident-meta strong {
+  color: var(--ink-primary);
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+.app-page-incident-headline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.app-page-incident.is-open .app-page-incident-headline { color: var(--error); }
+.app-page-incident:not(.is-open) .app-page-incident-headline { color: var(--ink-primary); }
+.app-page-incident-headline svg { flex-shrink: 0; }
+
+.app-page-incident-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  margin-left: 8px;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.app-page-incident-notes {
+  font-size: 13px;
+  color: var(--ink-secondary);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.app-page-incident-resolution {
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+  font-style: italic;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.app-page-incident-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-solid);
+  text-decoration: none;
+  margin-top: 8px;
+  transition: color .18s ease;
+}
+.app-page-incident-link:hover {
+  color: var(--ink-solid-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.app-page-incident-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Danger button (emergency / destructive) ─────────── */
+.app-page-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease;
+  background: var(--error);
+  color: #fff;
+  border: 1px solid var(--error);
+  white-space: nowrap;
+}
+.app-page-btn-danger:hover:not(:disabled) {
+  background: #991B1B;
+  border-color: #991B1B;
+}
+.app-page-btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Sized variant for primary that matches the danger sizing */
+.app-page-btn.is-sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+/* ── Filter chip (dismissible, like a tag) ───────────── */
+.app-page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+}
+.app-page-chip svg { flex-shrink: 0; }
+.app-page-chip-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.app-page-chip-value {
+  color: var(--ink-primary);
+  font-weight: 600;
+}
+.app-page-chip.is-accent {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+  color: var(--ink-solid);
+}
+.app-page-chip.is-accent .app-page-chip-label,
+.app-page-chip.is-accent .app-page-chip-value {
+  color: var(--ink-solid);
+}
+.app-page-chip-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: inherit;
+  opacity: 0.7;
+  margin-left: 2px;
+  transition: opacity .18s ease, background-color .18s ease;
+}
+.app-page-chip-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.06); }
+
+.app-page-chips-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── Sortable column header ──────────────────────────── */
+.app-page-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: color .18s ease;
+}
+.app-page-table th.is-sortable:hover { color: var(--ink-primary); }
+.app-page-table th.is-sortable .app-page-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.app-page-table th.is-sorted { color: var(--ink-solid); }
+.app-page-table th.is-sorted .app-page-th-sort-icon { color: var(--ink-solid); }
+
+/* ── Mono accent link (for loan numbers, IDs) ────────── */
+.app-page-link-mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-solid);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.app-page-link-mono:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--ink-solid-hover);
+}
+
+/* ── Inline pill stack (multiple pills in one cell) ──── */
+.app-page-pill-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ── Back link ───────────────────────────────────────── */
+.app-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: var(--sans);
+  color: var(--ink-tertiary);
+  padding: 0;
+  margin-bottom: 16px;
+  transition: color .18s ease;
+}
+.app-page-back:hover { color: var(--ink-primary); }
+

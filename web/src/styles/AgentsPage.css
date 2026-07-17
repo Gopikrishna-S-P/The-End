@@ -1,0 +1,94 @@
+/* ── Agents — page-specific layout ───────────────────────────────────────── */
+
+.agents-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  min-height: 100%;
+}
+
+.app-page.agents-page { background: var(--bg-canvas); }
+
+/* ── Toolbar row ── */
+.agents-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+.agents-toolbar-row .ds-icon-btn { margin-left: auto; }
+
+.agents-search {
+  width: 380px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-surface);
+  color: var(--ink-tertiary);
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+.agents-search:hover { background: var(--bg-subtle); }
+.agents-search:focus-within {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+.agents-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+.agents-search-input::placeholder { color: var(--ink-tertiary); }
+.agents-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+.agents-search-clear:hover { color: var(--ink-primary); }
+
+/* ── Error banner ── */
+.agents-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.agents-banner.is-error {
+  color: var(--error);
+  background: var(--error-subtle);
+  border-color: color-mix(in srgb, var(--error) 25%, transparent);
+}
+.agents-banner > span { flex: 1; }
+
+/* ── Row actions ── */
+.ag-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}

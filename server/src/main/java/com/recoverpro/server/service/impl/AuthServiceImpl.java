@@ -1,0 +1,332 @@
+package com.recoverpro.server.service.impl;
+
+import com.recoverpro.server.common.exception.RateLimitExceededException;
+import com.recoverpro.server.common.exception.ResourceNotFoundException;
+import com.recoverpro.server.config.AppProperties;
+import com.recoverpro.server.dto.request.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recoverpro.server.dto.response.AuthResponse;
+import com.recoverpro.server.dto.response.MfaEnableResponse;
+import com.recoverpro.server.dto.response.MfaSetupResponse;
+import com.recoverpro.server.dto.response.UserResponse;
+import com.recoverpro.server.entity.Role;
+import com.recoverpro.server.entity.User;
+import com.recoverpro.server.exception.*;
+import com.recoverpro.server.mapper.UserMapper;
+import com.recoverpro.server.repository.RefreshTokenRepository;
+import com.recoverpro.server.repository.RoleRepository;
+import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.AuthService;
+import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.UserActionAuditService;
+import com.recoverpro.server.service.MfaService;
+import com.recoverpro.server.service.PasswordResetService;
+import com.recoverpro.server.service.RefreshTokenRotationService;
+import com.recoverpro.server.util.RateLimiter;
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Core identity flows (registration, login, current-user, change-password). MFA, password-reset,
+ * and refresh-token/session concerns live in {@link MfaService}, {@link PasswordResetService},
+ * and {@link RefreshTokenRotationService} respectively (SYSTEM-PLAN SP39 -- this class was ~640
+ * lines mixing all four).
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class AuthServiceImpl implements AuthService {
+
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RateLimiter rateLimiter;
+    private final StringRedisTemplate redisTemplate;
+    private final AppProperties appProperties;
+    private final UserMapper userMapper;
+    private final UserActionAuditService auditLogService;
+    private final ObjectMapper objectMapper;
+    private final EmailService emailService;
+    private final MfaService mfaService;
+    private final PasswordResetService passwordResetService;
+    private final RefreshTokenRotationService refreshTokenRotationService;
+
+    private static final String USER_PROFILE_CACHE_PREFIX = "user:profile:";
+    private static final String REGISTER_RATE_PREFIX      = "rate:register:";
+
+    private String dummyPasswordHash;
+
+    @PostConstruct
+    private void init() {
+        dummyPasswordHash = passwordEncoder.encode("__DUMMY_CONSTANT_TIME__");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(UUID userId) {
+        String cacheKey = USER_PROFILE_CACHE_PREFIX + userId;
+        String cached = redisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            try {
+                return objectMapper.readValue(cached, UserResponse.class);
+            } catch (Exception e) {
+                log.warn("Failed to deserialize cached profile for user {}: {}", userId, e.getMessage());
+                redisTemplate.delete(cacheKey);
+            }
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        UserResponse response = userMapper.toResponse(user);
+        try {
+            redisTemplate.opsForValue().set(cacheKey,
+                    objectMapper.writeValueAsString(response), 5, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("Failed to cache user profile for {}: {}", userId, e.getMessage());
+        }
+        return response;
+    }
+
+    private void evictUserProfileCache(UUID userId) {
+        redisTemplate.delete(USER_PROFILE_CACHE_PREFIX + userId);
+    }
+
+    @Override
+    public AuthResponse register(RegisterRequest request, HttpServletRequest httpRequest) {
+        AppProperties.Security sec = appProperties.getSecurity();
+        String ip = extractClientIp(httpRequest);
+
+        String regRateKey = REGISTER_RATE_PREFIX + ip;
+        Long regCount = redisTemplate.opsForValue().increment(regRateKey);
+        if (regCount != null && regCount == 1) {
+            redisTemplate.expire(regRateKey, sec.getRegistrationWindowMinutes(), TimeUnit.MINUTES);
+        }
+        if (regCount != null && regCount > sec.getMaxRegistrationAttempts()) {
+            Long ttl = redisTemplate.getExpire(regRateKey, TimeUnit.SECONDS);
+            long retryAfter = (ttl != null && ttl > 0) ? ttl : (long) sec.getRegistrationWindowMinutes() * 60;
+            throw new RateLimitExceededException("Too many registration attempts. Please try again later.", retryAfter);
+        }
+
+        String email = request.getEmail().toLowerCase().trim();
+        String emailRegRateKey = REGISTER_RATE_PREFIX + "email:" + email;
+        if (!rateLimiter.tryAcquire(emailRegRateKey, sec.getMaxRegistrationAttempts(),
+                Duration.ofMinutes(sec.getRegistrationWindowMinutes()))) {
+            Long ttl = redisTemplate.getExpire(emailRegRateKey, TimeUnit.SECONDS);
+            long retryAfter = (ttl != null && ttl > 0) ? ttl : (long) sec.getRegistrationWindowMinutes() * 60;
+            throw new RateLimitExceededException("Too many registration attempts. Please try again later.", retryAfter);
+        }
+
+        if (userRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
+            throw new EmailAlreadyExistsException("An account with this email already exists");
+        }
+
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new ResourceNotFoundException("Default role ROLE_USER not found"));
+
+        User user = User.builder()
+                .email(request.getEmail().toLowerCase().trim())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .enabled(true)
+                .build();
+        user.addRole(userRole);
+
+        try {
+            userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException("An account with this email already exists");
+        }
+
+        auditLogService.logUserAction(user.getId(), "REGISTER", "New user self-registered");
+        log.info("New user registered, id={}", user.getId());
+        return refreshTokenRotationService.buildFullAuthResponse(user, httpRequest);
+    }
+
+    @Override
+    public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
+        String ip = extractClientIp(httpRequest);
+        String email = request.getEmail().toLowerCase().trim();
+        String emailRateLimitKey = "email:" + email;
+        AppProperties.Security sec = appProperties.getSecurity();
+
+        if (!rateLimiter.isAllowed(ip, sec.getMaxLoginAttempts(), sec.getLoginWindowMinutes())) {
+            long retryAfter = rateLimiter.getRetryAfterSeconds(ip);
+            throw new RateLimitExceededException("Too many login attempts. Retry after " + retryAfter + "s", retryAfter);
+        }
+        if (!rateLimiter.isAllowed(emailRateLimitKey, sec.getMaxLoginAttempts(), sec.getLoginWindowMinutes())) {
+            long retryAfter = rateLimiter.getRetryAfterSeconds(emailRateLimitKey);
+            throw new RateLimitExceededException("Too many login attempts. Retry after " + retryAfter + "s", retryAfter);
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        String hashToCheck = (user != null) ? user.getPasswordHash() : dummyPasswordHash;
+        boolean passwordValid = passwordEncoder.matches(request.getPassword(), hashToCheck);
+
+        if (user == null || !passwordValid) {
+            if (user != null) {
+                handleFailedAttempt(user);
+                auditLogService.logUserAction(user.getId(), "LOGIN_FAILED", "Invalid password from IP: " + ip);
+            }
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        if (!user.isEnabled()) throw new AccountDisabledException("Account is disabled");
+        if (user.isCurrentlyLocked()) {
+            long retryAfter = computeLockoutRetryAfter(user);
+            auditLogService.logUserAction(user.getId(), "LOGIN_FAILED", "Account locked from IP: " + ip);
+            throw new AccountLockedException("Account locked. Try again in " + retryAfter + "s", retryAfter);
+        }
+
+        if (mfaService.isEnforced() && mfaService.requiresMfaEnrollment(user) && !user.isMfaEnabled()) {
+            auditLogService.logUserAction(user.getId(), "LOGIN_BLOCKED", "MFA enrollment required");
+            throw new MfaSetupRequiredException("MFA enrollment is required for this account.");
+        }
+
+        if (user.isMfaEnabled()) {
+            boolean hasTotp = request.getTotpCode() != null && !request.getTotpCode().isBlank();
+            boolean hasRecoveryCode = request.getRecoveryCode() != null && !request.getRecoveryCode().isBlank();
+
+            if (!hasTotp && !hasRecoveryCode) {
+                String sessionToken = mfaService.storeMfaSession(user.getId());
+                return AuthResponse.builder().mfaRequired(true).mfaSessionToken(sessionToken).build();
+            }
+
+            if (hasRecoveryCode) {
+                if (!mfaService.redeemRecoveryCode(user.getId(), request.getRecoveryCode())) {
+                    handleFailedAttempt(user);
+                    throw new InvalidTotpException("Invalid or already-used recovery code");
+                }
+                log.info("MFA recovery code redeemed for user {}", user.getId());
+            } else {
+                if (!mfaService.verifyTotpForLogin(user.getId(), user.getMfaSecret(), request.getTotpCode())) {
+                    handleFailedAttempt(user);
+                    throw new InvalidTotpException("Invalid TOTP code");
+                }
+            }
+        }
+
+        rateLimiter.reset(ip);
+        rateLimiter.reset(emailRateLimitKey);
+        userRepository.recordSuccessfulLogin(user.getId(), Instant.now());
+        auditLogService.logUserAction(user.getId(), "LOGIN", "Successful login from IP: " + ip);
+
+        return refreshTokenRotationService.buildFullAuthResponse(user, httpRequest);
+    }
+
+    @Override
+    public AuthResponse refreshToken(RefreshTokenRequest request, HttpServletRequest httpRequest) {
+        return refreshTokenRotationService.rotate(request, httpRequest);
+    }
+
+    @Override
+    public void logout(String accessToken, UUID userId, String refreshToken) {
+        refreshTokenRotationService.logout(accessToken, userId, refreshToken);
+    }
+
+    @Override
+    public void logoutAllDevices(UUID userId, String accessToken) {
+        refreshTokenRotationService.logoutAllDevices(userId, accessToken);
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        passwordResetService.forgotPassword(request);
+    }
+
+    @Override
+    public void verifyResetOtp(VerifyOtpRequest request) {
+        passwordResetService.verifyResetOtp(request);
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+    }
+
+    @Override
+    public void changePassword(UUID userId, ChangePasswordRequest request, String accessToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            auditLogService.logUserAction(userId, "PASSWORD_CHANGE_FAILED", "Incorrect current password");
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
+        userRepository.save(user);
+
+        refreshTokenRotationService.blacklistToken(accessToken);
+        refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
+        evictUserProfileCache(userId);
+        auditLogService.logUserAction(userId, "PASSWORD_CHANGE_SUCCESS", "Password changed successfully");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MfaSetupResponse initMfaSetup(UUID userId) {
+        return mfaService.initMfaSetup(userId);
+    }
+
+    @Override
+    public MfaEnableResponse enableMfa(UUID userId, EnableMfaRequest request) {
+        return mfaService.enableMfa(userId, request);
+    }
+
+    @Override
+    public void disableMfa(UUID userId, String totpCode) {
+        mfaService.disableMfa(userId, totpCode);
+    }
+
+    // ─── helpers ─────────────────────────────────────────────────────────────
+
+    private long computeLockoutRetryAfter(User user) {
+        if (user.getLockoutUntil() == null) return 0L;
+        return Math.max(0L,
+                java.time.Duration.between(Instant.now(), user.getLockoutUntil()).toSeconds());
+    }
+
+    private void handleFailedAttempt(User user) {
+        AppProperties.Security sec = appProperties.getSecurity();
+        int attempts = user.getFailedLoginAttempts() + 1;
+        user.setFailedLoginAttempts(attempts);
+
+        if (attempts >= sec.getMaxLoginAttempts()) {
+            int lockoutNumber = user.getLockoutCount() + 1;
+            user.setLockoutCount(lockoutNumber);
+            long backoffMinutes = Math.min(
+                    (long) sec.getLockoutDurationMinutes() * (1L << Math.min(lockoutNumber - 1, 5)),
+                    1440L);
+            user.setAccountLocked(true);
+            user.setLockoutUntil(Instant.now().plus(backoffMinutes, ChronoUnit.MINUTES));
+            user.setFailedLoginAttempts(0);
+            userRepository.save(user);
+            emailService.sendAccountLockedAlert(user.getEmail());
+            throw new AccountLockedException("Account locked for " + backoffMinutes + " minutes",
+                    backoffMinutes * 60);
+        }
+        userRepository.save(user);
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
+        String realIp = request.getHeader("X-Real-IP");
+        return realIp != null ? realIp.trim() : request.getRemoteAddr();
+    }
+}

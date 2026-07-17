@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Make the design tokens (--sans, --serif, --mono, accents, etc.) available
+ * to every stylesheet — including the ones that render BEFORE AppLayout
+ * mounts (login page, post-login splash, lazy-load Suspense fallback). */
+@import "./design-tokens.css";
+
+/* Shared motion utilities (pm-aurora, pm-noise, pm-hover-lift, pm-magnetic,
+ * pm-reveal, pm-text-gradient, pm-page-enter, etc.) — load globally so the
+ * post-login app inherits the landing page's motion DNA. */
+@import "./public-motion.css";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Global typography base
+   ─────────────────────────────────────────────────────────────────────────────
+   The app had a recurring "same tag, different font" drift problem: inputs
+   would fall back to the browser's system font, some <h1>s used the body
+   sans by default while a few card titles inlined a different stack, etc.
+   This base locks every common tag to exactly one canonical family. Pages
+   are still free to opt in to the serif/mono explicitly with `var(--serif)`
+   or `var(--mono)`, but they no longer pick up a different family by
+   accident.
+   ───────────────────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border, #e2e5ea) transparent;
+}
+*::-webkit-scrollbar { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border, #e2e5ea); border-radius: 999px; }
+
+html, body {
+  font-family: var(--sans);
+  /* `font-synthesis: none` prevents browsers from inventing a bold/italic
+     when the requested weight isn't available in the loaded face — it
+     reliably yields a heavier-looking glyph than a real bold cut. */
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings inherit the body family by default. Pages that intentionally use
+   the editorial serif (e.g. AllocationDetailPage hero) opt in by setting
+   `font-family: var(--serif)` on the specific node. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: inherit;
+}
+
+em, i, [data-italic] {
+  font-style: italic;
+}
+h1 em, h2 em { font-weight: 400; }
+
+/* Form controls reset to the host font instead of the browser's system
+   default (Arial/Helvetica on most platforms). */
+input,
+button,
+textarea,
+select,
+optgroup,
+option,
+fieldset,
+legend,
+label {
+  font-family: inherit;
+}
+
+/* Code-like tags — mono everywhere they appear. */
+code,
+pre,
+kbd,
+samp,
+var {
+  font-family: var(--mono);
+}
+
+/* Force component-specific CSS to load after global styles (Vite chunk ordering fix) */
+@import "../pages/Dashboard.css";
+@import "./UploadDataPage.css";

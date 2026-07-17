@@ -1,0 +1,66 @@
+/* ── Pill primitive ───────────────────────────────────────────────────────── */
+
+.ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 22px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-align: center;
+  white-space: nowrap;
+  font-feature-settings: 'tnum','zero';
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+/* Status tones — status meaning only, never branding */
+.ds-pill.is-success  { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }
+.ds-pill.is-warning  { background: var(--warning-subtle); border-color: var(--warning-border); color: var(--warning); }
+.ds-pill.is-danger   { background: var(--danger-subtle);  border-color: var(--danger-border);  color: var(--danger); }
+.ds-pill.is-info     { background: var(--info-subtle);    border-color: var(--info-border);    color: var(--info); }
+.ds-pill.is-warn     { background: var(--warning-subtle); border-color: var(--warning-border); color: var(--warning); }
+.ds-pill.is-error    { background: var(--danger-subtle);  border-color: var(--danger-border);  color: var(--danger); }
+.ds-pill.is-neutral  { /* default */ }
+
+/* Semantic aliases — use these instead of raw success/danger for status labels */
+.ds-pill.is-active   { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }
+.ds-pill.is-inactive { background: var(--bg-subtle);      border-color: var(--border);          color: var(--text-tertiary); }
+.ds-pill.is-pending  { background: var(--warning-subtle); border-color: var(--warning-border); color: var(--warning); }
+.ds-pill.is-closed   { background: var(--bg-subtle);      border-color: var(--border);          color: var(--text-tertiary); }
+.ds-pill.is-open     { background: var(--info-subtle);    border-color: var(--info-border);    color: var(--info); }
+.ds-pill.is-broken   { background: var(--danger-subtle);  border-color: var(--danger-border);  color: var(--danger); }
+.ds-pill.is-kept     { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }
+
+/* Dot aliases to match */
+.ds-dot.is-active   { background: var(--success); }
+.ds-dot.is-inactive { background: var(--text-tertiary); }
+.ds-dot.is-pending  { background: var(--warning); }
+.ds-dot.is-closed   { background: var(--text-tertiary); }
+.ds-dot.is-broken   { background: var(--danger); }
+.ds-dot.is-kept     { background: var(--success); }
+
+/* Bare: no bg/border, color-only for dense rows */
+.ds-pill.is-bare { background: none; border: none; padding: 0; min-width: 0; }
+
+/* Status dot */
+.ds-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  flex-shrink: 0;
+  display: inline-block;
+}
+.ds-dot.is-success { background: var(--success); }
+.ds-dot.is-warning { background: var(--warning); }
+.ds-dot.is-danger  { background: var(--danger); }
+.ds-dot.is-info    { background: var(--info); }
+.ds-dot.is-warn    { background: var(--warning); }
+.ds-dot.is-error   { background: var(--danger); }

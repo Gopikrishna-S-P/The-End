@@ -1,0 +1,277 @@
+/* ── Split body ──────────────────────────────────────────────────────────────── */
+
+.fo-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  gap: 12px;
+}
+
+.fo-right-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Map card ─────────────────────────────────────────────────────────────────── */
+
+.fo-map-panel {
+  flex: 0 0 55%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fo-map-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+/* Floating map status badges */
+.fo-map-badges {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 1000;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.fo-map-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1C1A19;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+
+.fo-map-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3B82F6;
+  flex-shrink: 0;
+}
+
+.fo-map-badge.is-sos {
+  background: rgba(220,38,38,.9);
+  border-color: rgba(220,38,38,.3);
+  color: #fff;
+}
+
+/* Map empty / disconnect overlay */
+.fo-map-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-family: var(--sans);
+  color: var(--ink-tertiary);
+  background: rgba(255,255,255,.55);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.fo-map-overlay.is-warn { color: var(--error); }
+
+/* Leaflet marker dots */
+.fo-dot {
+  display: block;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.fo-dot-agent {
+  width: 14px;
+  height: 14px;
+  background: var(--ink-secondary);
+  box-shadow: 0 0 0 2px rgba(0,0,0,.12);
+}
+
+.fo-dot-sos {
+  width: 18px;
+  height: 18px;
+  background: var(--error);
+  box-shadow: 0 0 0 3px rgba(220,38,38,.35);
+  animation: fo-sos-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes fo-sos-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(220,38,38,.35); }
+  50%       { box-shadow: 0 0 0 7px rgba(220,38,38,.10); }
+}
+
+/* ── Active agents card ───────────────────────────────────────────────────────── */
+
+/* Page-specific layout. Card chrome (bg/border/radius/shadow) from .ds-card. */
+.fo-agents-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.fo-agents-card .fo-roster {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── Agent roster rows ────────────────────────────────────────────────────────── */
+
+.fo-roster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-tertiary);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 1;
+}
+
+.fo-roster-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  letter-spacing: 0;
+}
+
+.fo-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 120ms;
+}
+
+.fo-roster-row:last-child { border-bottom: none; }
+.fo-roster-row:hover { background: var(--bg-subtle); }
+.fo-roster-row.is-sos { background: rgba(220,38,38,.03); }
+.fo-roster-row.is-sos:hover { background: rgba(220,38,38,.06); }
+
+.fo-roster-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--ink-secondary);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fo-roster-avatar.is-sos {
+  background: rgba(220,38,38,.08);
+  border-color: rgba(220,38,38,.28);
+  color: var(--error);
+}
+
+.fo-roster-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fo-roster-name {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fo-roster-meta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.02em;
+}
+
+.fo-roster-sos-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--error);
+  background: rgba(220,38,38,.1);
+  border: 1px solid rgba(220,38,38,.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.fo-roster-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 20px;
+  text-align: center;
+  flex: 1;
+}
+
+.fo-roster-empty-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--ink-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.fo-roster-empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  font-family: var(--sans);
+}
+
+.fo-roster-empty-sub {
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+  font-family: var(--sans);
+  line-height: 1.5;
+  max-width: 180px;
+}

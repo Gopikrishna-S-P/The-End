@@ -1,0 +1,146 @@
+/* ── MfaGate — matches logout confirmation popup pattern ─────────────────── */
+
+.mfag-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 500);
+  background: var(--shadow-overlay-scrim);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: mfag-in 200ms ease both;
+}
+
+@keyframes mfag-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Card ── */
+.mfag-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  animation: mfag-card-in 260ms cubic-bezier(0.34, 1.15, 0.64, 1) both;
+}
+
+@keyframes mfag-card-in {
+  from { opacity: 0; transform: scale(0.95) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+/* ── Top row: icon + countdown ring ── */
+.mfag-top-row {
+  margin-bottom: 16px;
+}
+
+/* ── Icon ── */
+.mfag-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Text ── */
+.mfag-title {
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+}
+
+.mfag-sub {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin: 0 0 16px;
+}
+
+/* ── Checks ── */
+.mfag-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.mfag-checks span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+}
+
+.mfag-checks svg { color: var(--ink-solid); flex-shrink: 0; }
+
+/* ── Actions ── */
+.mfag-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mfag-btn-cancel {
+  flex: 1;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: background 150ms var(--ease);
+}
+.mfag-btn-cancel:hover:not(:disabled) { background: var(--bg-subtle); }
+.mfag-btn-cancel:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mfag-btn-primary {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: #0AA550;
+  color: var(--text-on-solid);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  outline: none;
+  transition: background 150ms var(--ease);
+}
+.mfag-btn-primary:hover { background: #088a42; }
+
+/* ── Ripple ── */
+.mfag-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text-on-solid) 22%, transparent);
+  transform: scale(0);
+  pointer-events: none;
+  animation: mfag-ripple-anim 500ms cubic-bezier(0,0,0.2,1) forwards;
+}
+@keyframes mfag-ripple-anim { to { transform: scale(1); opacity: 0; } }

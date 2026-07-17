@@ -1,0 +1,115 @@
+/* ── MfaNudge — slim app-wide MFA enrolment banner ─────────────────────── */
+
+.mfa-nudge {
+  background: var(--warning-subtle);
+  color: var(--warning);
+  border-bottom: 1px solid var(--warning-border);
+  font-family: var(--font-sans);
+  animation: mfa-nudge-in var(--dur-slow) var(--ease-out) both;
+}
+@keyframes mfa-nudge-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.mfa-nudge-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px max(32px, env(safe-area-inset-right)) 20px max(32px, env(safe-area-inset-left));
+}
+
+.mfa-nudge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.mfa-nudge-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+.mfa-nudge-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--warning);
+}
+.mfa-nudge-sub {
+  font-size: 13px;
+  color: var(--warning);
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mfa-nudge-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mfa-nudge-cta {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 44px;
+  padding: 12px 32px;
+  border-radius: var(--radius-sm);
+  background: var(--warning);
+  color: var(--text-on-solid);
+  border: 1px solid var(--warning);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+.mfa-nudge-cta:hover { background: color-mix(in srgb, var(--warning) 88%, black); }
+.mfa-nudge-cta:active { transform: translateY(1px); }
+
+.mfa-nudge-dismiss {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--warning);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: background var(--dur-fast), opacity var(--dur-fast);
+}
+.mfa-nudge-dismiss:hover {
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .mfa-nudge-sub { display: none; }
+  .mfa-nudge-inner { gap: 8px; padding-left: 16px; padding-right: 16px; }
+  .mfa-nudge-cta { padding: 8px 10px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfa-nudge { animation: none; }
+}

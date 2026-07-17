@@ -1,0 +1,159 @@
+﻿/* â”€â”€ MfaSetupPage â€” uses .signin-page tokens, single-column centered layout â”€â”€ */
+
+.signin-page.mfa-setup .page {
+  display: block;
+  min-height: 100vh;
+}
+
+.mfa-shell {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: signin-fadeUp 400ms var(--ease) 0ms forwards;
+}
+
+.mfa-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+.mfa-topbar-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  text-decoration: none;
+  transition: color 150ms var(--ease);
+}
+.mfa-topbar-back:hover { color: var(--ink-solid); }
+
+.mfa-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+.mfa-hero-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mfa-hero-text { flex: 1; }
+.mfa-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 6px;
+}
+.mfa-hero-title {
+  font-family: var(--font-sans);
+  font-size: 36px;
+  line-height: 1.05;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  margin-bottom: 6px;
+  font-variation-settings: 'opsz' 48;
+}
+.mfa-hero-title em {
+  font-family: var(--font-sans);
+  font-style: italic;
+  display: inline-block;
+  line-height: 1.25;
+  padding: 0 0.12em 0.12em;
+  margin-left: -0.12em;
+  background: linear-gradient(120deg, var(--ink-solid) 0%, var(--ink-solid-hover) 45%, var(--ink-solid) 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  animation: mfa-gradient-pan 5s linear infinite;
+}
+@keyframes mfa-gradient-pan {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@media (prefers-reduced-motion: reduce) { .mfa-hero-title em { animation: none; } }
+.mfa-hero-sub {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+}
+
+/* â”€â”€ Step indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 28px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-surface);
+}
+.mfa-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.mfa-step-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 200ms var(--ease);
+  background: var(--bg-subtle);
+  color: var(--ink-tertiary);
+  border: 1px solid var(--border);
+}
+.mfa-step.is-active .mfa-step-badge {
+  background: var(--bg-active);
+  color: var(--ink-solid);
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-solid) 8%, transparent);
+}
+.mfa-step.is-done .mfa-step-badge {
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  border-color: var(--ink-solid);
+}
+.mfa-step-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+.mfa-step.is-active .mfa-step-label { color: var(--ink-primary); font-weight: 600; }
+.mfa-step.is-done .mfa-step-label { color: var(--ink-primary); }
+.mfa-step-divider {
+  flex: 0 1 24px;
+  height: 1px;
+  background: var(--border);
+  margin: 0 6px;
+}
+

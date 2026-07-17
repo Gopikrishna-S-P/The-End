@@ -1,0 +1,128 @@
+/* ── Today's visits — page-specific layout ───────────────────────────────── */
+
+.today-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  min-height: 100%;
+}
+
+/* ── Header actions ──────────────────────────────────────────────────────── */
+
+.today-header-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Fallback banner ─────────────────────────────────────────────────────── */
+
+.today-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.today-banner.is-warn {
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-color: var(--warning-border);
+}
+
+/* ── Visit list (vertical stack of cards) ────────────────────────────────── */
+
+.today-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.today-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  font-family: var(--ds-font-body);
+  cursor: default;
+  width: 100%;
+  border-radius: var(--ds-radius-lg);
+}
+
+.today-card-clickable {
+  cursor: pointer;
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+.today-card-clickable:hover {
+  border-color: var(--ink-solid);
+  box-shadow: 0 4px 14px rgba(12, 10, 9, 0.04);
+}
+.today-card-clickable:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.today-card-skel { cursor: default; }
+
+.today-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.today-card-loan {
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  margin-top: 4px;
+  font-feature-settings: 'tnum','zero';
+}
+
+.today-card-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  margin-top: 4px;
+}
+.today-card-phone > svg { color: var(--ink-tertiary); }
+
+.today-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.today-card-amount {
+  font-family: var(--ds-font-num);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  font-feature-settings: 'tnum','zero';
+}
+
+.today-card-chev {
+  color: var(--ink-tertiary);
+}
+
+/* ── Empty card ──────────────────────────────────────────────────────────── */
+
+.today-empty-card {
+  padding: 8px;
+}

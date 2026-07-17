@@ -1,0 +1,145 @@
+/* ── Platform Setup — page layout ─────────────────────────────────────────── */
+
+.app-page.up-page.ps-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  min-height: 100%;
+  background: var(--bg-canvas);
+}
+
+/* ── Top row: section label + tab switcher ────────────────────────────────── */
+
+.ps-toprow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 4px 0 0;
+}
+
+/* ── Tab switcher (underline style per spec) ──────────────────────────────── */
+
+.ps-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ps-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  margin-right: 20px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: color 80ms, border-color 80ms;
+  margin-bottom: -1px;
+}
+.ps-tab:hover { color: var(--ink-primary); border-bottom-color: var(--border-strong); }
+.ps-tab.is-active {
+  color: var(--ink-primary);
+  font-weight: 550;
+  border-bottom-color: var(--ink-solid);
+}
+
+/* ── Section row: label left, actions right ───────────────────────────────── */
+
+.ps-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 8px;
+}
+
+/* ── Row action (text + icon, borderless) — mirrors up-row-action ─────────── */
+
+.ps-row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: none;
+  background: none;
+  font-family: var(--ds-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  border-radius: var(--ds-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms var(--ease), color 120ms var(--ease);
+}
+.ps-row-action:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+}
+.ps-row-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Avatar initials chip ─────────────────────────────────────────────────── */
+
+.ps-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ── Banner (error / warn inline) ────────────────────────────────────────── */
+
+.ps-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.ps-banner.is-error {
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.ps-banner.is-warn {
+  background: var(--warning-subtle);
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+.ps-banner-content  { flex: 1; color: var(--text-secondary); }
+.ps-banner.is-error .ps-banner-content { color: var(--text-primary); }
+
+/* ── Select wrapper with caret ────────────────────────────────────────────── */
+
+.ps-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ps-select-wrap > .ds-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 28px;
+  background-image: none;
+}

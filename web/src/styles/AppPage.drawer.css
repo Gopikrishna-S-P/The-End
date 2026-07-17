@@ -1,0 +1,290 @@
+/* ── Drawer (slide-in panel from the right) ──────────── */
+.app-page-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--shadow-overlay-scrim);
+  animation: app-page-fadein 180ms var(--ease);
+}
+.app-page-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: 100%;
+  max-width: 560px;
+  z-index: 40;
+  background: var(--bg-canvas);
+  border-left: 1px solid var(--border);
+  box-shadow:
+    -24px 0 64px rgba(16,24,40,.10),
+    -4px 0 12px rgba(16,24,40,.05);
+  display: flex;
+  flex-direction: column;
+  animation: app-page-drawer-in 240ms var(--ease);
+}
+@keyframes app-page-drawer-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.app-page-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.app-page-drawer-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-page-drawer-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-solid);
+  margin-top: 4px;
+}
+.app-page-drawer-sub {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+.app-page-drawer-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.app-page-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.app-page-drawer-footer {
+  padding: 20px 24px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Detail group (mono section header + def-rows in a panel) ──── */
+.app-page-detail-group {
+  margin-bottom: 18px;
+}
+.app-page-detail-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 8px;
+}
+.app-page-detail-group-label svg { color: var(--ink-solid); }
+.app-page-detail-group-body {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px 14px;
+}
+
+/* ── Textarea (for approval remarks, etc.) ───────────── */
+.app-page-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  font-size: 13px;
+  font-family: var(--sans);
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+.app-page-textarea::placeholder { color: var(--ink-tertiary); }
+.app-page-textarea:focus,
+.app-page-textarea:focus-visible {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+
+/* ── Checklist section (form section with OK/Required tag) ─── */
+.app-page-checklist {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.app-page-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.app-page-checklist-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+.app-page-checklist-title svg { color: var(--ink-tertiary); flex-shrink: 0; }
+.app-page-checklist.is-ok .app-page-checklist-title svg { color: var(--ink-solid); }
+
+.app-page-checklist-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+.app-page-checklist.is-ok .app-page-checklist-status {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+
+/* ── Sticky bottom action bar ─────────────────────────── */
+.app-page-sticky-action {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0 -28px -56px;
+  padding: 14px 28px 18px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(12, 10, 9, 0.04);
+  z-index: 20;
+}
+.app-page-sticky-action-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink-solid);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 150ms var(--ease);
+}
+.app-page-sticky-action-btn:hover:not(:disabled) { background: var(--ink-solid-hover); }
+.app-page-sticky-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.app-page-sticky-action-hint {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+  margin-top: 8px;
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+
+/* ── Photo thumbnail (with remove button) ────────────── */
+.app-page-photo-thumb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-subtle);
+}
+.app-page-photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.app-page-photo-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(12, 10, 9, 0.7);
+  color: #fff;
+  border: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 150ms var(--ease);
+}
+.app-page-photo-thumb-remove:hover { background: rgba(12, 10, 9, 0.9); }
+
+/* ── Compact form input (used inside checklist sections) ──── */
+.app-page-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  font-size: 13.5px;
+  font-family: var(--sans);
+  outline: none;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease;
+  -webkit-appearance: none;
+}
+.app-page-input::placeholder { color: var(--ink-tertiary); }
+.app-page-input:focus,
+.app-page-input:focus-visible {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+
+/* ── Subtle approve/reject button pair ───────────────── */
+.app-page-btn-soft-error {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    transform .18s ease;
+  background: var(--error-subtle);
+  color: var(--error);
+  border: 1px solid rgba(185, 28, 28, 0.22);
+}
+.app-page-btn-soft-error:hover:not(:disabled) {
+  background: rgba(185, 28, 28, 0.12);
+}
+.app-page-btn-soft-error:disabled { opacity: 0.55; cursor: not-allowed; }
+

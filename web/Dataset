@@ -1,0 +1,84 @@
+{
+    "case_snapshot": {
+      "loan": {
+        "product": "Business_loan",
+        "principal_inr": 250000,
+        "outstanding_inr": 187500,
+        "outstanding_to_principal_ratio": 0.75,
+        "tenure_months": 36,
+        "months_elapsed": 14,
+        "emi_inr": 8200,
+        "dpd_days": 67,
+        "bucket": "60-89",
+        "npa_flagged": false
+      },
+      "borrower": {
+        "segment": "STRETCHED_HONEST",
+        "occupation_hint": "salaried_private",
+        "location_tier": "tier-2",
+        "language_pref": "hi-en",
+        "age_band": "30-40"
+      },
+      "history": {
+        "ptp_count_lifetime": 3,
+        "ptp_kept": 2,
+        "ptp_broken": 1,
+        "ptp_kept_rate": 0.66,
+        "last_ptp": {
+          "promised_amount": 8200,
+          "collected_amount": 4000,
+          "outcome": "PARTIAL_PAID",
+          "broken_reason": "medical_emergency_spouse",
+          "days_ago": 12
+        },
+        "contact_attempts_30d": 7,
+        "contact_success_30d": 4,
+        "contactability_rate": 0.57,
+        "last_contact_channel": "voice",
+        "last_contact_outcome": "answered_cooperative",
+        "field_visits_lifetime": 1,
+        "complaints_filed": 0,
+        "cooling_off_active": false
+      },
+      "recent_events": [
+        "partial_payment_4000_inr_12d_ago",
+        "spouse_hospitalisation_disclosed_18d_ago",
+        "salary_credit_detected_3d_ago"
+      ]
+    },
+
+    "expert_response": {
+      "diagnosis": "Stretched-honest borrower, 67 DPD, genuine medical shock but salary just credited — willingness is high, ability returning. Partial payment shows good faith.",
+      "recommended_approach": "VOICE_CALL_SOFT_TONE",
+      "priority": "MEDIUM_HIGH",
+      "call_within_hours": 24,
+      "opening_script": "Hello [BORROWER], this is [AGENT] calling from [ORG]. You had deposited ₹4,000 last time, 
+      and we came to know that your spouse was unwell — is everything okay now? Also, your salary has been credited recently, so I thought we could have a quick discussion.",
+      "offer_ladder": [
+        { "tier": 1, "offer": "Full EMI ₹8,200 by month-end + waive late fee", "rationale": "Salary just credited, can absorb" },
+        { "tier": 2, "offer": "Split: ₹5,000 in 7 days + ₹3,200 in 21 days", "rationale": "If cashflow still tight from medical" },
+        { "tier": 3, "offer": "One-time 1-month EMI deferral with documented medical proof", "rationale": "Restructure trigger if Tier 1/2 refused" }
+      ],
+      "do_not_offer": ["settlement_discount_above_10pct", "NPA_classification_threat"],
+      "red_flags_to_watch": [
+        "If borrower mentions job_loss → re-segment as DISTRESSED",
+        "If refuses to commit any amount → escalate to supervisor",
+        "If asks to stop calls → DPDP cease-comms flow"
+      ],
+      "escalate_if": "No PTP secured in this call AND no payment in next 72h",
+      "expected_outcome": "PTP_FULL_EMI_within_7_days",
+      "compliance_notes": [
+        "Stay within RBI calling hours 08:00-19:00",
+        "Do not invoke legal_action — borrower is pre-NPA",
+        "Mention LSP disclosure if borrower asks who is calling"
+      ]
+    },
+
+    "metadata": {
+      "source": "manager_correction",
+      "reviewed_by_user_id": "uuid-of-senior-manager",
+      "quality_score": 5,
+      "tags": ["stretched_honest", "medical_shock", "partial_pay_recovery", "hindi"],
+      "created_at": "2026-05-14T10:23:00Z"
+    }
+  }

@@ -1,0 +1,145 @@
+/* ── Lucien chat — page-specific layout ──────────────────────────────────── */
+
+.lu-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-canvas);
+}
+
+/* ── Compact hero ────────────────────────────────────────────────────────── */
+
+.lu-hero {
+  flex-shrink: 0;
+  padding: 18px 20px 16px;
+  margin: 10px 12px 0;
+}
+
+.lu-hero-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lu-hero .app-page-title {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+
+.lu-hero .app-page-eyebrow {
+  margin-bottom: 6px;
+}
+
+.lu-hero .app-page-sub {
+  font-size: 12px;
+}
+
+.lu-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.lu-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 12px 12px;
+  gap: 0;
+}
+
+/* White card containing messages + composer */
+.lu-stream {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* ── Composer ────────────────────────────────────────────────────────────── */
+
+.lu-composer {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.lu-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.lu-composer-textarea {
+  min-height: 44px;
+  max-height: 160px;
+  flex: 1;
+  resize: none;
+}
+
+.lu-send-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lu-composer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.lu-composer-disclaimer {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+}
+
+.lu-char-count {
+  font-family: var(--ds-font-num);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+}
+.lu-char-count.is-warn { color: var(--warning); }
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+
+.lu-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+  border-radius: var(--ds-radius);
+}
+.lu-banner-content { flex: 1; }
+.lu-banner.is-error {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger-border);
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes lu-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30%           { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes lucien-msg-in {
+  from { opacity: 0; transform: translateY(6px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

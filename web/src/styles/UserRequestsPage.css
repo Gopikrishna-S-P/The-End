@@ -1,0 +1,105 @@
+/* ── User requests — page-specific layout ────────────────────────────────── */
+
+.ur-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  min-height: 100%;
+}
+
+.app-page.ur-page { background: var(--bg-canvas); }
+
+/* ── Toolbar row: tabs + action ── */
+.ur-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Tabs — underline style matching DD/Assignments ── */
+.ur-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+.ur-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+.ur-tab:hover { color: var(--ink-secondary); }
+.ur-tab.is-active {
+  color: var(--ink-primary);
+  border-bottom-color: var(--ink-primary);
+  font-weight: 600;
+}
+
+.ur-tab-badge {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border: 1px solid var(--warning-border);
+  border-radius: 999px;
+  padding: 0 6px;
+  line-height: 18px;
+}
+
+/* ── Table card ── */
+.ur-table-card { padding: 0; overflow: hidden; margin-bottom: 0; }
+
+.ur-table-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* ── Modal helpers ── */
+.ur-modal-section {
+  padding: 6px 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--ds-radius);
+  margin-bottom: 12px;
+}
+
+.ur-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ur-select-wrap > .ds-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 28px;
+  background-image: none;
+}
+.ur-select-caret {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--ink-tertiary);
+}

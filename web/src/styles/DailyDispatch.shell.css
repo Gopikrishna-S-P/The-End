@@ -1,0 +1,200 @@
+/* ── Page shell ──────────────────────────────────────────────────────────────── */
+
+.dd-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  gap: 0;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* Let the app-right backdrop show through — merges with the transparent topbar */
+.app-page.dd-page { background: transparent; }
+
+/* ── Page header — mirrors the dashboard's .db-page-header ───────────────────── */
+
+.dd-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0 16px;
+  flex-shrink: 0;
+}
+
+.dd-page-titles {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.dd-page-title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+  line-height: 1.2;
+}
+
+.dd-page-context {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dd-page-context strong { color: var(--ink-secondary); font-weight: 600; }
+
+/* ── Date navigation — a single bordered control group ───────────────────────── */
+
+/* Date nav — exact db-date-range token match */
+.dd-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  flex-shrink: 0;
+}
+
+.dd-date-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--ink-secondary);
+  flex-shrink: 0;
+  transition: background 120ms, color 120ms;
+}
+
+
+
+.dd-date-arrow:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+}
+
+.dd-date-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.dd-date-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: space-between;
+  padding: 0 4px;
+  height: 32px;
+  cursor: pointer;
+  border: none;
+  background: var(--bg-surface);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  font-weight: 600;
+  transition: background 120ms;
+}
+
+.dd-date-display:hover { background: var(--bg-surface); }
+.dd-date-icon { color: var(--ink-solid); flex-shrink: 0; }
+
+.dd-date-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Anchors the native picker without being visible */
+.dd-date-input-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  border: none;
+  padding: 0;
+}
+
+/* ── Grid — consolidated single-card layout ─────────────────────────────────── */
+
+.dd-main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dd-grid {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+
+/* Left column — officers */
+.dd-agent-panel {
+  flex: 0 0 288px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+/* Right column — cases + send bar */
+.dd-case-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Layout-only for the two panel cards */
+.dd-officers-card,
+.dd-cases-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Agent select-all button ─────────────────────────────────────────────────── */
+
+.dd-ap-select-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: 12.5px;
+  margin-top: 12px;
+}
+
+
+/* ── Responsive: stack below 960px ──────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .dd-page        { overflow-y: auto; }
+  .dd-grid        { flex-direction: column; overflow: visible; }
+  .dd-agent-panel { flex: none; width: 100%; }
+  .dd-case-panel  { flex: none; }
+  .dd-officers-card { max-height: 360px; }
+  .dd-cases-card  { min-height: 460px; }
+  .dd-cp-list     { overflow: visible; }
+}

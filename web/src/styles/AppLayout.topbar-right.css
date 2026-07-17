@@ -1,0 +1,262 @@
+/* (app-search-input / app-search-wrap removed — palette trigger pattern in use) */
+
+/* ── User avatar button ────────────────────────────────────────────────────── */
+.app-topbar-avatar-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    opacity .18s var(--ease),
+    box-shadow .18s var(--ease),
+    transform .18s var(--ease);
+}
+.app-topbar-avatar-btn:hover { opacity: 0.88; box-shadow: 0 0 0 3px var(--border); }
+.app-topbar-avatar-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.app-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* ── User dropdown ─────────────────────────────────────────────────────────── */
+.app-user-dropdown-wrap { position: relative; }
+.app-user-chevron {
+  color: var(--ink-tertiary);
+  flex-shrink: 0;
+  transition: transform .18s ease;
+}
+.app-user-chevron.is-open { transform: rotate(180deg); }
+.app-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: var(--z-dropdown);
+  animation: app-dropdown-in .18s ease both;
+}
+@keyframes app-dropdown-in {
+  from { opacity: 0; transform: scale(0.95) translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+.app-user-dropdown {
+  transform-origin: top right;
+}
+.app-user-name {
+  font-size: clamp(12px,1.3vw,14px);
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.app-user-email {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.app-role-pill {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid color-mix(in srgb, var(--ink-solid) 20%, transparent);
+}
+.app-user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition:
+    background-color .18s ease,
+    color .18s ease;
+  text-align: left;
+}
+.app-user-dropdown-item:hover           { background: var(--bg-subtle); color: var(--ink-primary); }
+.app-user-dropdown-item.is-danger:hover { background: var(--error-subtle); color: var(--error); }
+
+/* ── Help menu ─────────────────────────────────────────────────────────────── */
+.app-help-menu-wrap {
+  position: relative;
+}
+.app-help-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: var(--z-dropdown);
+  animation: app-dropdown-in .18s ease both;
+  transform-origin: top right;
+}
+.app-help-menu-header {
+  padding: 11px 14px 9px;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  border-bottom: 1px solid var(--border);
+}
+.app-help-menu-section {
+  padding: 4px 0;
+}
+.app-help-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+.app-help-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink-secondary);
+  transition:
+    background-color .18s ease,
+    color .18s ease;
+}
+.app-help-menu-item:hover {
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+}
+.app-help-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease;
+}
+.app-help-menu-item:hover .app-help-menu-icon {
+  background: var(--bg-subtle);
+  border-color: color-mix(in srgb, var(--ink-solid) 25%, transparent);
+  color: var(--ink-solid);
+}
+.app-help-menu-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.app-help-menu-label {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-primary);
+  line-height: 1.3;
+}
+.app-help-menu-desc {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  line-height: 1.3;
+}
+.app-help-menu-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-tertiary);
+  background: var(--bg-subtle);
+  box-shadow: 0 1px 0 var(--border);
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.app-help-menu-ext {
+  flex-shrink: 0;
+  color: var(--ink-tertiary);
+  opacity: 0.6;
+}
+
+/* ── Tooltips ──────────────────────────────────────────────────────────────── */
+.app-topbar [data-tooltip] { position: relative; }
+.app-topbar [data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: var(--ink-primary);
+  color: var(--bg-canvas);
+  font-family: var(--sans);
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity .18s ease,
+    transform .18s ease;
+  transition-delay: 0ms;
+  z-index: var(--z-elevated);
+  box-shadow: var(--elevation-2);
+}
+.app-topbar [data-tooltip]:not(:active):hover::after {
+  transition-delay: 280ms;
+}
+.app-topbar [data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+

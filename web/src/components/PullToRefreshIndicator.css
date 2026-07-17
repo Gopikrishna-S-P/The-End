@@ -1,0 +1,45 @@
+/* ── PullToRefreshIndicator ───────────────────────────────────────────────── */
+
+.app-ptr {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  z-index: 90;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.app-ptr-disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-secondary);
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+
+.app-ptr.is-triggered .app-ptr-disc {
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+  color: var(--text-on-solid);
+}
+
+.app-ptr-arrow {
+  transition: transform 80ms linear;
+}
+
+.app-ptr-spin {
+  animation: app-ptr-spin 0.85s linear infinite;
+}
+@keyframes app-ptr-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-ptr-spin { animation: none; }
+}

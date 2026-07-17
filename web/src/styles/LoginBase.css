@@ -1,0 +1,25 @@
+/* ── LoginPage ─────────────────────────────────────────────────────────────── */
+
+.signin-page {
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--sans);
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.signin-page *,
+.signin-page *::before,
+.signin-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.signin-page .page {
+  display: grid;
+  grid-template-columns: 55fr 45fr;
+  height: 100%;
+}

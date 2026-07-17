@@ -1,0 +1,98 @@
+/* VisitSubmitPage.css */
+/* Aligning with Dashboard and Daily Dispatch Layout-C Blueprint */
+
+.visit-submit-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-canvas);
+  padding: 32px 40px;
+}
+
+.visit-submit-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.visit-submit-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.visit-submit-header span {
+  color: var(--ink-tertiary);
+  font-size: 13px;
+}
+
+/* ── Grid structure analogous to db-grid ── */
+.visit-submit-content {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.visit-context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.visit-form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.visit-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Submit Action Bar aligned with the new aesthetic */
+.visit-action-bar {
+  position: sticky;
+  bottom: 24px;
+  z-index: 100;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-top: 32px;
+}
+
+.premium-submit-btn {
+  background: var(--brand); /* use brand color */
+  color: var(--brand-on-solid);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 120ms;
+}
+
+.premium-submit-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.premium-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

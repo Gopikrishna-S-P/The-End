@@ -1,0 +1,136 @@
+/* ── Organization settings — page-specific layout ────────────────────────── */
+
+.os-page {
+  padding: 12px;
+  min-height: 100%;
+}
+
+.os-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.os-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.os-hero-body { min-width: 0; }
+
+.os-hero-actions {
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+.os-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+}
+.os-banner.is-error {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+}
+.os-banner.is-ok {
+  color: var(--success);
+  background: var(--success-subtle);
+  border-color: var(--success-border);
+}
+.os-banner > span { flex: 1; }
+
+.os-section { padding: 0; overflow: hidden; }
+
+.os-section-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.os-loader {
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-tertiary);
+}
+.os-loader > svg { color: var(--ink-solid); }
+
+/* ── Identity row ────────────────────────────────────────────────────────── */
+
+.os-id-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.os-id-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.os-id-text {
+  flex: 1;
+  min-width: 0;
+}
+.os-id-label {
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 4px;
+}
+.os-id-value {
+  font-family: var(--ds-font-num);
+  font-size: 13px;
+  color: var(--ink-primary);
+}
+
+.os-readonly-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-tertiary);
+  margin-left: 8px;
+  font-size: 10px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.os-def-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.os-def-row-span-2 { grid-column: span 2; }
+
+.os-mono {
+  font-family: var(--ds-font-num);
+  font-feature-settings: 'tnum','zero';
+}
+
+.os-save-row {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}

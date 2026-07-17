@@ -1,0 +1,11 @@
+package com.recoverpro.server.enums;
+
+public enum FraudCategory {
+    CHEATING_AND_FORGERY,
+    MISAPPROPRIATION,
+    FRAUDULENT_ENCASHMENT,
+    UNAUTHORISED_CREDIT_FACILITIES,
+    DOCUMENTATION_FRAUD,
+    CYBER_FRAUD,
+    OTHER
+}

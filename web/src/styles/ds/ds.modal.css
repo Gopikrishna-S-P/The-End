@@ -1,0 +1,95 @@
+/* ── Modal primitive ──────────────────────────────────────────────────────── */
+
+.ds-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--shadow-overlay-scrim);
+  animation: ds-overlay-in var(--dur-base) var(--ease-out) both;
+}
+
+.ds-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  animation: ds-modal-in var(--dur-fast) var(--ease-out) both;
+  color: var(--text-primary);
+}
+
+.ds-modal.is-md { max-width: 560px; }
+.ds-modal.is-lg { max-width: 720px; }
+
+.ds-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.ds-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.ds-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.ds-modal-close:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.ds-modal-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.ds-modal-body {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.ds-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+.ds-modal-actions > * { flex: 1; }
+.ds-modal-actions.is-end { justify-content: flex-end; }
+.ds-modal-actions.is-end > * { flex: none; }
+
+@keyframes ds-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes ds-modal-in {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes ds-modal-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.97) translateY(4px); }
+}
+.ds-modal-overlay.is-closing { animation: ds-overlay-out var(--dur-fast) var(--ease-in) both; }
+.ds-modal.is-closing         { animation: ds-modal-out   var(--dur-fast) var(--ease-in) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-modal-overlay,
+  .ds-modal { animation: none; }
+}

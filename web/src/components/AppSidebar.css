@@ -1,0 +1,841 @@
+/* ── AppSidebar — persistent navigation sidebar ─────────────────────────────
+   Light-only. No dark mode. No glass. No brand-green accent anywhere except
+   --brand-subtle as the selected-nav fill (the single approved use).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Local token layer (light only) ──────────────────────────────────────── */
+.asb-root {
+  --asb-bg: var(--bg-surface);
+  --asb-canvas: var(--bg-canvas);
+  --asb-surface: var(--bg-subtle);
+  --asb-border: var(--border);
+  --asb-border-hi: var(--border-strong);
+  --asb-ink: var(--text-primary);
+  --asb-ink-dim: var(--text-secondary);
+  --asb-ink-faint: var(--text-tertiary);
+}
+
+/* ── Right border — fades at top and bottom ─────────────────────────────── */
+.asb-root::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg,
+      transparent 0%,
+      var(--asb-border) 8%,
+      var(--asb-border) 92%,
+      transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Root shell ───────────────────────────────────────────────────────────── */
+.asb-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--rp-sb-on, 272px);
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width var(--dur-slow) var(--ease-out);
+  z-index: 50;
+  contain: paint;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.asb-root * {
+  box-sizing: border-box;
+}
+
+.asb-root.is-collapsed {
+  width: var(--rp-sb-off, 64px);
+}
+
+/* ── Brand header ─────────────────────────────────────────────────────────── */
+.asb-root .asb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 64px;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.asb-root.is-collapsed .asb-header {
+  justify-content: center;
+  padding: 0;
+  position: relative;
+}
+
+.asb-root .asb-header-logo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.asb-root .asb-header-logo img {
+  height: 40px;
+  width: auto;
+
+  transition:
+    height var(--dur-slow) var(--ease-out),
+    width var(--dur-slow) var(--ease-out);
+}
+
+.asb-root .asb-header-logo--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+
+/* ── Scroll position indicator (Compact) ─────────────────────────────────── */
+.asb-scroll-map {
+  position: absolute;
+  right: 2px;
+  width: 1.5px;
+  background: var(--asb-border-hi);
+  border-radius: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out), top 120ms ease-out, height 120ms ease-out;
+  z-index: 5;
+}
+
+.asb-root:hover .asb-scroll-map {
+  opacity: .18;
+  transform: translateX(2px);
+}
+
+/* ── Nav list ─────────────────────────────────────────────────────────────── */
+.asb-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 12px;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.asb-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.asb-root .asb-section {
+  padding: 0;
+}
+
+/* Section header — static label per spec (no accordion theatrics) */
+.asb-root .asb-section-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 18px 10px 8px;
+  background: none;
+  border: none;
+  text-align: left;
+  pointer-events: none;
+  /* remove accordion interaction */
+}
+
+/* Section label — 11px uppercase tertiary */
+.asb-root .asb-section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #98A2B3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Rule after label */
+.asb-root .asb-section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* Chevron */
+.asb-root .asb-section-chevron {
+  color: var(--asb-ink-faint);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: transform var(--dur-base) ease, opacity var(--dur-fast);
+}
+
+.asb-root .asb-section-chevron.is-closed {
+  transform: rotate(-90deg);
+}
+
+/* CSS grid height-collapse trick */
+.asb-root .asb-section-wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--dur-slow) var(--ease-out);
+}
+
+.asb-root .asb-section-wrap.is-closed {
+  grid-template-rows: 0fr;
+}
+
+.asb-root .asb-section-wrap>ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px 0 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.asb-root .asb-section+.asb-section {
+  margin-top: 0;
+}
+
+/* Collapsed rail: show a subtle gap rule between nav sections */
+.asb-section-divider {
+  display: none;
+}
+
+.asb-root.is-collapsed .asb-section-divider {
+  display: block;
+  height: 1px;
+  margin: 4px 12px;
+  background: var(--border-subtle);
+}
+
+/* ── Nav item ─────────────────────────────────────────────────────────────── */
+.asb-root .asb-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 2px 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+
+  /* Font style matching help & resources row labels */
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+
+  transition:
+    background-color .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+
+  cursor: pointer;
+}
+
+.asb-root .asb-nav-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+  color: #111;
+}
+
+.asb-root.is-collapsed .asb-nav-item {
+  justify-content: center;
+  padding: 0;
+}
+
+/* Active — brand-subtle fill + brand left bar */
+.asb-root .asb-nav-item.is-active,
+.asb-root .asb-nav-item.is-active:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #111;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* Collapsed: left bar is invisible at icon center — use fill only */
+.asb-root.is-collapsed .asb-nav-item.is-active,
+.asb-root.is-collapsed .asb-nav-item.is-active:hover {
+  box-shadow: none;
+}
+
+/* ── Nav icon + badge ─────────────────────────────────────────────────────── */
+.asb-nav-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.04);
+  color: rgba(0,0,0,0.6);
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.asb-root .asb-nav-item:hover .asb-nav-icon,
+.asb-root .asb-nav-item.is-active .asb-nav-icon {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: #111;
+}
+
+/* Action chevron */
+.asb-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.asb-root .asb-nav-item.is-active .asb-action-icon {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111;
+}
+
+.asb-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--danger-solid);
+  color: var(--text-on-solid);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--asb-bg);
+  line-height: 1;
+}
+
+/* ── Nav label + arrow ────────────────────────────────────────────────────── */
+.asb-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asb-nav-arrow {
+  flex-shrink: 0;
+  color: var(--asb-ink-faint);
+}
+
+/* ── Nav count chip ───────────────────────────────────────────────────────── */
+.asb-nav-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--asb-ink-dim);
+  background: var(--asb-surface);
+  border: 1px solid var(--asb-border);
+  flex-shrink: 0;
+  transition: color var(--dur-fast), background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.asb-nav-item:hover .asb-nav-count {
+  color: var(--asb-ink);
+  border-color: var(--asb-border-hi);
+  transform: translateX(2px);
+}
+
+.asb-nav-item.is-active .asb-nav-count {
+  color: var(--asb-ink);
+  background: var(--asb-surface);
+  border-color: var(--asb-border);
+}
+
+/* ── Keyboard shortcut hint ───────────────────────────────────────────────── */
+.asb-kb-hint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: var(--asb-ink-faint);
+  background: var(--asb-surface);
+  border: 1px solid var(--asb-border);
+  border-radius: var(--radius-xs);
+  padding: 1px 5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+  pointer-events: none;
+}
+
+.asb-nav-item:hover .asb-kb-hint {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* ── Org workspace anchor ─────────────────────────────────────────────────── */
+.asb-org-anchor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+  transition: background var(--dur-fast);
+}
+
+.asb-org-anchor:hover {
+  background: rgba(0, 0, 0, 0.03);
+  transform: translateX(2px);
+}
+
+.asb-org-anchor:hover .asb-org-anchor-name {
+  color: var(--asb-ink);
+  transform: translateX(2px);
+}
+
+.asb-org-anchor-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+
+.asb-org-anchor-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--asb-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--dur-fast);
+}
+
+/* ── Identity footer ──────────────────────────────────────────────────────── */
+.asb-root .asb-footer {
+  flex-shrink: 0;
+  padding: 16px;
+  margin-top: auto;
+  position: relative;
+  background: transparent;
+}
+
+/* Avatar */
+.asb-root .asb-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.asb-root .asb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  color: var(--text-on-solid);
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Footer pill row — behaves like a Profile Card */
+.asb-root .asb-footer-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.asb-root .asb-footer-pill:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.asb-root .asb-footer-pill:active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.asb-root .asb-footer-pill:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Collapsed rail button */
+.asb-root .asb-footer-rail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+
+.asb-root .asb-footer-rail-btn:hover {
+  background: #F8FAFC;
+  transform: translateX(2px);
+}
+
+.asb-root .asb-footer-rail-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Identity text */
+.asb-root .asb-footer-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.asb-root .asb-footer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.asb-root .asb-footer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.asb-root .asb-footer-role {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 450;
+  color: #98A2B3;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.asb-root .asb-footer-sep {
+  font-size: 10px;
+  color: #98A2B3;
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+.asb-root .asb-footer-org {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 450;
+  color: #98A2B3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+/* Logout icon button — Subtle destructive action */
+.asb-root .asb-footer-logout-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #98A2B3;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  margin-left: 2px;
+}
+
+.asb-root .asb-footer-logout-icon:hover {
+  background: #FEF3F2;
+  border-color: #FECACA;
+  color: #DC2626;
+  transform: translateX(2px);
+}
+
+.asb-root .asb-footer-logout-icon:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+}
+
+/* ── Ripple effect ────────────────────────────────────────────────────────── */
+.popup-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink-solid) 6%, transparent);
+  transform: scale(0);
+  pointer-events: none;
+  animation: popup-ripple-anim 500ms cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes popup-ripple-anim {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ── Sign-out confirm popup ───────────────────────────────────────────────── */
+.asb-signout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--shadow-overlay-scrim);
+  animation: asb-overlay-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes asb-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.asb-signout-window {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 20px 60px rgba(16, 24, 40, .12);
+  animation: asb-window-in var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes asb-window-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.asb-signout-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+
+.asb-signout-titlebar-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.asb-signout-titlebar-text {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+
+.asb-signout-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: #98A2B3;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.asb-signout-close:hover {
+  background: var(--bg-subtle);
+  color: #111827;
+  transform: translateX(2px);
+}
+
+.asb-signout-body {
+  padding: 20px 20px 18px;
+}
+
+.asb-signout-msg {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #111827;
+  font-family: var(--font-sans);
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.asb-signout-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.asb-signout-cancel {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+
+.asb-signout-cancel:hover {
+  background: var(--bg-subtle);
+  color: #111827;
+  border-color: var(--border-strong);
+  transform: translateX(2px);
+}
+
+.asb-signout-confirm {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--danger);
+  color: var(--text-on-solid);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+
+.asb-signout-confirm:hover {
+  background: color-mix(in srgb, var(--danger) 85%, black);
+  transform: translateY(-1px);
+}
+
+.asb-signout-confirm:active {
+  transform: none;
+}
+
+.asb-signout-confirm:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 3px;
+}
+
+/* ── Rail tooltip ─────────────────────────────────────────────────────────── */
+.asb-tip {
+  position: fixed;
+  transform: translateY(-50%);
+  z-index: var(--z-elevated);
+  padding: 5px 10px;
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  animation: asb-tip-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes asb-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+
+  .asb-root,
+  .asb-root * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

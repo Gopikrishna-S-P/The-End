@@ -1,0 +1,450 @@
+/* ── Visits — page-specific layout only ────────────────────────────────────
+   All card, search, filter-button, pill, modal, table, skeleton chrome is
+   supplied by ds-*. This file only owns the page composition (toolbar row,
+   active-filter chips, error banner, sort indicators).
+   ────────────────────────────────────────────────────────────────────────── */
+
+.vis-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
+  min-height: 100%;
+}
+
+.app-page.vis-page { background: var(--bg-canvas); }
+
+/* ── Toolbar row ─────────────────────────────────────────────────────────── */
+
+.vis-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.vis-toolbar-row .ds-filter-btn { padding: 0 20px; gap: 8px; height: var(--ds-ctl-h); font-size: 13px; }
+.vis-toolbar-row .vis-export-btn { margin-left: auto; margin-right: 8px; padding: 0 14px; height: var(--ds-ctl-h); font-size: 13px; gap: 6px; }
+
+/* ── Search pill ─────────────────────────────────────────────────────────── */
+
+.vis-search {
+  width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-surface);
+  color: var(--ink-tertiary);
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+
+.vis-search:hover { background: var(--bg-subtle); }
+
+.vis-search:focus-within {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+
+.vis-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.vis-search-input::placeholder { color: var(--ink-tertiary); }
+
+.vis-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+.vis-search-clear:hover { color: var(--ink-primary); }
+
+/* ── Active-filter chips row ─────────────────────────────────────────────── */
+
+.vis-active-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  margin-top: -4px;
+}
+
+.vis-active-filters .ds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vis-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 120ms var(--ease);
+}
+.vis-chip-x:hover { opacity: 1; }
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+
+.vis-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: var(--error);
+  font-size: 13px;
+  border-color: color-mix(in srgb, var(--error) 30%, var(--border));
+}
+.vis-banner > span { flex: 1; }
+
+/* ── Table — sort indicators ─────────────────────────────────────────────── */
+
+.vis-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 120ms var(--ease);
+}
+.vis-table th.is-sortable:hover { color: var(--ink-primary); }
+.vis-table th.is-sorted        { color: var(--ink-primary); }
+
+.vis-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Table column widths ─────────────────────────────────────────────────── */
+
+.vis-table th:nth-child(1),
+.vis-table td:nth-child(1) { width: 100px; white-space: nowrap; }   /* Loan # */
+
+.vis-table th:nth-child(4),
+.vis-table td:nth-child(4) { width: 110px; white-space: nowrap; }   /* Visit date */
+
+.vis-table th:nth-child(5),
+.vis-table td:nth-child(5) { width: 120px; white-space: nowrap; }   /* Disposition */
+
+.vis-table th:nth-child(6),
+.vis-table td:nth-child(6) { width: 130px; white-space: nowrap; }   /* GPS status */
+
+.vis-table th:nth-child(7),
+.vis-table td:nth-child(7) { width: 110px; white-space: nowrap; }   /* Approval */
+
+.vis-table th:nth-child(8),
+.vis-table td:nth-child(8) { width: 160px; }                         /* Location */
+
+/* ── Table cells ─────────────────────────────────────────────────────────── */
+
+.vis-loan-cell {
+  color: var(--ink-solid);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.vis-borrower-cell {
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.vis-em-dash {
+  color: var(--ink-tertiary);
+  font-weight: 400;
+}
+
+/* ── Agent cell with avatar ──────────────────────────────────────────────── */
+
+.vis-agent-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vis-agent-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ds-font-num);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.vis-agent-name {
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+/* ── Location cell ───────────────────────────────────────────────────────── */
+
+.vis-location-cell {
+  max-width: 160px;
+}
+
+.vis-map-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-solid);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--bg-subtle);
+  border: 1px solid color-mix(in srgb, var(--ink-solid) 18%, transparent);
+  transition: opacity 120ms var(--ease);
+}
+.vis-map-chip:hover { opacity: 0.85; }
+
+.vis-gps-text {
+  display: inline-block;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.vis-muted-dash {
+  color: var(--ink-tertiary);
+  font-size: 12px;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+
+.vis-pagination {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+/* ── Filter modal — approval option pills ────────────────────────────────── */
+
+.vis-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.vis-filter-option {
+  padding: 6px 14px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--ink-secondary);
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease);
+}
+.vis-filter-option:hover {
+  border-color: var(--border-strong);
+  color: var(--ink-primary);
+}
+.vis-filter-option.is-active {
+  background: var(--bg-active);
+  border-color: var(--ink-solid);
+  color: var(--ink-solid);
+  font-weight: 500;
+}
+
+/* ── Drawer ──────────────────────────────────────────────────────────────── */
+
+.vis-drawer-title-col {
+  min-width: 0;
+  flex: 1;
+}
+.vis-drawer-title {
+  font-family: var(--ds-font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+.vis-drawer-sub-meta {
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+.vis-drawer-sub {
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+}
+
+.vis-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.vis-delete-btn { color: var(--error); }
+.vis-delete-btn:hover { background: var(--error-subtle); color: var(--error); }
+
+.vis-drawer-footer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.vis-drawer-action-row {
+  display: flex;
+  gap: 8px;
+}
+
+.vis-drawer-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--error);
+}
+
+.vis-confirm-delete {
+  padding: 12px;
+  background: var(--error-subtle);
+  border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+  border-radius: var(--ds-radius);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vis-confirm-delete p {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--error);
+  margin: 0;
+}
+
+/* ── Drawer-internal group layout (used by VisitDrawerBody) ──────────────── */
+
+.vis-drawer-group + .vis-drawer-group {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.vis-drawer-group-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 8px;
+}
+.vis-drawer-group-label > svg { color: var(--ink-tertiary); }
+
+.vis-drawer-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Lightbox (photo preview) ────────────────────────────────────────────── */
+
+.vis-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-modal, 500) + 10);
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: ds-overlay-in 180ms var(--ease) both;
+}
+
+.vis-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms var(--ease);
+}
+.vis-lightbox-close:hover { background: rgba(255, 255, 255, 0.22); }
+
+.vis-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--ds-radius);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Photo grid ──────────────────────────────────────────────────────────── */
+
+.vis-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.vis-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--bg-subtle);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 120ms var(--ease), border-color 120ms var(--ease);
+}
+.vis-photo:hover {
+  transform: scale(1.03);
+  border-color: var(--ink-solid);
+}
+.vis-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

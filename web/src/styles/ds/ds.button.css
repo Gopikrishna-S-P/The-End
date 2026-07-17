@@ -1,0 +1,153 @@
+/* ── Button primitive ──────────────────────────────────────────────────────
+   Primary = near-black ink fill. No accent color. Emphasis via weight and fill.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--ds-ctl-h);
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+
+.ds-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 85%, black);
+  border-color: color-mix(in srgb, var(--brand) 85%, black);
+  color: #ffffff;
+}
+
+.ds-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ds-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Primary — brand fill ───────────────────────────────────────────── */
+.ds-btn.is-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #ffffff;
+}
+.ds-btn.is-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 85%, black);
+  border-color: color-mix(in srgb, var(--brand) 85%, black);
+}
+.ds-btn.is-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* ── Secondary — outlined ─────────────────────────────────────────────────── */
+.ds-btn.is-secondary {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.ds-btn.is-secondary:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+/* ── Ghost — text-only ────────────────────────────────────────────────────── */
+.ds-btn.is-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+.ds-btn.is-ghost:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+/* ── Danger — solid destructive ───────────────────────────────────────────── */
+.ds-btn.is-danger {
+  background: var(--danger-solid);
+  border-color: var(--danger-solid);
+  color: var(--text-on-solid);
+}
+.ds-btn.is-danger:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+/* ── Size modifiers ───────────────────────────────────────────────────────── */
+.ds-btn.is-sm { height: var(--ds-ctl-h-sm); padding: 0 10px; font-size: 12px; }
+.ds-btn.is-lg { height: var(--ds-row-h);    padding: 0 20px; font-size: 14px; }
+
+/* ── Icon button ──────────────────────────────────────────────────────────── */
+.ds-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ds-ctl-h);
+  height: var(--ds-ctl-h);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.ds-icon-btn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+.ds-icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ds-icon-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ds-icon-btn.is-sm {
+  width: var(--ds-ctl-h-sm);
+  height: var(--ds-ctl-h-sm);
+  border-radius: var(--radius-xs);
+}
+
+.ds-spin { animation: ds-spin 700ms linear infinite; }
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+
+/* ── Loading state ─────────────────────────────────────────────────────────── */
+.ds-btn.is-loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+  color: transparent !important;
+}
+.ds-btn.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ds-spin 600ms linear infinite;
+  color: var(--text-on-solid);
+}
+.ds-btn.is-secondary.is-loading::after,
+.ds-btn.is-ghost.is-loading::after { color: var(--text-secondary); }
