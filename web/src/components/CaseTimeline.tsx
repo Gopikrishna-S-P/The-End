@@ -129,35 +129,7 @@ export default function CaseTimeline({ allocationId }: Props) {
           {data ? `${data.events.length} event${data.events.length === 1 ? '' : 's'} recorded` : 'Loading events...'}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ position: 'relative' }} ref={caseExportRef}>
-            <button type="button" className="ds-btn is-primary"
-              onClick={() => setCaseExportOpen((o) => !o)} disabled={exportDisabled}
-              aria-haspopup="menu" aria-expanded={caseExportOpen}>
-              {exporting === 'case' ? <RefreshCw size={14} className="ds-spin" /> : <Printer size={14} />}
-              {exporting === 'case' ? 'Exporting…' : 'Export case'}
-              <ChevronDown size={14} style={{ marginLeft: 4, opacity: 0.7 }} />
-            </button>
-            {caseExportOpen && (
-              <div role="menu" style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, minWidth: 200, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, boxShadow: 'var(--shadow-lg)', padding: 4, zIndex: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-tertiary)', padding: '6px 12px' }}>Format Options</div>
-                {CASE_EXPORT_OPTIONS.map((opt) => (
-                  <div key={opt.include} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px' }}>
-                    <span style={{ flex: 1, fontSize: 13, paddingLeft: 8 }}>{opt.label}</span>
-                    <button type="button" className="ds-btn is-secondary" style={{ height: 28, padding: '0 8px' }} onClick={() => downloadCaseExport(opt.include, 'pdf')}><FileText size={12} /> PDF</button>
-                    <button type="button" className="ds-btn is-secondary" style={{ height: 28, padding: '0 8px' }} onClick={() => downloadCaseExport(opt.include, 'xlsx')}><TableIcon size={12} /> Excel</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <button type="button" className="ds-btn is-secondary" onClick={() => download('sft', 'sft-export', 'sft')} disabled={exportDisabled}>
-            {exporting === 'sft' ? <RefreshCw size={14} className="ds-spin" /> : <GraduationCap size={14} />}
-            {exporting === 'sft' ? 'Exporting…' : 'Export SFT pairs'}
-          </button>
-          <button type="button" className="ds-btn is-secondary" onClick={() => download('raw', 'training-export', 'case')} disabled={exportDisabled}>
-            {exporting === 'raw' ? <RefreshCw size={14} className="ds-spin" /> : <FileDown size={14} />}
-            {exporting === 'raw' ? 'Exporting…' : 'Raw events'}
-          </button>
+          {/* Export buttons hidden due to missing backend endpoints (BCR-1) */}
         </div>
       </div>
 
