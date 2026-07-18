@@ -31,6 +31,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -151,7 +153,16 @@ public class AuthServiceImpl implements AuthService {
             throw new EmailAlreadyExistsException("An account with this email already exists");
         }
 
-        auditLogService.logUserAction(user.getId(), "REGISTER", "New user self-registered");
+        // logUserAction runs in REQUIRES_NEW (its own connection/transaction), which cannot see
+        // this still-uncommitted user row yet -- calling it inline here would violate the audit
+        // log's FK to users. Defer it until this transaction actually commits.
+        UUID newUserId = user.getId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                auditLogService.logUserAction(newUserId, "REGISTER", "New user self-registered");
+            }
+        });
         log.info("New user registered, id={}", user.getId());
         return refreshTokenRotationService.buildFullAuthResponse(user, httpRequest);
     }
