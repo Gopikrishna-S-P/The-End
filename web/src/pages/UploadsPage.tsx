@@ -125,13 +125,19 @@ function KpiCard({ label, value, sub, icon: Icon, accent, onClick }: {
   );
 }
 
+// Mirrors FileUploadController.READERS exactly — PLATFORM_ADMIN, ORG_ADMIN, MANAGER, TL.
+// The /app/uploads route itself is gated more loosely (ANY_ORG_ROLE, incl. FO/CALLER/TRACER),
+// so this page must self-gate to avoid a screen full of silently-failed 403s.
+const UPLOAD_READER_ROLES = ['PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL'];
+
 export default function UploadsPage() {
   const location  = useLocation();
   const navigate  = useNavigate();
-  const { hasRole, hasPermission } = usePermissions();
+  const { hasRole, hasPermission, hasAnyRole } = usePermissions();
   const isPlatformAdmin = hasRole('PLATFORM_ADMIN');
   const canDelete = hasPermission('FILE_DELETE');
   const canUpload = hasPermission('FILE_UPLOAD');
+  const canView = hasAnyRole(...UPLOAD_READER_ROLES);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   const basePath = location.pathname.startsWith('/bank') ? '/bank'
@@ -156,6 +162,7 @@ export default function UploadsPage() {
   }, [isPlatformAdmin]);
 
   const fetchUploads = useCallback(async () => {
+    if (!canView) { setLoading(false); return; }
     if (isPlatformAdmin && (orgsLoading || !selectedOrgId)) return;
     setLoading(true);
     try {
@@ -167,7 +174,7 @@ export default function UploadsPage() {
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch { /* silent */ } finally { setLoading(false); }
-  }, [page, isPlatformAdmin, selectedOrgId, orgsLoading]);
+  }, [page, isPlatformAdmin, selectedOrgId, orgsLoading, canView]);
 
   useEffect(() => { fetchUploads(); }, [fetchUploads]);
 
@@ -197,11 +204,25 @@ export default function UploadsPage() {
   const failedAnim = useCountUp(failedRowsCount);
   const filesAnim = useCountUp(totalElements);
 
+  if (!canView) {
+    return (
+      <div className="db-root">
+        <div className="db-content">
+          <div className="ds-empty" style={{ padding: '80px 0' }}>
+            <FileIcon size={32} className="ds-empty-icon" />
+            <span className="ds-empty-title">Restricted to team leads and above</span>
+            <span className="ds-empty-sub">File uploads are visible to Team Leads, Managers, and Org Admins.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="db-root">
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
-          
+
           <div className="db-kpi-header">
             <h2 className="db-kpi-title">File Uploads</h2>
             <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 12 }}>

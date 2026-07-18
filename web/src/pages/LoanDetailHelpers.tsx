@@ -171,9 +171,11 @@ export interface NextAction {
 }
 
 export const NEXT_ACTION_FOR: Record<AllocationStatus, NextAction | null> = {
-  UNASSIGNED: null,
-  ASSIGNED:   { status: 'CLOSED',   label: 'Close Case', needsConfirm: true },
-  CLOSED:     { status: 'ASSIGNED', label: 'Reopen Case' },
+  UNASSIGNED:   null,
+  ASSIGNED:     { status: 'CLOSED',   label: 'Close Case', needsConfirm: true },
+  CLOSED:       { status: 'ASSIGNED', label: 'Reopen Case' },
+  // Server-driven transition only (restructure workflow) — no direct manual next-action here.
+  RESTRUCTURED: null,
 };
 export const ALL_STATUSES: AllocationStatus[] = ['UNASSIGNED', 'ASSIGNED', 'CLOSED'];
 export const STATUSES_REQUIRING_CONFIRM = new Set<AllocationStatus>(['CLOSED']);

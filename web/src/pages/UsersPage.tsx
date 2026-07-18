@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { usersApi } from '../api/usersApi';
 import { rolesApi } from '../api/rolesApi';
@@ -64,6 +65,7 @@ function KpiCard({ label, value, sub, icon: Icon, accent, onClick }: {
 export default function UsersPage() {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
+  const navigate = useNavigate();
 
   const role = user?.roles?.[0]?.name?.replace('ROLE_', '');
   const canCreate = hasPermission('USER_CREATE') || role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'AGENCY_ADMIN' || role === 'BANK_ADMIN';
@@ -151,6 +153,12 @@ export default function UsersPage() {
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button" onClick={() => navigate('/app/settings/roles')}
+            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+          >
+            <ShieldCheck size={14} style={{ marginRight: 6 }} /> Manage roles
+          </button>
           <button
             type="button" onClick={load} disabled={loading}
             aria-label="Refresh" title="Refresh"

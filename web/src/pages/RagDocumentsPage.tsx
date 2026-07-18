@@ -1,18 +1,17 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { FileText, Plus, Trash2, Loader2, AlertCircle, X, Upload } from 'lucide-react';
+import { FileText, Plus, Trash2, Loader2, AlertCircle, X, Upload, UploadCloud } from 'lucide-react';
 import { ragApi } from '../api/ragApi';
-import type { RagDocumentResponse, RagSourceType, RagStatus } from '../api/ragApi';
+import type { RagDocumentResponse, RagStatus } from '../api/ragApi';
 import '../styles/AppPage.css';
 import './Dashboard.css';
-
-const SOURCE_TYPES: RagSourceType[] = ['POLICY', 'SCRIPT', 'FAQ', 'PROCEDURE', 'OTHER'];
 
 const STATUS_VARIANT: Record<RagStatus, string> = {
   PENDING:    'is-neutral',
   PROCESSING: 'is-warn',
   ACTIVE:     'is-success',
   FAILED:     'is-danger',
+  SUPERSEDED: 'is-neutral',
 };
 
 // ── Motion variants ────────────────────────────────────────────────────────────
@@ -56,16 +55,17 @@ export default function RagDocumentsPage() {
   const [error, setError]           = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [title, setTitle]           = useState('');
-  const [sourceType, setSourceType] = useState<RagSourceType>('POLICY');
-  const [content, setContent]       = useState('');
+  const [description, setDescription] = useState('');
+  const [file, setFile]             = useState<File | null>(null);
   const [uploading, setUploading]   = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoading(true); setError(null);
     try {
-      const page = await ragApi.list(0, 100);
-      setDocs(page.content || []);
+      const list = await ragApi.list();
+      setDocs(list || []);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to load documents.');
     } finally { setLoading(false); }
@@ -75,25 +75,26 @@ export default function RagDocumentsPage() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim() || !file) return;
     setUploading(true); setError(null);
     try {
-      await ragApi.upload({ title: title.trim(), sourceType, content });
-      setTitle(''); setContent(''); setSourceType('POLICY'); setShowUpload(false);
+      await ragApi.upload(file, title.trim(), description.trim() || undefined);
+      setTitle(''); setDescription(''); setFile(null); setShowUpload(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       await load();
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to upload document.');
     } finally { setUploading(false); }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This removes it from Lucien's retrieval corpus.`)) return;
+  const handleDeactivate = async (id: string, name: string) => {
+    if (!confirm(`Deactivate "${name}"? This removes it from Lucien's retrieval corpus.`)) return;
     setDeletingId(id);
     try {
-      await ragApi.delete(id);
-      setDocs((prev) => prev.filter((d) => d.id !== id));
+      await ragApi.supersede(id);
+      await load();
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to delete document.');
+      setError(e?.response?.data?.message || 'Failed to deactivate document.');
     } finally { setDeletingId(null); }
   };
 
@@ -128,27 +129,30 @@ export default function RagDocumentsPage() {
                         placeholder="e.g. RBI Fair Practices Code §3.2" className="ds-input" maxLength={500} required
                         style={{ width: '100%', height: 36, fontSize: 13 }} />
                     </div>
-                    <div className="ds-field" style={{ flex: 1, minWidth: 140, marginBottom: 0 }}>
-                      <label className="ds-label is-required" htmlFor="rag-source" style={{ marginBottom: 6, display: 'block' }}>Source type</label>
-                      <select id="rag-source" value={sourceType}
-                        onChange={(e) => setSourceType(e.target.value as RagSourceType)}
-                        className="ds-select" style={{ width: '100%', height: 36, fontSize: 13 }}>
-                        {SOURCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
+                    <div className="ds-field" style={{ flex: 1, minWidth: 220, marginBottom: 0 }}>
+                      <label className="ds-label is-required" htmlFor="rag-file" style={{ marginBottom: 6, display: 'block' }}>File</label>
+                      <input id="rag-file" ref={fileInputRef} type="file" required
+                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                        className="ds-input" style={{ width: '100%', height: 36, fontSize: 13, padding: '6px 10px' }} />
                     </div>
                   </div>
                   <div className="ds-field" style={{ marginBottom: 0 }}>
-                    <label className="ds-label is-required" htmlFor="rag-content" style={{ marginBottom: 6, display: 'block' }}>Content</label>
-                    <textarea id="rag-content" value={content} onChange={(e) => setContent(e.target.value)}
-                      placeholder="Paste or type the document body. Up to ~500,000 characters."
-                      rows={12} className="ds-textarea" required
+                    <label className="ds-label" htmlFor="rag-description" style={{ marginBottom: 6, display: 'block' }}>Description (optional)</label>
+                    <textarea id="rag-description" value={description} onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Short note on what this document covers, and why it belongs in Lucien's corpus."
+                      rows={4} className="ds-textarea"
                       style={{ width: '100%', resize: 'vertical', padding: '12px 16px', fontSize: 13, lineHeight: 1.5 }} />
                   </div>
+                  {file && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-tertiary)' }}>
+                      <UploadCloud size={13} /> {file.name} · {(file.size / 1024).toFixed(1)} KB
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8 }}>
                     <button type="submit" className="ds-btn is-primary"
-                      disabled={uploading || !title.trim() || !content.trim()} style={{ height: 36 }}>
+                      disabled={uploading || !title.trim() || !file} style={{ height: 36 }}>
                       {uploading ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Upload size={14} style={{ marginRight: 6 }} />}
-                      Queue for ingestion
+                      Upload &amp; queue for ingestion
                     </button>
                   </div>
                 </div>
@@ -167,11 +171,11 @@ export default function RagDocumentsPage() {
                     <h2 className="db-card-title">RAG Corpus</h2>
                     {!loading && docs.length > 0 && (
                       <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>
-                        / {docs.length} documents indexed
+                        / {docs.length} documents
                       </span>
                     )}
                   </div>
-                  <span className="db-kpi2-foot-meta">Policies, scripts and FAQs that Lucien retrieves from</span>
+                  <span className="db-kpi2-foot-meta">Compliance documents Lucien retrieves from — platform-wide</span>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
@@ -192,8 +196,7 @@ export default function RagDocumentsPage() {
                   <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Title</th>
                     <th style={{ padding: '12px 16px' }}>Status</th>
-                    <th style={{ padding: '12px 16px' }}>Type</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Chunks</th>
+                    <th style={{ padding: '12px 16px' }}>Content type</th>
                     <th className="is-right" style={{ padding: '12px 16px' }}>Added</th>
                     <th className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>Actions</th>
                   </tr>
@@ -204,15 +207,14 @@ export default function RagDocumentsPage() {
                       <tr key={i} style={{ opacity: 1 - i * 0.08, borderBottom: '1px solid var(--border-subtle)' }}>
                         <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: '70%', display: 'block' }} /></td>
                         <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 64, borderRadius: 999, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 64, borderRadius: 999, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 24, marginLeft: 'auto', display: 'block' }} /></td>
+                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
                         <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 64, marginLeft: 'auto', display: 'block' }} /></td>
                         <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 24, width: 24, borderRadius: 6, marginLeft: 'auto', display: 'block' }} /></td>
                       </tr>
                     ))
                   ) : docs.length === 0 ? (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={5}>
                         <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
                           <FileText size={32} className="ds-empty-icon" />
                           <span className="ds-empty-title">No documents yet</span>
@@ -229,19 +231,24 @@ export default function RagDocumentsPage() {
                           transition={{ duration: 0.28, delay: idx * 0.02 }}
                           style={{ borderBottom: '1px solid var(--border-subtle)' }}
                         >
-                          <td style={{ padding: '12px 16px', paddingLeft: 24, fontWeight: 500, color: 'var(--ink-primary)' }}>
-                            {d.title}
+                          <td style={{ padding: '12px 16px', paddingLeft: 24 }}>
+                            <div style={{ fontWeight: 500, color: 'var(--ink-primary)' }}>{d.title}</div>
+                            {d.description && (
+                              <div style={{ fontSize: 11.5, color: 'var(--ink-tertiary)', marginTop: 2, maxWidth: 360 }}>{d.description}</div>
+                            )}
+                            {d.status === 'FAILED' && d.errorMessage && (
+                              <div style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <AlertCircle size={11} /> {d.errorMessage}
+                              </div>
+                            )}
                           </td>
                           <td style={{ padding: '12px 16px' }}>
                             <span className={`ds-pill ${STATUS_VARIANT[d.status]}`}>
                               {d.status}
                             </span>
                           </td>
-                          <td style={{ padding: '12px 16px' }}>
-                            <span className="ds-pill is-info">{d.sourceType}</span>
-                          </td>
-                          <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--ink-tertiary)' }}>
-                            {d.chunkCount.toLocaleString()}
+                          <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-tertiary)' }}>
+                            {d.contentType || '—'}
                           </td>
                           <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--ink-tertiary)' }}>
                             {new Date(d.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })}
@@ -251,10 +258,10 @@ export default function RagDocumentsPage() {
                               type="button"
                               className="ds-btn is-secondary"
                               style={{ color: 'var(--danger)', width: 32, height: 32, padding: 0 }}
-                              onClick={() => handleDelete(d.id, d.title)}
-                              disabled={deletingId === d.id}
-                              aria-label="Delete document"
-                              title="Delete"
+                              onClick={() => handleDeactivate(d.id, d.title)}
+                              disabled={deletingId === d.id || d.status === 'SUPERSEDED'}
+                              aria-label="Deactivate document"
+                              title={d.status === 'SUPERSEDED' ? 'Already deactivated' : 'Deactivate'}
                             >
                               {deletingId === d.id ? <Loader2 size={14} className="ds-spin" /> : <Trash2 size={14} />}
                             </button>
@@ -272,4 +279,3 @@ export default function RagDocumentsPage() {
     </div>
   );
 }
-

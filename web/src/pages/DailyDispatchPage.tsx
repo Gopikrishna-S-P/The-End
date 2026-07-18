@@ -89,6 +89,7 @@ export default function DailyDispatchPage() {
   const [feedback,      setFeedback]      = useState<{ kind: 'ok' | 'err'; msg: string; sub?: string; onRetry?: () => void } | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [orgDispatched, setOrgDispatched] = useState<number | null>(null);
 
   const agentObj      = useMemo(() => agents.find(a => a.id === selectedAgent), [agents, selectedAgent]);
   const agentFullName = agentObj ? `${agentObj.firstName} ${agentObj.lastName}`.trim() : '';
@@ -129,6 +130,17 @@ export default function DailyDispatchPage() {
 
   useEffect(() => { loadCases(); }, [loadCases]);
 
+  // Org-wide dispatched count for the selected date (LEADS-only endpoint — same
+  // role gate as create/undo, so reuse canDispatch rather than a second permission check).
+  useEffect(() => {
+    if (!canDispatch) { setOrgDispatched(null); return; }
+    let cancelled = false;
+    dailyDispatchApi.orgSummary(dispatchDate)
+      .then(count => { if (!cancelled) setOrgDispatched(count); })
+      .catch(() => { if (!cancelled) setOrgDispatched(null); });
+    return () => { cancelled = true; };
+  }, [canDispatch, dispatchDate, dispatched.length]);
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(globalSearch), 150);
     return () => clearTimeout(t);
@@ -158,7 +170,8 @@ export default function DailyDispatchPage() {
     if (!selectedAgent) return;
     setUndoingId(caseId); setFeedback(null);
     try {
-      setDispatched(await dailyDispatchApi.create({ agentId: selectedAgent, date: dispatchDate, caseIds: dispatched.filter(d => d.id !== caseId).map(d => d.id) }));
+      await dailyDispatchApi.removeCase(selectedAgent, dispatchDate, caseId);
+      setDispatched(prev => prev.filter(d => d.id !== caseId));
     } catch (e: any) {
       setFeedback({ kind: 'err', msg: 'Could not undo dispatch.', sub: e?.response?.data?.message || 'The change was not saved. Please try again.' });
     } finally { setUndoingId(null); }
@@ -192,6 +205,11 @@ export default function DailyDispatchPage() {
               <>Field Officer: <strong>{agentFullName}</strong></>
             ) : (
               'Select a Field Officer'
+            )}
+            {canDispatch && orgDispatched != null && (
+              <span className="dd-cp-tab-count" style={{ marginLeft: 10 }} title="Cases dispatched org-wide on this date">
+                {orgDispatched} dispatched org-wide
+              </span>
             )}
           </span>
         </div>

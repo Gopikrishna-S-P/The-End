@@ -21,17 +21,24 @@ export interface ChatRequest {
   message: string;
 }
 
+export type SafetyDecision = 'ALLOWED' | 'BLOCKED_PII' | 'BLOCKED_OFF_TOPIC' | 'BLOCKED_HARMFUL';
+
 export interface ChatResponse {
   messageId: string;
   sessionId: string;
   reply: string;
   blocked: boolean;
   blockReason?: string;
-  inputSafetyDecision?: string;
-  outputSafetyDecision?: string;
+  inputSafetyDecision?: SafetyDecision;
+  outputSafetyDecision?: SafetyDecision;
   latencyMs?: number;
   timestamp: string;
   modelName?: string;
+  /** Populated when Lucien has a WRITE tool pending user confirmation (design-doc §6.3). */
+  confirmationRequired: boolean;
+  pendingActionId?: string;
+  pendingActionSummary?: string;
+  pendingToolName?: string;
 }
 
 export interface ChatMessageResponse {
@@ -42,18 +49,9 @@ export interface ChatMessageResponse {
   createdAt: string;
 }
 
-interface SystemPromptResponse {
-  promptKey: string;
-  promptText: string;
-  context?: string;
-  version: number;
-  updatedAt: string;
-  updatedBy: string;
-}
-
-interface UpdateSystemPromptRequest {
-  promptText: string;
-  context?: string;
+export interface ConfirmActionRequest {
+  actionId: string;
+  confirmed: boolean;
 }
 
 export const lucienApi = {
@@ -64,6 +62,15 @@ export const lucienApi = {
 
   sendMessage: async (data: ChatRequest): Promise<ChatResponse> => {
     const response = await axiosInstance.post<ApiResponse<ChatResponse>>('/api/v1/lucien/chat', data);
+    return response.data.data;
+  },
+
+  /** Confirm (confirmed=true) or cancel (confirmed=false) a pending WRITE tool action. */
+  confirmAction: async (sessionId: string, data: ConfirmActionRequest): Promise<ChatResponse> => {
+    const response = await axiosInstance.post<ApiResponse<ChatResponse>>(
+      `/api/v1/lucien/sessions/${sessionId}/confirm`,
+      data,
+    );
     return response.data.data;
   },
 
@@ -84,17 +91,21 @@ export const lucienApi = {
     return response.data.data;
   },
 
+  /**
+   * Marks the session inactive but keeps its history intact. This is the
+   * correct call for a "New chat" action — it does NOT erase data.
+   */
   closeSession: async (sessionId: string): Promise<void> => {
+    await axiosInstance.post(`/api/v1/lucien/sessions/${sessionId}/close`);
+  },
+
+  /**
+   * DPDP erasure — permanently and irreversibly deletes the session and all
+   * of its messages. Do not call this for routine "start a new chat" flows;
+   * use closeSession() instead. Reserve this for an explicit user-initiated
+   * "delete this conversation" action.
+   */
+  deleteSession: async (sessionId: string): Promise<void> => {
     await axiosInstance.delete(`/api/v1/lucien/sessions/${sessionId}`);
-  },
-
-  getSystemPrompt: async (promptKey: string): Promise<SystemPromptResponse> => {
-    const response = await axiosInstance.get<ApiResponse<SystemPromptResponse>>(`/api/v1/lucien/admin/prompts/${promptKey}`);
-    return response.data.data;
-  },
-
-  updateSystemPrompt: async (promptKey: string, data: UpdateSystemPromptRequest): Promise<SystemPromptResponse> => {
-    const response = await axiosInstance.put<ApiResponse<SystemPromptResponse>>(`/api/v1/lucien/admin/prompts/${promptKey}`, data);
-    return response.data.data;
   },
 };

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { apiClient, unwrapApiResponse } from '../client';
 import { useAuth } from '../AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import type { ReportJobResponse, PagedResponse } from '../types';
 import type { MisEodReportResponse, MisEodCaseRow } from '../api/reportsApi';
 import { reportsApi } from '../api/reportsApi';
@@ -14,6 +15,7 @@ import {
 import * as XLSX from 'xlsx';
 import { StatusPill, fmtDate, fmtFileSize, TERMINAL_STATUSES, REPORT_LABELS } from './ReportsHelpers';
 import { ReportGenerateModal } from './ReportGenerateModal';
+import { ReportsAnalyticsPanel } from './ReportsAnalyticsPanel';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../styles/UploadsPage.css';
@@ -217,9 +219,16 @@ function exportMisToExcel(data: MisEodReportResponse) {
 }
 
 
+// Mirrors ReportingController's class-level @PreAuthorize (READERS) exactly.
+// The /app/reports route itself is gated more loosely (ANY_ORG_ROLE, incl.
+// FO/CALLER/TRACER), so this page must self-gate to avoid every fetch 403'ing.
+const REPORT_READER_ROLES = ['PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL'];
+
 export default function ReportsPage() {
   const { user } = useAuth();
+  const { hasAnyRole } = usePermissions();
   const organizationId = user?.organizationId || '';
+  const canView = hasAnyRole(...REPORT_READER_ROLES);
 
   const [jobs,               setJobs]               = useState<ReportJobResponse[]>([]);
   const [loading,            setLoading]            = useState(true);
@@ -228,7 +237,6 @@ export default function ReportsPage() {
   const [totalElements,      setTotalElements]      = useState(0);
   const [showGenerateModal,  setShowGenerateModal]  = useState(false);
   const [downloadingId,      setDownloadingId]      = useState<string | null>(null);
-  const [cancellingId,       setCancellingId]       = useState<string | null>(null);
   const [actionError,        setActionError]        = useState<string | null>(null);
 
   const [misDate,   setMisDate]   = useState(todayStr());
@@ -238,7 +246,7 @@ export default function ReportsPage() {
   const [expandedFo, setExpandedFo] = useState<string | null>(null);
 
   const fetchMis = useCallback(async () => {
-    if (!organizationId) return;
+    if (!organizationId || !canView) return;
     setMisLoading(true); setMisError(null); setMisData(null);
     try {
       const data = await reportsApi.getMisEod(organizationId, misDate);
@@ -248,7 +256,7 @@ export default function ReportsPage() {
     } finally {
       setMisLoading(false);
     }
-  }, [organizationId, misDate]);
+  }, [organizationId, misDate, canView]);
 
   const pollTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollIntervalRef = useRef<number>(2000);
@@ -258,6 +266,7 @@ export default function ReportsPage() {
   };
 
   const fetchJobs = useCallback(async () => {
+    if (!canView) { setLoading(false); return; }
     setLoading(true);
     try {
       const { data } = await apiClient.get('/api/v1/reports/jobs', {
@@ -278,40 +287,49 @@ export default function ReportsPage() {
         pollIntervalRef.current = 2000;
       }
     } catch { /* silent */ } finally { setLoading(false); }
-  }, [organizationId, page]);
+  }, [organizationId, page, canView]);
 
   useEffect(() => {
     if (organizationId) { pollIntervalRef.current = 2000; fetchJobs(); }
     return () => stopPolling();
   }, [fetchJobs, organizationId]);
 
+  // Ground truth: ExportController is mounted at /api/v1/reports/export (nested
+  // under /api/v1/reports), so the download route is .../reports/export/jobs/{id}/download.
+  // ReportingController's own /jobs/{jobId} route only returns job status, not a file.
+  // There is also no DELETE/cancel route for report jobs anywhere on the backend —
+  // the previous "Cancel" button here called a route that has never existed
+  // (confirmed: no @DeleteMapping in ReportingController). Removed rather than
+  // left to silently 404; see BCR for a real cancel endpoint.
   const handleDownload = async (job: ReportJobResponse) => {
     if (downloadingId) return;
     setDownloadingId(job.id);
     try {
-      const { data } = await apiClient.get(
-        `/api/v1/reports/jobs/${job.id}/download`,
-        { params: { orgId: organizationId }, responseType: 'blob' },
-      );
-      const url = URL.createObjectURL(new Blob([data]));
+      const blob = await reportsApi.downloadReportJob(job.id, organizationId);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = job.fileName || `report-${job.id}.${job.exportFormat === 'PDF' ? 'pdf' : 'xlsx'}`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-    } catch { /* ignore */ } finally { setDownloadingId(null); }
+    } catch {
+      setActionError('Failed to download report file.');
+    } finally { setDownloadingId(null); }
   };
 
-  const handleCancel = async (job: ReportJobResponse) => {
-    if (cancellingId) return;
-    setActionError(null); setCancellingId(job.id);
-    try {
-      await apiClient.delete(`/api/v1/reports/jobs/${job.id}`, { params: { orgId: organizationId } });
-      fetchJobs();
-    } catch (err: any) {
-      setActionError(err?.response?.data?.message || err?.message || 'Failed to cancel report job.');
-    } finally { setCancellingId(null); }
-  };
+  if (!canView) {
+    return (
+      <div className="db-root">
+        <div className="db-content">
+          <div className="ds-empty" style={{ padding: '80px 0' }}>
+            <FileText size={32} className="ds-empty-icon" />
+            <span className="ds-empty-title">Restricted to team leads and above</span>
+            <span className="ds-empty-sub">Reports are visible to Team Leads, Managers, and Org Admins.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="db-root">
@@ -502,6 +520,11 @@ export default function ReportsPage() {
             )}
           </motion.div>
 
+          {/* ── Advanced analytics (rankings / collection / reassignment / loan book / reconciliation) ── */}
+          <motion.div variants={fadeUp}>
+            <ReportsAnalyticsPanel organizationId={organizationId} />
+          </motion.div>
+
           <header className="db-card-head" style={{ marginBottom: 20, padding: 0, background: 'transparent', border: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -584,18 +607,6 @@ export default function ReportsPage() {
                       >
                         {downloadingId === job.id ? <Loader2 size={12} className="ds-spin" style={{ marginRight: 4 }} /> : <Download size={12} style={{ marginRight: 4 }} />}
                         {downloadingId === job.id ? 'Downloading…' : 'Download'}
-                      </button>
-                    )}
-                    {(job.status === 'QUEUED' || job.status === 'GENERATING') && (
-                      <button
-                        type="button"
-                        onClick={() => handleCancel(job)}
-                        disabled={cancellingId === job.id}
-                        className="ds-btn is-secondary"
-                        style={{ height: 24, padding: '0 10px', fontSize: 11 }}
-                      >
-                        {cancellingId === job.id ? <Loader2 size={12} className="ds-spin" style={{ marginRight: 4 }} /> : <X size={12} style={{ marginRight: 4 }} />}
-                        {cancellingId === job.id ? 'Cancelling…' : 'Cancel'}
                       </button>
                     )}
                   </div>

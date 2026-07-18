@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAccessToken } from '../api/axiosInstance';
-import { wsUrl } from '../pages/FieldOpsUtils';
+import { wsUrl, REFRESH_MS } from '../pages/FieldOpsUtils';
+import { fieldOpsApi } from '../api/fieldOpsApi';
 
 export interface AgentDot {
   agentId: string;
@@ -21,12 +22,52 @@ function getToken(): string | null {
   return getAccessToken();
 }
 
-export function useLiveTrackSocket() {
+export function useLiveTrackSocket(orgId?: string) {
   const [agents, setAgents]       = useState<Map<string, AgentDot>>(new Map());
   const [connected, setConnected] = useState(false);
   const wsRef      = useRef<WebSocket | null>(null);
   const retryRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+
+  // REST polling fallback (GET /api/v1/agent/active) — used because the
+  // ws/live-track socket has no guarantee of ever connecting; see
+  // useFieldOpsTrack.ts for the identical rationale.
+  useEffect(() => {
+    if (!orgId) return;
+    let alive = true;
+    const poll = async () => {
+      try {
+        const rows = await fieldOpsApi.listActive(orgId);
+        if (!alive) return;
+        setAgents(prev => {
+          const next = new Map(prev);
+          for (const row of rows) {
+            if (row.lastLat == null || row.lastLng == null) continue;
+            const existing = next.get(row.agentId);
+            if (existing && row.lastPingAt && new Date(row.lastPingAt).getTime() < existing.ts) continue;
+            next.set(row.agentId, {
+              agentId:        row.agentId,
+              agentName:      existing?.agentName ?? null,
+              lat:            row.lastLat,
+              lng:            row.lastLng,
+              accuracy:       row.lastAccuracy ?? 0,
+              heading:        existing?.heading ?? null,
+              speed:          existing?.speed ?? null,
+              batteryLevel:   existing?.batteryLevel ?? null,
+              mockDetected:   row.lastMockDetected ?? false,
+              visitSessionId: existing?.visitSessionId ?? null,
+              ts:             row.lastPingAt ? new Date(row.lastPingAt).getTime() : Date.now(),
+              online:         true,
+            });
+          }
+          return next;
+        });
+      } catch { /* non-fatal — keep last known state */ }
+    };
+    poll();
+    const t = setInterval(poll, REFRESH_MS);
+    return () => { alive = false; clearInterval(t); };
+  }, [orgId]);
 
   const connect = useCallback(() => {
     const token = getToken();

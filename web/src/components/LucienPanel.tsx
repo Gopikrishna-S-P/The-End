@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Sparkles, Send, X, Plus, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, Send, X, Plus, Loader2, AlertCircle, RefreshCw, ShieldAlert, Check } from 'lucide-react';
 import { useAuth } from '../AuthContext';
-import { apiClient } from '../client';
+import { lucienApi } from '../api/lucienApi';
 import lucienLogo from '../assets/images/lucien-logo.png';
 import './LucienPanel.css';
 
@@ -9,6 +9,12 @@ interface ChatMessage {
   id: string;
   role: 'USER' | 'ASSISTANT';
   content: string;
+}
+
+interface PendingConfirm {
+  actionId: string;
+  summary: string;
+  toolName?: string;
 }
 
 interface LucienPanelProps {
@@ -78,6 +84,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
   const [sending,   setSending]   = useState(false);
   const [starting,  setStarting]  = useState(false);
   const [error,     setError]     = useState<string | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const panelRef    = useRef<HTMLElement>(null);
   const listRef     = useRef<HTMLDivElement>(null);
@@ -136,10 +144,10 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
     setStarting(true);
     setError(null);
     try {
-      const { data } = await apiClient.post('/api/v1/lucien/sessions', { agentId, agentFirstName });
-      const session = data?.data ?? data;
+      const session = await lucienApi.startSession({ agentId, agentFirstName });
       setSessionId(session.sessionId);
       setMessages([]);
+      setPendingConfirm(null);
     } catch {
       setError('Lucien is unavailable right now. Please try again.');
     } finally {
@@ -157,7 +165,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
 
   const send = useCallback(async (text?: string) => {
     const raw = (text ?? input).trim();
-    if (!raw || !sessionId || sending) return;
+    if (!raw || !sessionId || sending || pendingConfirm) return;
     const now = Date.now();
     if (now - lastSentRef.current < SEND_DEBOUNCE_MS) return;
     lastSentRef.current = now;
@@ -168,14 +176,19 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
     setSending(true);
     setError(null);
     try {
-      const { data } = await apiClient.post('/api/v1/lucien/chat', { sessionId, message: raw });
-      const resp = data?.data ?? data;
-      const reply: string = resp?.message?.content ?? resp?.reply ?? resp?.content ?? '';
+      const resp = await lucienApi.sendMessage({ sessionId, message: raw });
       setMessages(prev => [...prev, {
-        id: `a-${Date.now()}`,
+        id: resp.messageId ?? `a-${Date.now()}`,
         role: 'ASSISTANT',
-        content: reply || 'Lucien had nothing to add.',
+        content: resp.reply || 'Lucien had nothing to add.',
       }]);
+      if (resp.confirmationRequired && resp.pendingActionId) {
+        setPendingConfirm({
+          actionId: resp.pendingActionId,
+          summary: resp.pendingActionSummary || 'Lucien wants to perform an action on your behalf.',
+          toolName: resp.pendingToolName,
+        });
+      }
     } catch {
       setError('error');
       setMessages(prev => prev.filter(m => m.id !== userMsg.id));
@@ -184,7 +197,26 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       setSending(false);
       inputRef.current?.focus();
     }
-  }, [input, sessionId, sending]);
+  }, [input, sessionId, sending, pendingConfirm]);
+
+  const handleConfirmAction = useCallback(async (confirmed: boolean) => {
+    if (!sessionId || !pendingConfirm) return;
+    setConfirming(true);
+    try {
+      const resp = await lucienApi.confirmAction(sessionId, { actionId: pendingConfirm.actionId, confirmed });
+      setMessages(prev => [...prev, {
+        id: resp.messageId ?? `a-${Date.now()}`,
+        role: 'ASSISTANT',
+        content: resp.reply || (confirmed ? 'Action executed.' : 'Action cancelled.'),
+      }]);
+    } catch {
+      setError('error');
+    } finally {
+      setPendingConfirm(null);
+      setConfirming(false);
+      inputRef.current?.focus();
+    }
+  }, [sessionId, pendingConfirm]);
 
   const newChat = useCallback(async () => {
     if (startingRef.current) return;
@@ -194,15 +226,16 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
     setMessages([]);
     setInput('');
     setError(null);
-    // fire-and-forget delete of old session
+    setPendingConfirm(null);
+    // fire-and-forget close of old session — keeps it in history, does NOT erase it
     if (prevSession) {
-      apiClient.delete(`/api/v1/lucien/sessions/${prevSession}`).catch(() => {/* ok */});
+      lucienApi.closeSession(prevSession).catch(() => {/* ok */});
     }
     // start a fresh session (startingRef guard prevents the effect from racing)
     await startSession();
   }, [sessionId, startSession]);
 
-  const canSend = input.trim().length > 0 && !!sessionId && !sending;
+  const canSend = input.trim().length > 0 && !!sessionId && !sending && !pendingConfirm;
   const isReady = !!sessionId && !starting;
 
   return (
@@ -312,6 +345,27 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
           )}
         </div>
 
+        {/* Pending WRITE-action confirmation */}
+        {pendingConfirm && (
+          <div className="lucien-panel-confirm" role="alert">
+            <ShieldAlert size={15} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div className="lucien-panel-confirm-body">
+              <span className="lucien-panel-confirm-title">
+                Confirmation required{pendingConfirm.toolName ? ` — ${pendingConfirm.toolName}` : ''}
+              </span>
+              <span className="lucien-panel-confirm-sub">{pendingConfirm.summary}</span>
+              <div className="lucien-panel-confirm-actions">
+                <button type="button" className="lucien-panel-confirm-btn is-confirm" onClick={() => handleConfirmAction(true)} disabled={confirming}>
+                  {confirming ? <Loader2 size={12} className="lucien-spin" aria-hidden="true" /> : <Check size={12} aria-hidden="true" />} Confirm
+                </button>
+                <button type="button" className="lucien-panel-confirm-btn" onClick={() => handleConfirmAction(false)} disabled={confirming}>
+                  <X size={12} aria-hidden="true" /> Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Composer */}
         <div className="lucien-panel-composer">
           <textarea
@@ -322,9 +376,9 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
             }}
-            placeholder={isReady ? 'Ask Lucien…' : 'Connecting…'}
+            placeholder={pendingConfirm ? 'Resolve the pending confirmation above…' : isReady ? 'Ask Lucien…' : 'Connecting…'}
             rows={1}
-            disabled={!isReady || sending}
+            disabled={!isReady || sending || !!pendingConfirm}
           />
           <div className="lucien-panel-composer-row">
             <button

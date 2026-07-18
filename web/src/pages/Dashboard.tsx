@@ -785,7 +785,18 @@ export default function Dashboard() {
               <div className="db-grid">
 
                 {/* Trend line chart */}
-                <Card className="db-span-8" title="Performance trend">
+                <Card className="db-span-8" title="Performance trend" action={
+                  <div className="db-kpi-toggle">
+                    {([3, 6, 12] as const).map(r => (
+                      <button key={r} type="button"
+                        className={`db-kpi-toggle-btn${trendRange === r ? ' is-active' : ''}`}
+                        onClick={() => setTrendRange(r)}
+                      >
+                        {r}M
+                      </button>
+                    ))}
+                  </div>
+                }>
                   {sortedTrend.length < 2 ? (
                     <>
                       <div className="db-trend-chart-wrap">

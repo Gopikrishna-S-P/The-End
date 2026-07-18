@@ -1,12 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
-import { apiClient } from '../client';
-import { History, Plus, Send, Loader2 } from 'lucide-react';
+import { lucienApi } from '../api/lucienApi';
+import { History, Plus, Send, Loader2, ShieldAlert, Check, X } from 'lucide-react';
 import { type ChatMessage, type Session } from './LucienHelpers';
 import { LucienHistoryPanel } from './LucienHistoryPanel';
 import { LucienMessages } from './LucienMessages';
 import '../styles/AppPage.css';
 import './Dashboard.css';
+
+interface PendingConfirm {
+  actionId: string;
+  summary: string;
+  toolName?: string;
+}
 
 export default function LucienPage() {
   const { user } = useAuth();
@@ -22,6 +28,8 @@ export default function LucienPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastSentAtRef = useRef<number>(0);
@@ -31,28 +39,26 @@ export default function LucienPage() {
   const maskPhoneNumbers = (text: string) =>
     text.replace(/\b[6-9]\d{9}\b/g, '[phone]').replace(/\b\d{12}\b/g, '[id]');
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, pendingConfirm]);
 
   const startSession = useCallback(async () => {
     if (!agentId) return;
     setStarting(true); setError(null);
     try {
-      const { data } = await apiClient.post('/api/v1/lucien/sessions', { agentId, agentFirstName });
-      const session = data?.data ?? data;
-      setSessionId(session.sessionId); setMessages([]);
+      const session = await lucienApi.startSession({ agentId, agentFirstName });
+      setSessionId(session.sessionId); setMessages([]); setPendingConfirm(null);
     } catch { setError('Lucien is unavailable right now. Please try again shortly.'); }
     finally { setStarting(false); }
-  }, [agentId]);
+  }, [agentId, agentFirstName]);
 
   useEffect(() => { startSession(); }, [startSession]);
 
   const loadSessionHistory = async (sid: string) => {
     setLoadingHistory(true); setError(null);
     try {
-      const { data } = await apiClient.get(`/api/v1/lucien/sessions/${sid}/history`);
-      const raw: any[] = (data?.data ?? data) || [];
+      const raw = await lucienApi.getSessionHistory(sid);
       const msgs: ChatMessage[] = raw.map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt }));
-      setMessages(msgs); setSessionId(sid); setShowHistory(false);
+      setMessages(msgs); setSessionId(sid); setShowHistory(false); setPendingConfirm(null);
     } catch { setError('Failed to load session history.'); }
     finally { setLoadingHistory(false); }
   };
@@ -60,15 +66,14 @@ export default function LucienPage() {
   const loadPastSessions = async () => {
     if (!agentId) return;
     try {
-      const { data } = await apiClient.get(`/api/v1/lucien/agents/${agentId}/sessions`, { params: { page: 0, size: 20 } });
-      const resp = data?.data ?? data;
-      setPastSessions(resp?.content || []);
+      const resp = await lucienApi.getAgentSessions(agentId, 0, 20);
+      setPastSessions(resp.content || []);
     } catch { setPastSessions([]); }
   };
 
   const handleSend = async (text?: string) => {
     const raw = (text ?? input).trim();
-    if (!raw || !sessionId || sending) return;
+    if (!raw || !sessionId || sending || pendingConfirm) return;
     const now = Date.now();
     if (now - lastSentAtRef.current < SEND_DEBOUNCE_MS) return;
     lastSentAtRef.current = now;
@@ -78,23 +83,68 @@ export default function LucienPage() {
     const optimistic: ChatMessage = { id: `local-${Date.now()}`, role: 'USER', content: msg, createdAt: new Date().toISOString() };
     setMessages((prev) => [...prev, optimistic]);
     try {
-      const { data } = await apiClient.post('/api/v1/lucien/chat', { sessionId, message: msg });
-      const resp = data?.data ?? data;
-      const assistantMsg: ChatMessage = { id: resp?.messageId ?? `a-${Date.now()}`, role: 'ASSISTANT', content: resp?.reply || '', createdAt: resp?.timestamp ?? new Date().toISOString() };
+      const resp = await lucienApi.sendMessage({ sessionId, message: msg });
+      const assistantMsg: ChatMessage = { id: resp.messageId ?? `a-${Date.now()}`, role: 'ASSISTANT', content: resp.reply || '', createdAt: resp.timestamp ?? new Date().toISOString() };
       setMessages((prev) => [...prev, assistantMsg]);
+      if (resp.confirmationRequired && resp.pendingActionId) {
+        setPendingConfirm({
+          actionId: resp.pendingActionId,
+          summary: resp.pendingActionSummary || 'Lucien wants to perform an action on your behalf.',
+          toolName: resp.pendingToolName,
+        });
+      }
     } catch {
       setError('Lucien did not respond. Please try again.');
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     } finally { setSending(false); inputRef.current?.focus(); }
   };
 
+  const handleConfirmAction = async (confirmed: boolean) => {
+    if (!sessionId || !pendingConfirm) return;
+    setConfirming(true); setError(null);
+    try {
+      const resp = await lucienApi.confirmAction(sessionId, { actionId: pendingConfirm.actionId, confirmed });
+      const assistantMsg: ChatMessage = {
+        id: resp.messageId ?? `a-${Date.now()}`,
+        role: 'ASSISTANT',
+        content: resp.reply || (confirmed ? 'Action executed.' : 'Action cancelled.'),
+        createdAt: resp.timestamp ?? new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch {
+      setError('Failed to process confirmation. Please try again.');
+    } finally {
+      setPendingConfirm(null);
+      setConfirming(false);
+      inputRef.current?.focus();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
+  // "New chat" closes the current session (keeps it in history) — it must
+  // NOT delete it. Deletion is a separate, explicit, irreversible DPDP
+  // erasure action available from the history panel.
   const handleNewSession = async () => {
-    if (sessionId) { try { await apiClient.delete(`/api/v1/lucien/sessions/${sessionId}`); } catch { /* ok */ } }
+    if (sessionId) { try { await lucienApi.closeSession(sessionId); } catch { /* ok */ } }
+    setPendingConfirm(null);
     await startSession();
+  };
+
+  const handleDeleteSession = async (id: string) => {
+    if (!confirm('Permanently delete this conversation and all its messages? This cannot be undone.')) return;
+    try {
+      await lucienApi.deleteSession(id);
+      setPastSessions((prev) => prev.filter((s) => s.sessionId !== id));
+      if (id === sessionId) {
+        setSessionId(null); setMessages([]); setPendingConfirm(null);
+        await startSession();
+      }
+    } catch {
+      setError('Failed to delete session.');
+    }
   };
 
   return (
@@ -111,6 +161,7 @@ export default function LucienPage() {
                 activeSessionId={sessionId}
                 onClose={() => setShowHistory(false)}
                 onSelectSession={loadSessionHistory}
+                onDeleteSession={handleDeleteSession}
               />
             </div>
           )}
@@ -155,6 +206,41 @@ export default function LucienPage() {
               />
             </div>
 
+            {pendingConfirm && (
+              <div style={{
+                margin: '0 24px 16px', padding: '14px 16px', borderRadius: 10,
+                background: 'var(--warning-subtle, rgba(245,158,11,0.1))',
+                border: '1px solid var(--warning-border, rgba(245,158,11,0.35))',
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+              }}>
+                <ShieldAlert size={18} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 1 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-primary)', marginBottom: 2 }}>
+                    Confirmation required{pendingConfirm.toolName ? ` — ${pendingConfirm.toolName}` : ''}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
+                    {pendingConfirm.summary}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <button
+                      type="button" className="ds-btn is-primary" style={{ height: 30 }}
+                      onClick={() => handleConfirmAction(true)} disabled={confirming}
+                    >
+                      {confirming ? <Loader2 size={13} className="ds-spin" style={{ marginRight: 6 }} /> : <Check size={13} style={{ marginRight: 6 }} />}
+                      Confirm
+                    </button>
+                    <button
+                      type="button" className="ds-btn is-secondary" style={{ height: 30 }}
+                      onClick={() => handleConfirmAction(false)} disabled={confirming}
+                    >
+                      <X size={13} style={{ marginRight: 6 }} />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-subtle)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px' }}>
                 <textarea
@@ -163,8 +249,8 @@ export default function LucienPage() {
                   onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
                   onKeyDown={handleKeyDown}
                   rows={1}
-                  placeholder={sessionId ? 'Ask Lucien anything… (Enter to send, Shift+Enter for newline)' : 'Connecting…'}
-                  disabled={!sessionId || sending}
+                  placeholder={pendingConfirm ? 'Resolve the pending confirmation above…' : sessionId ? 'Ask Lucien anything… (Enter to send, Shift+Enter for newline)' : 'Connecting…'}
+                  disabled={!sessionId || sending || !!pendingConfirm}
                   className="ds-textarea"
                   aria-label="Message input"
                   style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', resize: 'none', minHeight: 36, maxHeight: 120, padding: '8px 0', fontSize: 13, color: 'var(--ink-primary)' }}
@@ -172,7 +258,7 @@ export default function LucienPage() {
                 <button
                   type="button"
                   onClick={() => handleSend()}
-                  disabled={!input.trim() || !sessionId || sending}
+                  disabled={!input.trim() || !sessionId || sending || !!pendingConfirm}
                   className="ds-btn is-primary"
                   style={{ width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, flexShrink: 0 }}
                   aria-label="Send message"

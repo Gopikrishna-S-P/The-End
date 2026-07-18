@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { apiClient, unwrapApiResponse } from '../client';
@@ -140,7 +140,6 @@ export default function PtpsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [filterStatus, setFilterStatus]   = useState<PtpStatus | ''>('');
   const [searchInput, setSearchInput]     = useState('');
-  const [searchTerm, setSearchTerm]       = useState('');
   const [filterOpen, setFilterOpen]       = useState(false);
   const [selectedPtp, setSelectedPtp]     = useState<PtpResponse | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -152,8 +151,6 @@ export default function PtpsPage() {
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const inputRef      = useRef<HTMLInputElement>(null);
   const abortRef      = useRef<AbortController | null>(null);
-
-  const organizationId = user?.organizationId || '';
 
   // "/" focuses search
   useEffect(() => {
@@ -189,12 +186,11 @@ export default function PtpsPage() {
     return () => document.removeEventListener('mousedown', onDown);
   }, [showExportMenu]);
 
-  // Debounce search input
-  useEffect(() => {
-    const t = window.setTimeout(() => { setSearchTerm(searchInput.trim()); setPage(0); }, 300);
-    return () => window.clearTimeout(t);
-  }, [searchInput]);
-
+  // NOTE: PtpController's GET /api/v1/ptps binds a fixed PtpFilterRequest (allocationId,
+  // agentId, status, promisedDateFrom/To, loanNumber, borrowerName, reminderSent) — there is
+  // no generic free-text `searchTerm` param, and org scope is always derived from the JWT
+  // (an `orgId` query param would be silently ignored). Search is therefore applied
+  // client-side against the currently loaded page, the same pattern CollectionsPage uses.
   const fetchPtps = useCallback(async () => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -205,11 +201,8 @@ export default function PtpsPage() {
       params.append('page', String(page));
       params.append('size', String(PAGE_SIZE));
       if (filterStatus)   params.append('status', filterStatus);
-      if (searchTerm)     params.append('searchTerm', searchTerm);
-      if (organizationId) params.append('orgId', organizationId);
       if (isAgentView && user?.agentId) params.append('agentId', user.agentId);
-      const endpoint = isBankView ? '/api/v1/ptps/bank' : '/api/v1/ptps';
-      const { data } = await apiClient.get(endpoint, { params, signal: controller.signal });
+      const { data } = await apiClient.get('/api/v1/ptps', { params, signal: controller.signal });
       const response = unwrapApiResponse<PagedResponse<PtpResponse>>(data);
       setPtps(response.content);
       setTotalPages(response.totalPages);
@@ -219,17 +212,26 @@ export default function PtpsPage() {
     } finally {
       if (abortRef.current === controller) setLoading(false);
     }
-  }, [page, filterStatus, searchTerm, organizationId, isBankView, isAgentView, user?.agentId]);
+  }, [page, filterStatus, isAgentView, user?.agentId]);
 
   useEffect(() => { fetchPtps(); }, [fetchPtps]);
+
+  const visiblePtps = useMemo(() => {
+    const q = searchInput.trim().toLowerCase();
+    if (!q) return ptps;
+    return ptps.filter(p => {
+      const fields = [p.loanNumber, p.borrowerName, p.agentName];
+      return fields.some(f => typeof f === 'string' && f.toLowerCase().includes(q));
+    });
+  }, [ptps, searchInput]);
 
   const statusCounts = ptps.reduce(
     (acc, p) => ({ ...acc, [p.status]: (acc[p.status] || 0) + 1 }),
     {} as Record<string, number>,
   );
 
-  const hasFilters = Boolean(searchTerm || filterStatus);
-  const clearFilters = () => { setSearchInput(''); setSearchTerm(''); setFilterStatus(''); setPage(0); };
+  const hasFilters = Boolean(searchInput || filterStatus);
+  const clearFilters = () => { setSearchInput(''); setFilterStatus(''); setPage(0); };
 
   const handleExport = useCallback(async (fromDate?: string, toDate?: string) => {
     setExporting(true); setShowExportMenu(false);
@@ -412,16 +414,18 @@ export default function PtpsPage() {
                         <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 22, width: 28, borderRadius: 6, marginLeft: 'auto', display: 'block' }} /></td>
                       </tr>
                     ))
-                  ) : ptps.length === 0 ? (
+                  ) : visiblePtps.length === 0 ? (
                     <tr>
                       <td colSpan={8}>
                         <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
                           <Phone size={32} className="ds-empty-icon" />
                           <span className="ds-empty-title">No PTP records found</span>
                           <span className="ds-empty-sub">
-                            {hasFilters
-                              ? 'No matches for the current filters. Try clearing them.'
-                              : 'PTPs will appear here once field officers record promise-to-pay commitments from borrowers.'}
+                            {searchInput
+                              ? 'Nothing on the current page matches your search. Clear the search, or change page / status filters.'
+                              : hasFilters
+                                ? 'No matches for the current filters. Try clearing them.'
+                                : 'PTPs will appear here once field officers record promise-to-pay commitments from borrowers.'}
                           </span>
                           {hasFilters && (
                             <div className="ds-empty-actions" style={{ marginTop: 12 }}>
@@ -432,7 +436,7 @@ export default function PtpsPage() {
                       </td>
                     </tr>
                   ) : (
-                    ptps.map((ptp, idx) => (
+                    visiblePtps.map((ptp, idx) => (
                       <PtpRow
                         key={ptp.id}
                         ptp={ptp}

@@ -1,29 +1,21 @@
 import axiosInstance from './axiosInstance';
-import type { AssignmentResponse, BulkAssignRequest, ApiResponse, PagedResponse } from '../types';
+import type {
+  AssignmentResponse, BulkAssignRequest, BulkAssignResponse,
+  AgentAssignmentSummary, DateAssignmentSummary, MyAssignedCaseResponse,
+  OptimizeAssignmentOrderRequest, OptimizedAssignmentOrderResponse,
+  ApiResponse, PagedResponse,
+} from '../types';
 
 interface ReassignRequest {
   newAgentId: string;
   assignmentDate: string;
   reason: string;
-}
-
-interface AgentAssignmentSummary {
-  agentId: string;
-  totalAssigned: number;
-  completed: number;
-  pending: number;
-}
-
-interface DateAssignmentSummary {
-  date: string;
-  totalAssignments: number;
-  completed: number;
-  pending: number;
+  priority?: string;
 }
 
 export const assignmentsApi = {
-  bulkAssign: async (data: BulkAssignRequest): Promise<any> => {
-    const response = await axiosInstance.post<ApiResponse<any>>('/api/v1/assignments/bulk', data);
+  bulkAssign: async (data: BulkAssignRequest): Promise<BulkAssignResponse> => {
+    const response = await axiosInstance.post<ApiResponse<BulkAssignResponse>>('/api/v1/assignments/bulk', data);
     return response.data.data;
   },
 
@@ -59,13 +51,15 @@ export const assignmentsApi = {
     return response.data.data;
   },
 
-  getAgentSummary: async (agentId: string, date?: string, orgId?: string): Promise<AgentAssignmentSummary> => {
+  /** LEADS-only. `date` is required by the server (no default). */
+  getAgentSummary: async (agentId: string, date: string, orgId?: string): Promise<AgentAssignmentSummary> => {
     const response = await axiosInstance.get<ApiResponse<AgentAssignmentSummary>>(`/api/v1/assignments/summary/agent/${agentId}`, {
       params: { date, orgId },
     });
     return response.data.data;
   },
 
+  /** LEADS-only. `date` is required by the server (no default). */
   getDateSummary: async (date: string, orgId?: string): Promise<DateAssignmentSummary> => {
     const response = await axiosInstance.get<ApiResponse<DateAssignmentSummary>>('/api/v1/assignments/summary/date', {
       params: { date, orgId },
@@ -73,7 +67,8 @@ export const assignmentsApi = {
     return response.data.data;
   },
 
-  getAgentCapacity: async (agentId: string, date?: string, orgId?: string): Promise<number> => {
+  /** LEADS-only. `date` is required by the server (no default). */
+  getAgentCapacity: async (agentId: string, date: string, orgId?: string): Promise<number> => {
     const response = await axiosInstance.get<ApiResponse<number>>(`/api/v1/assignments/capacity/agent/${agentId}`, {
       params: { date, orgId },
     });
@@ -90,23 +85,25 @@ export const assignmentsApi = {
     return active;
   },
 
+  /** Any authenticated caller — server scopes to the caller's own active cases. */
+  getMyActiveCases: async (page = 0, size = 20): Promise<PagedResponse<MyAssignedCaseResponse>> => {
+    const response = await axiosInstance.get<ApiResponse<PagedResponse<MyAssignedCaseResponse>>>('/api/v1/assignments/my-cases', {
+      params: { page, size },
+    });
+    return response.data.data;
+  },
+
+  /** ORG_ADMIN / PLATFORM_ADMIN only — geo-aware visit-order optimizer. */
+  optimizeOrder: async (data: OptimizeAssignmentOrderRequest): Promise<OptimizedAssignmentOrderResponse> => {
+    const response = await axiosInstance.post<ApiResponse<OptimizedAssignmentOrderResponse>>('/api/v1/assignments/optimize-order', data);
+    return response.data.data;
+  },
+
   cancelAssignment: async (id: string): Promise<void> => {
     await axiosInstance.patch(`/api/v1/assignments/${id}/cancel`);
   },
 
   deleteAssignment: async (id: string): Promise<void> => {
     await axiosInstance.delete(`/api/v1/assignments/${id}`);
-  },
-
-  getBankAssignments: async (params: {
-    orgId?: string;
-    agentId?: string;
-    date?: string;
-    status?: string;
-    page?: number;
-    size?: number;
-  }): Promise<PagedResponse<any>> => {
-    const response = await axiosInstance.get<ApiResponse<PagedResponse<any>>>('/api/v1/assignments/bank', { params });
-    return response.data.data;
   },
 };

@@ -125,6 +125,14 @@
   color: var(--text-on-solid);
   box-shadow: var(--shadow-sm);
 }
+.db-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
 .db-page-header-left {
   display: flex;
   align-items: center;

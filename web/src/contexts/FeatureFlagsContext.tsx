@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { featureFlagsApi, type FeatureFlag } from '../api/featureFlagsApi';
+import { featureFlagsApi, type ResolvedFeatureFlag } from '../api/featureFlagsApi';
 import { useAuth } from '../AuthContext';
 
 const FLAG_REQUIRED_PLAN: Record<string, string> = {
@@ -9,7 +9,7 @@ const FLAG_REQUIRED_PLAN: Record<string, string> = {
 };
 
 interface FeatureFlagsContextValue {
-  flags: FeatureFlag[];
+  flags: ResolvedFeatureFlag[];
   loading: boolean;
   isEnabled: (flagKey: string) => boolean;
   requiredPlan: (flagKey: string) => string;
@@ -26,7 +26,7 @@ const FeatureFlagsContext = createContext<FeatureFlagsContextValue>({
 
 export function FeatureFlagsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [flags, setFlags] = useState<FeatureFlag[]>([]);
+  const [flags, setFlags] = useState<ResolvedFeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isPlatformAdmin = user?.roles?.some(r =>

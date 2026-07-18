@@ -1,6 +1,9 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse, UserResponse } from '../types';
 
+/** Mirrors server OrganizationSummaryResponse exactly — no admin first/last name here
+ *  (the backend keeps the list endpoint cheap); fetch full admin details via
+ *  platformApi.getOrganizationUsers(id) when a single org's admin needs editing. */
 export interface OrganizationSummary {
   id: string;
   name: string;
@@ -10,8 +13,6 @@ export interface OrganizationSummary {
   createdAt: string;
   userCount: number;
   orgAdminEmail?: string;
-  orgAdminFirstName?: string;
-  orgAdminLastName?: string;
 }
 
 export interface CreateOrganizationRequest {
@@ -45,6 +46,13 @@ export const platformApi = {
   getOrganization: async (id: string): Promise<OrganizationSummary> => {
     const r = await axiosInstance.get<ApiResponse<OrganizationSummary>>(
       `/api/v1/platform/organizations/${id}`,
+    );
+    return r.data.data;
+  },
+
+  getOrganizationUsers: async (id: string): Promise<UserResponse[]> => {
+    const r = await axiosInstance.get<ApiResponse<UserResponse[]>>(
+      `/api/v1/platform/organizations/${id}/users`,
     );
     return r.data.data;
   },
@@ -115,6 +123,12 @@ export const platformApi = {
     return r.data.data;
   },
 
+  // NOTE: the four methods below (listSubscriptions/getRevenueTrend/listInvoices/changePlan)
+  // call /api/v1/platform/subscriptions/* which does NOT exist on the backend — see
+  // BACKEND-REQUESTS.md BCR-5. SubscriptionController.java only exposes self-service
+  // /api/v1/subscription for the caller's own org, with no platform-wide admin surface.
+  // Left as-is (out of this module's controller scope to rebuild); PlatformSubscriptions.tsx
+  // and PlatformRevenueTrendPage.tsx will 404 until BCR-5 is resolved.
   listSubscriptions: async (): Promise<PlatformSubRow[]> => {
     const r = await axiosInstance.get<ApiResponse<PlatformSubRow[]>>(
       '/api/v1/platform/subscriptions',

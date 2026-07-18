@@ -1,9 +1,10 @@
 import axiosInstance from './axiosInstance';
 import type { AllocationResponse, ApiResponse, PagedResponse } from '../types';
 
+/** Matches server's UpdateAllocationStatusRequest — no `notes` field exists server-side. */
 interface UpdateAllocationStatusRequest {
   status: string;
-  notes?: string;
+  assignedToUserId?: string;
 }
 
 export const allocationsApi = {
@@ -71,10 +72,11 @@ export const allocationsApi = {
   },
 
   /** Directly reassign one allocation to a different FO (no Assignment entity required). */
-  reassignToFo: async (allocationId: string, assignedToUserId: string): Promise<void> => {
-    await axiosInstance.post('/api/v1/allocations/bulk-assign', {
+  reassignToFo: async (allocationId: string, assignedToUserId: string): Promise<AllocationResponse[]> => {
+    const response = await axiosInstance.post<ApiResponse<AllocationResponse[]>>('/api/v1/allocations/bulk-assign', {
       allocationIds: [allocationId],
       assignedToUserId,
     });
+    return response.data.data;
   },
 };

@@ -1,45 +1,48 @@
 import axiosInstance from './axiosInstance';
-import type { ApiResponse, PagedResponse } from '../types';
+import type { ApiResponse } from '../types';
 
-export type RagSourceType = 'POLICY' | 'SCRIPT' | 'FAQ' | 'PROCEDURE' | 'OTHER';
-export type RagStatus = 'PENDING' | 'PROCESSING' | 'ACTIVE' | 'FAILED';
+/** Mirrors com.recoverpro.server.enums.RagDocumentStatus. */
+export type RagStatus = 'PENDING' | 'PROCESSING' | 'ACTIVE' | 'FAILED' | 'SUPERSEDED';
 
 export interface RagDocumentResponse {
   id: string;
-  organizationId: string;
   title: string;
-  sourceType: RagSourceType;
+  description?: string;
+  contentType?: string;
   status: RagStatus;
-  chunkCount: number;
-  createdBy: string;
+  errorMessage?: string;
+  uploadedByUserId?: string;
+  supersedesDocumentId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface UploadDocumentRequest {
-  title: string;
-  sourceType: RagSourceType;
-  content: string;
-}
-
 export const ragApi = {
-  list: async (page = 0, size = 20): Promise<PagedResponse<RagDocumentResponse>> => {
-    const response = await axiosInstance.get<ApiResponse<PagedResponse<RagDocumentResponse>>>(
-      '/api/v1/lucien/rag/documents',
-      { params: { page, size } },
+  /** GET /api/v1/admin/rag-documents — returns a plain (unpaged) list. */
+  list: async (): Promise<RagDocumentResponse[]> => {
+    const response = await axiosInstance.get<ApiResponse<RagDocumentResponse[]>>(
+      '/api/v1/admin/rag-documents',
     );
     return response.data.data;
   },
 
-  upload: async (body: UploadDocumentRequest): Promise<RagDocumentResponse> => {
+  /** POST /api/v1/admin/rag-documents — multipart/form-data (file, title, description). */
+  upload: async (file: File, title: string, description?: string): Promise<RagDocumentResponse> => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('title', title);
+    if (description) form.append('description', description);
     const response = await axiosInstance.post<ApiResponse<RagDocumentResponse>>(
-      '/api/v1/lucien/rag/documents',
-      body,
+      '/api/v1/admin/rag-documents',
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
     );
     return response.data.data;
   },
 
-  delete: async (id: string): Promise<void> => {
-    await axiosInstance.delete(`/api/v1/lucien/rag/documents/${id}`);
+  /** DELETE /api/v1/admin/rag-documents/{id} — soft "supersede" (deactivate), not a hard delete. */
+  supersede: async (id: string): Promise<string> => {
+    const response = await axiosInstance.delete<ApiResponse<string>>(`/api/v1/admin/rag-documents/${id}`);
+    return response.data.data;
   },
 };

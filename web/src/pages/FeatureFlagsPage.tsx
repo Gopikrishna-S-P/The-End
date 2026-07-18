@@ -72,14 +72,17 @@ export default function FeatureFlagsPage() {
   const handleToggle = async (flag: FeatureFlag) => {
     setTogglingKey(flag.flagKey); setError(null);
     try {
-      const updated = await featureFlagsApi.upsert({
+      await featureFlagsApi.upsert({
         organizationId: flag.organizationId,
         flagKey: flag.flagKey,
         enabled: !flag.enabled,
         description: flag.description ?? undefined,
       });
+      // Backend returns a confirmation message, not the updated flag — update locally.
       setFlags((prev) => prev.map((f) =>
-        f.flagKey === flag.flagKey && f.organizationId === flag.organizationId ? updated : f,
+        f.flagKey === flag.flagKey && f.organizationId === flag.organizationId
+          ? { ...f, enabled: !flag.enabled }
+          : f,
       ));
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to toggle flag.');

@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { allocationsApi } from '../api/allocationsApi';
 import { assignmentsApi } from '../api/assignmentsApi';
+import { usePermissions } from '../hooks/usePermissions';
 import type { AllocationResponse, UserResponse } from '../types';
-import { ArrowRightLeft, CheckCircle2, ChevronLeft, ChevronRight, Loader2, UserCheck } from 'lucide-react';
+import { ArrowRightLeft, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Trash2, UserCheck, X } from 'lucide-react';
 import { StatusPill } from './LoansHelpers';
 import './Dashboard.css';
 
@@ -35,12 +36,17 @@ const fadeIn: Variants = {
 };
 
 export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, onOpenReassign, externalSearch = '' }: Props) {
+  const { hasAnyRole } = usePermissions();
+  const canDelete = hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN');
+
   const [assignedCases,      setAssignedCases]      = useState<AllocationResponse[]>([]);
   const [assignedTotal,      setAssignedTotal]      = useState(0);
   const [assignedTotalPages, setAssignedTotalPages] = useState(0);
   const [assignedPage,       setAssignedPage]       = useState(0);
   const [assignedLoading,    setAssignedLoading]    = useState(false);
   const [fetchingFor,        setFetchingFor]        = useState<string | null>(null);
+  const [confirmDeleteId,    setConfirmDeleteId]    = useState<string | null>(null);
+  const [deletingId,         setDeletingId]         = useState<string | null>(null);
 
   const loadAssigned = useCallback(async (page = assignedPage) => {
     if (!selectedFo) {
@@ -77,6 +83,18 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
     } catch {
       onFeedback({ kind: 'err', msg: 'Could not load assignment details. Please try again.' });
     } finally { setFetchingFor(null); }
+  };
+
+  const confirmDelete = async (caseId: string) => {
+    setDeletingId(caseId);
+    try {
+      await allocationsApi.deleteAllocation(caseId);
+      onFeedback({ kind: 'ok', msg: 'Case deleted.' });
+      setConfirmDeleteId(null);
+      loadAssigned();
+    } catch {
+      onFeedback({ kind: 'err', msg: 'Could not delete this case. Please try again.' });
+    } finally { setDeletingId(null); }
   };
 
   return (

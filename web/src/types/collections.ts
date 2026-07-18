@@ -1,13 +1,12 @@
 import type { ApprovalAction, ApprovalStatus, CollectionStatus, PaymentMode, PtpStatus, VisitStatus, Role } from "./core";
 
+/** Matches server's CollectionDocumentResponse exactly — no collectionId/fileSizeBytes/uploadedBy fields exist server-side. */
 export interface CollectionDocumentResponse {
   id: string;
-  collectionId: string;
-  originalFilename: string;
-  contentType: string;
-  fileSizeBytes: number;
-  uploadedBy: string;
-  createdAt: string;
+  fileName: string;
+  fileUrl: string;
+  documentType?: string;
+  uploadedAt: string;
 }
 
 export interface CollectionResponse {
@@ -61,6 +60,46 @@ export interface SubmitCollectionRequest {
 export interface ApprovalRequest {
   action: ApprovalAction;
   remarks?: string;
+}
+
+export interface DepositRequest {
+  notes?: string;
+}
+
+/** Matches server's AgentCollectionReport exactly. */
+export interface AgentCollectionReport {
+  agentId: string;
+  reportDate: string;
+  isDailyReport: boolean;
+  totalSubmissions: number;
+  totalApproved: number;
+  totalRejected: number;
+  totalDeposited: number;
+  totalPending: number;
+  totalAmountSubmitted: number;
+  totalAmountApproved: number;
+  totalAmountDeposited: number;
+  countByPaymentMode: Partial<Record<PaymentMode, number>>;
+  amountByPaymentMode: Partial<Record<PaymentMode, number>>;
+  countByStatus: Partial<Record<CollectionStatus, number>>;
+}
+
+export interface LedgerBalanceResponse {
+  organizationId: string;
+  asOf: string;
+  accounts: Array<{ account: string; totalDebits: number; totalCredits: number }>;
+}
+
+/** Matches server's PtpFilterRequest query-bindable fields exactly (GET /api/v1/ptps). */
+export interface PtpFilterRequest {
+  allocationId?: string;
+  agentId?: string;
+  status?: PtpStatus;
+  promisedDateFrom?: string;
+  promisedDateTo?: string;
+  loanNumber?: string;
+  borrowerName?: string;
+  reminderSent?: boolean;
 }
 
 export interface PtpResponse {

@@ -10,6 +10,7 @@ export interface ColumnSchemaResponse {
   isRequired: boolean;
   isSearchable: boolean;
   sortOrder: number;
+  validationRules?: Record<string, unknown>;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -23,6 +24,7 @@ export interface ColumnSchemaRequest {
   isRequired?: boolean;
   isSearchable?: boolean;
   sortOrder?: number;
+  validationRules?: Record<string, unknown>;
 }
 
 export const columnSchemasApi = {

@@ -7,9 +7,12 @@ export const filesApi = {
     formData.append('file', file);
     formData.append('organizationId', organizationId);
 
-    const response = await axiosInstance.post<ApiResponse<FileUploadResponse>>('/api/v1/file-uploads', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // No explicit Content-Type here: axios only strips a caller-set header when it
+    // matches "application/json" (see axios transformRequest). A literal
+    // 'multipart/form-data' value has no boundary parameter and is sent verbatim,
+    // which breaks Spring's multipart parser. Let axios/the browser generate the
+    // header (with boundary) for FormData bodies.
+    const response = await axiosInstance.post<ApiResponse<FileUploadResponse>>('/api/v1/file-uploads', formData);
     return response.data.data;
   },
 

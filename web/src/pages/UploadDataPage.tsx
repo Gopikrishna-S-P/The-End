@@ -50,16 +50,19 @@ export default function UploadDataPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/bank') ? '/bank' : '/app';
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyRole } = usePermissions();
   const canCreateRow = hasPermission('ROW_CREATE');
   const canUpdateRow = hasPermission('ROW_UPDATE');
   const canDeleteRow = hasPermission('ROW_DELETE');
   const canCreateCol = hasPermission('COLUMN_CREATE');
   const canDeleteCol = hasPermission('COLUMN_DELETE');
+  // Mirrors UploadDataController's class-level @PreAuthorize exactly.
+  const canView = hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL');
 
   const [response,         setResponse]         = useState<UploadDataResponse | null>(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState<string | null>(null);
+  const [saveError,        setSaveError]        = useState<string | null>(null);
   const [page,             setPage]             = useState(0);
   const [editingCell,      setEditingCell]      = useState<EditingCell | null>(null);
   const [savingCell,       setSavingCell]       = useState(false);
@@ -77,7 +80,7 @@ export default function UploadDataPage() {
   const hasDraftChanges = Object.keys(pendingUpdates).length > 0 || pendingDeletes.size > 0;
 
   const load = useCallback(async () => {
-    if (!uploadId) return;
+    if (!uploadId || !canView) { setLoading(false); return; }
     setLoading(true); setError(null);
     try {
       const data = await uploadDataApi.getRows(uploadId, page, PAGE_SIZE);
@@ -85,7 +88,7 @@ export default function UploadDataPage() {
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to load data');
     } finally { setLoading(false); }
-  }, [uploadId, page]);
+  }, [uploadId, page, canView]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -120,21 +123,22 @@ export default function UploadDataPage() {
 
   const handleSaveDrafts = async () => {
     if (!uploadId) return;
-    setIsSavingAll(true);
+    setIsSavingAll(true); setSaveError(null);
     try {
       // Run updates
       const updatePromises = Object.entries(pendingUpdates).map(([rId, data]) => uploadDataApi.updateRow(uploadId, rId, data));
       // Run deletes
       const deletePromises = Array.from(pendingDeletes).map(rId => uploadDataApi.deleteRow(uploadId, rId));
-      
+
       await Promise.all([...updatePromises, ...deletePromises]);
-      
+
       setPendingUpdates({});
       setPendingDeletes(new Set());
       await load(); // refresh from server to ensure perfect sync
-    } catch (err) {
-      console.error(err);
-      // Ideally show a toast here
+    } catch (err: any) {
+      // Draft state is intentionally left intact on failure so the user can
+      // retry without re-entering their edits — only surface what broke.
+      setSaveError(err?.response?.data?.message || 'Failed to save changes. Your edits are unsaved — retry or discard.');
     } finally {
       setIsSavingAll(false);
     }
@@ -143,6 +147,7 @@ export default function UploadDataPage() {
   const handleDiscardDrafts = () => {
     setPendingUpdates({});
     setPendingDeletes(new Set());
+    setSaveError(null);
     load(); // revert to server state
   };
 
@@ -156,6 +161,20 @@ export default function UploadDataPage() {
   const columns = response?.columns ?? [];
   // Filter out pending deleted rows visually
   const rows = (response?.rows ?? []).filter(r => !pendingDeletes.has(r.id));
+
+  if (!canView) {
+    return (
+      <div className="db-root">
+        <div className="db-content">
+          <div className="ds-empty" style={{ padding: '80px 0' }}>
+            <Database size={32} className="ds-empty-icon" />
+            <span className="ds-empty-title">Restricted to team leads and above</span>
+            <span className="ds-empty-sub">Upload row data is visible to Team Leads, Managers, and Org Admins.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="db-root">
@@ -212,7 +231,13 @@ export default function UploadDataPage() {
               )}
             </div>
           </div>
-          
+
+          {saveError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 8, background: 'var(--danger-subtle)', border: '1px solid color-mix(in srgb, var(--danger) 30%, var(--border))', color: 'var(--danger)', fontSize: 12.5, marginBottom: 12 }}>
+              <AlertCircle size={14} /><span>{saveError}</span>
+            </div>
+          )}
+
           <div className="db-grid">
             <div className="db-span-12">
               <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', padding: 0, height: 'calc(100vh - 180px)' }}>

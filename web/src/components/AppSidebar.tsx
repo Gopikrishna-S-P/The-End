@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as RMouseEvent } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { Lock, LogOut, X as XIcon, ChevronRight } from 'lucide-react';
+import { Lock, LogOut, X as XIcon, ChevronRight, PanelLeft } from 'lucide-react';
 import { Logo } from './Logo';
 import { prefetchRoute } from '../utils/routePrefetch';
 import { useT } from '../utils/i18n';
@@ -115,9 +115,36 @@ export default function AppSidebar({
       aria-label="Main sidebar"
     >
       <div className="asb-header">
-        <Link to="/app/dashboard" className="asb-header-logo--btn" aria-label="Recoverpro — Dashboard">
-          <Logo height={34} />
-        </Link>
+        {expanded ? (
+          <>
+            <Link to="/app/dashboard" className="asb-header-logo--btn" aria-label="Recoverpro — Dashboard">
+              <Logo height={34} />
+            </Link>
+            {onToggleCollapse && (
+              <button
+                type="button"
+                className="asb-collapse-toggle"
+                onClick={onToggleCollapse}
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+              >
+                <PanelLeft size={16} aria-hidden="true" />
+              </button>
+            )}
+          </>
+        ) : (
+          onToggleCollapse && (
+            <button
+              type="button"
+              className="asb-collapse-toggle"
+              onClick={onToggleCollapse}
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <PanelLeft size={16} aria-hidden="true" />
+            </button>
+          )
+        )}
       </div>
       {/* ── Org workspace anchor (Notion / Shopify pattern) ── */}
       {expanded && user?.organizationName && (

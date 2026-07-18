@@ -1,6 +1,11 @@
 import axiosInstance from './axiosInstance';
 import type { CollectionDocumentResponse, ApiResponse } from '../types';
 
+/**
+ * Collection payment-proof documents. All routes are nested under
+ * /api/v1/collections/{collectionId}/documents on the server (DocumentController) —
+ * documentId alone is never enough to address a document.
+ */
 export const documentsApi = {
   uploadDocument: async (collectionId: string, file: File): Promise<CollectionDocumentResponse> => {
     const formData = new FormData();
@@ -17,14 +22,14 @@ export const documentsApi = {
     return response.data.data;
   },
 
-  downloadDocument: async (documentId: string): Promise<Blob> => {
-    const response = await axiosInstance.get(`/api/v1/collections/documents/${documentId}/download`, {
+  downloadDocument: async (collectionId: string, documentId: string): Promise<Blob> => {
+    const response = await axiosInstance.get(`/api/v1/collections/${collectionId}/documents/${documentId}/download`, {
       responseType: 'blob',
     });
     return response.data;
   },
 
-  deleteDocument: async (documentId: string): Promise<void> => {
-    await axiosInstance.delete(`/api/v1/collections/documents/${documentId}`);
+  deleteDocument: async (collectionId: string, documentId: string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/collections/${collectionId}/documents/${documentId}`);
   },
 };

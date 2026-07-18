@@ -1,3 +1,37 @@
+export type ShiftStatus = 'ACTIVE' | 'ENDED' | 'AUTO_ENDED';
+
+export interface AgentShiftResponse {
+  id: string;
+  agentId: string;
+  organizationId: string;
+  startedAt: string;
+  endedAt?: string;
+  status: ShiftStatus;
+}
+
+export interface StartShiftRequest {
+  lat?: number;
+  lng?: number;
+}
+
+export interface SosRequest {
+  agentId: string;
+  lat?: number;
+  lng?: number;
+  accuracy?: number;
+  notes?: string;
+}
+
+export interface LocationPingRequest {
+  agentId: string;
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  batteryLevel?: number;
+  mockLocationDetected?: boolean;
+  recordedAt?: string;
+}
+
 export interface AgentLiveStatusResponse {
   shiftId: string;
   agentId: string;

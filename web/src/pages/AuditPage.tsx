@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import axiosInstance from '../api/axiosInstance';
+import { useAuth } from '../AuthContext';
+import { auditApi } from '../api/auditApi';
 import { visitsApi } from '../api/visitsApi';
 import { collectionsApi } from '../api/collectionsApi';
 import { ptpsApi } from '../api/ptpsApi';
-import type { AuditLogResponse, ApiResponse, PagedResponse } from '../types';
-import { RefreshCw, User, FileText, ChevronLeft, ChevronRight, AlertCircle, SlidersHorizontal, X, Calendar } from 'lucide-react';
+import type { UserActionAuditResponse } from '../types';
+import { RefreshCw, User, FileText, ShieldCheck, AlertCircle, SlidersHorizontal, X, Calendar } from 'lucide-react';
 import {
   type OrgEvent, type EventKind, type FilterKind,
   fmtDT, fmtINR, fromAudit, fromVisit, fromCollection, fromPtp,
-  KIND_META, dotVariant, PAGE_SIZE, FETCH_SIZE,
+  KIND_META, dotVariant, FETCH_SIZE,
 } from './AuditHelpers';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import '../styles/AuditPage.css';
 import './Dashboard.css';
@@ -39,7 +41,14 @@ function istDateOnly(s: string): Date {
   return new Date(`${s}T00:00:00+05:30`);
 }
 
+type MainTab = 'activity' | 'admin';
+
 export default function AuditPage() {
+  const { user } = useAuth();
+  const isPlatformAdmin = user?.roles?.some(r => r.name === 'ROLE_PLATFORM_ADMIN' || r.name === 'PLATFORM_ADMIN') ?? false;
+
+  const [tab, setTab] = useState<MainTab>('activity');
+
   const [events,  setEvents]  = useState<OrgEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
@@ -53,6 +62,13 @@ export default function AuditPage() {
   const [tempFromDate, setTempFromDate] = useState<string>('');
   const [tempToDate,   setTempToDate]   = useState<string>('');
 
+  // Admin actions tab (PLATFORM_ADMIN only) — GET /api/v1/audit-logs/actions
+  const [adminActions,    setAdminActions]    = useState<UserActionAuditResponse[]>([]);
+  const [adminPage,       setAdminPage]       = useState(0);
+  const [adminTotalPages, setAdminTotalPages] = useState(0);
+  const [adminLoading,    setAdminLoading]    = useState(true);
+  const [adminError,      setAdminError]      = useState<string | null>(null);
+
   const openFilterModal = () => {
     setTempFilter(filter);
     setTempFromDate(fromDate);
@@ -64,13 +80,13 @@ export default function AuditPage() {
     setLoading(true); setError(null);
     try {
       const [auditRes, visitsRes, colsRes, ptpsRes] = await Promise.allSettled([
-        axiosInstance.get<ApiResponse<PagedResponse<AuditLogResponse>>>('/api/v1/audit-logs', { params: { page: 0, size: FETCH_SIZE } }),
+        auditApi.getByOrganization(0, FETCH_SIZE),
         visitsApi.listByOrg(0, FETCH_SIZE),
         collectionsApi.listCollections({ page: 0, size: FETCH_SIZE }),
         ptpsApi.listPtps({ page: 0, size: FETCH_SIZE }),
       ]);
       const all: OrgEvent[] = [];
-      if (auditRes.status === 'fulfilled')  (auditRes.value.data?.data?.content ?? []).forEach(l => all.push(fromAudit(l)));
+      if (auditRes.status === 'fulfilled')  (auditRes.value.content ?? []).forEach(l => all.push(fromAudit(l)));
       if (visitsRes.status === 'fulfilled') (visitsRes.value.content ?? []).forEach(v => all.push(fromVisit(v)));
       if (colsRes.status === 'fulfilled')   (colsRes.value.content ?? []).forEach(c => all.push(fromCollection(c)));
       if (ptpsRes.status === 'fulfilled')   (ptpsRes.value.content ?? []).forEach(p => all.push(fromPtp(p)));
@@ -82,7 +98,21 @@ export default function AuditPage() {
     } finally { setLoading(false); }
   }, []);
 
+  const fetchAdminActions = useCallback(async (page: number) => {
+    setAdminLoading(true); setAdminError(null);
+    try {
+      const paged = await auditApi.getAllActionLogs(page, 20);
+      setAdminActions(paged.content);
+      setAdminTotalPages(paged.totalPages);
+      setAdminPage(paged.page);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setAdminError(e?.response?.data?.message ?? 'Failed to load admin actions');
+    } finally { setAdminLoading(false); }
+  }, []);
+
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { if (isPlatformAdmin && tab === 'admin') fetchAdminActions(0); }, [isPlatformAdmin, tab, fetchAdminActions]);
 
   const filtered = events.filter(e => {
     if (filter !== 'all' && e.kind !== filter) return false;
@@ -153,25 +183,96 @@ export default function AuditPage() {
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {isPlatformAdmin && (
+            <div className="db-trend-range-toggle" style={{ margin: 0 }}>
+              <button type="button" onClick={() => setTab('activity')}
+                className={`db-trend-range-btn${tab === 'activity' ? ' is-active' : ''}`}
+                role="tab" aria-selected={tab === 'activity'}>
+                <FileText size={13} style={{ marginRight: 6 }} /> Activity
+              </button>
+              <button type="button" onClick={() => setTab('admin')}
+                className={`db-trend-range-btn${tab === 'admin' ? ' is-active' : ''}`}
+                role="tab" aria-selected={tab === 'admin'}>
+                <ShieldCheck size={13} style={{ marginRight: 6 }} /> Admin Actions
+              </button>
+            </div>
+          )}
+          {tab === 'activity' && (
+            <button
+              type="button"
+              onClick={openFilterModal}
+              className="ds-btn is-secondary"
+              style={{ position: 'relative' }}
+            >
+              <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+              Filter
+              {(filter !== 'all' || fromDate || toDate) && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
+            </button>
+          )}
           <button
             type="button"
-            onClick={openFilterModal}
-            className="ds-btn is-secondary"
-            style={{ position: 'relative' }}
-          >
-            <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
-            Filter
-            {(filter !== 'all' || fromDate || toDate) && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
-          </button>
-          <button
-            type="button" onClick={() => { fetchAll(); }} disabled={loading}
+            onClick={() => { tab === 'activity' ? fetchAll() : fetchAdminActions(adminPage); }}
+            disabled={tab === 'activity' ? loading : adminLoading}
             className="ds-btn is-secondary" aria-label="Refresh" title="Refresh"
           >
-            <RefreshCw size={14} className={loading ? 'ds-spin' : ''} style={{ marginRight: 6 }} /> Refresh
+            <RefreshCw size={14} className={(tab === 'activity' ? loading : adminLoading) ? 'ds-spin' : ''} style={{ marginRight: 6 }} /> Refresh
           </button>
         </div>
       </div>
 
+      {tab === 'admin' ? (
+        <div className="dd-shell" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1, minHeight: 0 }}>
+          {adminError && (
+            <div className="db-error-banner" role="alert">
+              <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
+              <div className="db-error-body"><span className="db-error-title">{adminError}</span></div>
+              <button className="db-error-retry" onClick={() => fetchAdminActions(adminPage)} aria-label="Retry"><RefreshCw size={14} /></button>
+            </div>
+          )}
+          <div className="ds-table-card">
+            <div className="ds-table-wrap">
+              <table className="ds-table">
+                <thead>
+                  <tr><th>User</th><th>Action</th><th>Details</th><th>When</th></tr>
+                </thead>
+                <tbody>
+                  {adminLoading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} style={{ opacity: 1 - i * 0.08 }}>
+                        {Array.from({ length: 4 }).map((__, j) => (
+                          <td key={j}><div className="ds-skel" style={{ height: 14, width: '75%' }} /></td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : adminActions.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="ds-table-empty">
+                        <div className="ds-empty">
+                          <ShieldCheck size={20} className="ds-empty-icon" />
+                          <span className="ds-empty-title">No admin actions recorded</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    adminActions.map(a => (
+                      <tr key={a.id}>
+                        <td className="is-mono is-muted">{a.userEmail}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--ink-primary)' }}>{a.action.replace(/_/g, ' ')}</td>
+                        <td style={{ color: 'var(--ink-secondary)' }}>{a.details || '—'}</td>
+                        <td className="is-mono is-muted" style={{ whiteSpace: 'nowrap' }}>{fmtDT(a.createdAt)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {!adminLoading && adminTotalPages > 1 && (
+              <Pagination currentPage={adminPage} totalPages={adminTotalPages}
+                onPageChange={p => fetchAdminActions(p)} isLoading={adminLoading} />
+            )}
+          </div>
+        </div>
+      ) : (
       <div className="dd-shell" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1, minHeight: 0 }}>
         <AnimatePresence>
           {(filter !== 'all' || fromDate || toDate) && (
@@ -312,6 +413,7 @@ export default function AuditPage() {
           </div>
         </motion.div>
       </div>
+      )}
 
       <AnimatePresence>
         {filterOpen && (

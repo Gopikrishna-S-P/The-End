@@ -1,24 +1,31 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse } from '../types';
 
+/**
+ * NOTE: the "friday" path segment below is intentional — it is a legacy
+ * naming choice preserved server-side (SystemPromptAdminController maps
+ * to /api/v1/friday/admin/prompts). Do not "fix" it to say "lucien".
+ */
 export interface SystemPromptResponse {
+  id: string;
   promptKey: string;
-  promptText: string;
-  context?: string;
+  promptTemplate: string;
   version: number;
+  isActive: boolean;
+  description?: string;
+  updatedBy?: string;
   updatedAt: string;
-  updatedBy: string;
 }
 
 export interface UpdateSystemPromptRequest {
-  promptText: string;
-  context?: string;
+  promptTemplate: string;
+  description?: string;
 }
 
 export const systemPromptApi = {
   get: async (promptKey: string): Promise<SystemPromptResponse> => {
     const response = await axiosInstance.get<ApiResponse<SystemPromptResponse>>(
-      `/api/v1/lucien/admin/prompts/${encodeURIComponent(promptKey)}`,
+      `/api/v1/friday/admin/prompts/${encodeURIComponent(promptKey)}`,
     );
     return response.data.data;
   },
@@ -28,7 +35,7 @@ export const systemPromptApi = {
     body: UpdateSystemPromptRequest,
   ): Promise<SystemPromptResponse> => {
     const response = await axiosInstance.put<ApiResponse<SystemPromptResponse>>(
-      `/api/v1/lucien/admin/prompts/${encodeURIComponent(promptKey)}`,
+      `/api/v1/friday/admin/prompts/${encodeURIComponent(promptKey)}`,
       body,
     );
     return response.data.data;

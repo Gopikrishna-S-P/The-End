@@ -12,10 +12,7 @@
     0
     max(24px, env(safe-area-inset-left));
 
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--tb-bg);
   z-index: var(--z-topbar);
   flex-shrink: 0;
   transition: box-shadow .18s ease, border-color .18s ease;

@@ -4,7 +4,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Building2, Users, ArrowUpRight, ArrowUp, ArrowDown, Minus,
   AlertCircle, RefreshCw, UserPlus, Clock, TrendingDown, CheckCircle,
-  CreditCard, BadgePercent,
+  CreditCard, Upload,
 } from 'lucide-react';
 import { platformApi, type PlatformStats, type PlatformAnalytics, type PlatformTrendPoint } from '../api/platformApi';
 import './Dashboard.css';
@@ -406,6 +406,7 @@ export default function PlatformDashboard() {
   const [stats, setStats]   = useState<PlatformStats | null>(null);
   const [an, setAn]         = useState<PlatformAnalytics | null>(null);
   const [months, setMonths] = useState<3 | 6 | 12>(6);
+  const [kpiView, setKpiView] = useState<'overview' | 'activity'>('overview');
   const [loading, setLoading]   = useState(true);
   const [loadError, setLoadError] = useState(false);
   const aliveRef = useRef(true);
@@ -521,19 +522,55 @@ export default function PlatformDashboard() {
                 </div>
               </div>
 
-              {/* ── KPI band ── */}
-              <motion.div className="db-kpi-band" variants={stagger}>
-                <KpiCard label="Monthly recurring rev" value={fmtINR(mrrAnim)} accent
-                  trend={an.mrrGrowthRate} sparkline={mrrSpark}
-                  onClick={() => navigate('/platform/revenue-trend')} />
-                <KpiCard label="Annual run rate" value={fmtINR(arr)} icon={BadgePercent} />
-                <KpiCard label="Paying orgs" value={fmtNum(an.payingOrgs)} icon={CreditCard}
-                  onClick={() => navigate('/platform/subscriptions')} />
-                <KpiCard label="Total users" value={fmtNum(stats.totalUsers)} icon={Users}
-                  onClick={() => navigate('/platform/setup')} />
-                <KpiCard label="On trial" value={fmtNum(an.trialOrgs)} icon={Clock}
-                  onClick={() => navigate('/platform/subscriptions')} />
-              </motion.div>
+              {/* ── KPI band with view toggle ── */}
+              <div className="db-kpi-header">
+                <h2 className="db-kpi-title">Overview</h2>
+                <div className="db-kpi-toggle" role="group" aria-label="KPI view">
+                  <button type="button"
+                    className={`db-kpi-toggle-btn${kpiView === 'overview' ? ' is-active' : ''}`}
+                    onClick={() => setKpiView('overview')}
+                    aria-pressed={kpiView === 'overview'}>
+                    Overview
+                  </button>
+                  <button type="button"
+                    className={`db-kpi-toggle-btn${kpiView === 'activity' ? ' is-active' : ''}`}
+                    onClick={() => setKpiView('activity')}
+                    aria-pressed={kpiView === 'activity'}>
+                    Activity
+                  </button>
+                </div>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {kpiView === 'overview' ? (
+                  <motion.div key="overview" className="db-kpi-band"
+                    variants={stagger} initial="hidden" animate="show"
+                    exit={{ opacity: 0 }} transition={{ duration: 0.1 }}>
+                    <KpiCard label="Monthly recurring rev" value={fmtINR(mrrAnim)} accent
+                      trend={an.mrrGrowthRate} sparkline={mrrSpark}
+                      onClick={() => navigate('/platform/revenue-trend')} />
+                    <KpiCard label="Paying orgs" value={fmtNum(an.payingOrgs)} icon={CreditCard}
+                      onClick={() => navigate('/platform/subscriptions')} />
+                    <KpiCard label="Total users" value={fmtNum(stats.totalUsers)} icon={Users}
+                      onClick={() => navigate('/platform/setup')} />
+                    <KpiCard label="On trial" value={fmtNum(an.trialOrgs)} icon={Clock}
+                      onClick={() => navigate('/platform/subscriptions')} />
+                  </motion.div>
+                ) : (
+                  <motion.div key="activity" className="db-kpi-band"
+                    variants={stagger} initial="hidden" animate="show"
+                    exit={{ opacity: 0 }} transition={{ duration: 0.1 }}>
+                    <KpiCard label="New orgs this month" value={fmtNum(stats.newOrgsThisMonth)} icon={Building2}
+                      accent onClick={() => navigate('/platform/setup')} />
+                    <KpiCard label="Uploads (7 days)" value={fmtNum(stats.uploadsLast7Days)} icon={Upload}
+                      onClick={() => navigate('/app/uploads')} />
+                    <KpiCard label="Pending user requests" value={fmtNum(stats.pendingUserRequests)} icon={UserPlus}
+                      onClick={() => navigate('/app/users/requests')} />
+                    <KpiCard label="Trials ending soon" value={fmtNum(an.trialsEndingSoon)} icon={Clock}
+                      onClick={() => navigate('/platform/subscriptions')} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* ════ REVENUE ════ */}
               <p className="ds-section-label db-section-label">Subscriptions &amp; revenue</p>

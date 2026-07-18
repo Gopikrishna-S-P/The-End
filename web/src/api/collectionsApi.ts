@@ -1,19 +1,8 @@
 import axiosInstance from './axiosInstance';
-import type { CollectionResponse, SubmitCollectionRequest, ApprovalRequest, ApiResponse, PagedResponse } from '../types';
-
-interface DepositRequest {
-  depositDate: string;
-  depositAmount: number;
-}
-
-interface AgentCollectionReport {
-  agentId: string;
-  agentName: string;
-  date: string;
-  totalCollections: number;
-  totalAmount: number;
-  averagePerCollection: number;
-}
+import type {
+  CollectionResponse, SubmitCollectionRequest, ApprovalRequest, DepositRequest,
+  AgentCollectionReport, LedgerBalanceResponse, ApiResponse, PagedResponse,
+} from '../types';
 
 export const collectionsApi = {
   submitCollection: async (data: SubmitCollectionRequest): Promise<CollectionResponse> => {
@@ -42,25 +31,38 @@ export const collectionsApi = {
     return response.data.data;
   },
 
+  /** Collections tied to the same loan number as this allocation (server groups by loanNumber). */
+  getByAllocation: async (allocationId: string): Promise<CollectionResponse[]> => {
+    const response = await axiosInstance.get<ApiResponse<CollectionResponse[]>>(`/api/v1/collections/allocation/${allocationId}`);
+    return response.data.data;
+  },
+
   approveCollection: async (id: string, data: ApprovalRequest): Promise<CollectionResponse> => {
     const response = await axiosInstance.patch<ApiResponse<CollectionResponse>>(`/api/v1/collections/${id}/approval`, data);
     return response.data.data;
   },
 
+  /** Server's DepositRequest carries only an optional `notes` field — no depositDate/depositAmount. */
   depositCollection: async (id: string, data: DepositRequest): Promise<CollectionResponse> => {
     const response = await axiosInstance.patch<ApiResponse<CollectionResponse>>(`/api/v1/collections/${id}/deposit`, data);
     return response.data.data;
   },
 
   getAgentDailyReport: async (agentId: string, date: string): Promise<AgentCollectionReport> => {
-    const response = await axiosInstance.get<ApiResponse<AgentCollectionReport>>(`/api/v1/reports/agents/${agentId}/collections/daily`, {
+    const response = await axiosInstance.get<ApiResponse<AgentCollectionReport>>(`/api/v1/collections/reports/agent/${agentId}/daily`, {
       params: { date },
     });
     return response.data.data;
   },
 
   getAgentAllTimeReport: async (agentId: string): Promise<AgentCollectionReport> => {
-    const response = await axiosInstance.get<ApiResponse<AgentCollectionReport>>(`/api/v1/reports/agents/${agentId}/collections/summary`);
+    const response = await axiosInstance.get<ApiResponse<AgentCollectionReport>>(`/api/v1/collections/reports/agent/${agentId}/all-time`);
+    return response.data.data;
+  },
+
+  /** LEADS-only ledger snapshot for the caller's organization. */
+  getLedgerBalances: async (): Promise<LedgerBalanceResponse> => {
+    const response = await axiosInstance.get<ApiResponse<LedgerBalanceResponse>>('/api/v1/collections/ledger/balances');
     return response.data.data;
   },
 
@@ -68,6 +70,8 @@ export const collectionsApi = {
     await axiosInstance.patch(`/api/v1/collections/${id}/cancel`);
   },
 
+  // NOTE: no CSV export endpoint exists on CollectionController today (BCR-9 in
+  // BACKEND-REQUESTS.md). This call will 404 until the backend adds one.
   exportCsv: async (params?: { fromDate?: string; toDate?: string }): Promise<string> => {
     const response = await axiosInstance.get<string>('/api/v1/collections/export', {
       params,
@@ -75,18 +79,5 @@ export const collectionsApi = {
       headers: { Accept: 'text/csv' },
     });
     return response.data;
-  },
-
-  getBankCollections: async (params: {
-    orgId?: string;
-    agentId?: string;
-    status?: string;
-    fromDate?: string;
-    toDate?: string;
-    page?: number;
-    size?: number;
-  }): Promise<PagedResponse<any>> => {
-    const response = await axiosInstance.get<ApiResponse<PagedResponse<any>>>('/api/v1/collections/bank', { params });
-    return response.data.data;
   },
 };

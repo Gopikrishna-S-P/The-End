@@ -79,11 +79,11 @@ export default function AttendancePage() {
     setExporting(true);
     try {
       const all = await attendanceApi.getByDate(date, 0, 9999);
-      const header = 'Name,Date,Check-in Time,Latitude,Longitude,Accuracy (m)\\n';
+      const header = 'Name,Date,Check-in Time,Latitude,Longitude,Accuracy (m)\n';
       const rows = all.content.map(r =>
         [csvCell(r.userName), csvCell(r.attendanceDate), csvCell(formatTime(r.checkedInAt)),
          csvCell(r.lat), csvCell(r.lng), csvCell(r.accuracy)].join(',')
-      ).join('\\n');
+      ).join('\n');
       const blob = new Blob([header + rows], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

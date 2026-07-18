@@ -1,14 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiClient } from '../client';
+import { reportsApi } from '../api/reportsApi';
 import './Dashboard.css';
 import type { ReportType, ExportFormat } from '../types';
 import {
   FileSpreadsheet, File as FileIcon, AlertCircle, Loader2, ChevronDown,
-  Users, CalendarDays, TrendingDown, BookOpen, X
+  Users, CalendarDays, TrendingDown, BookOpen, X, Shuffle, Landmark
 } from 'lucide-react';
 
+// Ground truth: ReportingServiceImpl.buildReportData() only has an explicit case
+// (real data, not the empty-Map fallback) for these report types — every other
+// ReportType enum value (AGENCY_PERFORMANCE, NPA_IDENTIFICATION, MIS_EOD) falls
+// through to a placeholder `Map.of("reportType", ...)` with no real content, so
+// they are intentionally NOT offered here to avoid generating misleading exports.
+// (NPA and MIS_EOD both already have dedicated live-view endpoints that don't
+// need the async export-job flow at all.)
 const REPORT_TYPES: {
   value: ReportType;
   label: string;
@@ -16,10 +23,14 @@ const REPORT_TYPES: {
   icon: React.ElementType;
   params: 'date_range' | 'month_year';
 }[] = [
-  { value: 'AGENT_PERFORMANCE',          label: 'Agent performance', description: 'Agent-wise visit rate, collection score and amounts for the period',    icon: Users,        params: 'date_range' },
-  { value: 'DAILY_VISIT_COMPLETION',     label: 'Visit report',      description: 'Total visits completed per agent between the selected dates',           icon: CalendarDays, params: 'date_range' },
-  { value: 'COLLECTION_EFFICIENCY',      label: 'Collection report', description: 'Collections received per agent between the selected dates',             icon: TrendingDown, params: 'date_range' },
-  { value: 'MONTHLY_LOAN_BOOK_SNAPSHOT', label: 'Loan book',         description: 'Uploaded loan book snapshot for the selected month',                   icon: BookOpen,     params: 'month_year' },
+  { value: 'AGENT_PERFORMANCE',          label: 'Agent performance',     description: 'Agent-wise visit rate, collection score and amounts for the period', icon: Users,        params: 'date_range' },
+  { value: 'TEAM_PERFORMANCE',           label: 'Team performance',      description: 'Org-wide totals and per-agent breakdown for the period',            icon: Users,        params: 'date_range' },
+  { value: 'DAILY_VISIT_COMPLETION',     label: 'Visit report',          description: 'Total visits completed per agent between the selected dates',       icon: CalendarDays, params: 'date_range' },
+  { value: 'MONTHLY_VISIT_COMPLETION',   label: 'Monthly visit report',  description: 'Visit completion rolled up for the full period selected',           icon: CalendarDays, params: 'date_range' },
+  { value: 'COLLECTION_EFFICIENCY',      label: 'Collection report',     description: 'Collections received per agent between the selected dates',         icon: TrendingDown, params: 'date_range' },
+  { value: 'REASSIGNMENT_FREQUENCY',     label: 'Reassignment report',   description: 'How often cases were reassigned between agents in the period',      icon: Shuffle,      params: 'date_range' },
+  { value: 'MONTHLY_LOAN_BOOK_SNAPSHOT', label: 'Loan book',             description: 'Uploaded loan book snapshot for the selected month',                 icon: BookOpen,     params: 'month_year' },
+  { value: 'BANK_RECONCILIATION',        label: 'Bank reconciliation',   description: 'Deposited vs pending collections for the selected month',           icon: Landmark,     params: 'month_year' },
 ];
 
 interface Props {
@@ -64,7 +75,7 @@ export function ReportGenerateModal({ isOpen, onClose, onSuccess, organizationId
     if (!selected) { setError('Select a report type.'); return; }
     setLoading(true); setError(null);
     try {
-      await apiClient.post('/api/v1/reports/generate', {
+      await reportsApi.generateReport({
         organizationId,
         reportType: selected,
         exportFormat,

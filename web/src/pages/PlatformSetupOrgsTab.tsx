@@ -101,13 +101,8 @@ export function OrgsTab({ orgs, onOrgsChange }: Props) {
                     <td className="is-mono is-muted">{o.code}</td>
                     <td>
                       {o.orgAdminEmail ? (
-                        <div>
-                          <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--ink-primary)' }}>
-                            {o.orgAdminFirstName} {o.orgAdminLastName}
-                          </div>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--ink-tertiary)' }}>
-                            <Mail size={11} />{o.orgAdminEmail}
-                          </div>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'var(--ink-primary)' }}>
+                          <Mail size={11} style={{ color: 'var(--ink-tertiary)' }} />{o.orgAdminEmail}
                         </div>
                       ) : (
                         <button type="button" onClick={() => setAssigning(o)} className="ps-row-action">

@@ -19,12 +19,13 @@ export type Role =
 
 export type DashboardRole = Role;
 
-export type AllocationStatus = 'UNASSIGNED' | 'ASSIGNED' | 'CLOSED';
+export type AllocationStatus = 'UNASSIGNED' | 'ASSIGNED' | 'CLOSED' | 'RESTRUCTURED';
 export type AssignmentStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED' | 'REASSIGNED';
 export type CollectionStatus = 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'DEPOSITED' | 'CANCELLED';
 export type PtpStatus = 'PENDING' | 'FULFILLED' | 'PARTIALLY_FULFILLED' | 'BROKEN' | 'CANCELLED';
 export type PaymentMode = 'CASH' | 'UPI' | 'CHEQUE' | 'NEFT' | 'RTGS';
-export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+/** Matches server enums.Priority exactly — server has no CRITICAL value, only URGENT. */
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type FileUploadStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PARTIALLY_COMPLETED';
 export type NpaRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ApprovalAction = 'APPROVE' | 'REJECT';

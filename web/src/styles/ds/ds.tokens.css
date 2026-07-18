@@ -6,7 +6,7 @@
 
 :root {
   /* ── Surfaces ─────────────────────────────────────────────────────────── */
-  --bg-canvas:   #F7F8FA;   /* app background; white cards read as raised */
+  --bg-canvas:   #F6F7F9;   /* app background; white cards read as raised */
   --bg-surface:  #FFFFFF;   /* raised surface: cards, panels, inputs, popovers */
   --bg-subtle:   #F2F4F7;   /* sunken fill: table header, zebra-alt, disabled */
   --bg-hover:    #E8EBF0;   /* row/item hover — distinct from subtle (was identical) */

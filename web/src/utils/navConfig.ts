@@ -1,13 +1,10 @@
 import type React from 'react';
 import type { Role } from '../types';
 import {
-  BarChart2, Home, Layers, Users, Shuffle, IndianRupee,
-  MapPin, TrendingUp, Upload, History,
-  Building2, Receipt, Bot, Database, ShieldCheck, Send, CalendarDays,
-  Library, Flag, UserPlus, Bookmark, CreditCard, Briefcase,
-  LineChart, Navigation2, Settings2, LayoutDashboard, ClipboardCheck, Play, Radio,
+  BarChart2, Layers, Shuffle, MapPin, Upload, Send,
+  CalendarDays, LineChart, Settings2, LayoutDashboard,
+  ClipboardCheck, Play, Receipt, Building2, CreditCard, Flag, Bookmark,
 } from 'lucide-react';
-import LucienIcon from '../components/LucienIcon';
 
 export interface NavItem {
   label: string;
@@ -20,66 +17,40 @@ export interface NavItem {
 }
 export interface NavSection { label: string; items: NavItem[] }
 
+// Sidebar is deliberately capped at 5-6 items per role — only the daily-driver
+// destination for that role's job. Every other page in the app still exists and
+// still has a working route; it's reached by navigating INTO it from one of these
+// hubs (e.g. a case's Assignments/Visit Logs/PTPs live inside the Loans detail
+// view), not by piling more entries into the sidebar.
 export const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Main',
     items: [
-      { label: 'Dashboard',      to: '/app/dashboard', icon: BarChart2,            alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
-      { label: "Today's Visits", to: '/app/today',     icon: CalendarDays,    alwaysFor: ['FO','CALLER','TRACER'] },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { label: 'Daily Dispatch', to: '/app/dispatch',      icon: Send,            alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'], permissions: ['DAILY_DISPATCH_CREATE'] },
-      { label: 'My Cases',       to: '/app/my-cases',      icon: Briefcase,       alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
-      { label: 'Attendance',     to: '/app/attendance',    icon: ClipboardCheck,  alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'] },
-      { label: 'My Attendance',  to: '/app/my-attendance', icon: ClipboardCheck,  alwaysFor: ['FO','CALLER','TRACER'] },
-      { label: 'Start Visit',    to: '/app/start-visit',   icon: Play,            alwaysFor: ['FO','CALLER','TRACER'] },
-      { label: 'File Uploads',   to: '/app/uploads',       icon: Upload,          alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'], permissions: ['FILE_UPLOAD'] },
-    ],
-  },
-  {
-    label: 'Cases',
-    items: [
-      { label: 'Loans',       to: '/app/allocations',      icon: Layers,      alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
-      { label: 'Assignments', to: '/app/assignments',      icon: Shuffle,     alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'] },
-      { label: 'Visit Logs',  to: '/app/visits',           icon: MapPin,      alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO'] },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [
-      { label: 'Reports',    to: '/app/reports', icon: LineChart,  alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'] },
-      { label: 'Audit Logs', to: '/app/audit',   icon: History,    alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER'] },
-    ],
-  },
-  {
-    label: 'Team',
-    items: [
-      { label: 'User Setup',    to: '/app/users',          icon: Settings2, alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER'] },
-      { label: 'User Requests', to: '/app/users/requests', icon: UserPlus,  alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER'] },
-      { label: 'Field Agents',  to: '/app/agents',     icon: Users,  alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'] },
-      { label: 'Live Map',      to: '/app/live-track', icon: Radio,  alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL'] },
-    ],
-  },
-  {
-    label: 'Admin',
-    items: [
-      { label: 'Column Schemas', to: '/app/settings/schema',  icon: Database,  alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN'], permissions: ['COLUMN_CREATE'] },
-      { label: 'Roles',          to: '/app/settings/roles',   icon: ShieldCheck,     alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN'], permissions: ['ROLE_ASSIGN'] },
-      // { label: 'Subscription',   to: '/app/subscription',     icon: CreditCard,      alwaysFor: ['ORG_ADMIN'] },
-      { label: 'Lucien Prompts', to: '/app/lucien/prompts',   icon: LucienIcon,      alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN'] },
-      { label: 'Knowledge Base', to: '/app/lucien/rag',       icon: Library,         alwaysFor: ['PLATFORM_ADMIN','ORG_ADMIN'] },
-    ],
-  },
-  {
-    label: 'Platform',
-    items: [
+      // Field roles (FO / CALLER / TRACER) — their whole job in 6 links.
+      { label: "Today's Visits", to: '/app/today',        icon: CalendarDays,   alwaysFor: ['FO','CALLER','TRACER'] },
+      { label: 'My Cases',       to: '/app/my-cases',      icon: Layers,         alwaysFor: ['FO','CALLER','TRACER'] },
+      { label: 'Start Visit',    to: '/app/start-visit',   icon: Play,           alwaysFor: ['FO','CALLER','TRACER'] },
+      { label: 'My Attendance',  to: '/app/my-attendance', icon: ClipboardCheck, alwaysFor: ['FO','CALLER','TRACER'] },
+
+      // Shared daily driver — everyone who touches money sees this.
+      { label: 'Dashboard',   to: '/app/dashboard',   icon: BarChart2, alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
+      { label: 'Collections', to: '/app/collections', icon: Receipt,   alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
+
+      // Leads (MANAGER / TL) — oversee the day's work.
+      { label: 'Daily Dispatch', to: '/app/dispatch',   icon: Send,      alwaysFor: ['ORG_ADMIN','MANAGER','TL'], permissions: ['DAILY_DISPATCH_CREATE'] },
+      { label: 'Loans',          to: '/app/allocations', icon: Layers,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+      { label: 'Visit Logs',     to: '/app/visits',      icon: MapPin,    alwaysFor: ['MANAGER','TL'] },
+      { label: 'Reports',        to: '/app/reports',     icon: LineChart, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+
+      // Org admin — same operational hubs, plus team setup instead of field-day tools.
+      { label: 'User Setup', to: '/app/users', icon: Settings2, alwaysFor: ['ORG_ADMIN'] },
+
+      // Platform admin — a distinct console, not the org workspace at all.
       { label: 'Overview',       to: '/platform/dashboard',     icon: LayoutDashboard, alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'File Uploads',   to: '/app/uploads',            icon: Upload,          alwaysFor: ['PLATFORM_ADMIN'] },
     ],
   },
 ];
@@ -102,6 +73,28 @@ export const ROUTE_LABELS: Record<string, string> = {
     .flatMap(s => s.items)
     .reduce((acc, item) => ({ ...acc, [item.to]: item.label }), {} as Record<string, string>),
   '/app/collections/trend': 'Collection Trend',
+  '/app/assignments': 'Assignments',
+  '/app/ptps': 'PTPs',
+  '/app/audit': 'Audit Logs',
+  '/app/agents': 'Field Agents',
+  '/app/live-track': 'Live Map',
+  '/app/settings/schema': 'Column Schemas',
+  '/app/settings/roles': 'Roles',
+  '/app/settings/organization': 'Organization',
+  '/app/settings/message-templates': 'Message Templates',
+  '/app/attendance': 'Attendance',
+  '/app/non-contactables': 'Non-Contactables',
+  '/app/calendar': 'Holiday Calendar',
+  '/app/field-ops': 'Field Ops',
+  '/app/kpi': 'KPI Dashboard',
+  '/app/portfolio-risk': 'Portfolio Risk',
+  '/app/payments/links': 'Payment Links',
+  '/app/borrowers': 'Borrowers',
+  '/app/fraud-cases': 'Fraud Cases',
+  '/app/reconciliation': 'Reconciliation',
+  '/app/restructure-proposals': 'Restructure Proposals',
+  '/app/lucien/prompts': 'Lucien Prompts',
+  '/app/lucien/rag': 'Knowledge Base',
 };
 
 export const SHORTCUTS = [

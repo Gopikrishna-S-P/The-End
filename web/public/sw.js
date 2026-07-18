@@ -10,7 +10,7 @@
  */
 
 const CACHE_VERSION = 'rp-shell-v1';
-const PRECACHE_URLS = ['/', '/index.html', '/favicon.svg'];
+const PRECACHE_URLS = ['/', '/index.html', '/favicon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

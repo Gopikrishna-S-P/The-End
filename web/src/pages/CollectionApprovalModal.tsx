@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../client';
-import type { CollectionResponse, ApprovalAction } from '../types';
+import { documentsApi } from '../api/documentsApi';
+import type { CollectionResponse, ApprovalAction, CollectionDocumentResponse } from '../types';
 import {
   CheckCircle2, XCircle, Loader2, AlertCircle, FileText, X,
 } from 'lucide-react';
@@ -21,15 +22,15 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
   const [remarks,     setRemarks]     = useState('');
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState<string | null>(null);
-  const [docs,        setDocs]        = useState<any[]>([]);
+  const [docs,        setDocs]        = useState<CollectionDocumentResponse[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setAction(initialAction ?? null);
     setRemarks(''); setError(null); setDocs([]); setDocsLoading(true);
-    apiClient.get(`/api/v1/collections/${collection.id}/documents`)
-      .then(({ data }) => { const r = data?.data ?? data; setDocs(Array.isArray(r) ? r : []); })
+    documentsApi.getDocuments(collection.id)
+      .then(r => setDocs(Array.isArray(r) ? r : []))
       .catch(() => setDocs([]))
       .finally(() => setDocsLoading(false));
   }, [isOpen, collection.id, initialAction]);
@@ -100,12 +101,11 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
                   <p style={{ fontSize: 12, color: 'var(--ink-tertiary)', fontStyle: 'italic', margin: 0 }}>No proof attached</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {docs.map((doc: any) => (
-                      <a key={doc.id} href={doc.viewUrl} target="_blank" rel="noopener noreferrer"
+                    {docs.map((doc) => (
+                      <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-solid)', textDecoration: 'none' }}>
                         <FileText size={13} />
-                        {doc.originalFilename}
-                        <span style={{ fontSize: 11, color: 'var(--ink-tertiary)' }}>({Math.round((doc.fileSizeBytes ?? 0) / 1024)} KB)</span>
+                        {doc.fileName}
                       </a>
                     ))}
                   </div>

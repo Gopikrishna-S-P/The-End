@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { apiClient } from '../client';
+import { useState } from 'react';
 import { usePermissions } from '../hooks/usePermissions';
 import type { PtpResponse } from '../types';
-import { X, CheckCircle2, AlertTriangle, Clock, Calendar, User, FileText, Loader2, Banknote } from 'lucide-react';
-import { fmtINR, fmtDate, fmtDT, STATUS_VARIANT, DR, Group, type PtpHistoryEntry } from './PtpDetailHelpers';
+import { X, CheckCircle2, AlertTriangle, Clock, Calendar, User, FileText } from 'lucide-react';
+import { fmtINR, fmtDate, fmtDT, STATUS_VARIANT, DR, Group } from './PtpDetailHelpers';
 import { PtpUpdateModal } from './PtpUpdateModal';
 import '../styles/AppPage.css';
 
@@ -18,20 +17,15 @@ export default function PtpDetailDrawer({ ptp, onClose, onChanged, canUpdate: ca
   const { hasPermission } = usePermissions();
   const canUpdate = canUpdateProp ?? hasPermission('PTP_CREATE');
 
-  const [history, setHistory]               = useState<PtpHistoryEntry[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   const isPast       = new Date(ptp.promisedDate) < new Date();
   const isActionable = ptp.status === 'PENDING' || ptp.status === 'PARTIALLY_FULFILLED';
 
-  useEffect(() => {
-    setHistory([]); setHistoryLoading(true);
-    apiClient.get(`/api/v1/ptps/${ptp.id}/history`)
-      .then(({ data }) => { const d = data?.data ?? data; setHistory(Array.isArray(d) ? d : []); })
-      .catch(() => setHistory([]))
-      .finally(() => setHistoryLoading(false));
-  }, [ptp.id]);
+  // NOTE: PtpController exposes no status-history endpoint today — PtpService
+  // (getPtpHistory/getFullAllocationHistory) has the data, but no route surfaces it.
+  // See BCR-8 in BACKEND-REQUESTS.md. The "Status history" section was removed rather
+  // than left calling a 404.
 
   return (
     <>
@@ -117,30 +111,6 @@ export default function PtpDetailDrawer({ ptp, onClose, onChanged, canUpdate: ca
             {ptp.reminderSentAt && <DR label="Reminder sent">{fmtDT(ptp.reminderSentAt)}</DR>}
           </Group>
 
-          <Group title="Status history" icon={Banknote}>
-            {historyLoading ? (
-              <span className="ptp-loading">
-                <Loader2 size={12} className="ds-spin" /> Loading…
-              </span>
-            ) : history.length === 0 ? (
-              <p className="ptp-no-history">No history available</p>
-            ) : (
-              <div className="ptp-history-list">
-                {history.map((h) => (
-                  <div key={h.id} className="ptp-history-row">
-                    <span className={`ds-pill ${STATUS_VARIANT[h.oldStatus] ?? ''} ptp-history-pill`}>
-                      {h.oldStatus.replace('_', ' ')}
-                    </span>
-                    <span className="ptp-history-arrow">→</span>
-                    <span className={`ds-pill ${STATUS_VARIANT[h.newStatus] ?? ''} ptp-history-pill`}>
-                      {h.newStatus.replace('_', ' ')}
-                    </span>
-                    <span className="ptp-history-time">{fmtDT(h.changedAt)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Group>
         </div>
 
         <div className="ds-drawer-footer">

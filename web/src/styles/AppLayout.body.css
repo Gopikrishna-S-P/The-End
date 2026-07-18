@@ -38,7 +38,7 @@
 .app-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
 /* Main content layering */
-.app-main > .app-route-view { position: relative; z-index: 1; }
+.app-main > .app-route-view { position: relative; z-index: 1; margin-top: -12px; }
 
 /* ── Skeleton loaders ──────────────────────────────────────────────────────── */
 .app-skel {

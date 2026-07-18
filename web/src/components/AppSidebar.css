@@ -99,6 +99,28 @@
   cursor: pointer;
 }
 
+.asb-root .asb-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-tertiary, #667085);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.asb-root .asb-collapse-toggle:hover {
+  background: var(--bg-hover, #E8EBF0);
+  color: var(--text-primary, #101828);
+}
+.asb-root.is-collapsed .asb-collapse-toggle {
+  margin: 0 auto;
+}
+
 
 /* ── Scroll position indicator (Compact) ─────────────────────────────────── */
 .asb-scroll-map {
@@ -313,7 +335,6 @@
 }
 
 .asb-root .asb-nav-item.is-active .asb-action-icon {
-  background: rgba(0, 0, 0, 0.06);
   color: #111;
 }
 

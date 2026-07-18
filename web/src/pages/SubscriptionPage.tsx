@@ -241,13 +241,11 @@ export default function SubscriptionPage() {
                   {GATED_FLAGS.map(({ key, label }, idx) => {
                     const flag = flags.find(f => f.flagKey === key);
                     const enabled = flag?.enabled ?? false;
-                    const isManual = flag?.source === 'MANUAL';
                     return (
                       <tr key={key} style={{ borderBottom: idx === GATED_FLAGS.length - 1 ? 'none' : '1px solid var(--border-subtle)' }}>
                         <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--ink-primary)' }}>{label}</td>
                         <td className="is-right" style={{ padding: '16px 24px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-                            {isManual && <span className="ds-pill is-warn">Custom Override</span>}
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: enabled ? 'var(--success)' : 'var(--ink-tertiary)' }}>
                               {enabled ? <CheckCircle2 size={14} /> : <X size={14} />}
                               {enabled ? 'Active' : 'Not included'}

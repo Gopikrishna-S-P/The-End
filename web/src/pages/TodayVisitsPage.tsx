@@ -7,6 +7,7 @@ import { dailyDispatchApi } from '../api/dailyDispatchApi';
 import type { AllocationResponse, PagedResponse } from '../types';
 import { ChevronLeft, ChevronRight, MapPin, RefreshCw, Phone, AlertCircle, Briefcase, X } from 'lucide-react';
 import ActiveVisitCard from '../components/ActiveVisitCard';
+import ShiftSosCard from '../components/ShiftSosCard';
 
 import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
@@ -124,8 +125,11 @@ export default function TodayVisitsPage() {
       );
     };
 
+  const isFo = user?.roles?.some(r => r.name === 'ROLE_FO') ?? false;
+
   return (
     <div className="dd-page">
+      {isFo && <ShiftSosCard />}
       <ActiveVisitCard onClosed={load} />
       {/* ── Page Header ── */}
       <div className="dd-page-header">

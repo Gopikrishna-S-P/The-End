@@ -27,8 +27,12 @@ const fadeIn: Variants = {
 
 export default function ColumnSchemaPage() {
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyRole } = usePermissions();
   const canCreate = hasPermission('COLUMN_CREATE');
+  // Mirrors ColumnSchemaController.ADMINS exactly — every endpoint here (incl. the
+  // plain GET list) is PLATFORM_ADMIN/ORG_ADMIN-only, tighter than the /app/settings/schema
+  // route's ORG_LEAD_ROLES gate (which also lets MANAGER/TL in), so self-gate.
+  const canView = hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN');
   const orgId = user?.organizationId ?? '';
 
   const [columns, setColumns]       = useState<ColumnSchemaResponse[]>([]);
@@ -38,14 +42,14 @@ export default function ColumnSchemaPage() {
   const [editingId, setEditingId]   = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId || !canView) { setLoading(false); return; }
     setLoading(true); setError(null);
     try {
       const list = await columnSchemasApi.list(orgId);
       setColumns(list.filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder));
     } catch { setError('Failed to load column schemas.'); }
     finally { setLoading(false); }
-  }, [orgId]);
+  }, [orgId, canView]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -66,6 +70,18 @@ export default function ColumnSchemaPage() {
     dataType: col.dataType, isRequired: col.isRequired, isSearchable: col.isSearchable,
     sortOrder: String(col.sortOrder ?? 0),
   });
+
+  if (!canView) {
+    return (
+      <div className="dd-page">
+        <div className="ds-empty" style={{ padding: '80px 0' }}>
+          <Columns size={32} className="ds-empty-icon" />
+          <span className="ds-empty-title">Admins only</span>
+          <span className="ds-empty-sub">Column schema configuration is restricted to Org Admins.</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dd-page">

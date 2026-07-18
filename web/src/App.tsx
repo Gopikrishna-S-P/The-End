@@ -41,6 +41,15 @@ import TodayVisitsPage from './pages/TodayVisitsPage';
 import VisitSubmitPage from './pages/VisitSubmitPage';
 import UsersPage from './pages/UsersPage';
 import UserRequestsPage from './pages/UserRequestsPage';
+import OrganizationSettingsPage from './pages/OrganizationSettingsPage';
+import PaymentLinksPage from './pages/PaymentLinksPage';
+import FieldOpsPage from './pages/FieldOpsPage';
+import BorrowersPage from './pages/BorrowersPage';
+import FraudCasesPage from './pages/FraudCasesPage';
+import ReconciliationPage from './pages/ReconciliationPage';
+import RestructureProposalsPage from './pages/RestructureProposalsPage';
+import NonContactablesPage from './pages/NonContactablesPage';
+import PortfolioRiskPage from './pages/PortfolioRiskPage';
 import LandingPage from './LandingPage';
 import DownloadPage from './pages/DownloadPage';
 import NotificationsPage from './pages/NotificationsPage';
@@ -63,6 +72,9 @@ import type { Role } from './types';
 const SystemPromptAdminPage = lazy(() => import('./pages/SystemPromptAdminPage'));
 const RagDocumentsPage = lazy(() => import('./pages/RagDocumentsPage'));
 const FeatureFlagsPage = lazy(() => import('./pages/FeatureFlagsPage'));
+const KpiPage = lazy(() => import('./pages/KpiPage'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const MessageTemplatesPage = lazy(() => import('./pages/MessageTemplatesPage'));
 
 function PageFallback() {
   return <PageSkeleton />;
@@ -105,6 +117,8 @@ const ORG_LEAD_ROLES: Role[] = [
 const ORG_ADMIN_ROLES: Role[] = ['PLATFORM_ADMIN', 'ORG_ADMIN'];
 
 const PLATFORM_ONLY: Role[] = ['PLATFORM_ADMIN'];
+
+const PAYMENT_ROLES: Role[] = ['PLATFORM_ADMIN', 'ORG_ADMIN', 'FO'];
 
 function App() {
   return (
@@ -149,6 +163,8 @@ function App() {
                   <Route path="/app/assignments" element={<CaseAssignmentsPage />} />
                   <Route path="/app/collections" element={<CollectionsPage />} />
                   <Route path="/app/collections/trend" element={<CollectionMomPage />} />
+                  <Route path="/app/non-contactables" element={<NonContactablesPage />} />
+                  <Route path="/app/restructure-proposals" element={<RestructureProposalsPage />} />
                   <Route path="/app/visits" element={<VisitsPage />} />
                   <Route path="/app/ptps" element={<PtpsPage />} />
                   <Route path="/app/today" element={<TodayVisitsPage />} />
@@ -168,19 +184,31 @@ function App() {
                   <Route path="/app/agents" element={<AgentsPage />} />
                   <Route path="/app/agents/:id" element={<AgentDetailPage />} />
                   <Route path="/app/live-track" element={<LiveTrackPage />} />
+                  <Route path="/app/field-ops" element={<FieldOpsPage />} />
 
-                  <Route path="/app/users" element={<UsersPage />} />
-                  <Route path="/app/users/requests" element={<UserRequestsPage />} />
                   <Route path="/app/settings/schema" element={<ColumnSchemaPage />} />
-                  <Route path="/app/settings/roles" element={<RoleManagementPage />} />
                   <Route path="/app/attendance" element={<AttendancePage />} />
+                  <Route path="/app/calendar" element={<CalendarPage />} />
+                  <Route path="/app/portfolio-risk" element={<PortfolioRiskPage />} />
                 </Route>
 
                 {/* ── /app/* org-admin routes (PLATFORM_ADMIN / ORG_ADMIN only) ── */}
                 <Route element={<ProtectedRoute allowedRoles={ORG_ADMIN_ROLES} />}>
-                  <Route path="/app/lucien/prompts" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><SystemPromptAdminPage /></FeatureGate>} />
-                  <Route path="/app/lucien/rag" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><RagDocumentsPage /></FeatureGate>} />
                   <Route path="/app/subscription" element={<SubscriptionPage />} />
+                  <Route path="/app/users" element={<UsersPage />} />
+                  <Route path="/app/users/requests" element={<UserRequestsPage />} />
+                  <Route path="/app/settings/roles" element={<RoleManagementPage />} />
+                  <Route path="/app/settings/organization" element={<OrganizationSettingsPage />} />
+                  <Route path="/app/settings/message-templates" element={<MessageTemplatesPage />} />
+                  <Route path="/app/kpi" element={<KpiPage />} />
+                  <Route path="/app/borrowers" element={<BorrowersPage />} />
+                  <Route path="/app/fraud-cases" element={<FraudCasesPage />} />
+                  <Route path="/app/reconciliation" element={<ReconciliationPage />} />
+                </Route>
+
+                {/* ── /app/* payment-tooling routes (org admin + FO, matches PaymentController's own gate) ── */}
+                <Route element={<ProtectedRoute allowedRoles={PAYMENT_ROLES} />}>
+                  <Route path="/app/payments/links" element={<PaymentLinksPage />} />
                 </Route>
 
                 {/* ── Platform-only ── */}
@@ -190,6 +218,8 @@ function App() {
                   <Route path="/platform/revenue-trend" element={<PlatformRevenueTrendPage />} />
                   <Route path="/platform/setup" element={<PlatformSetupPage />} />
                   <Route path="/platform/feature-flags" element={<FeatureFlagsPage />} />
+                  <Route path="/app/lucien/prompts" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><SystemPromptAdminPage /></FeatureGate>} />
+                  <Route path="/app/lucien/rag" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><RagDocumentsPage /></FeatureGate>} />
                 </Route>
 
                 {/* ── Legacy redirects so old bookmarks / JWTs don't 404 ── */}

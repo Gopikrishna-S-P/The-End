@@ -125,8 +125,11 @@ export default function CollectionsPage() {
       if (filterStatus)      params.append('status', filterStatus);
       if (filterPaymentMode) params.append('paymentMode', filterPaymentMode);
       if (isAgentView && user?.agentId) params.append('agentId', user.agentId);
-      const endpoint = isBankView ? '/api/v1/collections/bank' : '/api/v1/collections';
-      const { data } = await apiClient.get(endpoint, { params });
+      // NOTE: CollectionController has no /bank sub-route — the server derives org scope
+      // from the JWT for every caller. `isBankView` is retained only to flag legacy
+      // /bank/* bookmarks (see App.tsx's LegacyRedirect, which already redirects those
+      // to /app/* before this component ever mounts), never to change the endpoint.
+      const { data } = await apiClient.get('/api/v1/collections', { params });
       const response = unwrapApiResponse<PagedResponse<CollectionResponse>>(data);
       setCollections(response.content);
       setTotalPages(response.totalPages);

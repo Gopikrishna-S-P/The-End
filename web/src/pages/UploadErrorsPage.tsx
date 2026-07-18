@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { filesApi } from '../api/filesApi';
+import { usePermissions } from '../hooks/usePermissions';
 import type { FileProcessingErrorResponse } from '../types';
 import {
   ArrowLeft, AlertTriangle, AlertCircle, FileX,
@@ -33,6 +34,9 @@ const fadeIn: Variants = {
 export default function UploadErrorsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasAnyRole } = usePermissions();
+  // Mirrors FileUploadController.READERS exactly.
+  const canView = hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL');
 
   const [errors, setErrors]               = useState<FileProcessingErrorResponse[]>([]);
   const [totalPages, setTotalPages]       = useState(0);
@@ -43,7 +47,7 @@ export default function UploadErrorsPage() {
   const [columnFilter, setColumnFilter]   = useState<string>('ALL');
 
   const load = async (p: number) => {
-    if (!id) return;
+    if (!id || !canView) { setLoading(false); return; }
     setLoading(true); setFetchError(null);
     try {
       const resp = await filesApi.getUploadErrors(id, p, PAGE_SIZE);
@@ -55,12 +59,26 @@ export default function UploadErrorsPage() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(page); }, [id, page]);
+  useEffect(() => { load(page); }, [id, page, canView]);
 
   const allColumns = Array.from(new Set(errors.map((e) => e.columnName).filter(Boolean) as string[]));
   const filtered = columnFilter === 'ALL'
     ? errors
     : errors.filter((e) => e.columnName === columnFilter);
+
+  if (!canView) {
+    return (
+      <div className="db-root">
+        <div className="db-content">
+          <div className="ds-empty" style={{ padding: '80px 0' }}>
+            <AlertTriangle size={32} className="ds-empty-icon" />
+            <span className="ds-empty-title">Restricted to team leads and above</span>
+            <span className="ds-empty-sub">Row errors are visible to Team Leads, Managers, and Org Admins.</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="db-root">

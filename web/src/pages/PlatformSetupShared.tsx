@@ -55,9 +55,9 @@ export function FormSection({ title, children }: { title: string; children: Reac
   );
 }
 
-export function Input({ label, value, onChange, type = 'text', error, hint, placeholder, required }: {
+export function Input({ label, value, onChange, type = 'text', error, hint, placeholder, required, disabled }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: string; error?: string; hint?: string; placeholder?: string; required?: boolean;
+  type?: string; error?: string; hint?: string; placeholder?: string; required?: boolean; disabled?: boolean;
 }) {
   return (
     <div className="ds-field">
@@ -65,7 +65,7 @@ export function Input({ label, value, onChange, type = 'text', error, hint, plac
         {label}{required && <span style={{ color: 'var(--error)', marginLeft: 2 }}>*</span>}
       </label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)}
-        placeholder={placeholder} className="ds-input"
+        placeholder={placeholder} className="ds-input" disabled={disabled}
         style={error ? { borderColor: 'var(--error)' } : undefined} />
       {error && <p style={{ color: 'var(--error)', fontSize: 11, marginTop: 4 }}>{error}</p>}
       {!error && hint && <p style={{ color: 'var(--ink-tertiary)', fontSize: 11, marginTop: 4 }}>{hint}</p>}

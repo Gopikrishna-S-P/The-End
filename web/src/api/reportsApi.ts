@@ -1,31 +1,158 @@
 import axiosInstance from './axiosInstance';
-import type { ReportJobResponse, ApiResponse, PagedResponse } from '../types';
+import type { ReportJobResponse, ApiResponse, PagedResponse, NpaRiskLevel } from '../types';
 
-interface ReportRequest {
+// Ground truth: server ReportingController.java (/api/v1/reports/*) and
+// ExportController.java (/api/v1/reports/export/*). Field names below are copied
+// 1:1 from the server response DTOs — do not rename without checking both sides.
+
+export interface ReportRequest {
   organizationId: string;
   reportType: string;
   exportFormat: string;
   fromDate?: string;
   toDate?: string;
-  filters?: Record<string, unknown>;
+  agentId?: string;
+  teamId?: number;
+  month?: number;
+  year?: number;
 }
 
-interface AgentPerformanceResponse {
+export interface AgentPerformanceResponse {
   agentId: string;
-  agentName: string;
-  date: string;
-  visitsCompleted: number;
-  collectionsCount: number;
-  totalAmountCollected: number;
+  organizationId: string;
+  snapshotDate: string;
+  totalAssigned: number;
+  totalVisited: number;
+  totalCollected: number;
+  totalPending: number;
+  totalReassignedOut: number;
+  totalReassignedIn: number;
+  amountCollected: number;
+  amountOutstanding: number;
+  visitCompletionRate: number;
+  collectionEfficiency: number;
   efficiencyScore: number;
+  rankInOrg: number | null;
 }
 
-interface TeamPerformanceResponse {
-  teamSize: number;
-  totalVisits: number;
-  totalCollections: number;
-  totalAmount: number;
-  averageEfficiency: number;
+export interface TeamPerformanceResponse {
+  organizationId: string;
+  fromDate: string;
+  toDate: string;
+  totalAgents: number;
+  totalAssigned: number;
+  totalVisited: number;
+  totalCollected: number;
+  totalAmountCollected: number;
+  totalAmountOutstanding: number;
+  avgCollectionEfficiency: number;
+  avgVisitCompletionRate: number;
+  overallEfficiencyScore: number;
+  agentBreakdown: AgentPerformanceResponse[];
+}
+
+export interface AgentDailyRow {
+  agentId: string;
+  assigned: number;
+  visited: number;
+  pending: number;
+  completionRate: number;
+}
+
+export interface DailyVisitCompletionResponse {
+  reportDate: string;
+  organizationId: string;
+  totalAgentsWorking: number;
+  totalAssigned: number;
+  totalVisited: number;
+  totalPending: number;
+  overallCompletionRate: number;
+  agentRows: AgentDailyRow[];
+}
+
+export interface AgentEfficiencyRow {
+  agentId: string;
+  amountOutstanding: number;
+  amountCollected: number;
+  efficiencyPct: number;
+  recoveryRatePct: number;
+  rank: number;
+}
+
+export interface CollectionEfficiencyResponse {
+  organizationId: string;
+  fromDate: string;
+  toDate: string;
+  totalOutstanding: number;
+  totalCollected: number;
+  collectionEfficiencyPct: number;
+  recoveryRatePct: number;
+  agentBreakdown: AgentEfficiencyRow[];
+}
+
+export interface AgentReassignmentRow {
+  agentId: string;
+  reassignedOut: number;
+  reassignedIn: number;
+  netReassignments: number;
+  reassignmentRate: number;
+}
+
+export interface ReassignmentFrequencyResponse {
+  organizationId: string;
+  fromDate: string;
+  toDate: string;
+  totalReassignments: number;
+  avgReassignmentsPerAgent: number;
+  agentBreakdown: AgentReassignmentRow[];
+}
+
+export interface MonthlyLoanBookResponse {
+  organizationId: string;
+  snapshotMonth: string;
+  totalLoans: number;
+  totalOutstandingAmount: number;
+  totalCollectedAmount: number;
+  totalNpaCount: number;
+  totalNpaAmount: number;
+  totalAssignedLoans: number;
+  totalUnassignedLoans: number;
+  collectionEfficiencyPct: number;
+  recoveryRatePct: number;
+}
+
+export interface BankReconciliationRow {
+  collectionId: string;
+  receiptNumber: string;
+  loanNumber: string | null;
+  borrowerName: string | null;
+  amount: number;
+  paymentMode: string;
+  status: string;
+  collectionDate: string | null;
+  depositedDate: string | null;
+  agentId: string | null;
+}
+
+export interface BankReconciliationResponse {
+  organizationId: string;
+  month: number;
+  year: number;
+  generatedOn: string;
+  totalCollectedCash: number;
+  totalCollectedUpi: number;
+  totalCollectedCheque: number;
+  totalCollectedNeft: number;
+  totalCollectedRtgs: number;
+  grandTotalCollected: number;
+  totalApprovedTransactions: number;
+  totalDepositedTransactions: number;
+  totalPendingDeposit: number;
+  totalDepositedAmount: number;
+  totalPendingDepositAmount: number;
+  npaBreakdown: Partial<Record<NpaRiskLevel, number>>;
+  totalNpaAmount: number;
+  rows: BankReconciliationRow[];
 }
 
 export interface FoDaySessionRow {
@@ -116,14 +243,6 @@ export interface MisEodReportResponse {
   foBreakdown: MisEodFoRow[];
 }
 
-interface DailyVisitCompletionResponse {
-  date: string;
-  totalAssigned: number;
-  completed: number;
-  pending: number;
-  completionRate: number;
-}
-
 export const reportsApi = {
   getAgentPerformance: async (agentId: string, params: { date?: string; orgId?: string } = {}): Promise<AgentPerformanceResponse> => {
     const response = await axiosInstance.get<ApiResponse<AgentPerformanceResponse>>(`/api/v1/reports/agent/${agentId}/performance`, { params });
@@ -149,36 +268,36 @@ export const reportsApi = {
     return response.data.data;
   },
 
-  getCollectionEfficiency: async (orgId?: string, from?: string, to?: string): Promise<any> => {
-    const response = await axiosInstance.get<ApiResponse<any>>('/api/v1/reports/collection-efficiency', {
+  getCollectionEfficiency: async (orgId?: string, from?: string, to?: string): Promise<CollectionEfficiencyResponse> => {
+    const response = await axiosInstance.get<ApiResponse<CollectionEfficiencyResponse>>('/api/v1/reports/collection-efficiency', {
       params: { orgId, from, to },
     });
     return response.data.data;
   },
 
-  getReassignmentFrequency: async (orgId?: string, from?: string, to?: string): Promise<any> => {
-    const response = await axiosInstance.get<ApiResponse<any>>('/api/v1/reports/reassignment-frequency', {
+  getReassignmentFrequency: async (orgId?: string, from?: string, to?: string): Promise<ReassignmentFrequencyResponse> => {
+    const response = await axiosInstance.get<ApiResponse<ReassignmentFrequencyResponse>>('/api/v1/reports/reassignment-frequency', {
       params: { orgId, from, to },
     });
     return response.data.data;
   },
 
-  getLoanBookHistory: async (orgId?: string, page = 0, size = 20): Promise<PagedResponse<any>> => {
-    const response = await axiosInstance.get<ApiResponse<PagedResponse<any>>>('/api/v1/reports/loan-book/history', {
+  getLoanBookHistory: async (orgId?: string, page = 0, size = 20): Promise<PagedResponse<MonthlyLoanBookResponse>> => {
+    const response = await axiosInstance.get<ApiResponse<PagedResponse<MonthlyLoanBookResponse>>>('/api/v1/reports/loan-book/history', {
       params: { orgId, page, size },
     });
     return response.data.data;
   },
 
-  getLoanBook: async (orgId?: string, month?: number, year?: number): Promise<any> => {
-    const response = await axiosInstance.get<ApiResponse<any>>('/api/v1/reports/loan-book', {
+  getLoanBook: async (orgId?: string, month?: number, year?: number): Promise<MonthlyLoanBookResponse> => {
+    const response = await axiosInstance.get<ApiResponse<MonthlyLoanBookResponse>>('/api/v1/reports/loan-book', {
       params: { orgId, month, year },
     });
     return response.data.data;
   },
 
-  getBankReconciliation: async (orgId?: string, month?: number, year?: number): Promise<any> => {
-    const response = await axiosInstance.get<ApiResponse<any>>('/api/v1/reports/bank-reconciliation', {
+  getBankReconciliation: async (orgId?: string, month?: number, year?: number): Promise<BankReconciliationResponse> => {
+    const response = await axiosInstance.get<ApiResponse<BankReconciliationResponse>>('/api/v1/reports/bank-reconciliation', {
       params: { orgId, month, year },
     });
     return response.data.data;
@@ -221,4 +340,17 @@ export const reportsApi = {
     return response.data.data;
   },
 
+  /**
+   * Blob download for a completed report job. Ground truth: ExportController is
+   * mounted at /api/v1/reports/export (nested under ReportingController's
+   * /api/v1/reports) — the route is .../reports/export/jobs/{jobId}/download,
+   * NOT .../reports/jobs/{jobId}/download (that path only has a GET-status route).
+   */
+  downloadReportJob: async (jobId: string, orgId: string): Promise<Blob> => {
+    const response = await axiosInstance.get(`/api/v1/reports/export/jobs/${jobId}/download`, {
+      params: { orgId },
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };

@@ -25,24 +25,28 @@ const fadeIn: Variants = {
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
 
+const MIN_PROMPT_LEN = 50;
+const MAX_PROMPT_LEN = 10000;
+const MAX_DESC_LEN = 500;
+
 export default function SystemPromptAdminPage() {
-  const [key, setKey]               = useState('lucien.system');
-  const [prompt, setPrompt]         = useState<SystemPromptResponse | null>(null);
-  const [promptText, setPromptText] = useState('');
-  const [context, setContext]       = useState('');
-  const [loading, setLoading]       = useState(false);
-  const [saving, setSaving]         = useState(false);
-  const [error, setError]           = useState<string | null>(null);
-  const [warn, setWarn]             = useState<string | null>(null);
-  const [saved, setSaved]           = useState(false);
+  const [key, setKey]                     = useState('lucien.system');
+  const [prompt, setPrompt]               = useState<SystemPromptResponse | null>(null);
+  const [promptTemplate, setPromptTemplate] = useState('');
+  const [description, setDescription]     = useState('');
+  const [loading, setLoading]             = useState(false);
+  const [saving, setSaving]               = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
+  const [warn, setWarn]                   = useState<string | null>(null);
+  const [saved, setSaved]                 = useState(false);
 
   const load = async (k: string) => {
     setLoading(true); setError(null); setWarn(null); setSaved(false);
     try {
       const data = await systemPromptApi.get(k);
-      setPrompt(data); setPromptText(data.promptText || ''); setContext(data.context || '');
+      setPrompt(data); setPromptTemplate(data.promptTemplate || ''); setDescription(data.description || '');
     } catch (e: any) {
-      setPrompt(null); setPromptText(''); setContext('');
+      setPrompt(null); setPromptTemplate(''); setDescription('');
       const status = e?.response?.status;
       if (status === 404) setWarn(`No prompt seeded under "${k}" yet — saving will create it.`);
       else setError(e?.response?.data?.message || 'Failed to load prompt.');
@@ -50,11 +54,13 @@ export default function SystemPromptAdminPage() {
   };
 
   const save = async () => {
-    if (!promptText.trim()) { setError('Prompt text is required.'); return; }
+    const trimmed = promptTemplate.trim();
+    if (trimmed.length < MIN_PROMPT_LEN) { setError(`Prompt text must be at least ${MIN_PROMPT_LEN} characters.`); return; }
+    if (trimmed.length > MAX_PROMPT_LEN) { setError(`Prompt text must be under ${MAX_PROMPT_LEN} characters.`); return; }
     setSaving(true); setError(null); setWarn(null); setSaved(false);
     try {
       const updated = await systemPromptApi.update(key.trim(), {
-        promptText, context: context.trim() || undefined,
+        promptTemplate: trimmed, description: description.trim() || undefined,
       });
       setPrompt(updated); setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -153,20 +159,23 @@ export default function SystemPromptAdminPage() {
               <div className="ds-field" style={{ marginBottom: 24 }}>
                 <label className="ds-label is-required" htmlFor="prompt-text" style={{ marginBottom: 8, display: 'block' }}>Prompt text</label>
                 <textarea
-                  id="prompt-text" value={promptText}
-                  onChange={(e) => setPromptText(e.target.value)}
+                  id="prompt-text" value={promptTemplate}
+                  onChange={(e) => setPromptTemplate(e.target.value.slice(0, MAX_PROMPT_LEN))}
                   placeholder="You are Lucien, the recovery-ops assistant. …"
                   rows={14}
                   className="ds-textarea"
                   style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.5, padding: '12px 16px', resize: 'vertical' }}
                 />
+                <span style={{ fontSize: 11, color: promptTemplate.trim().length > 0 && promptTemplate.trim().length < MIN_PROMPT_LEN ? 'var(--warning)' : 'var(--ink-tertiary)', display: 'block', marginTop: 4 }}>
+                  {promptTemplate.length}/{MAX_PROMPT_LEN} · minimum {MIN_PROMPT_LEN} characters
+                </span>
               </div>
 
               <div className="ds-field" style={{ marginBottom: 24 }}>
-                <label className="ds-label" htmlFor="prompt-context" style={{ marginBottom: 8, display: 'block' }}>Context (optional)</label>
+                <label className="ds-label" htmlFor="prompt-context" style={{ marginBottom: 8, display: 'block' }}>Description (optional)</label>
                 <textarea
-                  id="prompt-context" value={context}
-                  onChange={(e) => setContext(e.target.value)}
+                  id="prompt-context" value={description}
+                  onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESC_LEN))}
                   placeholder="Notes for the next reviewer — what this prompt is for, when to revisit, etc."
                   rows={3}
                   className="ds-textarea"
@@ -177,12 +186,12 @@ export default function SystemPromptAdminPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
                 {prompt ? (
                   <span className="db-kpi2-foot-meta">
-                    Version {prompt.version} · Last updated {new Date(prompt.updatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                    Version {prompt.version} · {prompt.isActive ? 'Active' : 'Inactive'} · Last updated {new Date(prompt.updatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
                   </span>
                 ) : <span />}
                 <button
                   type="button" className="ds-btn is-primary"
-                  onClick={save} disabled={saving || !promptText.trim()}
+                  onClick={save} disabled={saving || promptTemplate.trim().length < MIN_PROMPT_LEN}
                   style={{ height: 36 }}
                 >
                   {saving ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Save size={14} style={{ marginRight: 6 }} />}

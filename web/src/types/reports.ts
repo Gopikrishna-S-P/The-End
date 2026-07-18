@@ -61,6 +61,16 @@ export interface AuditLogResponse {
   createdAt: string;
 }
 
+/** Admin/user-action audit trail entry (distinct from AuditLogResponse's assignment/allocation trail). */
+export interface UserActionAuditResponse {
+  id: string;
+  userId: string;
+  userEmail: string;
+  action: string;
+  details?: string;
+  createdAt: string;
+}
+
 export interface BorrowerResponse {
   id: string;
   organizationId: string;
@@ -142,6 +152,11 @@ export interface DataErasureRequestResponse {
   executedAt?: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+/** POST /api/v1/borrowers/{id}/erasure-request body. Matches server CreateErasureRequestRequest. */
+export interface CreateErasureRequestRequest {
+  reason: string;
 }
 
 export type GrievanceCategory =

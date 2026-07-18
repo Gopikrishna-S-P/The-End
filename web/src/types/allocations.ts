@@ -49,13 +49,8 @@ export interface FieldAgentSection {
   todayCompletionRate: number;
   collectedAmountToday: number;
   collectionsSubmittedToday: number;
-  collectedAmountThisWeek: number;
-  collectionsThisWeek: number;
   pendingPtps: number;
   ptpsDueToday: number;
-  ptpsFulfilledThisMonth: number;
-  ptpsBrokenThisMonth: number;
-  ptpFulfillmentRate: number;
   todayAssignments: TodayAssignmentEntry[];
 }
 
@@ -194,5 +189,75 @@ export interface BulkAssignRequest {
   priority: Priority;
   strictMode?: boolean;
   sequenceOrders?: Array<{ allocationId: string; sequenceOrder: number }>;
+}
+
+export interface BulkAssignResponse {
+  totalRequested: number;
+  totalSucceeded: number;
+  totalFailed: number;
+  strictModeApplied: boolean;
+  rolledBack: boolean;
+  successfulAssignments: AssignmentResponse[];
+  failures: Array<{ allocationId: string; reason: string }>;
+}
+
+export interface AgentAssignmentSummary {
+  agentId: string;
+  date: string;
+  totalAssigned: number;
+  remainingCapacity: number;
+  maxCapacity: number;
+  countByPriority: Partial<Record<Priority, number>>;
+  countByStatus: Partial<Record<AssignmentStatus, number>>;
+}
+
+export interface DateAssignmentSummary {
+  date: string;
+  totalAssignments: number;
+  totalAgentsInvolved: number;
+  countByPriority: Partial<Record<Priority, number>>;
+  countByStatus: Partial<Record<AssignmentStatus, number>>;
+  agentBreakdown: AgentAssignmentSummary[];
+}
+
+/** Server-side enriched "my active cases" view (GET /api/v1/assignments/my-cases). */
+export interface MyAssignedCaseResponse {
+  assignmentId: string;
+  assignmentDate: string;
+  assignmentStatus: AssignmentStatus;
+  priority: Priority;
+  sequenceOrder?: number;
+  allocationId: string;
+  loanNumber: string;
+  borrowerName: string;
+  outstandingAmount?: number;
+  totalDue?: number;
+  npaFlagged?: boolean;
+  allocationStatus: AllocationStatus;
+  dynamicData?: Record<string, unknown>;
+  lastVisitDate?: string;
+  lastVisitDisposition?: string;
+}
+
+export interface OptimizeAssignmentOrderRequest {
+  organizationId: string;
+  agentId?: string;
+  allocationIds: string[];
+  /** India bounding box only: 8.4–37.6°N. Both lat/lng must be provided together or omitted. */
+  agentLatitude?: number;
+  agentLongitude?: number;
+}
+
+export interface OptimizedAssignmentOrderResponse {
+  organizationId: string;
+  agentId?: string;
+  modelVersion: string;
+  ordered: Array<{
+    allocationId: string;
+    sequenceOrder: number;
+    score: number;
+    rationale: string;
+    segment: string;
+  }>;
 }
 

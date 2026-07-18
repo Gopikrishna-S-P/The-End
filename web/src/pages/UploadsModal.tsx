@@ -36,8 +36,10 @@ export function UploadsModal({ onClose, onSuccess, targetOrgId }: Props) {
       const form = new FormData();
       form.append('file', file);
       const url = targetOrgId ? `/api/v1/file-uploads?organizationId=${targetOrgId}` : '/api/v1/file-uploads';
+      // No explicit Content-Type: a manually-set 'multipart/form-data' header has no
+      // boundary parameter and is sent as-is, which breaks Spring's multipart parser.
+      // Let axios/the browser generate the correct header for the FormData body.
       await apiClient.post(url, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: e => { if (e.total) setProgress(Math.round((e.loaded * 100) / e.total)); },
       });
       onSuccess(); onClose();

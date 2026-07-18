@@ -32,6 +32,12 @@ export function usePermissions() {
     return roles.includes(role) || roles.includes(normalizedRole);
   };
 
+  /** True if the user holds at least one of the given roles (bare or ROLE_-prefixed). */
+  const hasAnyRole = (...roleList: string[]): boolean => {
+    if (!roleList.length) return false;
+    return roleList.some(r => hasRole(r));
+  };
+
   const getAllPermissions = (): string[] => {
     return [...permissions];
   };
@@ -47,6 +53,7 @@ export function usePermissions() {
     hasAnyPermission,
     hasAllPermissions,
     hasRole,
+    hasAnyRole,
     getAllPermissions,
     getAllRoles,
   };

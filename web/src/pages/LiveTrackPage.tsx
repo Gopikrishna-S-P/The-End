@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLiveTrackSocket, type AgentDot } from '../hooks/useLiveTrackSocket';
+import { useAuth } from '../AuthContext';
 import './LiveTrackPage.css';
 
 declare const L: any;
@@ -42,7 +43,8 @@ function makeIcon(agent: AgentDot) {
 // ── component ─────────────────────────────────────────────────────────────
 
 export default function LiveTrackPage() {
-  const { agents, connected } = useLiveTrackSocket();
+  const { user } = useAuth();
+  const { agents, connected } = useLiveTrackSocket(user?.organizationId);
 
   const mapRef       = useRef<any>(null);
   const mapDivRef    = useRef<HTMLDivElement>(null);

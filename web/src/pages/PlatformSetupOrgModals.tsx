@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   platformApi,
   type OrganizationSummary,
@@ -103,12 +103,7 @@ export function AssignAdminModal({ org, onClose, onAssigned }: {
         organizationId: org.id,
       });
       toastBus.success('Admin assigned', `${user.firstName} ${user.lastName} is now admin for ${org.name}.`);
-      onAssigned({
-        ...org,
-        orgAdminEmail:     user.email,
-        orgAdminFirstName: user.firstName,
-        orgAdminLastName:  user.lastName,
-      });
+      onAssigned({ ...org, orgAdminEmail: user.email });
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to assign admin');
     } finally { setSubmitting(false); }
@@ -137,14 +132,24 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
   org: OrganizationSummary; onClose: () => void; onUpdated: (updated: OrganizationSummary) => void;
 }) {
   const [orgForm, setOrgForm] = useState<UpdateOrganizationRequest>({ name: org.name, code: org.code });
-  const [adminForm, setAdminForm] = useState<UpdateOrgAdminRequest>({
-    firstName: org.orgAdminFirstName ?? '',
-    lastName:  org.orgAdminLastName  ?? '',
-    email:     org.orgAdminEmail     ?? '',
-  });
+  const [adminForm, setAdminForm] = useState<UpdateOrgAdminRequest>({ firstName: '', lastName: '', email: org.orgAdminEmail ?? '' });
+  const [adminLoaded, setAdminLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
+
+  // The org list endpoint only returns the admin's email (kept cheap for the table);
+  // fetch the org's users here to get the admin's actual first/last name for editing.
+  useEffect(() => {
+    if (!org.orgAdminEmail) { setAdminLoaded(true); return; }
+    let alive = true;
+    platformApi.getOrganizationUsers(org.id).then(users => {
+      if (!alive) return;
+      const admin = users.find(u => u.roles?.some(r => r.name === 'ROLE_ORG_ADMIN'));
+      if (admin) setAdminForm({ firstName: admin.firstName, lastName: admin.lastName, email: admin.email });
+    }).finally(() => { if (alive) setAdminLoaded(true); });
+    return () => { alive = false; };
+  }, [org.id, org.orgAdminEmail]);
 
   const setOrg = (k: keyof UpdateOrganizationRequest, v: string) => setOrgForm(p => ({ ...p, [k]: v }));
   const setAdmin = (k: keyof UpdateOrgAdminRequest, v: string) => setAdminForm(p => ({ ...p, [k]: v }));
@@ -164,11 +169,7 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
       let updated = await platformApi.updateOrganization(org.id, {
         name: orgForm.name.trim(), code: orgForm.code.trim().toUpperCase(),
       });
-      const adminChanged =
-        adminForm.firstName.trim() !== (org.orgAdminFirstName ?? '') ||
-        adminForm.lastName.trim()  !== (org.orgAdminLastName  ?? '') ||
-        adminForm.email.trim().toLowerCase() !== (org.orgAdminEmail ?? '').toLowerCase();
-      if (org.orgAdminEmail && adminChanged) {
+      if (org.orgAdminEmail) {
         updated = await platformApi.updateOrgAdmin(org.id, {
           firstName: adminForm.firstName.trim(),
           lastName:  adminForm.lastName.trim(),
@@ -191,10 +192,10 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
         {org.orgAdminEmail ? (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <Input label="First name" value={adminForm.firstName} onChange={v => setAdmin('firstName', v)} error={fieldErr.adminFirstName} />
-              <Input label="Last name" value={adminForm.lastName} onChange={v => setAdmin('lastName', v)} error={fieldErr.adminLastName} />
+              <Input label="First name" value={adminForm.firstName} onChange={v => setAdmin('firstName', v)} error={fieldErr.adminFirstName} disabled={!adminLoaded} />
+              <Input label="Last name" value={adminForm.lastName} onChange={v => setAdmin('lastName', v)} error={fieldErr.adminLastName} disabled={!adminLoaded} />
             </div>
-            <Input label="Email" type="email" value={adminForm.email} onChange={v => setAdmin('email', v)} error={fieldErr.adminEmail} />
+            <Input label="Email" type="email" value={adminForm.email} onChange={v => setAdmin('email', v)} error={fieldErr.adminEmail} disabled={!adminLoaded} />
             {fieldErr.adminGeneral && <p style={{ color: 'var(--error)', fontSize: 11, marginTop: 2 }}>{fieldErr.adminGeneral}</p>}
           </>
         ) : (
@@ -209,7 +210,7 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
           <AlertCircle size={14} /><span className="ps-banner-content">{error}</span>
         </div>
       )}
-      <ModalFooter onClose={onClose} submitting={submitting} onSubmit={submit} label="Save changes" />
+      <ModalFooter onClose={onClose} submitting={submitting || !adminLoaded} onSubmit={submit} label="Save changes" />
     </Modal>
   );
 }

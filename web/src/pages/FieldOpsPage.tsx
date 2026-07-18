@@ -119,7 +119,7 @@ export default function FieldOpsPage() {
 
   const seenIds      = useRef<Set<string>>(new Set());
   const firstOpenRef = useRef<HTMLLIElement | null>(null);
-  const { agents, wsStatus } = useLiveTrack();
+  const { agents, wsStatus } = useLiveTrack(orgId);
 
   useEffect(() => {
     const t = setInterval(() => tick(n => n + 1), 60_000);

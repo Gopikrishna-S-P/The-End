@@ -41,8 +41,8 @@
   --elevation-3: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
   --elevation-4: 0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -5px rgba(0,0,0,0.04);
 
-  /* Topbar chrome */
-  --tb-bg:     var(--bg-surface);
+  /* Topbar chrome — matches the content-area canvas, not the raised card surface */
+  --tb-bg:     var(--bg-canvas);
   --tb-border: var(--border);
 
   display: flex;

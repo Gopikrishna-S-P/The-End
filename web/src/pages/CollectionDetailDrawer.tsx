@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../client';
+import { documentsApi } from '../api/documentsApi';
 import { useAuth } from '../AuthContext';
 import type { CollectionResponse, CollectionDocumentResponse, ApprovalAction } from '../types';
 import {
@@ -71,8 +72,8 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
 
   useEffect(() => {
     setDocs([]); setDocsLoading(true); setAction(null); setRemarks(''); setError(null);
-    apiClient.get(`/api/v1/collections/${collection.id}/documents`)
-      .then(({ data }) => { const r = data?.data ?? data; setDocs(Array.isArray(r) ? r : []); })
+    documentsApi.getDocuments(collection.id)
+      .then(r => setDocs(Array.isArray(r) ? r : []))
       .catch(() => setDocs([]))
       .finally(() => setDocsLoading(false));
   }, [collection.id]);
@@ -184,17 +185,14 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
                 {docs.map((doc) => (
                   <a
                     key={doc.id}
-                    href={(doc as any).viewUrl}
+                    href={doc.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="db-customize-btn"
                     style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start', textDecoration: 'none' }}
                   >
                     <FileText size={14} style={{ color: 'var(--ink-tertiary)' }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{doc.originalFilename}</span>
-                    <span style={{ fontSize: 11, color: 'var(--ink-tertiary)', flexShrink: 0 }}>
-                      ({Math.round((doc.fileSizeBytes ?? 0) / 1024)} KB)
-                    </span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{doc.fileName}</span>
                   </a>
                 ))}
               </div>

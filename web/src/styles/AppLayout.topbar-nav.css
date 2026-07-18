@@ -73,12 +73,8 @@
 .app-icon-btn:active { transform: scale(0.96); }
 .app-icon-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
-/* Lucien AI — subtle gradient tint when inactive */
-.app-icon-btn[aria-label*="Lucien"] {
-  background: linear-gradient(135deg, var(--bg-surface) 0%, color-mix(in srgb, var(--ink-solid) 5%, var(--bg-surface)) 100%);
-}
+/* Lucien AI — same plain transparent style as the other topbar icon buttons */
 .app-icon-btn[aria-label*="Lucien"]:hover {
-  background: color-mix(in srgb, var(--ink-solid) 8%, var(--bg-subtle));
   color: var(--ink-solid);
 }
 

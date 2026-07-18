@@ -138,7 +138,7 @@ export default function LoanDetailContent(p: Props) {
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div className="db-kpi-toggle" style={{ display: 'inline-flex' }}>
           {[
             { id: 'details', label: 'Details' },
@@ -149,6 +149,20 @@ export default function LoanDetailContent(p: Props) {
               {tab.label}
             </button>
           ))}
+        </div>
+
+        {/* Related-workspace quick links — these pages aren't in the sidebar for
+            every role, so this is how a case leads onward to its assignment,
+            visit, PTP, and collection history. */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
+            onClick={() => navigate('/app/assignments')}>Assignments</button>
+          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
+            onClick={() => navigate('/app/visits')}>Visit Logs</button>
+          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
+            onClick={() => navigate('/app/ptps')}>PTPs</button>
+          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
+            onClick={() => navigate('/app/collections')}>Collections</button>
         </div>
       </div>
 
