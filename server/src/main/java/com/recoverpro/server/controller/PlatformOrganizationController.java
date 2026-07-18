@@ -97,11 +97,16 @@ public class PlatformOrganizationController {
         Role orgAdminRole = roleRepo.findByNameAndOrganizationIdIsNull(PlatformConstants.ROLE_ORG_ADMIN)
                 .orElseThrow(() -> new BusinessException("ROLE_ORG_ADMIN not seeded"));
 
+        byte[] pepperBytes = new byte[32];
+        SECURE_RANDOM.nextBytes(pepperBytes);
+        String lookupHashPepper = HexFormat.of().formatHex(pepperBytes);
+
         Organization org = Organization.builder()
                 .name(request.getName())
                 .code(request.getCode())
                 .organizationType(OrganizationType.ORGANIZATION)
                 .isActive(true)
+                .lookupHashPepper(lookupHashPepper)
                 .build();
         org = orgRepo.save(org);
 
