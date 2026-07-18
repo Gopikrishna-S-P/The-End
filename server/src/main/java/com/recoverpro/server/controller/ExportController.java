@@ -22,7 +22,7 @@ public class ExportController {
     private final ExportService exportService;
 
     @GetMapping("/jobs/{jobId}/download")
-    @PreAuthorize("hasAnyRole('ORG_ADMIN', 'ORG_ADMIN', 'PLATFORM_ADMIN')")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')")
     public ResponseEntity<Resource> downloadReport(
             @PathVariable UUID jobId,
             @RequestParam UUID orgId) {
