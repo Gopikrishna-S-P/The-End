@@ -9,8 +9,10 @@ import com.recoverpro.server.dto.request.CreatePtpRequest;
 import com.recoverpro.server.dto.request.PtpFilterRequest;
 import com.recoverpro.server.dto.request.UpdatePtpStatusRequest;
 import com.recoverpro.server.dto.response.*;
+import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.PtpStatus;
 import com.recoverpro.server.exception.IdempotencyKeyConflictException;
+import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.*;
 import com.recoverpro.server.service.IdempotencyKeyService.IdempotencyResult;
@@ -54,6 +56,7 @@ public class PtpController {
     private final IdempotencyKeyService idempotencyKeyService;
     private final AllocationService allocationService;
     private final com.recoverpro.server.repository.AllocationRepository allocationRepository;
+    private final UserRepository userRepository;
 
     private boolean shouldProceed(String key, String scope, UUID id) {
         if (key == null || key.isBlank()) return true;
@@ -143,6 +146,52 @@ public class PtpController {
         }
 
         return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
+    @GetMapping("/{id}/history")
+    @PreAuthorize(READERS)
+    public ResponseEntity<ApiResponse<List<PtpHistoryResponse>>> getPtpHistory(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID id) {
+
+        PtpResponse resp = ptpService.getPtpById(id);
+        assertViaAllocation(resp.getAllocationId(), principal);
+
+        if (isOnlyFieldOfficer(principal) &&
+                !principal.getId().equals(resp.getAgentId())) {
+            throw new ResourceNotFoundException("PTP not found");
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(ptpService.getPtpHistory(id)));
+    }
+
+    @GetMapping("/allocation/{allocationId}/history")
+    @PreAuthorize(READERS)
+    public ResponseEntity<ApiResponse<List<PtpHistoryResponse>>> getFullAllocationHistory(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID allocationId) {
+
+        assertViaAllocation(allocationId, principal);
+        return ResponseEntity.ok(ApiResponse.success(ptpService.getFullAllocationHistory(allocationId)));
+    }
+
+    @GetMapping("/agents/{agentId}/statistics")
+    @PreAuthorize(LEADS)
+    public ResponseEntity<ApiResponse<PtpStatisticsResponse>> getAgentStatistics(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID agentId) {
+
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found: " + agentId));
+
+        if (!isPlatformAdmin(principal)) {
+            UUID callerOrg = principal.getOrganizationId();
+            if (callerOrg == null || !callerOrg.equals(agent.getOrganizationId())) {
+                throw new ResourceNotFoundException("Agent not found: " + agentId);
+            }
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(ptpService.getAgentStatistics(agentId)));
     }
 
     @GetMapping
