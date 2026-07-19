@@ -26,6 +26,16 @@ public class RlsAwareDataSource extends DelegatingDataSource {
 
     private static final String SET_ORG_SQL = "SELECT set_config('app.current_org_id', ?, false)";
 
+    /**
+     * Gates the "OR current_setting('app.is_platform_admin', true) = 'true'" branch that
+     * individual RLS policies opt into (see V050 for file_uploads) -- only ever activated by
+     * RlsOrgIdHolder.setBypass(true), which only server-side code that has already checked
+     * hasRole('PLATFORM_ADMIN') may call. Explicitly set to 'true'/'false' on every checkout,
+     * same reasoning as app.current_org_id below: pooled connections must never carry a stale
+     * value left over from a previous borrower.
+     */
+    private static final String SET_PLATFORM_ADMIN_SQL = "SELECT set_config('app.is_platform_admin', ?, false)";
+
     public RlsAwareDataSource(DataSource targetDataSource) {
         super(targetDataSource);
     }
@@ -48,6 +58,11 @@ public class RlsAwareDataSource extends DelegatingDataSource {
         UUID orgId = RlsOrgIdHolder.get();
         try (PreparedStatement ps = connection.prepareStatement(SET_ORG_SQL)) {
             ps.setString(1, orgId != null ? orgId.toString() : "");
+            ps.execute();
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(SET_PLATFORM_ADMIN_SQL)) {
+            ps.setString(1, RlsOrgIdHolder.isBypass() ? "true" : "false");
             ps.execute();
         }
     }

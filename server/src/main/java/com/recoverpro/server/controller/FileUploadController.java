@@ -6,6 +6,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.response.FileProcessingErrorResponse;
 import com.recoverpro.server.dto.response.FileUploadResponse;
+import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
@@ -104,7 +105,18 @@ public class FileUploadController {
     }
 
     private UUID resolveOrgId(UserPrincipal p, UUID requested) {
-        if (isPlatformAdmin(p)) return requested != null ? requested : p.getOrganizationId();
+        if (isPlatformAdmin(p)) {
+            if (requested != null && !requested.equals(p.getOrganizationId())) {
+                // Platform admin explicitly acting on another org's data: RLS's current_org_id()
+                // is always the platform admin's own org (never a real tenant's), so a normal
+                // session would see zero rows here regardless of `requested`. Flags this request's
+                // connection checkouts to set app.is_platform_admin, which the file_uploads RLS
+                // policy (V050) opts into; the WHERE organization_id = requested filter in
+                // fileUploadService below remains the actual scoping mechanism.
+                RlsOrgIdHolder.setBypass(true);
+            }
+            return requested != null ? requested : p.getOrganizationId();
+        }
         return p.getOrganizationId();
     }
 
