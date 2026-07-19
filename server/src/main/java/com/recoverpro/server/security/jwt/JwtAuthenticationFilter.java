@@ -28,11 +28,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
+    private final SseTicketService sseTicketService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        if (isSseTicketRequest(request)) {
+            authenticateViaTicket(request, response, filterChain);
+            return;
+        }
+
         String token = extractToken(request);
 
         if (!StringUtils.hasText(token)) {
@@ -83,20 +89,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     // Browser EventSource cannot set custom headers, so the SSE notification stream is the one
-    // endpoint that accepts a token via query param instead of the Authorization header. Scoped
-    // narrowly to that single path so no other endpoint's tokens end up in access logs/proxies.
+    // endpoint that authenticates via a query param instead of the Authorization header -- but
+    // it's a short-lived, single-use ticket (see SseTicketService), never the JWT itself, so
+    // nothing sensitive ends up sitting in access logs/proxy logs/browser history.
     private static final String SSE_STREAM_PATH = "/api/v1/notifications/stream";
+
+    private boolean isSseTicketRequest(HttpServletRequest request) {
+        return SSE_STREAM_PATH.equals(request.getRequestURI())
+                && StringUtils.hasText(request.getParameter("ticket"));
+    }
+
+    private void authenticateViaTicket(HttpServletRequest request, HttpServletResponse response,
+                                       FilterChain filterChain) throws ServletException, IOException {
+        String username = sseTicketService.redeemTicket(request.getParameter("ticket"));
+        if (username == null) {
+            writeUnauthorized(response, "Invalid or expired stream ticket");
+            return;
+        }
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+        } catch (UsernameNotFoundException e) {
+            writeUnauthorized(response, "Invalid credentials");
+        }
+    }
 
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (StringUtils.hasText(header) && header.startsWith(BEARER_PREFIX)) {
             return header.substring(BEARER_PREFIX.length());
-        }
-        if (SSE_STREAM_PATH.equals(request.getRequestURI())) {
-            String queryToken = request.getParameter("token");
-            if (StringUtils.hasText(queryToken)) {
-                return queryToken;
-            }
         }
         return null;
     }

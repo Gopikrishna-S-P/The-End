@@ -3,6 +3,7 @@ package com.recoverpro.server.controller;
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.entity.AppNotification;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.security.jwt.SseTicketService;
 import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.impl.NotificationSseService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +27,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final NotificationSseService notificationSseService;
+    private final SseTicketService sseTicketService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<AppNotification>>> getUnread(
@@ -70,6 +73,18 @@ public class NotificationController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant until) {
         notificationService.snooze(id, principal.getId(), until);
         return ResponseEntity.ok(ApiResponse.of("Notification snoozed", null));
+    }
+
+    /**
+     * Issues a short-lived, single-use ticket for the SSE stream below -- called via a normal
+     * authenticated fetch (Authorization header works fine here), then EventSource connects with
+     * ?ticket= since it can't set that header itself. See SseTicketService.
+     */
+    @PostMapping("/stream/ticket")
+    public ResponseEntity<ApiResponse<Map<String, String>>> issueStreamTicket(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        String ticket = sseTicketService.issueTicket(principal.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(Map.of("ticket", ticket)));
     }
 
     @GetMapping("/stream")

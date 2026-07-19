@@ -5,6 +5,7 @@ import com.recoverpro.server.security.RestAccessDeniedHandler;
 import com.recoverpro.server.security.RestAuthenticationEntryPoint;
 import com.recoverpro.server.security.jwt.JwtAuthenticationFilter;
 import com.recoverpro.server.security.jwt.JwtTokenProvider;
+import com.recoverpro.server.security.jwt.SseTicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -46,13 +47,14 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
+    private final SseTicketService sseTicketService;
 
     @Value("${app.cors.allowed-origins:}")
     private List<String> allowedOrigins;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate);
+        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate, sseTicketService);
     }
 
     @Bean
