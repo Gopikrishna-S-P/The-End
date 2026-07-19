@@ -43,7 +43,9 @@ public class PlatformAnalyticsService {
     private final OrganizationRepository    orgRepo;
     private final UserRepository            userRepo;
 
-    /** Monthly list price per plan (INR). Source of truth for MRR/ARR. */
+    /** Monthly list price per plan (INR). Source of truth for MRR/ARR -- also used by
+     * PlatformSubscriptionController's revenue-trend endpoint (BCR-5), so kept public/static
+     * rather than duplicated. */
     private static final Map<Plan, Long> PLAN_PRICE = new EnumMap<>(Plan.class);
     static {
         PLAN_PRICE.put(Plan.NONE,        0L);
@@ -58,7 +60,7 @@ public class PlatformAnalyticsService {
 
     /** Real Stripe-synced amount when available; falls back to the default list price for
      * subscriptions that predate {@code plan_amount} (not yet re-synced by a Stripe webhook). */
-    private static long amountOf(OrgSubscription s) {
+    public static long amountOf(OrgSubscription s) {
         return s.getPlanAmount() != null
                 ? s.getPlanAmount().setScale(0, java.math.RoundingMode.HALF_UP).longValue()
                 : priceOf(s.getPlan());

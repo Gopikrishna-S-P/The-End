@@ -5,13 +5,16 @@ import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
+import com.stripe.model.Invoice;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.InvoiceListParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -63,6 +66,16 @@ public class StripeService {
                 com.stripe.model.billingportal.Session.create(params);
         log.info("Stripe portal session created: org={}", orgId);
         return session.getUrl();
+    }
+
+    /** Lists this Stripe customer's invoices, most recent first. Used by the platform-admin
+     * cross-org billing view (BCR-5) -- requires a real Stripe customer to already exist. */
+    public List<Invoice> listInvoices(String stripeCustomerId) throws StripeException {
+        InvoiceListParams params = InvoiceListParams.builder()
+                .setCustomer(stripeCustomerId)
+                .setLimit(25L)
+                .build();
+        return Invoice.list(params).getData();
     }
 
     private String ensureCustomer(OrgSubscription sub, UUID orgId) throws StripeException {
