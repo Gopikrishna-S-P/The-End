@@ -19,8 +19,16 @@ public interface AppNotificationRepository extends JpaRepository<AppNotification
 
     long countByRecipientIdAndReadAtIsNullAndDismissedFalse(UUID recipientId);
 
-    @Query("SELECT n FROM AppNotification n WHERE n.recipientId = :userId AND n.organizationId = :orgId AND n.readAt IS NULL AND n.dismissed = false ORDER BY n.createdAt DESC")
+    @Query("SELECT n FROM AppNotification n WHERE n.recipientId = :userId AND n.organizationId = :orgId " +
+           "AND n.readAt IS NULL AND n.dismissed = false " +
+           "AND (n.snoozedUntil IS NULL OR n.snoozedUntil <= CURRENT_TIMESTAMP) " +
+           "ORDER BY n.createdAt DESC")
     List<AppNotification> findUnreadByUserAndOrg(@Param("userId") UUID userId, @Param("orgId") UUID orgId);
+
+    @Query("SELECT COUNT(n) FROM AppNotification n WHERE n.recipientId = :userId AND n.organizationId = :orgId " +
+           "AND n.readAt IS NULL AND n.dismissed = false " +
+           "AND (n.snoozedUntil IS NULL OR n.snoozedUntil <= CURRENT_TIMESTAMP)")
+    long countUnreadByUserAndOrg(@Param("userId") UUID userId, @Param("orgId") UUID orgId);
 
     @Modifying
     @Query("UPDATE AppNotification n SET n.readAt = CURRENT_TIMESTAMP WHERE n.recipientId = :userId AND n.organizationId = :orgId AND n.readAt IS NULL")

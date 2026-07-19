@@ -82,10 +82,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+    // Browser EventSource cannot set custom headers, so the SSE notification stream is the one
+    // endpoint that accepts a token via query param instead of the Authorization header. Scoped
+    // narrowly to that single path so no other endpoint's tokens end up in access logs/proxies.
+    private static final String SSE_STREAM_PATH = "/api/v1/notifications/stream";
+
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (StringUtils.hasText(header) && header.startsWith(BEARER_PREFIX)) {
             return header.substring(BEARER_PREFIX.length());
+        }
+        if (SSE_STREAM_PATH.equals(request.getRequestURI())) {
+            String queryToken = request.getParameter("token");
+            if (StringUtils.hasText(queryToken)) {
+                return queryToken;
+            }
         }
         return null;
     }

@@ -19,6 +19,7 @@ import java.util.UUID;
 public class NotificationServiceImpl implements NotificationService {
 
     private final AppNotificationRepository notificationRepository;
+    private final NotificationSseService sseService;
 
     @Override
     @Transactional(readOnly = true)
@@ -42,13 +43,41 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    public void dismiss(UUID notificationId, UUID userId) {
+        notificationRepository.findById(notificationId).ifPresent(n -> {
+            if (userId.equals(n.getRecipientId()) && !n.isDismissed()) {
+                n.setDismissed(true);
+                notificationRepository.save(n);
+            }
+        });
+    }
+
+    @Override
+    public void snooze(UUID notificationId, UUID userId, Instant until) {
+        notificationRepository.findById(notificationId).ifPresent(n -> {
+            if (userId.equals(n.getRecipientId())) {
+                n.setSnoozedUntil(until);
+                notificationRepository.save(n);
+            }
+        });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getUnreadCount(UUID userId, UUID orgId) {
+        return notificationRepository.countUnreadByUserAndOrg(userId, orgId);
+    }
+
+    @Override
     public AppNotification create(UUID recipientId, UUID orgId, NotificationType type, String title, String body) {
-        return notificationRepository.save(AppNotification.builder()
+        AppNotification saved = notificationRepository.save(AppNotification.builder()
                 .recipientId(recipientId)
                 .organizationId(orgId)
                 .type(type)
                 .title(title)
                 .body(body)
                 .build());
+        sseService.publish(saved);
+        return saved;
     }
 }
