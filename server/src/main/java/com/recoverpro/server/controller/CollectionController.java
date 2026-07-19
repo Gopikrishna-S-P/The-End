@@ -28,7 +28,11 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -225,6 +229,74 @@ public class CollectionController {
                 );
 
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(result)));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EXPORT
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @GetMapping(value = "/export", produces = "text/csv")
+    @PreAuthorize(READERS)
+    public ResponseEntity<StreamingResponseBody> exportCsv(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID orgId,
+            @RequestParam(required = false) UUID agentId,
+            @RequestParam(required = false) CollectionStatus status,
+            @RequestParam(required = false) PaymentMode paymentMode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+
+        UUID effectiveOrg = resolveOrgId(principal, orgId);
+        if (effectiveOrg == null) {
+            throw new BusinessException("No organization context for caller");
+        }
+
+        UUID effectiveAgent = isOnlyFieldOfficer(principal)
+                ? principal.getId()
+                : agentId;
+
+        List<CollectionResponse> rows = collectionService
+                .getCollections(effectiveOrg, effectiveAgent, status, paymentMode, fromDate, toDate, Pageable.unpaged())
+                .getContent();
+
+        StreamingResponseBody body = out -> {
+            try (Writer w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+                w.write("Collection Date,Receipt Number,Amount,Payment Mode,Status,Bank Name,Cheque Number,"
+                        + "Cheque Date,UPI Reference,Transaction Reference,Notes,Rejection Reason,Created At\n");
+                for (CollectionResponse c : rows) {
+                    w.write(csvJoin(
+                            c.getCollectionDate(), c.getReceiptNumber(), c.getAmount(), c.getPaymentMode(),
+                            c.getStatus(), c.getBankName(), c.getChequeNumber(), c.getChequeDate(),
+                            c.getUpiReferenceId(), c.getTransactionReferenceId(), c.getNotes(),
+                            c.getRejectionReason(), c.getCreatedAt()));
+                }
+                w.flush();
+            }
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"collections.csv\"")
+                .body(body);
+    }
+
+    private static String csvJoin(Object... fields) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < fields.length; i++) {
+            if (i > 0) sb.append(',');
+            sb.append(csvEscape(fields[i]));
+        }
+        sb.append('\n');
+        return sb.toString();
+    }
+
+    private static String csvEscape(Object value) {
+        if (value == null) return "";
+        String s = value.toString();
+        if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
+            return "\"" + s.replace("\"", "\"\"") + "\"";
+        }
+        return s;
     }
 
     @GetMapping("/allocation/{allocationId}")
