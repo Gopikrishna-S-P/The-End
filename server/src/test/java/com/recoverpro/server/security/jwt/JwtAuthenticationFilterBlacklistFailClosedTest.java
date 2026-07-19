@@ -22,13 +22,14 @@ class JwtAuthenticationFilterBlacklistFailClosedTest {
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private UserDetailsService userDetailsService;
     @Mock private StringRedisTemplate redisTemplate;
+    @Mock private SseTicketService sseTicketService;
     @Mock private FilterChain filterChain;
 
     private JwtAuthenticationFilter filter;
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate);
+        filter = new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, redisTemplate, sseTicketService);
     }
 
     @Test

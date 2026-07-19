@@ -23,6 +23,7 @@ import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AgentFieldService;
 import com.recoverpro.server.service.storage.StoragePort;
 import com.recoverpro.server.websocket.LiveTrackWebSocketHandler;
+import com.recoverpro.server.websocket.SosAudioWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,9 @@ public class AgentFieldServiceImpl implements AgentFieldService {
 
     @Autowired
     private LiveTrackWebSocketHandler liveTrackWebSocketHandler;
+
+    @Autowired
+    private SosAudioWebSocketHandler sosAudioWebSocketHandler;
 
     @Value("${app.storage.sos-audio-path:./uploads/sos-audio}")
     private String sosAudioPath;
@@ -230,7 +234,9 @@ public class AgentFieldServiceImpl implements AgentFieldService {
         incident.setResolvedAt(Instant.now());
         incident.setResolvedByUserId(actingUserId);
         incident.setResolutionNotes(notes);
-        return toIncidentResponse(incidentRepository.save(incident));
+        IncidentReportResponse response = toIncidentResponse(incidentRepository.save(incident));
+        sosAudioWebSocketHandler.relayEnd(incident.getId());
+        return response;
     }
 
     @Override
@@ -280,6 +286,7 @@ public class AgentFieldServiceImpl implements AgentFieldService {
         incident.setResolvedByUserId(agentId);
         incident.setResolutionNotes("Cancelled by agent");
         incidentRepository.save(incident);
+        sosAudioWebSocketHandler.relayEnd(incidentId);
         log.info("SOS cancelled by agent: incident={} agent={}", incidentId, agentId);
     }
 
@@ -292,9 +299,13 @@ public class AgentFieldServiceImpl implements AgentFieldService {
         String s3Key = "sos-audio/" + agentId + "/" + filename;
         Path localPath = Paths.get(sosAudioPath, agentId.toString()).resolve(filename);
         try {
-            String stored = storagePort.store(s3Key, localPath, audio.getInputStream(),
+            byte[] bytes = audio.getBytes();
+            String stored = storagePort.store(s3Key, localPath, new java.io.ByteArrayInputStream(bytes),
                     audio.getContentType() != null ? audio.getContentType() : "audio/m4a", audio.getSize());
             log.warn("SOS audio stored: location={} agent={}", stored, agentId);
+
+            incidentRepository.findTopByAgentIdAndResolvedAtIsNullOrderByTriggeredAtDesc(agentId)
+                    .ifPresent(incident -> sosAudioWebSocketHandler.relayAudioChunk(incident.getId(), bytes));
         } catch (IOException e) {
             throw new BusinessException("Could not save SOS audio recording: " + e.getMessage());
         }

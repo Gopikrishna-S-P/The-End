@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -14,4 +15,6 @@ public interface IncidentReportRepository extends JpaRepository<IncidentReport, 
     Page<IncidentReport> findByOrganizationIdOrderByTriggeredAtDesc(UUID organizationId, Pageable pageable);
 
     Page<IncidentReport> findByOrganizationIdAndResolvedAtIsNullOrderByTriggeredAtDesc(UUID organizationId, Pageable pageable);
+
+    Optional<IncidentReport> findTopByAgentIdAndResolvedAtIsNullOrderByTriggeredAtDesc(UUID agentId);
 }

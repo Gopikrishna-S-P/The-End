@@ -41,7 +41,13 @@ public class SecurityConfig {
         "/actuator/health",
         "/v3/api-docs/**",
         "/swagger-ui/**",
-        "/swagger-ui.html"
+        "/swagger-ui.html",
+        // WebSocket upgrade requests are authenticated by JwtHandshakeInterceptor at the
+        // handshake layer instead (it validates the JWT and rejects unauthenticated connections
+        // with 401 before the handler ever sees them) -- letting the standard authenticated-request
+        // rule below apply here too would 403 the upgrade before that interceptor even runs, since
+        // JwtAuthenticationFilter doesn't understand the ?token= query param WS clients use.
+        "/ws/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;
