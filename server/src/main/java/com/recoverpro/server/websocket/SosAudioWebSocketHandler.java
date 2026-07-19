@@ -3,6 +3,9 @@ package com.recoverpro.server.websocket;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.recoverpro.server.entity.IncidentReport;
+import com.recoverpro.server.repository.IncidentReportRepository;
+import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -39,7 +43,14 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @RequiredArgsConstructor
 public class SosAudioWebSocketHandler extends TextWebSocketHandler {
 
+    // Same supervisor-tier role set AgentFieldController gates incident actions
+    // (resolve/cancel) with -- an FO or lower-privilege role has no business
+    // listening to another agent's live SOS audio.
+    private static final Set<String> SUPERVISOR_ROLES =
+            Set.of("ROLE_ORG_ADMIN", "ROLE_PLATFORM_ADMIN", "ROLE_MANAGER", "ROLE_TL");
+
     private final ObjectMapper objectMapper;
+    private final IncidentReportRepository incidentRepository;
 
     // incidentId -> subscribed supervisor sessions
     private final ConcurrentHashMap<UUID, CopyOnWriteArraySet<WebSocketSession>> subscribersByIncident =
@@ -64,8 +75,37 @@ public class SosAudioWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        if (!isAuthorizedForIncident(principal, incidentId)) {
+            log.warn("SOS audio subscribe rejected: user={} not authorized for incident={}",
+                    principal.getId(), incidentId);
+            return;
+        }
+
         subscribersByIncident.computeIfAbsent(incidentId, k -> new CopyOnWriteArraySet<>()).add(session);
         log.info("Supervisor subscribed to SOS audio: session={} incident={}", session.getId(), incidentId);
+    }
+
+    private boolean isAuthorizedForIncident(UserPrincipal principal, UUID incidentId) {
+        boolean isPlatformAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
+        boolean isSupervisor = principal.getAuthorities().stream()
+                .anyMatch(a -> SUPERVISOR_ROLES.contains(a.getAuthority()));
+        if (!isSupervisor) return false;
+
+        // WebSocket message handling runs on its own thread, which never passes through
+        // RlsContextFilter (that's an HTTP servlet filter, only invoked for the original
+        // handshake request) -- so RlsOrgIdHolder is empty here by default, and fail-closed
+        // RLS would silently hide this row from *everyone*, not just unauthorized callers.
+        // Stamp the same context RlsContextFilter would have set for an equivalent HTTP request.
+        RlsOrgIdHolder.set(principal.getOrganizationId());
+        if (isPlatformAdmin) RlsOrgIdHolder.setBypass(true);
+        try {
+            IncidentReport incident = incidentRepository.findById(incidentId).orElse(null);
+            if (incident == null) return false;
+            return isPlatformAdmin || incident.getOrganizationId().equals(principal.getOrganizationId());
+        } finally {
+            RlsOrgIdHolder.clear();
+        }
     }
 
     @Override
