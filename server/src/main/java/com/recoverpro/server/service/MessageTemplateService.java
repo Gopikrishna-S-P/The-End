@@ -9,6 +9,8 @@ import com.recoverpro.server.repository.MessageTemplateRepository;
 import com.recoverpro.server.service.compliance.TemplateAbuseLinter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,18 @@ public class MessageTemplateService {
 
     private final MessageTemplateRepository repository;
     private final TemplateAbuseLinter abuseLinter;
+
+    @Transactional(readOnly = true)
+    public Page<MessageTemplate> findAll(UUID organizationId, MessageTemplateStatus status,
+                                          Channel channel, Pageable pageable) {
+        return repository.findWithFilters(organizationId, status, channel, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public MessageTemplate findById(UUID organizationId, UUID templateId) {
+        return repository.findByIdAndOrganizationId(templateId, organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found: " + templateId));
+    }
 
     @Transactional
     public MessageTemplate activate(UUID templateId, UUID approverUserId) {
