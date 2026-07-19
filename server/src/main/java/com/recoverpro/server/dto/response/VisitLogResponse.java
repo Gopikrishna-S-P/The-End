@@ -22,6 +22,8 @@ public class VisitLogResponse {
     private UUID agentId;
     private String agentName;
     private UUID organizationId;
+    private String loanNumber;
+    private String borrowerName;
 
     private LocalDate visitDate;
     private Instant visitTime;

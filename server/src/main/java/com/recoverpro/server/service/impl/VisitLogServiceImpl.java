@@ -145,7 +145,7 @@ public class VisitLogServiceImpl implements VisitLogService {
     @Override
     @Transactional(readOnly = true)
     public VisitLogResponse getById(UUID id) {
-        return visitLogMapper.toResponse(requireVisitLog(id));
+        return enrichWithNames(visitLogMapper.toResponse(requireVisitLog(id)));
     }
 
     @Override
@@ -166,14 +166,14 @@ public class VisitLogServiceImpl implements VisitLogService {
     @Transactional(readOnly = true)
     public Page<VisitLogResponse> getByAgentIdPaged(UUID agentId, Pageable pageable) {
         return visitLogRepository.findByAgentIdAndIsDeletedFalse(agentId, pageable)
-                .map(v -> enrichWithAgentName(visitLogMapper.toResponse(v)));
+                .map(v -> enrichWithNames(visitLogMapper.toResponse(v)));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<VisitLogResponse> getByOrganizationIdPaged(UUID orgId, Pageable pageable) {
         return visitLogRepository.findByOrganizationIdAndIsDeletedFalse(orgId, pageable)
-                .map(v -> enrichWithAgentName(visitLogMapper.toResponse(v)));
+                .map(v -> enrichWithNames(visitLogMapper.toResponse(v)));
     }
 
     @Override
@@ -417,8 +417,12 @@ public class VisitLogServiceImpl implements VisitLogService {
         visitLog.getImages().add(img);
     }
 
-    private VisitLogResponse enrichWithAgentName(VisitLogResponse r) {
+    private VisitLogResponse enrichWithNames(VisitLogResponse r) {
         if (r.getAgentId() != null) r.setAgentName(getAgentDisplayName(r.getAgentId()));
+        if (r.getAllocationId() != null) {
+            allocationRepository.findById(r.getAllocationId())
+                    .ifPresent(a -> r.setBorrowerName(a.getBorrowerName()));
+        }
         return r;
     }
 

@@ -80,6 +80,7 @@ public class VisitLogMapper {
                 .assignmentId(entity.getAssignmentId())
                 .agentId(entity.getAgentId())
                 .organizationId(entity.getOrganizationId())
+                .loanNumber(entity.getLoanNumber())
                 .visitDate(entity.getVisitDate())
                 .visitTime(entity.getVisitTime())
                 .contactability(entity.getContactability())
