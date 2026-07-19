@@ -21,12 +21,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -210,22 +216,7 @@ public class PtpController {
                 ptpService.getAllPtps(filter, PageRequest.of(page, size, sort));
 
         if (!isPlatformAdmin(principal)) {
-            UUID org = principal.getOrganizationId();
-            UUID user = principal.getId();
-            boolean foOnly = isOnlyFieldOfficer(principal);
-
-            List<PtpResponse> filtered = result.getContent().stream()
-                    .filter(p -> {
-                        if (p.getAllocationId() == null) return false;
-                        try {
-                            AllocationResponse a =
-                                    allocationService.getAllocationById(p.getAllocationId());
-                            if (!org.equals(a.getOrganizationId())) return false;
-                            return !foOnly || user.equals(p.getAgentId());
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    }).toList();
+            List<PtpResponse> filtered = scopeToPrincipal(principal, result.getContent());
 
             return ResponseEntity.ok(ApiResponse.success(
                     PagedResponse.<PtpResponse>builder()
@@ -240,6 +231,81 @@ public class PtpController {
         }
 
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(result)));
+    }
+
+    @GetMapping(value = "/export", produces = "text/csv")
+    @PreAuthorize(READERS)
+    public ResponseEntity<StreamingResponseBody> exportCsv(
+            @AuthenticationPrincipal UserPrincipal principal,
+            PtpFilterRequest filter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+
+        if (fromDate != null) filter.setPromisedDateFrom(fromDate);
+        if (toDate != null) filter.setPromisedDateTo(toDate);
+
+        Page<PtpResponse> result = ptpService.getAllPtps(filter, Pageable.unpaged());
+        List<PtpResponse> rows = isPlatformAdmin(principal)
+                ? result.getContent()
+                : scopeToPrincipal(principal, result.getContent());
+
+        StreamingResponseBody body = out -> {
+            try (Writer w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+                w.write("Promised Date,Promised Amount,Collected Amount,Status,Loan Number,"
+                        + "Borrower Name,Agent Name,Reminder Sent,Created At\n");
+                for (PtpResponse p : rows) {
+                    w.write(csvJoin(p.getPromisedDate(), p.getPromisedAmount(), p.getCollectedAmount(),
+                            p.getStatus(), p.getLoanNumber(), p.getBorrowerName(), p.getAgentName(),
+                            p.getReminderSent(), p.getCreatedAt()));
+                }
+                w.flush();
+            }
+        };
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"ptps.csv\"")
+                .body(body);
+    }
+
+    private List<PtpResponse> scopeToPrincipal(UserPrincipal principal, List<PtpResponse> content) {
+        if (isPlatformAdmin(principal)) return content;
+
+        UUID org = principal.getOrganizationId();
+        UUID user = principal.getId();
+        boolean foOnly = isOnlyFieldOfficer(principal);
+
+        return content.stream()
+                .filter(p -> {
+                    if (p.getAllocationId() == null) return false;
+                    try {
+                        AllocationResponse a =
+                                allocationService.getAllocationById(p.getAllocationId());
+                        if (!org.equals(a.getOrganizationId())) return false;
+                        return !foOnly || user.equals(p.getAgentId());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }).toList();
+    }
+
+    private static String csvJoin(Object... fields) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < fields.length; i++) {
+            if (i > 0) sb.append(',');
+            sb.append(csvEscape(fields[i]));
+        }
+        sb.append('\n');
+        return sb.toString();
+    }
+
+    private static String csvEscape(Object value) {
+        if (value == null) return "";
+        String s = value.toString();
+        if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
+            return "\"" + s.replace("\"", "\"\"") + "\"";
+        }
+        return s;
     }
 
     @PatchMapping("/{id}/status")
