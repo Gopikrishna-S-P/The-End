@@ -15,12 +15,14 @@ public final class RlsOrgIdHolder {
     /**
      * Marks the current thread's connection checkouts as platform-admin-privileged for the rest
      * of this request -- RlsAwareDataSource stamps this onto the app.is_platform_admin session
-     * GUC, which individual RLS policies can opt into (see V050 for file_uploads). Set only by
-     * server-side code that has already verified the caller is PLATFORM_ADMIN and is deliberately
-     * acting on another org's data (e.g. an explicit organizationId override), never from request
-     * input directly.
+     * GUC, which individual RLS policies can opt into (see V050 for file_uploads).
+     *
+     * <p>Deliberately package-private: elevation must go through {@link PlatformAdminAccessGuard},
+     * which records who is reading whose data before the bypass takes effect. Making this public
+     * again would let a caller read across tenants with nothing on record -- which is exactly how
+     * the file_uploads, message_templates and incident_reports bypasses went unlogged.
      */
-    public static void setBypass(boolean bypass) { BYPASS.set(bypass); }
+    static void setBypass(boolean bypass) { BYPASS.set(bypass); }
     public static boolean isBypass()              { return Boolean.TRUE.equals(BYPASS.get()); }
 
     public static void clear() {

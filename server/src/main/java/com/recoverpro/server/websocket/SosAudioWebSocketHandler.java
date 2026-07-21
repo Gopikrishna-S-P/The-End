@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.recoverpro.server.entity.IncidentReport;
 import com.recoverpro.server.repository.IncidentReportRepository;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtHandshakeInterceptor;
@@ -51,6 +52,7 @@ public class SosAudioWebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper;
     private final IncidentReportRepository incidentRepository;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     // incidentId -> subscribed supervisor sessions
     private final ConcurrentHashMap<UUID, CopyOnWriteArraySet<WebSocketSession>> subscribersByIncident =
@@ -98,7 +100,10 @@ public class SosAudioWebSocketHandler extends TextWebSocketHandler {
         // RLS would silently hide this row from *everyone*, not just unauthorized callers.
         // Stamp the same context RlsContextFilter would have set for an equivalent HTTP request.
         RlsOrgIdHolder.set(principal.getOrganizationId());
-        if (isPlatformAdmin) RlsOrgIdHolder.setBypass(true);
+        if (isPlatformAdmin) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(
+                    principal.getId(), "sos-audio:subscribe incident=" + incidentId);
+        }
         try {
             IncidentReport incident = incidentRepository.findById(incidentId).orElse(null);
             if (incident == null) return false;

@@ -6,7 +6,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.entity.MessageTemplate;
 import com.recoverpro.server.enums.Channel;
 import com.recoverpro.server.enums.MessageTemplateStatus;
-import com.recoverpro.server.security.RlsOrgIdHolder;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.MessageTemplateService;
 import lombok.RequiredArgsConstructor;
@@ -43,18 +43,20 @@ public class MessageTemplateController {
     private static final String READERS = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')";
 
     private final MessageTemplateService messageTemplateService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @GetMapping
     @PreAuthorize(READERS)
     public ResponseEntity<ApiResponse<PagedResponse<MessageTemplate>>> list(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = false) String reason,
             @RequestParam(required = false) MessageTemplateStatus status,
             @RequestParam(required = false) Channel channel,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        UUID effectiveOrgId = resolveOrgId(principal, organizationId);
+        UUID effectiveOrgId = resolveOrgId(principal, organizationId, reason, "message-templates:list");
         if (effectiveOrgId == null) throw new BusinessException("Authenticated user has no organization context");
 
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(
@@ -67,9 +69,10 @@ public class MessageTemplateController {
     public ResponseEntity<ApiResponse<MessageTemplate>> getById(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id,
-            @RequestParam(required = false) UUID organizationId) {
+            @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = false) String reason) {
 
-        UUID effectiveOrgId = resolveOrgId(principal, organizationId);
+        UUID effectiveOrgId = resolveOrgId(principal, organizationId, reason, "message-templates:get");
         if (effectiveOrgId == null) throw new BusinessException("Authenticated user has no organization context");
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -81,12 +84,12 @@ public class MessageTemplateController {
                 .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
     }
 
-    private UUID resolveOrgId(UserPrincipal p, UUID requested) {
+    private UUID resolveOrgId(UserPrincipal p, UUID requested, String reason, String resource) {
         if (isPlatformAdmin(p)) {
             if (requested != null && !requested.equals(p.getOrganizationId())) {
                 // Same RLS gap BCR-12 found on file_uploads: current_org_id() is always the
                 // platform admin's own org, never the tenant org being asked about here.
-                RlsOrgIdHolder.setBypass(true);
+                platformAdminAccessGuard.beginCrossOrgAccess(p.getId(), requested, reason, resource);
             }
             return requested != null ? requested : p.getOrganizationId();
         }

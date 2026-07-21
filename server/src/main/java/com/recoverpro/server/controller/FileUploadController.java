@@ -6,7 +6,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.response.FileProcessingErrorResponse;
 import com.recoverpro.server.dto.response.FileUploadResponse;
-import com.recoverpro.server.security.RlsOrgIdHolder;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
@@ -34,15 +34,17 @@ public class FileUploadController {
     private static final String WRITERS = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
 
     private final FileUploadService fileUploadService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize(WRITERS)
     public ResponseEntity<ApiResponse<FileUploadResponse>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        UUID effectiveOrgId = resolveOrgId(principal, organizationId);
+        UUID effectiveOrgId = resolveOrgId(principal, organizationId, reason, "file-uploads:create");
         if (effectiveOrgId == null) throw new BusinessException("Authenticated user has no organization context");
         log.info("POST /api/v1/file-uploads - filename: {}, orgId: {}, userId: {}",
                 file.getOriginalFilename(), effectiveOrgId, principal.getId());
@@ -65,11 +67,12 @@ public class FileUploadController {
     @PreAuthorize(READERS)
     public ResponseEntity<ApiResponse<PagedResponse<FileUploadResponse>>> getUploadsByOrganization(
             @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = false) String reason,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        UUID effectiveOrgId = resolveOrgId(principal, organizationId);
+        UUID effectiveOrgId = resolveOrgId(principal, organizationId, reason, "file-uploads:list");
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(ApiResponse.success(
                 fileUploadService.getUploadsByOrganization(effectiveOrgId, pageable)));
@@ -104,16 +107,16 @@ public class FileUploadController {
         return p.getAuthorities().stream().anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
     }
 
-    private UUID resolveOrgId(UserPrincipal p, UUID requested) {
+    private UUID resolveOrgId(UserPrincipal p, UUID requested, String reason, String resource) {
         if (isPlatformAdmin(p)) {
             if (requested != null && !requested.equals(p.getOrganizationId())) {
                 // Platform admin explicitly acting on another org's data: RLS's current_org_id()
                 // is always the platform admin's own org (never a real tenant's), so a normal
-                // session would see zero rows here regardless of `requested`. Flags this request's
-                // connection checkouts to set app.is_platform_admin, which the file_uploads RLS
-                // policy (V050) opts into; the WHERE organization_id = requested filter in
-                // fileUploadService below remains the actual scoping mechanism.
-                RlsOrgIdHolder.setBypass(true);
+                // session would see zero rows here regardless of `requested`. Elevating through
+                // the guard records who/whose/why before app.is_platform_admin is set, which the
+                // file_uploads RLS policy (V050) opts into; the WHERE organization_id = requested
+                // filter in fileUploadService below remains the actual scoping mechanism.
+                platformAdminAccessGuard.beginCrossOrgAccess(p.getId(), requested, reason, resource);
             }
             return requested != null ? requested : p.getOrganizationId();
         }
