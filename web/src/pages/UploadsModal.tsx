@@ -8,9 +8,11 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   targetOrgId?: string;
+  /** Justification for acting on another org's data; required by the server when targetOrgId is set. */
+  accessReason?: string;
 }
 
-export function UploadsModal({ onClose, onSuccess, targetOrgId }: Props) {
+export function UploadsModal({ onClose, onSuccess, targetOrgId, accessReason }: Props) {
   const [file,      setFile]      = useState<File | null>(null);
   const [dragging,  setDragging]  = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +37,12 @@ export function UploadsModal({ onClose, onSuccess, targetOrgId }: Props) {
     try {
       const form = new FormData();
       form.append('file', file);
-      const url = targetOrgId ? `/api/v1/file-uploads?organizationId=${targetOrgId}` : '/api/v1/file-uploads';
+      // Uploading into another org is a cross-tenant write: the server audits it and refuses
+      // without a reason, so carry the one the page already collected for this organization.
+      const url = targetOrgId
+        ? `/api/v1/file-uploads?organizationId=${targetOrgId}`
+          + `&reason=${encodeURIComponent(accessReason ?? '')}`
+        : '/api/v1/file-uploads';
       // No explicit Content-Type: a manually-set 'multipart/form-data' header has no
       // boundary parameter and is sent as-is, which breaks Spring's multipart parser.
       // Let axios/the browser generate the correct header for the FormData body.

@@ -10,7 +10,7 @@ import {
   File as FileIcon, AlertCircle, Trash2, Upload,
   ChevronLeft, ChevronRight, ChevronDown, CloudUpload,
   TableProperties, ListChecks, Building2, LayoutGrid,
-  CheckCircle2, Clock, RefreshCw
+  CheckCircle2, Clock, RefreshCw, ShieldAlert
 } from 'lucide-react';
 import { UploadsModal, UploadStatusBadge } from './UploadsModal';
 import '../styles/AppPage.css';
@@ -152,6 +152,19 @@ export default function UploadsPage() {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [orgsLoading,   setOrgsLoading]   = useState(false);
 
+  // Reading another tenant's data requires a stated justification (PlatformAdminAccessGuard);
+  // the server refuses the request without one. Collected once per organization rather than
+  // per request, since the list below re-fetches on paging and on a poll timer.
+  //
+  // Both the draft and the confirmed reason are stored against the org they belong to and read
+  // back by comparison, so switching tenants retracts the justification by derivation rather
+  // than by an effect that clears state in a cascading render.
+  const [reasonDraft,   setReasonDraft]   = useState<{ orgId: string; text: string }>({ orgId: '', text: '' });
+  const [reasonGranted, setReasonGranted] = useState<{ orgId: string; text: string }>({ orgId: '', text: '' });
+
+  const accessReason    = reasonDraft.orgId   === selectedOrgId ? reasonDraft.text   : '';
+  const confirmedReason = reasonGranted.orgId === selectedOrgId ? reasonGranted.text : '';
+
   useEffect(() => {
     if (!isPlatformAdmin) return;
     setOrgsLoading(true);
@@ -164,17 +177,24 @@ export default function UploadsPage() {
   const fetchUploads = useCallback(async () => {
     if (!canView) { setLoading(false); return; }
     if (isPlatformAdmin && (orgsLoading || !selectedOrgId)) return;
+    // Without a confirmed reason the server returns 400, and the catch below is silent --
+    // which would render as an empty upload list rather than as the refusal it actually is.
+    if (isPlatformAdmin && selectedOrgId && !confirmedReason) { setLoading(false); return; }
     setLoading(true);
     try {
       const params: Record<string, string | number> = { page, size: PAGE_SIZE };
-      if (isPlatformAdmin && selectedOrgId) params.organizationId = selectedOrgId;
+      if (isPlatformAdmin && selectedOrgId) {
+        params.organizationId = selectedOrgId;
+        params.reason = confirmedReason;
+      }
       const { data } = await apiClient.get('/api/v1/file-uploads', { params });
       const response = unwrapApiResponse<PagedResponse<FileUploadResponse>>(data);
       setUploads(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
     } catch { /* silent */ } finally { setLoading(false); }
-  }, [page, isPlatformAdmin, selectedOrgId, orgsLoading, canView]);
+  }, [page, isPlatformAdmin, selectedOrgId, orgsLoading, canView, confirmedReason]);
+
 
   useEffect(() => { fetchUploads(); }, [fetchUploads]);
 
@@ -242,15 +262,45 @@ export default function UploadsPage() {
                   <ChevronDown size={13} className="up-org-caret" />
                 </div>
               )}
-              {canUpload && (
-                <button type="button" className="ds-btn is-primary" style={{ height: 32 }}
-                  onClick={() => setShowUploadModal(true)}>
-                  <Upload size={14} /> Upload File
-                </button>
-              )}
+              <button type="button" className="ds-btn is-secondary" style={{ height: 32 }}
+                onClick={() => navigate('/app/settings/schema')}>
+                <TableProperties size={14} /> Column Schemas
+              </button>
             </div>
           </div>
           
+          {isPlatformAdmin && selectedOrgId && !confirmedReason && (
+            <motion.div variants={fadeUp} className="ds-card" style={{ padding: 16, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <ShieldAlert size={15} style={{ color: 'var(--ds-warning, #b45309)' }} />
+                <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
+              </div>
+              <p style={{ fontSize: 13, opacity: 0.75, margin: '0 0 12px' }}>
+                This is recorded against your account in the audit trail, along with the
+                organization you are accessing. Reference a ticket or support case.
+              </p>
+              <form
+                style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+                onSubmit={e => {
+                  e.preventDefault();
+                  setReasonGranted({ orgId: selectedOrgId, text: accessReason.trim() });
+                }}
+              >
+                <input
+                  className="ds-input"
+                  style={{ flex: 1, minWidth: 240, height: 32 }}
+                  placeholder="e.g. BCR-77 — customer reported failed upload"
+                  value={accessReason}
+                  onChange={e => setReasonDraft({ orgId: selectedOrgId, text: e.target.value })}
+                />
+                <button type="submit" className="ds-btn is-primary" style={{ height: 32 }}
+                  disabled={!accessReason.trim()}>
+                  Confirm &amp; view
+                </button>
+              </form>
+            </motion.div>
+          )}
+
           {/* ── KPI Band ── */}
           <motion.div variants={fadeUp} className="db-kpi-band">
             <KpiCard label="Total Files" value={fmtNum(filesAnim)} icon={FileIcon} accent
@@ -374,11 +424,31 @@ export default function UploadsPage() {
         </motion.div>
       </div>
 
+      {canUpload && (
+        <button type="button"
+          onClick={() => setShowUploadModal(true)}
+          title="Upload file"
+          aria-label="Upload file"
+          style={{
+            position: 'fixed', bottom: 28, right: 32, zIndex: 50,
+            width: 56, height: 56, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)',
+            transition: 'transform 120ms ease, box-shadow 120ms ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}>
+          <Upload size={24} />
+        </button>
+      )}
+
       {showUploadModal && (
         <UploadsModal
           onClose={() => setShowUploadModal(false)}
           onSuccess={() => { fetchUploads(); setShowUploadModal(false); }}
           targetOrgId={isPlatformAdmin ? selectedOrgId : undefined}
+          accessReason={confirmedReason}
         />
       )}
     </div>
