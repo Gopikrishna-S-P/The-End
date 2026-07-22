@@ -175,4 +175,19 @@ class FeatureFlagAdminControllerTest {
                 .isInstanceOf(BusinessException.class);
         verifyNoInteractions(featureFlagService);
     }
+
+    @Test
+    void deleteOverride_orgAdminGlobal_throws() {
+        asOrgAdmin();
+        assertThatThrownBy(() -> controller.deleteOverride("LUCIEN_AI", null, orgAdmin))
+                .isInstanceOf(BusinessException.class);
+        verifyNoInteractions(featureFlagService);
+    }
+
+    @Test
+    void deleteOverride_platformAdminGlobal_succeeds() {
+        asPlatformAdmin();
+        controller.deleteOverride("LUCIEN_AI", null, platformAdmin);
+        verify(featureFlagService).deleteManualOverride(null, "LUCIEN_AI");
+    }
 }

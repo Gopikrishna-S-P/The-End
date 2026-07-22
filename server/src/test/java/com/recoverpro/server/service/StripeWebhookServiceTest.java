@@ -3,8 +3,10 @@ package com.recoverpro.server.service;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.config.StripeConfig;
 import com.recoverpro.server.entity.OrgSubscription;
+import com.recoverpro.server.entity.PlatformInvoice;
 import com.recoverpro.server.entity.ProcessedStripeEvent;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.repository.ProcessedStripeEventRepository;
 import com.stripe.model.Invoice;
 import com.stripe.model.Price;
@@ -15,11 +17,13 @@ import com.stripe.model.checkout.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +41,8 @@ class StripeWebhookServiceTest {
     @Mock
     private OrgSubscriptionRepository subscriptionRepository;
     @Mock
+    private PlatformInvoiceRepository invoiceRepository;
+    @Mock
     private FeatureFlagService featureFlagService;
 
     private StripeConfig stripeConfig;
@@ -50,7 +56,8 @@ class StripeWebhookServiceTest {
         setField(stripeConfig, "priceEnterprise", "price_enterprise_123");
 
         webhookService = new StripeWebhookService(
-                processedEventRepository, subscriptionRepository, featureFlagService, stripeConfig);
+                processedEventRepository, subscriptionRepository, invoiceRepository,
+                featureFlagService, stripeConfig);
     }
 
     @Test
@@ -123,8 +130,7 @@ class StripeWebhookServiceTest {
         assertThat(sub.getStripeSubscriptionId()).isEqualTo("sub_2");
         assertThat(sub.getCurrentPeriodEnd()).isEqualTo(Instant.ofEpochSecond(1_800_000_000L));
         assertThat(sub.getCancelAtPeriodEnd()).isTrue();
-        verify(featureFlagService).provisionFlagsForPlan(
-                sub.getOrgId(), OrgSubscription.Status.ACTIVE, OrgSubscription.Plan.GROWTH);
+        verify(featureFlagService).provisionFlagsFor(sub);
     }
 
     @Test
@@ -143,8 +149,7 @@ class StripeWebhookServiceTest {
         webhookService.handleSubscriptionDeleted(subscription);
 
         assertThat(sub.getStatus()).isEqualTo(OrgSubscription.Status.CANCELLED);
-        verify(featureFlagService).provisionFlagsForPlan(
-                sub.getOrgId(), OrgSubscription.Status.CANCELLED, OrgSubscription.Plan.STARTER);
+        verify(featureFlagService).provisionFlagsFor(sub);
     }
 
     @Test
@@ -200,8 +205,7 @@ class StripeWebhookServiceTest {
         webhookService.handleInvoicePaymentFailed(invoice);
 
         assertThat(sub.getStatus()).isEqualTo(OrgSubscription.Status.PAST_DUE);
-        verify(featureFlagService).provisionFlagsForPlan(
-                sub.getOrgId(), OrgSubscription.Status.PAST_DUE, OrgSubscription.Plan.GROWTH);
+        verify(featureFlagService).provisionFlagsFor(sub);
     }
 
     @Test
@@ -235,6 +239,187 @@ class StripeWebhookServiceTest {
         webhookService.handleSubscriptionUpserted(subscription);
 
         assertThat(sub.getPlan()).isEqualTo(OrgSubscription.Plan.STARTER);
+    }
+
+    /* ── Comps survive Stripe ────────────────────────────────────────────── */
+
+    @Test
+    void handleSubscriptionUpserted_overwritesStripeFieldsButLeavesCompIntact() {
+        Instant compedAt = Instant.now().minus(2, ChronoUnit.DAYS);
+        OrgSubscription sub = OrgSubscription.builder()
+                .orgId(UUID.randomUUID())
+                .stripeCustomerId("cus_20")
+                .status(OrgSubscription.Status.ACTIVE)
+                .plan(OrgSubscription.Plan.STARTER)
+                .compedPlan(OrgSubscription.Plan.ENTERPRISE)
+                .compedReason("Design partner")
+                .compedAt(compedAt)
+                .build();
+        when(subscriptionRepository.findByStripeCustomerId("cus_20")).thenReturn(Optional.of(sub));
+
+        webhookService.handleSubscriptionUpserted(subscriptionFixture(
+                "sub_20", "cus_20", "active", "price_growth_123", 1_800_000_000L, false));
+
+        // Stripe owns these and is expected to overwrite them...
+        assertThat(sub.getPlan()).isEqualTo(OrgSubscription.Plan.GROWTH);
+        assertThat(sub.getStatus()).isEqualTo(OrgSubscription.Status.ACTIVE);
+
+        // ...but the grant is a parallel channel. This is the entire reason comps
+        // are separate columns: writing plan directly meant an admin grant vanished
+        // on the next renewal or payment, silently and at an unpredictable time.
+        assertThat(sub.getCompedPlan()).isEqualTo(OrgSubscription.Plan.ENTERPRISE);
+        assertThat(sub.getCompedReason()).isEqualTo("Design partner");
+        assertThat(sub.getCompedAt()).isEqualTo(compedAt);
+        assertThat(sub.activeComp()).isEqualTo(OrgSubscription.Plan.ENTERPRISE);
+    }
+
+    @Test
+    void handleSubscriptionDeleted_leavesCompIntactSoAccessOutlivesCancellation() {
+        OrgSubscription sub = OrgSubscription.builder()
+                .orgId(UUID.randomUUID())
+                .stripeCustomerId("cus_21")
+                .status(OrgSubscription.Status.ACTIVE)
+                .plan(OrgSubscription.Plan.GROWTH)
+                .compedPlan(OrgSubscription.Plan.GROWTH)
+                .compedReason("Comped through migration")
+                .build();
+        when(subscriptionRepository.findByStripeCustomerId("cus_21")).thenReturn(Optional.of(sub));
+
+        webhookService.handleSubscriptionDeleted(subscriptionFixture(
+                "sub_21", "cus_21", "canceled", "price_growth_123", null, false));
+
+        // An org that stopped paying but was explicitly comped keeps its access;
+        // revoking it is a deliberate admin action, not a side effect of churn.
+        assertThat(sub.getStatus()).isEqualTo(OrgSubscription.Status.CANCELLED);
+        assertThat(sub.activeComp()).isEqualTo(OrgSubscription.Plan.GROWTH);
+    }
+
+    /* ── Invoice mirroring ───────────────────────────────────────────────── */
+
+    @Test
+    void upsertInvoice_mirrorsNewInvoiceWithStripeAmountsUnconverted() {
+        UUID orgId = UUID.randomUUID();
+        stubSubscription("cus_10", orgId);
+        when(invoiceRepository.findByStripeInvoiceId("in_10")).thenReturn(Optional.empty());
+
+        Invoice invoice = invoiceFixture("in_10", "cus_10", "paid", "ABCD-0001", 299900L, 299900L);
+        invoice.setStatusTransitions(paidAt(1_800_000_000L));
+
+        webhookService.upsertInvoice(invoice);
+
+        PlatformInvoice saved = captureSavedInvoice();
+        assertThat(saved.getOrgId()).isEqualTo(orgId);
+        assertThat(saved.getStripeInvoiceId()).isEqualTo("in_10");
+        assertThat(saved.getNumber()).isEqualTo("ABCD-0001");
+        assertThat(saved.getStatus()).isEqualTo("paid");
+        // Paise straight from Stripe -- a /100 anywhere on this path is a 100x revenue bug.
+        assertThat(saved.getAmountPaid()).isEqualTo(299900L);
+        assertThat(saved.getAmountDue()).isEqualTo(299900L);
+        assertThat(saved.getPaidAt()).isEqualTo(Instant.ofEpochSecond(1_800_000_000L));
+    }
+
+    @Test
+    void upsertInvoice_updatesExistingRowInPlaceRatherThanDuplicating() {
+        UUID orgId = UUID.randomUUID();
+        stubSubscription("cus_11", orgId);
+
+        PlatformInvoice existing = PlatformInvoice.builder()
+                .id(UUID.randomUUID()).stripeInvoiceId("in_11").orgId(orgId)
+                .status("open").amountPaid(0L).build();
+        when(invoiceRepository.findByStripeInvoiceId("in_11")).thenReturn(Optional.of(existing));
+
+        Invoice invoice = invoiceFixture("in_11", "cus_11", "paid", "ABCD-0002", 299900L, 299900L);
+        invoice.setStatusTransitions(paidAt(1_800_000_500L));
+
+        webhookService.upsertInvoice(invoice);
+
+        PlatformInvoice saved = captureSavedInvoice();
+        assertThat(saved.getId()).isEqualTo(existing.getId());
+        assertThat(saved.getStatus()).isEqualTo("paid");
+        assertThat(saved.getAmountPaid()).isEqualTo(299900L);
+    }
+
+    @Test
+    void upsertInvoice_clearsPaidAtWhenInvoiceIsVoided() {
+        UUID orgId = UUID.randomUUID();
+        stubSubscription("cus_12", orgId);
+
+        PlatformInvoice existing = PlatformInvoice.builder()
+                .id(UUID.randomUUID()).stripeInvoiceId("in_12").orgId(orgId)
+                .status("paid").amountPaid(299900L)
+                .paidAt(Instant.ofEpochSecond(1_800_000_000L)).build();
+        when(invoiceRepository.findByStripeInvoiceId("in_12")).thenReturn(Optional.of(existing));
+
+        webhookService.upsertInvoice(
+                invoiceFixture("in_12", "cus_12", "void", "ABCD-0003", 299900L, 0L));
+
+        // paid_at drives every revenue sum, so a voided invoice must stop counting.
+        PlatformInvoice saved = captureSavedInvoice();
+        assertThat(saved.getStatus()).isEqualTo("void");
+        assertThat(saved.getPaidAt()).isNull();
+    }
+
+    @Test
+    void upsertInvoice_dropsInvoiceForUnknownCustomerWithoutThrowing() {
+        when(subscriptionRepository.findByStripeCustomerId("cus_stranger")).thenReturn(Optional.empty());
+
+        // Must not throw: raising here would make Stripe retry this event forever
+        // for a customer that will never map to an org.
+        webhookService.upsertInvoice(
+                invoiceFixture("in_13", "cus_stranger", "paid", "X-1", 100L, 100L));
+
+        verify(invoiceRepository, never()).save(any());
+    }
+
+    @Test
+    void handleInvoicePaid_mirrorsInvoiceEvenWhenSubscriptionNeedsNoStatusChange() {
+        OrgSubscription sub = OrgSubscription.builder()
+                .orgId(UUID.randomUUID()).stripeCustomerId("cus_14")
+                .status(OrgSubscription.Status.ACTIVE).plan(OrgSubscription.Plan.GROWTH).build();
+        when(subscriptionRepository.findByStripeCustomerId("cus_14")).thenReturn(Optional.of(sub));
+        when(invoiceRepository.findByStripeInvoiceId("in_14")).thenReturn(Optional.empty());
+
+        Invoice invoice = invoiceFixture("in_14", "cus_14", "paid", "ABCD-0004", 599900L, 599900L);
+        invoice.setStatusTransitions(paidAt(1_800_001_000L));
+
+        webhookService.handleInvoicePaid(invoice);
+
+        // Revenue must still be recorded even though the subscription was already ACTIVE.
+        verify(invoiceRepository).save(any(PlatformInvoice.class));
+        verify(subscriptionRepository, never()).save(any());
+    }
+
+    private void stubSubscription(String customerId, UUID orgId) {
+        when(subscriptionRepository.findByStripeCustomerId(customerId)).thenReturn(Optional.of(
+                OrgSubscription.builder().orgId(orgId).stripeCustomerId(customerId).build()));
+    }
+
+    private PlatformInvoice captureSavedInvoice() {
+        ArgumentCaptor<PlatformInvoice> captor = ArgumentCaptor.forClass(PlatformInvoice.class);
+        verify(invoiceRepository).save(captor.capture());
+        return captor.getValue();
+    }
+
+    private static Invoice.StatusTransitions paidAt(long epochSeconds) {
+        Invoice.StatusTransitions t = new Invoice.StatusTransitions();
+        t.setPaidAt(epochSeconds);
+        return t;
+    }
+
+    private static Invoice invoiceFixture(String id, String customerId, String status,
+                                          String number, Long amountDue, Long amountPaid) {
+        Invoice invoice = new Invoice();
+        invoice.setId(id);
+        invoice.setCustomer(customerId);
+        invoice.setStatus(status);
+        invoice.setNumber(number);
+        invoice.setAmountDue(amountDue);
+        invoice.setAmountPaid(amountPaid);
+        invoice.setCurrency("inr");
+        invoice.setCreated(1_799_000_000L);
+        invoice.setHostedInvoiceUrl("https://invoice.stripe.com/" + id);
+        invoice.setInvoicePdf("https://invoice.stripe.com/" + id + "/pdf");
+        return invoice;
     }
 
     private static Subscription subscriptionFixture(

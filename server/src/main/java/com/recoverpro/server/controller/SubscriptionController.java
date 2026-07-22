@@ -81,7 +81,7 @@ public class SubscriptionController {
         sub.setCurrentPeriodEnd(null);
         sub.setCancelAtPeriodEnd(false);
         subRepo.save(sub);
-        featureFlagService.provisionFlagsForPlan(orgId, Status.ACTIVE, Plan.STARTER);
+        featureFlagService.provisionFlagsFor(sub);
         log.info("Org {} selected free Starter plan", orgId);
         return ResponseEntity.ok(ApiResponse.success("Free plan activated"));
     }

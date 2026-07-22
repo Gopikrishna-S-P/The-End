@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Loader2, Search, Users, UserCheck, X } from 'lucide-react';
+import { CheckCircle2, Loader2, Users, UserCheck, Search, X } from 'lucide-react';
 import type { UserResponse, AllocationResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
 
@@ -10,7 +10,6 @@ interface Props {
   selectedAgent: string;
   agentObj: UserResponse | undefined;
   agentFullName: string;
-  filteredAgents: UserResponse[];
   setAgent: (id: string) => void;
   cases: AllocationResponse[];
   dispatched: AllocationResponse[];
@@ -19,8 +18,6 @@ interface Props {
   dispatchPct: number;
   initials: (a: UserResponse) => string;
   dispatchDayLabel: string;
-  globalSearch: string;
-  setGlobalSearch: (s: string) => void;
 }
 
 // ── Count-up animation ────────────────────────────────────────────────────────
@@ -134,17 +131,50 @@ function AgentStats({ cases, dispatched, dispatchPct, casesLoading }: {
 // ── Agent Panel ───────────────────────────────────────────────────────────────
 
 export default function DispatchAgentPanel(p: Props) {
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [agentSearch, setAgentSearch] = useState('');
+
+  const filteredAgents = useMemo(() => {
+    const q = agentSearch.trim().toLowerCase();
+    if (!q) return p.agents;
+    return p.agents.filter(a =>
+      `${a.firstName} ${a.lastName}`.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q)
+    );
+  }, [p.agents, agentSearch]);
+
   return (
     <div className="dd-officers-card ds-card is-overflow-hidden">
       <div className="dd-ap-header db-card-head">
-        <span className="dd-ap-header-label">
-          <Users size={12} aria-hidden="true" />
-          Field Officers
-        </span>
-        {!p.agentsLoading && (
-          <span className="dd-cp-tab-count" style={{ marginLeft: 'auto' }}>
-            {p.agents.length}
-          </span>
+        {!isSearchActive ? (
+          <>
+            <span className="dd-ap-header-label">
+              <Users size={12} aria-hidden="true" />
+              Field Officers
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+              {!p.agentsLoading && (
+                <span className="dd-cp-tab-count">{p.agents.length}</span>
+              )}
+              <button type="button" className="dd-ap-header-search-btn"
+                onClick={() => setIsSearchActive(true)} aria-label="Search field officers">
+                <Search size={13} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="dd-agent-search-active">
+            <Search size={13} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+            <input
+              autoFocus
+              value={agentSearch}
+              onChange={e => setAgentSearch(e.target.value)}
+              placeholder="Search officers…"
+            />
+            <button type="button" className="dd-agent-search-close"
+              onClick={() => { setIsSearchActive(false); setAgentSearch(''); }} aria-label="Close search">
+              <X size={13} />
+            </button>
+          </div>
         )}
       </div>
 
@@ -156,13 +186,18 @@ export default function DispatchAgentPanel(p: Props) {
               <span className="ds-skel" style={{ height: 13, flex: 1 }} />
             </div>
           ))
-        ) : p.filteredAgents.length === 0 ? (
-          <div className="ds-empty" style={{ padding: '40px 0' }}>
-            <UserCheck size={22} className="ds-empty-icon" />
-            <span className="ds-empty-title">No officers match</span>
+        ) : filteredAgents.length === 0 ? (
+          <div style={{ padding: '56px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <span className="ds-empty-icon">
+              <UserCheck size={20} aria-hidden="true" />
+            </span>
+            <span className="dd-cp-empty-title">{agentSearch ? 'No officers match' : 'No field officers'}</span>
+            <p className="dd-cp-empty-sub">
+              {agentSearch ? 'Try a different search term.' : 'No field officers are assigned to your organization yet.'}
+            </p>
           </div>
         ) : (
-          p.filteredAgents.map((a) => {
+          filteredAgents.map((a) => {
             const isActive = p.selectedAgent === a.id;
             return (
               <button

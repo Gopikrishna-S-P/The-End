@@ -74,12 +74,18 @@ public class FeatureFlagAdminController {
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteOverride(
             @PathVariable String flagKey,
-            @RequestParam UUID organizationId,
+            @RequestParam(required = false) UUID organizationId,
             @AuthenticationPrincipal UserPrincipal caller) {
 
-        requireScopeAccess(caller, organizationId);
+        if (organizationId == null) {
+            requirePlatformAdmin(caller, "delete a global feature flag");
+        } else {
+            requireScopeAccess(caller, organizationId);
+        }
         featureFlagService.deleteManualOverride(organizationId, flagKey);
-        return ResponseEntity.ok(ApiResponse.success("Manual override removed, reverted to plan default"));
+        return ResponseEntity.ok(ApiResponse.success(organizationId == null
+                ? "Global feature flag deleted"
+                : "Manual override removed, reverted to plan default"));
     }
 
     private boolean isPlatformAdmin(UserPrincipal p) {

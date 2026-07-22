@@ -29,7 +29,10 @@ export function useAppNavState({ role, historyStack, currentIndex }: Params) {
   const sections = useMemo(() => {
     const filterItems = (items: NavItem[]) => items
       .filter(item => {
-        if (item.alwaysFor?.includes(role)) return true;
+        // alwaysFor is an authoritative role gate when present — a role it excludes
+        // never sees the item, even if that role happens to hold the permission too
+        // (e.g. PLATFORM_ADMIN holds every permission but isn't an operational role).
+        if (item.alwaysFor?.length) return item.alwaysFor.includes(role);
         if (item.permissions?.length) return hasAnyPermission(...item.permissions);
         return false;
       })

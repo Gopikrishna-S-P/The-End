@@ -40,6 +40,15 @@ export const ragApi = {
     return response.data.data;
   },
 
+  /** PUT /api/v1/admin/rag-documents/{id} — update title/description metadata only. */
+  update: async (id: string, title: string, description?: string): Promise<RagDocumentResponse> => {
+    const response = await axiosInstance.put<ApiResponse<RagDocumentResponse>>(
+      `/api/v1/admin/rag-documents/${id}`,
+      { title, description },
+    );
+    return response.data.data;
+  },
+
   /** DELETE /api/v1/admin/rag-documents/{id} — soft "supersede" (deactivate), not a hard delete. */
   supersede: async (id: string): Promise<string> => {
     const response = await axiosInstance.delete<ApiResponse<string>>(`/api/v1/admin/rag-documents/${id}`);

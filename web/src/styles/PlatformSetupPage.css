@@ -9,6 +9,68 @@
   background: var(--bg-canvas);
 }
 
+/* ── Fill the window like Daily Dispatch's panels — no page scroll,
+   the table card itself takes the full available height ──────────────────── */
+
+.db-root.ps-fill-page {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.db-root.ps-fill-page .db-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+}
+
+.db-root.ps-fill-page .db-page-header {
+  margin-bottom: 0;
+  padding: 10px 0 16px;
+}
+
+.db-root.ps-fill-page .db-inner {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Generic version of the .ps-fill-tab pattern below — for pages where the
+   table card sits directly under .db-inner with no tab-switch wrapper. */
+.db-root.ps-fill-page > .db-content > .db-inner > .ds-table-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.db-root.ps-fill-page > .db-content > .db-inner > .ds-table-card .ds-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ps-fill-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ps-fill-tab .ds-table-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-fill-tab .ds-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* ── Top row: section label + tab switcher ────────────────────────────────── */
 
 .ps-toprow {
@@ -79,7 +141,7 @@
   transition: background 120ms var(--ease), color 120ms var(--ease);
 }
 .ps-row-action:hover:not(:disabled) {
-  background: var(--bg-subtle);
+  background: rgba(0, 0, 0, 0.03);
   color: var(--ink-solid);
 }
 .ps-row-action:disabled {
@@ -93,15 +155,15 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--bg-subtle);
-  color: var(--ink-primary);
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.6);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--ds-font-num);
   font-size: 11px;
   font-weight: 700;
-  border: 1px solid var(--border);
+  border: none;
   flex-shrink: 0;
 }
 
@@ -140,6 +202,133 @@
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 28px;
+  -moz-appearance: none;
+  padding-right: 30px;
   background-image: none;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ── Table row hover — matches the topbar customize/help dialog's row hover ── */
+
+.db-root .ds-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* ── Modals — same glass/blur recipe as the topbar customize/help dialog.
+   Portaled to document.body (like TopbarCustomizeDialog), so these can't be
+   scoped under .db-root — targeted via their own ps-modal-* class instead. ── */
+
+.ps-modal-overlay {
+  background: rgba(12, 10, 9, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ps-modal {
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* Popup manages padding per-section (header/body/actions), not one flat inset */
+  padding: 0;
+  overflow: hidden;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-modal .ds-modal-header {
+  padding: 20px 24px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.ps-modal .ds-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  background: linear-gradient(135deg, #111, #444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ps-modal .ds-modal-sub {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.ps-modal .ds-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--ink-tertiary);
+}
+.ps-modal .ds-modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #111;
+}
+
+.ps-modal .ds-modal-body {
+  padding: 0 24px 20px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.ps-modal .ds-modal-actions {
+  padding: 20px 24px;
+  margin-top: 0;
+  gap: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.ps-modal .ds-modal-actions .ds-btn {
+  height: 44px;
+  font-size: 14px;
+}
+
+.ps-modal .ds-label {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #111;
+}
+
+.ps-modal .ds-input,
+.ps-modal .ds-select,
+.ps-modal .ds-textarea {
+  height: 42px;
+  background: #f7f7f7;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 0 16px;
+}
+.ps-modal .ds-input:hover,
+.ps-modal .ds-select:hover,
+.ps-modal .ds-textarea:hover {
+  border-color: rgba(0, 0, 0, 0.22);
+}
+.ps-modal .ds-input:focus-visible,
+.ps-modal .ds-select:focus-visible,
+.ps-modal .ds-textarea:focus-visible {
+  outline: none;
+  border-color: rgba(0, 0, 0, 0.22);
+  box-shadow: none;
+}
+
+/* ── Table header — a little more breathing room above the column labels ── */
+.ps-table th {
+  padding-top: 18px;
 }

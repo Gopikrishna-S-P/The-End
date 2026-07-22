@@ -40,6 +40,15 @@
   transition: border-color var(--dur-fast) var(--ease-standard),
               box-shadow var(--dur-fast) var(--ease-standard);
 }
+.ds-select {
+  /* line-height:1 (shared above) is fine for <input>, which the UA centers
+     natively — but a <select> with appearance:none follows normal line-box
+     rules for its own display text, and line-height:1 clips descenders
+     (e.g. the "g" in "Agent"). Give it room without affecting inputs. */
+  line-height: normal;
+  display: flex;
+  align-items: center;
+}
 .ds-textarea {
   height: auto;
   min-height: calc(var(--ds-ctl-h) * 2);

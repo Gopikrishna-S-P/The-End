@@ -9,14 +9,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  padding: 8px 12px;
   min-height: 44px;
   font-family: var(--sans);
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-tertiary);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  color: var(--ink-primary);
   border-bottom: none;
   flex-shrink: 0;
   background: var(--bg-surface);
@@ -109,14 +109,14 @@
 }
 .dd-ap-header-label svg { color: var(--ink-solid); }
 
-/* FO avatar — matches db-att-chip (32px, 8px radius, bordered) */
+/* FO avatar — flat neutral box, matches the topbar/dialog icon treatment */
 .dd-fo-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  color: var(--ink-secondary);
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
+  color: rgba(0, 0, 0, 0.6);
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 700;
@@ -127,9 +127,8 @@
 }
 
 .dd-agent-row.is-active .dd-fo-avatar {
-  background: var(--bg-subtle);
-  border-color: var(--border);
-  color: var(--ink-secondary);
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 /* Skeleton row — matches dd-case-skel */
@@ -137,7 +136,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 18px;
+  padding: 8px 12px;
   min-height: 52px;
   border-bottom: 1px solid var(--border);
 }
@@ -258,7 +257,7 @@
   box-sizing: border-box;
 }
 
-.dd-agent-row:hover { background: var(--bg-hover); }
+.dd-agent-row:hover { background: rgba(0, 0, 0, 0.03); }
 
 .dd-agent-row.is-active {
   background: var(--brand-subtle);
@@ -369,20 +368,19 @@
   justify-content: center;
   width: 22px;
   height: 22px;
-  border: 1px solid var(--border);
-  background: var(--bg-canvas);
+  border: none;
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 6px;
   cursor: pointer;
-  color: var(--ink-tertiary);
+  color: rgba(0, 0, 0, 0.6);
   padding: 0;
   flex-shrink: 0;
-  transition: color 120ms, background 120ms, border-color 120ms;
+  transition: color 120ms, background 120ms;
 }
 
 .dd-picker-clear:hover {
   color: var(--error);
   background: var(--error-subtle);
-  border-color: color-mix(in srgb, var(--error) 25%, transparent);
 }
 
 .dd-picker-caret {
@@ -462,8 +460,8 @@
   transition: background 100ms;
 }
 
-.dd-picker-option:hover          { background: var(--bg-subtle); }
-.dd-picker-option.is-selected    { background: var(--bg-subtle); font-weight: 500; }
+.dd-picker-option:hover          { background: rgba(0, 0, 0, 0.03); }
+.dd-picker-option.is-selected    { background: rgba(0, 0, 0, 0.04); font-weight: 500; }
 
 .dd-picker-empty {
   display: flex;

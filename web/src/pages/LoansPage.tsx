@@ -2,14 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
-  Search, X, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
-  SlidersHorizontal
+  X, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
+  SlidersHorizontal, ChevronDown, FileSliders, ShieldAlert, TrendingDown, Users,
 } from 'lucide-react';
 import { allocationsApi } from '../api/allocationsApi';
-import type { AllocationResponse } from '../types';
+import { usersApi } from '../api/usersApi';
+import type { AllocationResponse, UserResponse } from '../types';
 import LoanDetailDrawer from './LoanDetailDrawer';
+import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
+import { useAuth } from '../AuthContext';
 
 import '../styles/AppPage.css';
+import '../styles/PlatformSetupPage.css';
 import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
 import './Dashboard.css';
@@ -82,6 +86,11 @@ const fadeIn: Variants = {
 export default function LoansPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.roles?.[0]?.name?.replace('ROLE_', '');
+  const canSeeBorrowers = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN';
+  const canSeeFraudCases = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN';
+  const canSeePortfolioRisk = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL';
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm   = searchParams.get('q')         ?? '';
@@ -96,9 +105,13 @@ export default function LoansPage() {
   const [loadError,     setLoadError]     = useState(false);
   const [totalPages,    setTotalPages]    = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  
-  const [searchInput,   setSearchInput]   = useState(searchTerm);
-  const [isSearchActive, setIsSearchActive] = useState(Boolean(searchTerm));
+
+  const [filterAgentId, setFilterAgentId] = useState('');
+  const [agents,        setAgents]        = useState<UserResponse[]>([]);
+  const [filterOpen,    setFilterOpen]    = useState(false);
+  // Draft copies — the filter dialog edits these; changes only take effect on "Apply".
+  const [draftSearch,   setDraftSearch]   = useState(searchTerm);
+  const [draftAgentId,  setDraftAgentId]  = useState('');
 
   const setUrl = (fn: (p: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams);
@@ -110,17 +123,31 @@ export default function LoansPage() {
     if (n <= 0) p.delete('page'); else p.set('page', String(n));
   });
 
-  // Debounce search input → URL
   useEffect(() => {
-    if (searchInput === searchTerm) return;
-    const t = window.setTimeout(() => {
-      const next = new URLSearchParams(searchParams);
-      if (searchInput) next.set('q', searchInput); else next.delete('q');
-      next.delete('page');
-      setSearchParams(next, { replace: true });
-    }, 300);
-    return () => window.clearTimeout(t);
-  }, [searchInput, searchTerm, searchParams, setSearchParams]);
+    usersApi.listByRole('FO').then(setAgents).catch(() => {});
+  }, []);
+
+  const openFilterDialog = () => {
+    setDraftSearch(searchTerm); setDraftAgentId(filterAgentId);
+    setFilterOpen(true);
+  };
+
+  const applyFilters = () => {
+    setUrl(p => {
+      if (draftSearch) p.set('q', draftSearch); else p.delete('q');
+      p.delete('page');
+    });
+    setFilterAgentId(draftAgentId);
+    setFilterOpen(false);
+  };
+
+  const clearFilters = () => {
+    setUrl(p => { p.delete('q'); p.delete('page'); });
+    setFilterAgentId('');
+    setDraftSearch(''); setDraftAgentId('');
+  };
+
+  const hasFilters = Boolean(searchTerm || fileUploadId || filterAgentId);
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true); setLoadError(false);
@@ -131,6 +158,7 @@ export default function LoansPage() {
       };
       if (searchTerm)   params.searchTerm   = searchTerm;
       if (fileUploadId) params.fileUploadId = fileUploadId;
+      if (filterAgentId) params.assignedToUserId = filterAgentId;
 
       const data = await allocationsApi.listAllocations(params as any, signal);
       setAllocations(data.content ?? []);
@@ -143,7 +171,7 @@ export default function LoansPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm, fileUploadId]);
+  }, [page, searchTerm, fileUploadId, filterAgentId]);
 
   const [drawerCaseId, setDrawerCaseId] = useState<string | null>(null);
 
@@ -176,85 +204,92 @@ export default function LoansPage() {
       </AnimatePresence>
 
       <div className="db-content">
-        <div className="dd-page-header" style={{ padding: '0 0 24px 0', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="dd-page-titles">
-            <h1 className="dd-page-title">Portfolio</h1>
-            <span className="dd-page-context">
-              <strong>{totalElements.toLocaleString('en-IN')}</strong> total loans
-            </span>
+        <div className="db-page-header">
+          <div className="db-page-header-left">
+            <div className="db-page-titles">
+              <h1 className="db-page-title">Portfolio</h1>
+              {totalElements > 0 && (
+                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} total loans</span>
+              )}
+            </div>
           </div>
-          <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button type="button" className="ds-btn is-secondary" aria-label="Filter" title="Filter">
-              <SlidersHorizontal size={14} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {canSeeBorrowers && (
+              <button type="button" onClick={() => navigate('/app/borrowers')}
+                className="ds-btn is-secondary" title="Borrowers" aria-label="Borrowers">
+                <Users size={14} />
+              </button>
+            )}
+            <button type="button" onClick={() => navigate('/app/restructure-proposals')}
+              className="ds-btn is-secondary" title="Restructure proposals" aria-label="Restructure proposals">
+              <FileSliders size={14} />
             </button>
-            <button type="button" onClick={() => load()} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+            {canSeeFraudCases && (
+              <button type="button" onClick={() => navigate('/app/fraud-cases')}
+                className="ds-btn is-secondary" title="Fraud cases" aria-label="Fraud cases">
+                <ShieldAlert size={14} />
+              </button>
+            )}
+            {canSeePortfolioRisk && (
+              <button type="button" onClick={() => navigate('/app/portfolio-risk')}
+                className="ds-btn is-secondary" title="Portfolio risk" aria-label="Portfolio risk">
+                <TrendingDown size={14} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={openFilterDialog}
+              className="ds-btn is-secondary"
+              style={{
+                background: filterOpen || hasFilters ? 'var(--ink-solid)' : undefined,
+                color: filterOpen || hasFilters ? 'var(--bg-surface)' : undefined,
+              }}
+            >
+              <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+              Filter
             </button>
           </div>
         </div>
 
         <div className="dd-shell" style={{ display: 'flex' }}>
           <div className="ds-card dd-cases-card" style={{ width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            
+
             <header className="dd-cases-head">
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Active Accounts</span>
-
-              <AnimatePresence mode="popLayout">
-                {!isSearchActive && !searchTerm ? (
-                  <motion.button
-                    key="search-btn"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.15 }}
-                    type="button"
-                    onClick={() => setIsSearchActive(true)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, border: 'none', background: 'transparent', color: 'var(--ink-tertiary)', cursor: 'pointer', borderRadius: 8, marginLeft: 'auto' }}
-                    aria-label="Open search"
-                  >
-                    <Search size={14} />
-                  </motion.button>
-                ) : (
-                  <motion.div
-                    key="search-bar"
-                    initial={{ opacity: 0, width: 32 }}
-                    animate={{ opacity: 1, width: 240 }}
-                    exit={{ opacity: 0, width: 32 }}
-                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="dd-cp-search"
-                    style={{ overflow: 'hidden', marginLeft: 'auto' }}
-                  >
-                    <Search size={14} className="dd-agent-search-icon" style={{ flexShrink: 0, color: 'var(--ink-tertiary)', marginLeft: 4 }} />
-                    <input
-                      autoFocus
-                      value={searchInput}
-                      onChange={e => setSearchInput(e.target.value)}
-                      placeholder="Search borrower or loan ID..."
-                      style={{ width: '100%', height: '100%', border: 'none', background: 'transparent', outline: 'none' }}
-                    />
-                    <button
-                      type="button"
-                      className="dd-cp-search-clear"
-                      onClick={() => { setIsSearchActive(false); setSearchInput(''); }}
-                      aria-label="Close search"
-                    >
-                      <X size={14} />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </header>
-            
-            {/* ── Active-filter chips (for file upload filter) ── */}
+
+            {/* ── Active-filter chips ── */}
             <AnimatePresence>
-              {fileUploadId && (
-                <motion.div variants={fadeUp} style={{ padding: '8px 16px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span className="ds-pill is-info" style={{ display: 'inline-flex' }}>
-                    Upload-filtered
-                    <button type="button" onClick={() => setUrl(p => p.delete('fileUploadId'))} aria-label="Clear upload filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
-                      <X size={11} />
-                    </button>
-                  </span>
+              {hasFilters && (
+                <motion.div variants={fadeUp} style={{ padding: '8px 16px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {searchTerm && (
+                    <span className="ds-pill is-accent">
+                      “{searchTerm}”
+                      <button type="button" onClick={() => setUrl(p => { p.delete('q'); p.delete('page'); })} aria-label="Clear search filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+                  {filterAgentId && (
+                    <span className="ds-pill is-info">
+                      {agents.find(a => a.id === filterAgentId) ? `${agents.find(a => a.id === filterAgentId)!.firstName} ${agents.find(a => a.id === filterAgentId)!.lastName}`.trim() : 'Agent'}
+                      <button type="button" onClick={() => setFilterAgentId('')} aria-label="Clear agent filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+                  {fileUploadId && (
+                    <span className="ds-pill is-info">
+                      Upload-filtered
+                      <button type="button" onClick={() => setUrl(p => p.delete('fileUploadId'))} aria-label="Clear upload filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+                  <button type="button" onClick={clearFilters} className="db-customize-btn" style={{ padding: '0 8px', fontSize: 11 }}>
+                    Clear all
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -375,6 +410,42 @@ export default function LoansPage() {
           <LoanDetailDrawer id={drawerCaseId} onClose={() => setDrawerCaseId(null)} />
         )}
       </AnimatePresence>
+
+      {/* ── Filter dialog — same Modal/Input/FormSection system as Platform Setup's Edit Org dialog ── */}
+      {filterOpen && (
+        <Modal title="Filter loans" subtitle="Narrow down the portfolio list" onClose={() => setFilterOpen(false)}>
+          <FormSection title="Search">
+            <Input label="Borrower or loan ID" value={draftSearch} onChange={setDraftSearch}
+              placeholder="e.g. LN10234 or Ramesh Kumar" />
+          </FormSection>
+
+          <FormSection title="Agent">
+            <div className="ds-field">
+              <label className="ds-label">Agent</label>
+              <div className="ps-select-wrap">
+                <select
+                  value={draftAgentId}
+                  onChange={e => setDraftAgentId(e.target.value)}
+                  className="ds-select"
+                  style={{
+                    width: '100%', paddingRight: 30,
+                    appearance: 'none', WebkitAppearance: 'none',
+                    textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap',
+                  }}
+                >
+                  <option value="">All agents</option>
+                  {agents.map(a => (
+                    <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>
+                  ))}
+                </select>
+                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+              </div>
+            </div>
+          </FormSection>
+
+          <ModalFooter onClose={() => setFilterOpen(false)} submitting={false} onSubmit={applyFilters} label="Apply filters" />
+        </Modal>
+      )}
     </div>
   );
 }

@@ -103,6 +103,14 @@ public class StripeWebhookController {
                     stripeWebhookService.handleInvoicePaymentFailed(invoice);
                 }
             }
+            // Mirror-only events: these move no subscription state, they just keep
+            // platform_invoices in step with Stripe so the billing console's history
+            // and collected-revenue totals stay accurate.
+            case "invoice.finalized", "invoice.voided", "invoice.marked_uncollectible" -> {
+                if (dataObject instanceof Invoice invoice) {
+                    stripeWebhookService.upsertInvoice(invoice);
+                }
+            }
             default -> log.debug("Unhandled Stripe event type: {}", eventType);
         }
     }

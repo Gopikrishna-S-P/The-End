@@ -41,4 +41,14 @@ public class SystemPromptAdminController {
         SystemPromptResponse response = systemPromptService.updatePrompt(promptKey, request, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response, "System prompt updated. New version: " + response.getVersion()));
     }
+
+    @DeleteMapping("/{promptKey}")
+    public ResponseEntity<ApiResponse<Void>> deletePrompt(
+            @PathVariable String promptKey,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        log.info("DELETE /api/v1/friday/admin/prompts/{} - by={}", promptKey, principal.getId());
+        systemPromptService.deletePrompt(promptKey);
+        return ResponseEntity.ok(ApiResponse.success(null, "System prompt deleted."));
+    }
 }

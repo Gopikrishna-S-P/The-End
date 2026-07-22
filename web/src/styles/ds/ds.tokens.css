@@ -184,7 +184,7 @@
   /* ── Layout dimensions ────────────────────────────────────────────────── */
   --rp-tb-h:     56px;
   --rp-sb-off:   64px;
-  --rp-sb-on:   256px;
+  --rp-sb-on:   280px;
   --rp-lucien-w: 340px;
 
   /* ── Forward compat: anything still referencing old rp-* ink/surface ──── */

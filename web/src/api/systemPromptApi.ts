@@ -40,4 +40,10 @@ export const systemPromptApi = {
     );
     return response.data.data;
   },
+
+  remove: async (promptKey: string): Promise<void> => {
+    await axiosInstance.delete<ApiResponse<void>>(
+      `/api/v1/friday/admin/prompts/${encodeURIComponent(promptKey)}`,
+    );
+  },
 };

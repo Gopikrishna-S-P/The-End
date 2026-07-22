@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type OrganizationSummary } from '../api/platformApi';
 import {
-  Building2, Plus, RefreshCw, AlertCircle, Mail, ToggleLeft, ToggleRight, Pencil, Trash2, UserPlus,
+  Building2, AlertCircle, Mail, ToggleLeft, ToggleRight, Pen, Trash2, UserPlus,
 } from 'lucide-react';
 import { CreateOrgModal, EditOrgModal, DeleteOrgModal, AssignAdminModal } from './PlatformSetupOrgModals';
 
 interface Props {
   orgs: OrganizationSummary[];
   onOrgsChange: (orgs: OrganizationSummary[]) => void;
+  showCreate: boolean;
+  setShowCreate: (v: boolean) => void;
 }
 
-export function OrgsTab({ orgs, onOrgsChange }: Props) {
+export function OrgsTab({ orgs, onOrgsChange, showCreate, setShowCreate }: Props) {
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
   const [editing,   setEditing]   = useState<OrganizationSummary | null>(null);
   const [deleting,  setDeleting]  = useState<OrganizationSummary | null>(null);
   const [assigning, setAssigning] = useState<OrganizationSummary | null>(null);
@@ -39,21 +40,6 @@ export function OrgsTab({ orgs, onOrgsChange }: Props) {
 
   return (
     <>
-      {/* ── Toolbar ── */}
-      <div className="ps-section-row">
-        <p className="ds-section-label" style={{ margin: 0, padding: 0 }}>
-          {orgs.length.toLocaleString()} organization{orgs.length === 1 ? '' : 's'}
-        </p>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button type="button" onClick={load} className="ds-icon-btn is-sm" title="Refresh" aria-label="Refresh">
-            <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-          </button>
-          <button type="button" onClick={() => setShowCreate(true)} className="ds-btn is-primary">
-            <Plus size={14} /> New organization
-          </button>
-        </div>
-      </div>
-
       {error && (
         <div className="ps-banner is-error" style={{ marginBottom: 10 }}>
           <AlertCircle size={14} /><span className="ps-banner-content">{error}</span>
@@ -63,7 +49,7 @@ export function OrgsTab({ orgs, onOrgsChange }: Props) {
       {/* ── Table ── */}
       <div className="ds-table-card">
         <div className="ds-table-wrap">
-          <table className="ds-table">
+          <table className="ds-table is-no-row-hover ps-table">
             <thead>
               <tr>
                 <th>Name</th><th>Code</th><th>Org admin</th>
@@ -82,7 +68,7 @@ export function OrgsTab({ orgs, onOrgsChange }: Props) {
                 ))
               ) : orgs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="ds-table-empty">
+                  <td colSpan={7}>
                     <div className="ds-empty">
                       <span className="ds-empty-icon"><Building2 size={20} /></span>
                       <span className="ds-empty-title">No organizations yet</span>
@@ -128,7 +114,7 @@ export function OrgsTab({ orgs, onOrgsChange }: Props) {
                             : <ToggleLeft  size={16} />}
                         </button>
                         <button type="button" onClick={() => setEditing(o)} className="ds-table-row-action" title="Edit">
-                          <Pencil size={14} />
+                          <Pen size={14} />
                         </button>
                         <button type="button" onClick={() => setDeleting(o)}
                           className="ds-table-row-action is-danger" title="Delete">

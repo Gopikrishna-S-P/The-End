@@ -12,5 +12,7 @@ public interface RagDocumentService {
 
     List<RagDocumentResponse> list();
 
+    RagDocumentResponse updateMetadata(UUID documentId, String title, String description);
+
     void supersede(UUID documentId);
 }

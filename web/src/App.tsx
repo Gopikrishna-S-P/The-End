@@ -5,6 +5,7 @@ import type { ReactNode, ErrorInfo } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from './AppLayout';
+import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -143,7 +144,7 @@ function App() {
 
             {/* ── Authenticated routes with shared layout ── */}
             <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
+              <Route element={<FeatureFlagsProvider><AppLayout /></FeatureFlagsProvider>}>
 
                 {/* Settings (any authenticated user) */}
                 <Route path="/settings/mfa" element={<MfaSetupPage />} />

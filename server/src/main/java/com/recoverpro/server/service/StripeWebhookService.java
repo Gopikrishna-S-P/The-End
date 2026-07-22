@@ -3,8 +3,10 @@ package com.recoverpro.server.service;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.config.StripeConfig;
 import com.recoverpro.server.entity.OrgSubscription;
+import com.recoverpro.server.entity.PlatformInvoice;
 import com.recoverpro.server.entity.ProcessedStripeEvent;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.repository.ProcessedStripeEventRepository;
 import com.stripe.model.Invoice;
 import com.stripe.model.Subscription;
@@ -31,6 +33,7 @@ public class StripeWebhookService {
 
     private final ProcessedStripeEventRepository processedEventRepository;
     private final OrgSubscriptionRepository subscriptionRepository;
+    private final PlatformInvoiceRepository invoiceRepository;
     private final FeatureFlagService featureFlagService;
     private final StripeConfig stripeConfig;
 
@@ -78,7 +81,7 @@ public class StripeWebhookService {
         sub.setCurrentPeriodEnd(toInstant(subscription.getCurrentPeriodEnd()));
         sub.setCancelAtPeriodEnd(Boolean.TRUE.equals(subscription.getCancelAtPeriodEnd()));
         subscriptionRepository.save(sub);
-        featureFlagService.provisionFlagsForPlan(sub.getOrgId(), sub.getStatus(), sub.getPlan());
+        featureFlagService.provisionFlagsFor(sub);
         log.info("Stripe subscription synced: org={}, status={}, plan={}",
                 sub.getOrgId(), sub.getStatus(), sub.getPlan());
     }
@@ -88,17 +91,18 @@ public class StripeWebhookService {
         OrgSubscription sub = requireByCustomerId(subscription.getCustomer());
         sub.setStatus(OrgSubscription.Status.CANCELLED);
         subscriptionRepository.save(sub);
-        featureFlagService.provisionFlagsForPlan(sub.getOrgId(), sub.getStatus(), sub.getPlan());
+        featureFlagService.provisionFlagsFor(sub);
         log.info("Stripe subscription cancelled: org={}", sub.getOrgId());
     }
 
     @Transactional
     public void handleInvoicePaid(Invoice invoice) {
+        upsertInvoice(invoice);
         subscriptionRepository.findByStripeCustomerId(invoice.getCustomer()).ifPresent(sub -> {
             if (sub.getStatus() == OrgSubscription.Status.PAST_DUE) {
                 sub.setStatus(OrgSubscription.Status.ACTIVE);
                 subscriptionRepository.save(sub);
-                featureFlagService.provisionFlagsForPlan(sub.getOrgId(), sub.getStatus(), sub.getPlan());
+                featureFlagService.provisionFlagsFor(sub);
                 log.info("Stripe subscription recovered from PAST_DUE: org={}", sub.getOrgId());
             }
         });
@@ -106,12 +110,74 @@ public class StripeWebhookService {
 
     @Transactional
     public void handleInvoicePaymentFailed(Invoice invoice) {
+        upsertInvoice(invoice);
         subscriptionRepository.findByStripeCustomerId(invoice.getCustomer()).ifPresent(sub -> {
             sub.setStatus(OrgSubscription.Status.PAST_DUE);
             subscriptionRepository.save(sub);
-            featureFlagService.provisionFlagsForPlan(sub.getOrgId(), sub.getStatus(), sub.getPlan());
+            featureFlagService.provisionFlagsFor(sub);
             log.warn("Stripe invoice payment failed, org marked PAST_DUE: org={}", sub.getOrgId());
         });
+    }
+
+    /**
+     * Mirrors a Stripe invoice into {@code platform_invoices} so the billing
+     * console can aggregate collected revenue in SQL rather than fanning out to
+     * the Stripe API once per customer on every page load.
+     *
+     * <p>Upsert keyed on {@code stripe_invoice_id}: one invoice arrives
+     * repeatedly across its lifecycle (finalized -> paid, or finalized ->
+     * payment_failed -> paid on retry) and every event carries the full current
+     * snapshot, so the newest write wins.
+     *
+     * <p>An invoice for an unknown customer is logged and dropped rather than
+     * raising. Stripe accounts routinely hold customers created outside this
+     * application, and throwing here would make Stripe retry the event forever.
+     */
+    @Transactional
+    public void upsertInvoice(Invoice invoice) {
+        OrgSubscription sub = subscriptionRepository.findByStripeCustomerId(invoice.getCustomer()).orElse(null);
+        if (sub == null) {
+            log.warn("Stripe invoice {} references unknown customer {}, not mirrored",
+                    invoice.getId(), invoice.getCustomer());
+            return;
+        }
+
+        PlatformInvoice row = invoiceRepository.findByStripeInvoiceId(invoice.getId())
+                .orElseGet(() -> PlatformInvoice.builder()
+                        .stripeInvoiceId(invoice.getId())
+                        .build());
+
+        row.setOrgId(sub.getOrgId());
+        row.setStripeCustomerId(invoice.getCustomer());
+        row.setNumber(invoice.getNumber());
+        row.setStatus(invoice.getStatus());
+        row.setAmountDue(invoice.getAmountDue() == null ? 0L : invoice.getAmountDue());
+        row.setAmountPaid(invoice.getAmountPaid() == null ? 0L : invoice.getAmountPaid());
+        row.setCurrency(invoice.getCurrency() == null ? "inr" : invoice.getCurrency());
+        row.setPeriodStart(toInstant(invoice.getPeriodStart()));
+        row.setPeriodEnd(toInstant(invoice.getPeriodEnd()));
+        row.setIssuedAt(toInstant(invoice.getCreated()));
+        row.setHostedInvoiceUrl(invoice.getHostedInvoiceUrl());
+        row.setInvoicePdfUrl(invoice.getInvoicePdf());
+
+        // paid_at drives every revenue aggregation, so it is set only on a real
+        // settlement and cleared again if Stripe later voids the invoice.
+        if ("paid".equals(invoice.getStatus())) {
+            if (row.getPaidAt() == null) {
+                row.setPaidAt(toInstant(invoice.getStatusTransitions() != null
+                        ? invoice.getStatusTransitions().getPaidAt()
+                        : null));
+            }
+            if (row.getPaidAt() == null) {
+                row.setPaidAt(Instant.now());
+            }
+        } else {
+            row.setPaidAt(null);
+        }
+
+        invoiceRepository.save(row);
+        log.info("Stripe invoice mirrored: org={}, invoice={}, status={}, paid={} paise",
+                sub.getOrgId(), invoice.getId(), invoice.getStatus(), row.getAmountPaid());
     }
 
     private OrgSubscription requireByCustomerId(String stripeCustomerId) {

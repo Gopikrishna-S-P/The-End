@@ -58,16 +58,44 @@
   min-height: 100%;
   width: 100%;
   background: transparent;
+  /* Ordinal green ramp for ranked donut/pie slices (plan mix, role mix) —
+     ordered light→dark, validated against the categorical-adjacency floor
+     (see docs/superpowers/specs/2026-07-21-dashboard-chart-redesign.md).
+     Single brand hue, no secondary hues, per this app's own color rule. */
+  --db-ramp-1: var(--ink-solid);
+  --db-ramp-2: #077438;
+  --db-ramp-3: #054A24;
 }
 
 .db-root .ds-card,
 .db-root .db-kpi2-card,
 .db-root .db-stat-card,
-.db-root .db-card {
+.db-root .db-card,
+.db-root .ds-table-card {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: var(--shadow-sm);
-  border-radius: 12px;
+  border-radius: 16px;
+}
+
+.db-root .ds-table thead {
+  background: var(--bg-surface);
+  box-shadow: none;
+  border-bottom: none;
+}
+
+.db-root .ds-table tbody tr:has(.ds-table-empty):hover {
+  background: transparent;
+}
+
+.db-root .ds-table.is-no-row-hover tbody tr:hover {
+  background: transparent;
+}
+
+.db-root .ds-empty-icon {
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
+  color: rgba(0, 0, 0, 0.6);
 }
 
 /* ── Content area ── */
@@ -261,22 +289,21 @@
 }
 
 .db-kpi-icon-box {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink-tertiary);
+  color: rgba(0, 0, 0, 0.6);
   flex-shrink: 0;
-  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+  transition: background-color .18s ease, color .18s ease;
 }
 .db-kpi-card:hover .db-kpi-icon-box {
-  background: var(--bg-hover);
-  border-color: color-mix(in srgb, var(--ink-solid) 25%, transparent);
-  color: var(--ink-solid);
+  background: rgba(0, 0, 0, 0.07);
+  color: #111;
 }
 
 .db-kpi-value {
@@ -394,15 +421,16 @@
 .db-att-row.has-border     { border-bottom: 1px solid var(--border); }
 .db-att-row.is-all-clear   { cursor: default; }
 .db-att-row:not(.is-all-clear) { cursor: pointer; }
+.db-att-row:not(.is-all-clear):hover { background: rgba(0, 0, 0, 0.03); }
 .db-att-row:focus-visible  { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 
 .db-att-chip {
-  width: 32px; height: 32px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
   display: flex; align-items: center; justify-content: center;
-  color: var(--ink-secondary);
+  color: rgba(0, 0, 0, 0.6);
   flex-shrink: 0;
 }
 .db-att-chip.is-urgent { background: var(--danger-subtle); border-color: var(--danger-border); color: var(--danger); }
@@ -431,30 +459,6 @@
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 16px; padding: 20px; flex: 1;
-}
-
-.db-ring-stats {
-  display: flex; align-items: stretch; width: 100%;
-  border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
-}
-
-.db-ring-stat {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; padding: 10px 8px; gap: 4px;
-}
-
-.db-ring-divider { width: 1px; background: var(--border); }
-
-.db-ring-stat-val {
-  font-size: 16px; font-family: var(--font-mono); font-weight: 700;
-  color: var(--ink-primary); letter-spacing: -0.04em;
-  font-feature-settings: 'tnum', 'zero';
-}
-
-.db-ring-stat-lbl {
-  font-size: var(--text-2xs); color: var(--ink-tertiary);
-  font-family: var(--font-mono); font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.06em; text-align: center;
 }
 
 /* ── Donut chart card ── */
@@ -659,6 +663,32 @@
 }
 
 /* Chart area */
+/* ── Stat-forward hero (trend chart lead-in) ── */
+.tc-hero { display: flex; flex-direction: column; }
+.tc-hero-row { display: flex; align-items: flex-end; gap: 28px; margin-bottom: 14px; }
+.tc-hero-main { display: flex; flex-direction: column; gap: 4px; }
+.tc-hero-label {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-tertiary);
+}
+.tc-hero-val {
+  font-family: var(--font-mono); font-size: 30px; font-weight: 800;
+  color: var(--ink-primary); letter-spacing: -0.02em; font-feature-settings: 'tnum';
+}
+.tc-hero-trend {
+  display: flex; align-items: center; gap: 3px;
+  font-family: var(--font-mono); font-size: 12.5px; font-weight: 700;
+  color: var(--ink-tertiary);
+}
+.tc-hero-trend.is-up { color: var(--ink-solid); }
+.tc-hero-trend.is-down { color: var(--danger); }
+.tc-hero-secondary { display: flex; flex-direction: column; gap: 3px; padding-bottom: 3px; }
+.tc-hero-secondary .tc-hero-label { font-size: 9.5px; }
+.tc-hero-secondary-val {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+  color: var(--ink-secondary); font-feature-settings: 'tnum';
+}
+
 .db-trend-chart-wrap {
   position: relative;
   height: 180px;
@@ -1009,8 +1039,8 @@
   gap: 6px;
   padding: 24px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
   text-align: left;
   cursor: pointer;
   box-shadow: none;
@@ -1018,7 +1048,7 @@
   width: 100%;
 }
 .db-kpi2-card:disabled { cursor: default; }
-.db-kpi2-card.is-hoverable:hover { border-color: var(--border-strong); }
+.db-kpi2-card.is-hoverable:hover { border-color: rgba(0, 0, 0, 0.16); }
 
 .db-kpi2-label {
   font-family: var(--font-sans);
@@ -1037,6 +1067,24 @@
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
+
+/* ── KPI value + compact inline trend, same line ── */
+.db-kpi2-value-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.db-kpi2-value-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+}
+.db-kpi2-value-trend.is-up   { color: var(--success); }
+.db-kpi2-value-trend.is-down { color: var(--danger); }
 
 /* ── KPI card sub-line ── */
 .db-kpi2-sub {
@@ -1131,24 +1179,28 @@
 .db-kpi-toggle {
   display: flex;
   align-items: center;
+  gap: 2px;
+  padding: 3px;
+  flex-shrink: 0;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 3px;
-  gap: 2px;
+  border-radius: var(--radius-md);
 }
 
 .db-kpi-toggle-btn {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
+  height: auto;
   border: none;
-  border-radius: 5px;
   background: transparent;
+  cursor: pointer;
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
-  cursor: pointer;
-  transition: background-color .18s ease, color .18s ease;
+  border-radius: 5px;
+  transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
   white-space: nowrap;
 }
 
@@ -1178,10 +1230,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px; height: 26px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
-  color: var(--ink-tertiary);
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.6);
   flex-shrink: 0;
 }
 .db-kpi2-card.is-accent {
@@ -1260,25 +1312,23 @@
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   color: var(--ink-tertiary);
-  opacity: 0;
-  transition: opacity .18s ease;
   white-space: nowrap;
 }
-.db-bar-col:hover .db-bar-cap { opacity: 1; }
 .db-bar-track {
   width: 100%;
   max-width: 36px;
   flex: 1;
   display: flex;
   align-items: flex-end;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 .db-bar-fill {
   width: 100%;
-  border-radius: var(--radius-sm) var(--radius-sm) 2px 2px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ink-solid) 70%, transparent) 0%, var(--ink-solid) 100%);
+  border-radius: var(--radius-md) var(--radius-md) 2px 2px;
+  background: color-mix(in srgb, var(--ink-solid) 32%, var(--bg-subtle));
   min-height: 2px;
-  transition: filter .18s ease;
+  transition: filter .18s ease, background-color .18s ease;
 }
 .db-bar-fill.is-peak { background: var(--ink-solid); }
 .db-bar-col:hover .db-bar-fill { filter: brightness(1.08); }
@@ -1290,22 +1340,27 @@
   letter-spacing: 0.03em;
 }
 
-/* ── Horizontal bars (top collectors / case age) ── */
-.db-hbars { display: flex; flex-direction: column; gap: 14px; padding-top: 2px; }
-.db-hbar-row { display: flex; align-items: center; gap: 10px; }
+/* ── Horizontal bars (top collectors / case age / status breakdowns) ──
+   "Weighted leaderboard" treatment: thick rounded-rect bars carry the
+   visual weight; ranked lists (emphasizeTop) get a large ghost rank
+   numeral instead of a badge, and the #1 row's value sits inside its
+   own fill once the bar is wide enough to hold it legibly. ── */
+.db-hbars { display: flex; flex-direction: column; gap: 16px; padding-top: 2px; }
+.db-hbar-row { display: flex; align-items: center; gap: 12px; }
 .db-hbar-rank {
   flex-shrink: 0;
-  width: 20px; height: 20px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  width: 24px;
+  text-align: center;
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-secondary);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--border-strong);
+  font-variant-numeric: tabular-nums;
 }
-.db-hbar-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.db-hbar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-left: 4px; margin-right: 0; }
+.db-hbar-row.is-lead .db-hbar-rank { color: var(--ink-solid); }
+.db-hbar-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.db-hbar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .db-hbar-label {
   font-family: var(--font-sans);
   font-size: 12.5px;
@@ -1321,13 +1376,24 @@
   flex-shrink: 0;
 }
 .db-hbar-track {
-  height: 7px;
-  margin: 0 4px;
-  border-radius: 999px;
+  height: 22px;
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
   overflow: hidden;
 }
-.db-hbar-fill { height: 100%; border-radius: 999px; }
+.db-hbar-fill {
+  height: 100%;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 9px;
+}
+.db-hbar-val-inline {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-on-solid);
+  white-space: nowrap;
+}
 
 /* ── Donut card ── */
 .db-donut-card { display: flex; align-items: center; gap: 18px; }

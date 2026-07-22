@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePermissions } from '../hooks/usePermissions';
 import { useAuth } from '../AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -8,8 +8,8 @@ import { dailyDispatchApi } from '../api/dailyDispatchApi';
 import { allocationsApi } from '../api/allocationsApi';
 import type { UserResponse, AllocationResponse } from '../types';
 import {
-  CheckCircle2, AlertCircle, X, ChevronLeft, ChevronRight,
-  RefreshCw, CalendarDays, Send
+  CheckCircle2, AlertCircle, X,
+  RefreshCw, Send, ChevronDown, ChevronUp, CalendarRange,
 } from 'lucide-react';
 import DispatchAgentPanel from './DispatchAgentPanel';
 import DispatchCasePanel, { resolveAmount } from './DispatchCasePanel';
@@ -74,33 +74,29 @@ export default function DailyDispatchPage() {
     setDate(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
   };
 
-  const dateInputRef = useRef<HTMLInputElement>(null);
-
   const [agents,        setAgents]        = useState<UserResponse[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(true);
   const [cases,         setCases]         = useState<AllocationResponse[]>([]);
   const [dispatched,    setDispatched]    = useState<AllocationResponse[]>([]);
   const [casesLoading,  setCasesLoading]  = useState(false);
   const [picked,        setPicked]        = useState<Set<string>>(new Set());
-  const [globalSearch,  setGlobalSearch]  = useState('');
   const [activeTab,     setActiveTab]     = useState<'queue' | 'done'>('queue');
   const [submitting,    setSubmitting]    = useState(false);
   const [undoingId,     setUndoingId]     = useState<string | null>(null);
   const [feedback,      setFeedback]      = useState<{ kind: 'ok' | 'err'; msg: string; sub?: string; onRetry?: () => void } | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [orgDispatched, setOrgDispatched] = useState<number | null>(null);
+  const [showOfficerPanel, setShowOfficerPanel] = useState(false);
+
+  // Officer panel auto-closes 30s after being opened.
+  useEffect(() => {
+    if (!showOfficerPanel) return;
+    const t = setTimeout(() => setShowOfficerPanel(false), 30000);
+    return () => clearTimeout(t);
+  }, [showOfficerPanel]);
 
   const agentObj      = useMemo(() => agents.find(a => a.id === selectedAgent), [agents, selectedAgent]);
   const agentFullName = agentObj ? `${agentObj.firstName} ${agentObj.lastName}`.trim() : '';
-
-  const filteredAgents = useMemo(() => {
-    if (!globalSearch.trim()) return agents;
-    const q = globalSearch.toLowerCase();
-    return agents.filter(a =>
-      `${a.firstName} ${a.lastName}`.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q)
-    );
-  }, [agents, globalSearch]);
 
   const dispatchDayLabel = useMemo(() =>
     new Date(dispatchDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }),
@@ -141,20 +137,9 @@ export default function DailyDispatchPage() {
     return () => { cancelled = true; };
   }, [canDispatch, dispatchDate, dispatched.length]);
 
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(globalSearch), 150);
-    return () => clearTimeout(t);
-  }, [globalSearch]);
-
-  const filteredCases     = useMemo(() => {
-    if (!debouncedSearch.trim()) return cases;
-    const q = debouncedSearch.toLowerCase();
-    return cases.filter(c => c.loanNumber?.toLowerCase().includes(q) || c.borrowerName?.toLowerCase().includes(q));
-  }, [cases, debouncedSearch]);
-
   const dispatchedIds     = useMemo(() => new Set(dispatched.map(d => d.id)), [dispatched]);
-  const undispatchedCases = useMemo(() => filteredCases.filter(c => !dispatchedIds.has(c.id)), [filteredCases, dispatchedIds]);
-  const dispatchedCases   = useMemo(() => filteredCases.filter(c =>  dispatchedIds.has(c.id)), [filteredCases, dispatchedIds]);
+  const undispatchedCases = useMemo(() => cases.filter(c => !dispatchedIds.has(c.id)), [cases, dispatchedIds]);
+  const dispatchedCases   = useMemo(() => cases.filter(c =>  dispatchedIds.has(c.id)), [cases, dispatchedIds]);
   const displayedCases    = activeTab === 'queue' ? undispatchedCases : dispatchedCases;
   const casesById         = useMemo(() => new Map(cases.map(c => [c.id, c])), [cases]);
   const selectedTotal     = useMemo(() => Array.from(picked).reduce((s, id) => {
@@ -199,7 +184,6 @@ export default function DailyDispatchPage() {
       {/* ── Page Header ── */}
       <div className="dd-page-header">
         <div className="dd-page-titles">
-          <h1 className="dd-page-title">Daily Dispatch</h1>
           <span className="dd-page-context">
             {agentFullName ? (
               <>Field Officer: <strong>{agentFullName}</strong></>
@@ -214,21 +198,16 @@ export default function DailyDispatchPage() {
           </span>
         </div>
 
-        <div className="dd-page-actions">
-          <div className="dd-date-nav">
-            <div className="dd-date-display" onClick={() => dateInputRef.current?.showPicker?.()}>
-              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); shiftDate(-1); }} aria-label="Previous day">
-                <ChevronLeft size={15} />
-              </button>
-              <CalendarDays size={13} className="dd-date-icon" />
-              <span className="dd-date-label">{dispatchDayLabel}</span>
-              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); shiftDate(1); }} aria-label="Next day">
-                <ChevronRight size={15} />
-              </button>
-            </div>
-            <input ref={dateInputRef} type="date" value={dispatchDate}
-              onChange={e => setDate(e.target.value)} className="dd-date-input-hidden" />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button type="button" onClick={() => navigate('/app/calendar')}
+            className="ds-btn is-secondary" title="Holiday calendar" aria-label="Holiday calendar">
+            <CalendarRange size={14} />
+          </button>
+          <button type="button" onClick={() => setShowOfficerPanel(v => !v)}
+            className="ds-btn is-primary">
+            Executive
+            {showOfficerPanel ? <ChevronUp size={14} style={{ marginLeft: 6 }} /> : <ChevronDown size={14} style={{ marginLeft: 6 }} />}
+          </button>
         </div>
       </div>
 
@@ -268,17 +247,6 @@ export default function DailyDispatchPage() {
 
       <div className="dd-main-container">
         <div className="dd-grid">
-          <div className="dd-agent-panel">
-            <DispatchAgentPanel
-              agents={agents} agentsLoading={agentsLoading} selectedAgent={selectedAgent}
-              agentObj={agentObj} agentFullName={agentFullName} filteredAgents={filteredAgents}
-              setAgent={setAgent}
-              cases={cases} dispatched={dispatched} undispatchedCases={undispatchedCases}
-              casesLoading={casesLoading} dispatchPct={dispatchPct} dispatchDayLabel={dispatchDayLabel}
-              initials={initials}
-              globalSearch={globalSearch} setGlobalSearch={setGlobalSearch}
-            />
-          </div>
           <div className="dd-case-panel">
             <DispatchCasePanel
               selectedAgent={selectedAgent} activeTab={activeTab} setActiveTab={setActiveTab}
@@ -287,10 +255,30 @@ export default function DailyDispatchPage() {
               picked={picked} setPicked={setPicked} toggle={toggle} fmtINR={fmtINR} selectedTotal={selectedTotal}
               undoOne={undoOne} undoingId={undoingId} casesLoading={casesLoading}
               initials={initials} canDispatch={canDispatch} submitting={submitting} doSend={doSend} agentObj={agentObj}
-              globalSearch={globalSearch} setGlobalSearch={setGlobalSearch}
               dispatchDate={dispatchDate} dispatchDayLabel={dispatchDayLabel} setDate={setDate} shiftDate={shiftDate}
             />
           </div>
+          <AnimatePresence>
+            {showOfficerPanel && (
+              <motion.div
+                key="agent-panel"
+                className="dd-agent-panel"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <DispatchAgentPanel
+                  agents={agents} agentsLoading={agentsLoading} selectedAgent={selectedAgent}
+                  agentObj={agentObj} agentFullName={agentFullName}
+                  setAgent={setAgent}
+                  cases={cases} dispatched={dispatched} undispatchedCases={undispatchedCases}
+                  casesLoading={casesLoading} dispatchPct={dispatchPct} dispatchDayLabel={dispatchDayLabel}
+                  initials={initials}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

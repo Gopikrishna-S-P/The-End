@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, unwrapApiResponse } from '../client';
 import { collectionsApi } from '../api/collectionsApi';
+import { usersApi } from '../api/usersApi';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import type {
-  CollectionResponse, CollectionStatus, PaymentMode, ApprovalAction, PagedResponse,
+  CollectionResponse, CollectionStatus, ApprovalAction, PagedResponse, UserResponse,
 } from '../types';
 import {
-  ChevronLeft, ChevronRight, RefreshCw, Download, CheckCircle2, XCircle,
-  Banknote, Clock, FileText, X, Search, SlidersHorizontal,
+  ChevronLeft, ChevronRight, Download, CheckCircle2, XCircle,
+  Banknote, Clock, FileText, X, SlidersHorizontal, ChevronDown,
+  UserX, Landmark, Link2,
 } from 'lucide-react';
 import CollectionDetailDrawer from './CollectionDetailDrawer';
 import { CollectionApprovalModal } from './CollectionApprovalModal';
 import { CollectionDepositModal } from './CollectionDepositModal';
+import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import { StatusPill, PaymentModePill, fmtINR, fmtDate } from './CollectionsHelpers';
 import '../styles/AppPage.css';
+import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
 
 const PAGE_SIZE = 20;
@@ -27,15 +31,6 @@ const STATUS_OPTIONS: Array<{ value: CollectionStatus | ''; label: string }> = [
   { value: 'APPROVED',         label: 'Approved' },
   { value: 'REJECTED',         label: 'Rejected' },
   { value: 'DEPOSITED',        label: 'Deposited' },
-];
-
-const PAYMENT_OPTIONS: Array<{ value: PaymentMode | ''; label: string }> = [
-  { value: '',       label: 'All' },
-  { value: 'CASH',   label: 'Cash' },
-  { value: 'UPI',    label: 'UPI' },
-  { value: 'CHEQUE', label: 'Cheque' },
-  { value: 'NEFT',   label: 'NEFT' },
-  { value: 'RTGS',   label: 'RTGS' },
 ];
 
 function csvDownload(filename: string, csv: string) {
@@ -53,11 +48,15 @@ const yearStartIso  = () => `${new Date().getFullYear()}-01-01`;
 
 export default function CollectionsPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isBankView  = location.pathname.startsWith('/bank');
   const isAgentView = location.pathname.startsWith('/agent');
   const { hasPermission } = usePermissions();
   const canApprove = hasPermission('COLLECTION_APPROVE');
+  const role = user?.roles?.[0]?.name?.replace('ROLE_', '');
+  const canSeeReconciliation = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN';
+  const canSeePaymentLinks = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'FO';
 
   const [collections,           setCollections]           = useState<CollectionResponse[]>([]);
   const [loading,               setLoading]               = useState(true);
@@ -66,9 +65,17 @@ export default function CollectionsPage() {
   const [totalElements,         setTotalElements]         = useState(0);
   const [pendingCount,          setPendingCount]          = useState<number | null>(null);
   const [filterStatus,          setFilterStatus]          = useState<CollectionStatus | ''>('');
-  const [filterPaymentMode,     setFilterPaymentMode]     = useState<PaymentMode | ''>('');
-  const [searchInput,           setSearchInput]           = useState('');
+  const [filterAgentId,         setFilterAgentId]         = useState('');
+  const [filterFromDate,        setFilterFromDate]        = useState('');
+  const [filterToDate,          setFilterToDate]          = useState('');
+  const [filterSearch,          setFilterSearch]          = useState('');
+  const [agents,                setAgents]                = useState<UserResponse[]>([]);
   const [filterOpen,            setFilterOpen]            = useState(false);
+  // Draft copies — the filter dialog edits these; changes only take effect on "Apply".
+  const [draftAgentId,          setDraftAgentId]          = useState('');
+  const [draftFromDate,         setDraftFromDate]         = useState('');
+  const [draftToDate,           setDraftToDate]           = useState('');
+  const [draftSearch,           setDraftSearch]           = useState('');
   const [selectedCollection,    setSelectedCollection]    = useState<CollectionResponse | null>(null);
   const [showApprovalModal,     setShowApprovalModal]     = useState(false);
   const [approvalInitialAction, setApprovalInitialAction] = useState<ApprovalAction | null>(null);
@@ -80,21 +87,8 @@ export default function CollectionsPage() {
   const [customTo,              setCustomTo]              = useState('');
 
   const exportMenuRef = useRef<HTMLDivElement>(null);
-  const inputRef      = useRef<HTMLInputElement>(null);
 
   const organizationId = user?.organizationId || '';
-
-  // "/" focuses search
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      e.preventDefault(); inputRef.current?.focus();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   // Escape closes filter modal + export menu
   useEffect(() => {
@@ -123,8 +117,10 @@ export default function CollectionsPage() {
     try {
       const params = new URLSearchParams({ orgId: organizationId, page: String(page), size: String(PAGE_SIZE) });
       if (filterStatus)      params.append('status', filterStatus);
-      if (filterPaymentMode) params.append('paymentMode', filterPaymentMode);
+      if (filterFromDate)    params.append('fromDate', filterFromDate);
+      if (filterToDate)      params.append('toDate', filterToDate);
       if (isAgentView && user?.agentId) params.append('agentId', user.agentId);
+      else if (filterAgentId) params.append('agentId', filterAgentId);
       // NOTE: CollectionController has no /bank sub-route — the server derives org scope
       // from the JWT for every caller. `isBankView` is retained only to flag legacy
       // /bank/* bookmarks (see App.tsx's LegacyRedirect, which already redirects those
@@ -137,7 +133,7 @@ export default function CollectionsPage() {
     } catch {
       // silent — empty state handles
     } finally { setLoading(false); }
-  }, [organizationId, page, filterStatus, filterPaymentMode, isBankView, isAgentView, user?.agentId]);
+  }, [organizationId, page, filterStatus, filterFromDate, filterToDate, filterAgentId, isBankView, isAgentView, user?.agentId]);
 
   useEffect(() => {
     if (!canApprove || !organizationId) return;
@@ -147,27 +143,43 @@ export default function CollectionsPage() {
       .catch(() => {});
   }, [canApprove, organizationId, collections]);
 
+  // Agent filter dropdown — irrelevant for a field officer's own "my collections" view.
+  useEffect(() => {
+    if (isAgentView) return;
+    usersApi.listByRole('FO').then(setAgents).catch(() => {});
+  }, [isAgentView]);
+
   useEffect(() => { if (organizationId) fetchCollections(); }, [fetchCollections, organizationId]);
 
   const visibleCollections = useMemo(() => {
-    const q = searchInput.trim().toLowerCase();
+    const q = filterSearch.trim().toLowerCase();
     if (!q) return collections;
-    return collections.filter(c => {
-      const fields = [
-        c.loanNumber, c.borrowerName, c.agentName, c.receiptNumber, c.notes,
-        c.chequeNumber, c.bankName, c.upiReferenceId, c.transactionReferenceId,
-        c.amount != null ? String(c.amount) : null,
-        c.amount != null ? c.amount.toLocaleString('en-IN') : null,
-      ];
-      return fields.some(f => typeof f === 'string' && f.toLowerCase().includes(q));
-    });
-  }, [collections, searchInput]);
+    return collections.filter(c =>
+      c.loanNumber?.toLowerCase().includes(q) || c.borrowerName?.toLowerCase().includes(q)
+    );
+  }, [collections, filterSearch]);
 
   const clearFilters = () => {
-    setFilterStatus(''); setFilterPaymentMode(''); setSearchInput(''); setPage(0);
+    setFilterStatus(''); setFilterAgentId('');
+    setFilterFromDate(''); setFilterToDate(''); setFilterSearch(''); setPage(0);
+    setDraftAgentId('');
+    setDraftFromDate(''); setDraftToDate(''); setDraftSearch('');
   };
 
-  const hasFilters = Boolean(filterStatus || filterPaymentMode || searchInput);
+  const openFilterDialog = () => {
+    setDraftAgentId(filterAgentId);
+    setDraftFromDate(filterFromDate); setDraftToDate(filterToDate); setDraftSearch(filterSearch);
+    setFilterOpen(true);
+  };
+
+  const applyFilters = () => {
+    setFilterAgentId(draftAgentId);
+    setFilterFromDate(draftFromDate); setFilterToDate(draftToDate); setFilterSearch(draftSearch);
+    setPage(0);
+    setFilterOpen(false);
+  };
+
+  const hasFilters = Boolean(filterStatus || filterAgentId || filterFromDate || filterToDate || filterSearch);
 
   const handleExport = useCallback(async (fromDate?: string, toDate?: string) => {
     setExporting(true); setShowExportMenu(false);
@@ -195,10 +207,26 @@ export default function CollectionsPage() {
                     </button>
                   </span>
                 )}
-                {filterPaymentMode && (
+                {filterAgentId && (
                   <span className="ds-pill is-info">
-                    {PAYMENT_OPTIONS.find(o => o.value === filterPaymentMode)?.label}
-                    <button type="button" onClick={() => { setFilterPaymentMode(''); setPage(0); }} aria-label="Clear payment mode filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                    {agents.find(a => a.id === filterAgentId) ? `${agents.find(a => a.id === filterAgentId)!.firstName} ${agents.find(a => a.id === filterAgentId)!.lastName}`.trim() : 'Agent'}
+                    <button type="button" onClick={() => { setFilterAgentId(''); setPage(0); }} aria-label="Clear agent filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+                {(filterFromDate || filterToDate) && (
+                  <span className="ds-pill is-accent">
+                    {filterFromDate || '…'} – {filterToDate || '…'}
+                    <button type="button" onClick={() => { setFilterFromDate(''); setFilterToDate(''); setPage(0); }} aria-label="Clear date filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+                {filterSearch && (
+                  <span className="ds-pill is-accent">
+                    “{filterSearch}”
+                    <button type="button" onClick={() => setFilterSearch('')} aria-label="Clear search filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
                       <X size={11} />
                     </button>
                   </span>
@@ -210,17 +238,14 @@ export default function CollectionsPage() {
             )}
           </AnimatePresence>
 
-          <section className="ds-card db-card" style={{ marginTop: 0, height: 'calc(100vh - 160px)' }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <h1 className="db-card-title" style={{ fontSize: 18, margin: 0 }}>Collection Records</h1>
+          <div className="db-page-header">
+            <div className="db-page-header-left">
+              <div className="db-page-titles">
+                <h1 className="db-page-title">Collections</h1>
                 {!loading && totalElements > 0 && (
-                  <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)', fontSize: 13 }}>
-                    / {totalElements.toLocaleString('en-IN')} records
-                  </span>
+                  <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
                 )}
               </div>
-              
               {canApprove && pendingCount != null && pendingCount > 0 && (
                 <button
                   type="button"
@@ -233,124 +258,113 @@ export default function CollectionsPage() {
                   <span>{pendingCount} pending</span>
                 </button>
               )}
+            </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
-                <div ref={exportMenuRef} style={{ position: 'relative' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowExportMenu(v => !v)}
-                    disabled={exporting}
-                    className="ds-btn is-secondary"
-                    style={{ padding: '0 12px', height: 32 }}
-                  >
-                    <Download size={14} style={{ marginRight: 6 }} />
-                    {exporting ? 'Exporting…' : 'Export'}
-                  </button>
-                  <AnimatePresence>
-                    {showExportMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }}
-                        style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, boxShadow: 'var(--shadow-md)', zIndex: 100 }}
-                      >
-                        <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Date range</p>
-                        <button type="button" onClick={() => handleExport()} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">All time</button>
-                        <button type="button" onClick={() => handleExport(todayIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">Today</button>
-                        <button type="button" onClick={() => handleExport(monthStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This month</button>
-                        <button type="button" onClick={() => handleExport(yearStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This year</button>
-                        <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0' }} />
-                        <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Custom range</p>
-                        <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="ds-input" style={{ width: '100%', marginBottom: 4, height: 32, fontSize: 12 }} />
-                        <input type="date" value={customTo}   onChange={e => setCustomTo(e.target.value)}   className="ds-input" style={{ width: '100%', marginBottom: 8, height: 32, fontSize: 12 }} />
-                        <button type="button" onClick={() => handleExport(customFrom || undefined, customTo || undefined)}
-                          className="ds-btn is-primary is-sm" style={{ width: '100%' }}>
-                          Export custom range
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button type="button" onClick={() => navigate('/app/non-contactables')}
+                className="ds-btn is-secondary" title="Non-contactable borrowers" aria-label="Non-contactable borrowers">
+                <UserX size={14} />
+              </button>
+              {canSeeReconciliation && (
+                <button type="button" onClick={() => navigate('/app/reconciliation')}
+                  className="ds-btn is-secondary" title="Bank reconciliation" aria-label="Bank reconciliation">
+                  <Landmark size={14} />
+                </button>
+              )}
+              {canSeePaymentLinks && (
+                <button type="button" onClick={() => navigate('/app/payments/links')}
+                  className="ds-btn is-secondary" title="Payment links" aria-label="Payment links">
+                  <Link2 size={14} />
+                </button>
+              )}
+              <div ref={exportMenuRef} style={{ position: 'relative' }}>
                 <button
                   type="button"
-                  onClick={() => setFilterOpen(true)}
-                  className="ds-btn is-secondary"
-                  style={{ background: filterOpen || filterStatus || filterPaymentMode ? 'var(--ink-solid)' : undefined, color: filterOpen || filterStatus || filterPaymentMode ? 'var(--bg-surface)' : undefined, position: 'relative' }}
+                  onClick={() => setShowExportMenu(v => !v)}
+                  disabled={exporting}
+                  className="ds-btn is-primary"
                 >
-                  <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
-                  Filter
-                  {(filterStatus || filterPaymentMode) && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
+                  <Download size={14} style={{ marginRight: 6 }} />
+                  {exporting ? 'Exporting…' : 'Export'}
                 </button>
-
-                <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
-                  <input
-                    ref={inputRef}
-                    type="search"
-                    value={searchInput}
-                    onChange={e => setSearchInput(e.target.value)}
-                    placeholder="Search receipt, borrower, loan, agent…"
-                    autoComplete="off"
-                    spellCheck={false}
-                    aria-label="Search collections on this page"
-                    style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 260 }}
-                  />
-                  <AnimatePresence>
-                    {searchInput && (
-                      <motion.button type="button" onClick={() => setSearchInput('')}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex' }}
-                        initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.12 }}>
-                        <X size={12} />
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <button type="button" onClick={fetchCollections} disabled={loading}
-                  className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                  <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
-                </button>
+                <AnimatePresence>
+                  {showExportMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }}
+                      style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, boxShadow: 'var(--shadow-md)', zIndex: 100 }}
+                    >
+                      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Date range</p>
+                      <button type="button" onClick={() => handleExport()} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">All time</button>
+                      <button type="button" onClick={() => handleExport(todayIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">Today</button>
+                      <button type="button" onClick={() => handleExport(monthStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This month</button>
+                      <button type="button" onClick={() => handleExport(yearStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This year</button>
+                      <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0' }} />
+                      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Custom range</p>
+                      <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="ds-input" style={{ width: '100%', marginBottom: 4, height: 32, fontSize: 12 }} />
+                      <input type="date" value={customTo}   onChange={e => setCustomTo(e.target.value)}   className="ds-input" style={{ width: '100%', marginBottom: 8, height: 32, fontSize: 12 }} />
+                      <button type="button" onClick={() => handleExport(customFrom || undefined, customTo || undefined)}
+                        className="ds-btn is-primary is-sm" style={{ width: '100%' }}>
+                        Export custom range
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none' }}>
-              <table className="ds-table">
+              <button
+                type="button"
+                onClick={openFilterDialog}
+                className="ds-btn is-secondary"
+                style={{
+                  background: filterOpen || hasFilters ? 'var(--ink-solid)' : undefined,
+                  color: filterOpen || hasFilters ? 'var(--bg-surface)' : undefined,
+                }}
+              >
+                <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+                Filter
+              </button>
+            </div>
+          </div>
+
+          <section className="ds-table-card" style={{ marginTop: 0, height: 'calc(100vh - 220px)', display: 'flex', flexDirection: 'column' }}>
+            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
+              <table className="ds-table ps-table is-no-row-hover">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Loan #</th>
-                    <th style={{ padding: '12px 16px' }}>Borrower</th>
-                    <th style={{ padding: '12px 16px' }}>Agent</th>
-                    <th style={{ padding: '12px 16px' }}>Date</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Amount</th>
-                    <th style={{ padding: '12px 16px' }}>Mode</th>
-                    <th style={{ padding: '12px 16px' }}>Status</th>
-                    <th className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>Actions</th>
+                  <tr>
+                    <th>Loan #</th>
+                    <th>Borrower</th>
+                    <th>Agent</th>
+                    <th>Date</th>
+                    <th className="is-right">Amount</th>
+                    <th>Mode</th>
+                    <th>Status</th>
+                    <th className="is-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     Array.from({ length: 8 }).map((_, i) => (
-                      <tr key={i} style={{ opacity: 1 - i * 0.1, borderBottom: '1px solid var(--border-subtle)' }}>
-                        <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 110, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: '60%', display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 70, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 72, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 56, borderRadius: 999, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 96, borderRadius: 999, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 14, width: 80, marginLeft: 'auto', display: 'block' }} /></td>
+                      <tr key={i} style={{ opacity: 1 - i * 0.1 }}>
+                        <td><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
+                        <td><span className="ds-skel" style={{ height: 14, width: 110, display: 'block' }} /></td>
+                        <td><span className="ds-skel" style={{ height: 14, width: '60%', display: 'block' }} /></td>
+                        <td><span className="ds-skel" style={{ height: 14, width: 70, display: 'block' }} /></td>
+                        <td className="is-right"><span className="ds-skel" style={{ height: 14, width: 72, marginLeft: 'auto', display: 'block' }} /></td>
+                        <td><span className="ds-skel" style={{ height: 22, width: 56, borderRadius: 999, display: 'block' }} /></td>
+                        <td><span className="ds-skel" style={{ height: 22, width: 96, borderRadius: 999, display: 'block' }} /></td>
+                        <td className="is-right"><span className="ds-skel" style={{ height: 14, width: 80, marginLeft: 'auto', display: 'block' }} /></td>
                       </tr>
                     ))
                   ) : visibleCollections.length === 0 ? (
                     <tr>
                       <td colSpan={8}>
-                        <motion.div className="ds-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} style={{ padding: '80px 0' }}>
-                          <Banknote size={32} className="ds-empty-icon" />
-                          <span className="ds-empty-title">{searchInput ? 'No matches on this page' : 'No collections found'}</span>
+                        <motion.div className="ds-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                          <span className="ds-empty-icon"><Banknote size={20} /></span>
+                          <span className="ds-empty-title">{filterSearch ? 'No matches on this page' : 'No collections found'}</span>
                           <span className="ds-empty-sub">
-                            {searchInput
-                              ? 'Nothing on the current page matches your search. Clear the search, or change page / status filters.'
-                              : filterStatus || filterPaymentMode
+                            {filterSearch
+                              ? 'Nothing on the current page matches your search. Clear it, or change the page / other filters.'
+                              : hasFilters
                                 ? 'No collections match the current filters. Clear them to see all records.'
                                 : 'Collections will appear here once field officers submit payments from the mobile app.'}
                           </span>
@@ -373,18 +387,17 @@ export default function CollectionsPage() {
                         onClick={() => setDrawerCollection(c)}
                         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerCollection(c); } }}
                         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: idx * 0.03 }}
-                        style={{ borderBottom: '1px solid var(--border-subtle)' }}
                       >
-                        <td style={{ padding: '12px 16px', paddingLeft: 24, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-primary)', fontWeight: 500 }}>
+                        <td className="is-mono" style={{ fontWeight: 500, color: 'var(--ink-primary)' }}>
                           {c.loanNumber ?? '—'}
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ink-secondary)' }}>{c.borrowerName ?? '—'}</td>
-                        <td style={{ padding: '12px 16px', color: 'var(--ink-tertiary)' }}>{c.agentName ?? '—'}</td>
-                        <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-tertiary)' }}>{fmtDate(c.collectionDate)}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 500, color: 'var(--ink-primary)' }}>{fmtINR(c.amount)}</td>
-                        <td style={{ padding: '12px 16px' }}><PaymentModePill mode={c.paymentMode} /></td>
-                        <td style={{ padding: '12px 16px' }}><StatusPill status={c.status} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }} onClick={e => e.stopPropagation()}>
+                        <td>{c.borrowerName ?? '—'}</td>
+                        <td className="is-muted">{c.agentName ?? '—'}</td>
+                        <td className="is-mono is-muted" style={{ fontSize: 12 }}>{fmtDate(c.collectionDate)}</td>
+                        <td className="is-currency">{fmtINR(c.amount)}</td>
+                        <td><PaymentModePill mode={c.paymentMode} /></td>
+                        <td><StatusPill status={c.status} /></td>
+                        <td className="is-right" onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
                             {canApprove && c.status === 'PENDING_APPROVAL' && (
                               <>
@@ -420,8 +433,8 @@ export default function CollectionsPage() {
                               </button>
                             )}
                             {c.documents && c.documents.length > 0 && (
-                              <button type="button" className="db-customize-btn" style={{ padding: '0 8px', height: 26 }} title="View documents" aria-label="View documents">
-                                <FileText size={12} />
+                              <button type="button" className="ds-table-row-action" title="View documents" aria-label="View documents">
+                                <FileText size={14} />
                               </button>
                             )}
                           </div>
@@ -452,62 +465,50 @@ export default function CollectionsPage() {
           </section>
         </div>
 
-        {/* ── Filter modal ── */}
-        <AnimatePresence>
-          {filterOpen && (
-            <motion.div className="ds-modal-overlay" onClick={() => setFilterOpen(false)}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-              <motion.div className="ds-modal" onClick={e => e.stopPropagation()}
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.15 }}>
-                <div className="ds-modal-header">
-                  <span className="ds-modal-title">Filter collections</span>
-                  <button type="button" onClick={() => setFilterOpen(false)} className="ds-modal-close" aria-label="Close">
-                    <X size={16} />
-                  </button>
-                </div>
+        {/* ── Filter dialog — same Modal/Input/FormSection system as Platform Setup's Edit Org dialog ── */}
+        {filterOpen && (
+          <Modal title="Filter collections" subtitle="Narrow down the collections list" onClose={() => setFilterOpen(false)}>
+            <FormSection title="Search">
+              <Input label="Loan # or borrower name" value={draftSearch} onChange={setDraftSearch}
+                placeholder="e.g. LN10234 or Ramesh Kumar" />
+            </FormSection>
 
-                <span className="ds-label" style={{ display: 'block', marginBottom: 10 }}>Status</span>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {STATUS_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      className={`ds-btn is-sm ${filterStatus === opt.value ? 'is-primary' : 'is-secondary'}`}
-                      style={filterStatus === opt.value ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}}
-                      onClick={() => { setFilterStatus(opt.value as CollectionStatus | ''); setPage(0); }}
+            {!isAgentView && (
+              <FormSection title="Agent">
+                <div className="ds-field">
+                  <label className="ds-label">Agent</label>
+                  <div className="ps-select-wrap">
+                    <select
+                      value={draftAgentId}
+                      onChange={e => setDraftAgentId(e.target.value)}
+                      className="ds-select"
+                      style={{
+                        width: '100%', paddingRight: 30,
+                        appearance: 'none', WebkitAppearance: 'none',
+                        textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap',
+                      }}
                     >
-                      {opt.label}
-                    </button>
-                  ))}
+                      <option value="">All agents</option>
+                      {agents.map(a => (
+                        <option key={a.id} value={a.id}>{a.firstName} {a.lastName}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+                  </div>
                 </div>
+              </FormSection>
+            )}
 
-                <span className="ds-label" style={{ display: 'block', marginBottom: 10, marginTop: 16 }}>Payment mode</span>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {PAYMENT_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      className={`ds-btn is-sm ${filterPaymentMode === opt.value ? 'is-primary' : 'is-secondary'}`}
-                      style={filterPaymentMode === opt.value ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}}
-                      onClick={() => { setFilterPaymentMode(opt.value as PaymentMode | ''); setPage(0); }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+            <FormSection title="Date range">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <Input label="From" type="date" value={draftFromDate} onChange={setDraftFromDate} />
+                <Input label="To" type="date" value={draftToDate} onChange={setDraftToDate} />
+              </div>
+            </FormSection>
 
-                <div className="ds-modal-actions">
-                  <button type="button" onClick={() => { clearFilters(); setFilterOpen(false); }} className="ds-btn is-secondary">
-                    Clear
-                  </button>
-                  <button type="button" onClick={() => setFilterOpen(false)} className="ds-btn is-primary">
-                    Apply
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <ModalFooter onClose={() => setFilterOpen(false)} submitting={false} onSubmit={applyFilters} label="Apply filters" />
+          </Modal>
+        )}
 
         {/* ── Approval / Deposit modals ── */}
         {selectedCollection && (

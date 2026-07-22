@@ -25,6 +25,7 @@
 }
 
 .ds-empty-title {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
@@ -32,10 +33,12 @@
 }
 
 .ds-empty-sub {
+  margin: 0;
   font-size: 12.5px;
   color: var(--text-tertiary);
   line-height: 1.5;
   max-width: 320px;
+  text-align: center;
 }
 
 .ds-empty-actions {

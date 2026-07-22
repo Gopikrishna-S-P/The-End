@@ -25,6 +25,25 @@ public class StripeService {
     private final StripeConfig stripeConfig;
     private final OrgSubscriptionRepository subRepo;
 
+    /**
+     * Values SubscriptionPage.tsx switches on after Stripe redirects the user back.
+     * That page reads a single {@code checkout} query param; these are the only two
+     * values it recognises.
+     *
+     * <p>They are named constants rather than inline strings because the previous
+     * form -- {@code ?success=true} / {@code ?cancelled=true} -- matched nothing the
+     * page looked for, so a completed payment returned the user to a silent screen
+     * with no confirmation. The mismatch was invisible from either file alone.
+     * {@code StripeServiceReturnUrlTest} pins them.
+     */
+    static final String CHECKOUT_SUCCESS = "success";
+    static final String CHECKOUT_CANCEL  = "cancel";
+
+    /** Where Stripe Checkout sends the user back to, carrying its outcome. */
+    String checkoutReturnUrl(String outcome) {
+        return stripeConfig.getBaseUrl() + "/app/subscription?checkout=" + outcome;
+    }
+
     public String createCheckoutUrl(UUID orgId, String planName) throws StripeException {
         OrgSubscription sub = subRepo.findByOrgId(orgId).orElseGet(() ->
                 OrgSubscription.builder().orgId(orgId).build());
@@ -39,8 +58,8 @@ public class StripeService {
                         .setPrice(priceId)
                         .setQuantity(1L)
                         .build())
-                .setSuccessUrl(stripeConfig.getBaseUrl() + "/app/subscription?success=true")
-                .setCancelUrl(stripeConfig.getBaseUrl() + "/app/subscription?cancelled=true")
+                .setSuccessUrl(checkoutReturnUrl(CHECKOUT_SUCCESS))
+                .setCancelUrl(checkoutReturnUrl(CHECKOUT_CANCEL))
                 .build();
 
         Session session = Session.create(params);

@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, UserCheck, Send, CheckCircle2, Undo2, Search, X, Check, ArrowUpRight, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Loader2, UserCheck, Send, CheckCircle2, Undo2, Check, ArrowUpRight, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import type { UserResponse, AllocationResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
+import { Modal, ModalFooter } from './PlatformSetupShared';
+import '../styles/PlatformSetupPage.css';
 
 interface Props {
   selectedAgent: string;
@@ -12,8 +14,6 @@ interface Props {
   undispatchedCases: AllocationResponse[];
   dispatchedCases: AllocationResponse[];
   displayedCases: AllocationResponse[];
-  globalSearch: string;
-  setGlobalSearch: (s: string) => void;
   cases: AllocationResponse[];
   dispatched: AllocationResponse[];
   picked: Set<string>;
@@ -129,7 +129,7 @@ const DISPATCH_HINT = IS_APPLE ? '⌘↵' : 'Ctrl↵';
 
 export default function DispatchCasePanel(p: Props) {
   const [casePage, setCasePage] = useState(0);
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const PAGE_SIZE = 20;
   const selectedTotalAnim = useCountUp(p.selectedTotal, 500);
   const { ref: listRef, fire: ripple } = useRipple<HTMLDivElement>();
@@ -137,7 +137,7 @@ export default function DispatchCasePanel(p: Props) {
 
   useEffect(() => {
     setCasePage(0);
-  }, [p.activeTab, p.globalSearch]);
+  }, [p.activeTab]);
 
   const totalCases = p.displayedCases.length;
   const totalPages = Math.ceil(totalCases / PAGE_SIZE);
@@ -147,85 +147,66 @@ export default function DispatchCasePanel(p: Props) {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && p.picked.size > 0 && p.canDispatch && !p.submitting) {
         e.preventDefault();
-        p.doSend();
+        setShowConfirm(true);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [p.picked.size, p.canDispatch, p.submitting, p.doSend]);
+  }, [p.picked.size, p.canDispatch, p.submitting]);
+
+  const confirmSend = async () => {
+    await p.doSend();
+    setShowConfirm(false);
+  };
 
   const agentFullName = p.agentObj ? `${p.agentObj.firstName} ${p.agentObj.lastName}`.trim() : '';
 
   return (
     <div className="dd-cases-card ds-card is-overflow-hidden">
-      {/* ── Header: tabs · search ── */}
+      {/* ── Header: tabs (far left) · calendar (center) · search (far right) ── */}
       <div className="dd-cases-head">
 
-        {/* Tabs */}
-        <div className="dd-cp-tabs">
-          <button
-            type="button"
-            className={`dd-cp-tab${p.activeTab === 'queue' ? ' is-active' : ''}`}
-            onClick={() => p.setActiveTab('queue')}
-          >
-            Queue
-            <span className="dd-cp-tab-count">{p.undispatchedCases.length}</span>
-          </button>
-          <button
-            type="button"
-            className={`dd-cp-tab${p.activeTab === 'done' ? ' is-active' : ''}`}
-            onClick={() => p.setActiveTab('done')}
-          >
-            Done
-            <span className="dd-cp-tab-count">{p.dispatchedCases.length}</span>
-          </button>
+        <div className="dd-cases-head-left">
+          {/* Tabs */}
+          <div className="dd-cp-tabs">
+            <button
+              type="button"
+              className={`dd-cp-tab${p.activeTab === 'queue' ? ' is-active' : ''}`}
+              onClick={() => p.setActiveTab('queue')}
+            >
+              Queue
+              <span className="dd-cp-tab-count">{p.undispatchedCases.length}</span>
+            </button>
+            <button
+              type="button"
+              className={`dd-cp-tab${p.activeTab === 'done' ? ' is-active' : ''}`}
+              onClick={() => p.setActiveTab('done')}
+            >
+              Done
+              <span className="dd-cp-tab-count">{p.dispatchedCases.length}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Search */}
-        <AnimatePresence mode="popLayout">
-          {!isSearchActive && !p.globalSearch ? (
-            <motion.button
-              key="search-btn"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.15 }}
-              type="button"
-              onClick={() => setIsSearchActive(true)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, border: 'none', background: 'transparent', color: 'var(--ink-tertiary)', cursor: 'pointer', borderRadius: 8, marginLeft: 'auto' }}
-              aria-label="Open search"
-            >
-              <Search size={14} />
-            </motion.button>
-          ) : (
-            <motion.div
-              key="search-bar"
-              initial={{ opacity: 0, width: 32 }}
-              animate={{ opacity: 1, width: 240 }}
-              exit={{ opacity: 0, width: 32 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="dd-cp-search"
-              style={{ overflow: 'hidden' }}
-            >
-              <Search size={14} className="dd-agent-search-icon" style={{ flexShrink: 0, color: 'var(--ink-tertiary)', marginLeft: 4 }} />
-              <input
-                autoFocus
-                value={p.globalSearch}
-                onChange={e => p.setGlobalSearch(e.target.value)}
-                placeholder="Search cases & officers…"
-                style={{ width: '100%' }}
-              />
-              <button 
-                type="button" 
-                className="dd-cp-search-clear" 
-                onClick={() => { setIsSearchActive(false); p.setGlobalSearch(''); }}
-                aria-label="Close search"
-              >
-                <X size={14} />
+        <div aria-hidden="true" />
+
+        <div className="dd-cases-head-right">
+          {/* Calendar */}
+          <div className="dd-date-nav">
+            <div className="dd-date-display" onClick={() => dateInputRef.current?.showPicker?.()}>
+              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); p.shiftDate(-1); }} aria-label="Previous day">
+                <ChevronLeft size={15} />
               </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <CalendarDays size={13} className="dd-date-icon" />
+              <span className="dd-date-label">{p.dispatchDayLabel}</span>
+              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); p.shiftDate(1); }} aria-label="Next day">
+                <ChevronRight size={15} />
+              </button>
+            </div>
+            <input ref={dateInputRef} type="date" value={p.dispatchDate}
+              onChange={e => p.setDate(e.target.value)} className="dd-date-input-hidden" />
+          </div>
+        </div>
       </div>
 
       {/* ── Case list ── */}
@@ -233,12 +214,12 @@ export default function DispatchCasePanel(p: Props) {
         <div className="dd-cp-list">
           <AnimatePresence mode="wait">
             <motion.div
-              key={p.activeTab + p.globalSearch}
+              key={p.activeTab}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              style={{ display: 'flex', flexDirection: 'column' }}
+              style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
             >
               {p.casesLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
@@ -252,31 +233,28 @@ export default function DispatchCasePanel(p: Props) {
                   </div>
                 ))
               ) : !p.selectedAgent ? (
-                <div className="dd-cp-empty" style={{ height: '100%' }}>
-                  <div className="dd-cp-empty-icon">
-                    <UserCheck size={22} />
-                  </div>
-                  <p className="dd-cp-empty-title">Select a field officer</p>
-                  <p className="dd-cp-empty-sub">Pick an officer from the list to view their dispatch queue.</p>
+                <div className="ds-empty" style={{ height: '100%', minHeight: 200 }}>
+                  <span className="ds-empty-icon">
+                    <UserCheck size={20} aria-hidden="true" />
+                  </span>
+                  <span className="ds-empty-title">Select a field officer</span>
+                  <span className="ds-empty-sub">Pick an officer from the list to view their dispatch queue.</span>
                 </div>
               ) : pageCases.length === 0 ? (
-                <div className="dd-cp-empty">
-                  <div className={`dd-cp-empty-icon${p.activeTab === 'queue' && !p.globalSearch ? ' is-clear' : ''}`}>
+                <div className="ds-empty" style={{ height: '100%', minHeight: 200 }}>
+                  <span className="ds-empty-icon" style={p.activeTab === 'queue'
+                    ? { background: 'var(--success-subtle)', borderColor: 'var(--success-border)', color: 'var(--success)' }
+                    : undefined}>
+                    {p.activeTab === 'done' ? <Send size={20} /> : <CheckCircle2 size={20} />}
+                  </span>
+                  <span className="ds-empty-title">
+                    {p.activeTab === 'done' ? 'Queue is empty' : 'All clear'}
+                  </span>
+                  <span className="ds-empty-sub">
                     {p.activeTab === 'done'
-                      ? <Send size={22} />
-                      : p.globalSearch ? <Search size={22} /> : <CheckCircle2 size={22} />
-                    }
-                  </div>
-                  <p className="dd-cp-empty-title">
-                    {p.activeTab === 'done' ? 'Queue is empty'
-                      : p.globalSearch ? 'No matches'
-                      : 'All clear'}
-                  </p>
-                  <p className="dd-cp-empty-sub">
-                    {p.activeTab === 'done' ? 'No cases dispatched yet for this date.'
-                      : p.globalSearch ? 'Try a different search term.'
+                      ? 'No cases dispatched yet for this date.'
                       : 'All assigned cases have been dispatched.'}
-                  </p>
+                  </span>
                 </div>
               ) : (
                 <>
@@ -409,7 +387,7 @@ export default function DispatchCasePanel(p: Props) {
                 Cancel
               </button>
               <button type="button" className="dd-bar-btn-confirm"
-                onClick={p.doSend}
+                onClick={() => setShowConfirm(true)}
                 disabled={p.submitting}>
                 {p.submitting
                   ? <Loader2 size={14} className="ds-spin" />
@@ -420,6 +398,31 @@ export default function DispatchCasePanel(p: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showConfirm && (
+        <Modal title="Confirm dispatch"
+          subtitle={`Send ${p.picked.size} ${p.picked.size === 1 ? 'case' : 'cases'} to ${agentFullName}?`}
+          onClose={() => setShowConfirm(false)}>
+          <div className="ps-section-row" style={{ padding: '4px 0 16px', justifyContent: 'flex-start', gap: 24 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#98A2B3', marginBottom: 4 }}>Officer</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{agentFullName || '—'}</div>
+            </div>
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#98A2B3', marginBottom: 4 }}>Cases</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.picked.size}</div>
+            </div>
+            {p.selectedTotal > 0 && (
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#98A2B3', marginBottom: 4 }}>Total</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.fmtINR(p.selectedTotal)}</div>
+              </div>
+            )}
+          </div>
+          <ModalFooter onClose={() => setShowConfirm(false)} submitting={p.submitting}
+            onSubmit={confirmSend} label="Dispatch" />
+        </Modal>
+      )}
     </div>
   );
 }

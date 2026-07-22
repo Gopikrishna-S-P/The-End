@@ -66,11 +66,47 @@ public class OrgSubscription {
     @Builder.Default
     private Boolean cancelAtPeriodEnd = false;
 
+    /* ── Admin-granted access ────────────────────────────────────────────────
+     * Written only by the platform-admin comp endpoints. StripeWebhookService
+     * must never touch these: they exist precisely so a grant survives the
+     * webhook overwriting plan/status/current_period_end from Stripe. */
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "comped_plan", length = 20)
+    private Plan compedPlan;
+
+    /** Null with a comp set means open-ended. */
+    @Column(name = "comped_until")
+    private Instant compedUntil;
+
+    @Column(name = "comped_reason", columnDefinition = "TEXT")
+    private String compedReason;
+
+    @Column(name = "comped_by")
+    private UUID compedBy;
+
+    @Column(name = "comped_at")
+    private Instant compedAt;
+
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    /**
+     * The comped plan if a grant is currently live, otherwise null.
+     *
+     * <p>Expiry is evaluated on read, so a lapsed comp stops applying the moment
+     * it passes {@code compedUntil} without needing a sweep job to clear it.
+     * That also means the row keeps its history -- who granted what, when and
+     * why -- after the grant stops taking effect.
+     */
+    public Plan activeComp() {
+        if (compedPlan == null) return null;
+        if (compedUntil != null && !Instant.now().isBefore(compedUntil)) return null;
+        return compedPlan;
+    }
 
     @PrePersist
     void onCreate() { createdAt = updatedAt = Instant.now(); }

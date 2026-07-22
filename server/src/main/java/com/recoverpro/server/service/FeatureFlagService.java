@@ -84,30 +84,50 @@ public class FeatureFlagService {
         return saved;
     }
 
+    /**
+     * Re-provisions plan-derived feature flags for a subscription.
+     *
+     * <p>This is the only entitlement entry point, and it takes the whole
+     * subscription rather than loose status/plan arguments on purpose: an
+     * admin-granted comp lives on the row, and a caller passing just
+     * {@code (status, plan)} would silently strip a live grant every time
+     * Stripe fired a webhook.
+     */
     @Transactional
-    public void provisionFlagsForPlan(UUID orgId, OrgSubscription.Status status, OrgSubscription.Plan plan) {
-        OrgSubscription.Plan effective = effectivePlan(status, plan);
+    public void provisionFlagsFor(OrgSubscription sub) {
+        OrgSubscription.Plan comp = sub.activeComp();
+        OrgSubscription.Plan effective = comp != null
+                ? comp
+                : effectivePlan(sub.getStatus(), sub.getPlan());
         if (effective == null) return;
+
         for (String flagKey : PlanFeatureMatrix.ALL_GATED_FLAGS) {
-            var existing = repository.findByOrganizationIdAndFlagKey(orgId, flagKey);
+            var existing = repository.findByOrganizationIdAndFlagKey(sub.getOrgId(), flagKey);
             if (existing.isPresent() && existing.get().getSource() == FeatureFlag.FlagSource.MANUAL) continue;
             boolean shouldEnable = PlanFeatureMatrix.includes(effective, flagKey);
-            set(orgId, flagKey, shouldEnable, null, null, FeatureFlag.FlagSource.PLAN);
+            set(sub.getOrgId(), flagKey, shouldEnable, null, null, FeatureFlag.FlagSource.PLAN);
         }
-        log.info("Provisioned feature flags for org {} (status={}, plan={}, effective={})", orgId, status, plan, effective);
+        log.info("Provisioned feature flags for org {} (status={}, plan={}, comp={}, effective={})",
+                sub.getOrgId(), sub.getStatus(), sub.getPlan(), comp, effective);
     }
 
     @Transactional
     public void deleteManualOverride(UUID organizationId, String flagKey) {
-        repository.findByOrganizationIdAndFlagKey(organizationId, flagKey)
+        (organizationId == null
+                ? repository.findGlobalByFlagKey(flagKey)
+                : repository.findByOrganizationIdAndFlagKey(organizationId, flagKey))
                 .filter(f -> f.getSource() == FeatureFlag.FlagSource.MANUAL)
                 .ifPresent(f -> {
                     repository.delete(f);
                     evictCache(organizationId, flagKey);
                     log.info("Deleted MANUAL override for flag {} on org {}", flagKey, organizationId);
                 });
+        if (organizationId == null) return;
         orgSubscriptionRepository.findByOrgId(organizationId).ifPresent(sub -> {
-            OrgSubscription.Plan effective = effectivePlan(sub.getStatus(), sub.getPlan());
+            OrgSubscription.Plan comp = sub.activeComp();
+            OrgSubscription.Plan effective = comp != null
+                    ? comp
+                    : effectivePlan(sub.getStatus(), sub.getPlan());
             if (effective == null) return;
             boolean shouldEnable = PlanFeatureMatrix.includes(effective, flagKey);
             set(organizationId, flagKey, shouldEnable, null, null, FeatureFlag.FlagSource.PLAN);

@@ -67,11 +67,12 @@ export const featureFlagsApi = {
     return response.data.data;
   },
 
-  /** Platform admin (any org) or org admin (own org): delete a MANUAL override — reverts to plan default. */
-  deleteOverride: async (orgId: string, flagKey: string): Promise<string> => {
+  /** Platform admin (global) or platform/org admin (org): delete a MANUAL flag.
+   *  For an org, reverts to the plan default; for global (orgId null), deletes it outright. */
+  deleteOverride: async (orgId: string | null, flagKey: string): Promise<string> => {
     const response = await axiosInstance.delete<ApiResponse<string>>(
       `/api/v1/admin/feature-flags/${flagKey}`,
-      { params: { organizationId: orgId } },
+      { params: orgId ? { organizationId: orgId } : {} },
     );
     return response.data.data;
   },

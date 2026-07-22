@@ -123,12 +123,8 @@ export const platformApi = {
     return r.data.data;
   },
 
-  // NOTE: the four methods below (listSubscriptions/getRevenueTrend/listInvoices/changePlan)
-  // call /api/v1/platform/subscriptions/* which does NOT exist on the backend — see
-  // BACKEND-REQUESTS.md BCR-5. SubscriptionController.java only exposes self-service
-  // /api/v1/subscription for the caller's own org, with no platform-wide admin surface.
-  // Left as-is (out of this module's controller scope to rebuild); PlatformSubscriptions.tsx
-  // and PlatformRevenueTrendPage.tsx will 404 until BCR-5 is resolved.
+  // Platform-wide billing console, backed by PlatformSubscriptionController.
+  // Distinct from subscriptionApi.ts, which is self-service for the caller's own org.
   listSubscriptions: async (): Promise<PlatformSubRow[]> => {
     const r = await axiosInstance.get<ApiResponse<PlatformSubRow[]>>(
       '/api/v1/platform/subscriptions',
@@ -136,10 +132,20 @@ export const platformApi = {
     return r.data.data;
   },
 
-  getRevenueTrend: async (granularity = 'monthly', periods = 0): Promise<RevenueTrendPoint[]> => {
+  /**
+   * @param basis `contracted` (default) = active subs × plan amount, an MRR
+   *   snapshot, in RUPEES. `collected` = invoices Stripe actually settled, in
+   *   PAISE. They diverge whenever a charge fails, prorates or is refunded.
+   *   Mind the units — see RevenueTrendPoint.revenue.
+   */
+  getRevenueTrend: async (
+    granularity = 'monthly',
+    periods = 0,
+    basis: RevenueBasis = 'contracted',
+  ): Promise<RevenueTrendPoint[]> => {
     const r = await axiosInstance.get<ApiResponse<RevenueTrendPoint[]>>(
       '/api/v1/platform/subscriptions/revenue-trend',
-      { params: { granularity, periods } },
+      { params: { granularity, periods, basis } },
     );
     return r.data.data;
   },
@@ -151,8 +157,50 @@ export const platformApi = {
     return r.data.data;
   },
 
+  /**
+   * Sets the plan an org pays for. Rejected for Stripe-billed orgs, where Stripe
+   * owns the plan and would overwrite this on the next subscription webhook —
+   * use grantComp to give access without charging them.
+   */
   changePlan: async (orgId: string, plan: string): Promise<void> => {
     await axiosInstance.put(`/api/v1/platform/subscriptions/${orgId}/plan`, { plan });
+  },
+
+  /**
+   * Grants plan access the org has not paid for. Survives Stripe webhooks,
+   * leaves revenue figures untouched, and replaces any existing grant.
+   *
+   * @param until ISO-8601 instant, or omit for an open-ended grant
+   */
+  grantComp: async (
+    orgId: string,
+    plan: string,
+    reason: string,
+    until?: string | null,
+  ): Promise<void> => {
+    await axiosInstance.put(`/api/v1/platform/subscriptions/${orgId}/comp`, {
+      plan, reason, ...(until ? { until } : {}),
+    });
+  },
+
+  /** Ends a grant; the org drops back to what it actually pays for. */
+  revokeComp: async (orgId: string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/platform/subscriptions/${orgId}/comp`);
+  },
+
+  /**
+   * One-shot import of historical Stripe invoices into the local mirror.
+   * Idempotent — keyed on the Stripe invoice id, so re-running refreshes rows
+   * rather than duplicating them. Until this has run at least once, every
+   * collected-revenue figure legitimately reads zero.
+   *
+   * @returns how many invoices were written or refreshed
+   */
+  backfillInvoices: async (): Promise<number> => {
+    const r = await axiosInstance.post<ApiResponse<{ imported: number }>>(
+      '/api/v1/platform/subscriptions/backfill-invoices',
+    );
+    return r.data.data.imported;
   },
 };
 
@@ -169,10 +217,40 @@ export interface PlatformSubRow {
   cancelAtPeriodEnd: boolean;
   createdAt: string;
   trialDaysLeft: number;
+  /**
+   * PAISE this org has actually paid us, over settled invoices only.
+   * Collected, not contracted — an org whose last charges failed shows its real
+   * contribution here. Divide by 100 to display.
+   */
+  lifetimeRevenue: number;
+
+  /** Plan granted without payment, or null. Never counts as revenue. */
+  compedPlan: 'STARTER' | 'GROWTH' | 'ENTERPRISE' | null;
+  /** Null alongside a compedPlan means the grant is open-ended. */
+  compedUntil: string | null;
+  compedReason: string | null;
+  compedAt: string | null;
+  /**
+   * What the org can actually use right now — the live comp if there is one,
+   * otherwise `plan`. Gate on this; `plan` is only what they pay for, and the
+   * two differ whenever a grant is active.
+   */
+  effectivePlan: 'NONE' | 'STARTER' | 'GROWTH' | 'ENTERPRISE';
 }
 
+/** Which question the revenue trend answers. See platformApi.getRevenueTrend. */
+export type RevenueBasis = 'contracted' | 'collected';
+
 export interface RevenueTrendPoint {
+  /** Display label already formatted by the server: "Jan 2026", "07 Feb", "2026". */
   month: string;
+  /**
+   * UNITS DEPEND ON THE `basis` YOU REQUESTED:
+   *   contracted → RUPEES
+   *   collected  → PAISE
+   * Formatting paise as rupees renders every figure 100× too large, so convert
+   * at the point where you know which basis you asked for.
+   */
   revenue: number;
   count: number;
 }

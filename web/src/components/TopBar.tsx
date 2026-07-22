@@ -349,7 +349,7 @@ export default function TopBar(props: TopBarProps) {
             data-tooltip="Lucien AI"
             onClick={onToggleLucien}
           >
-            <img src={lucienLogo} alt="" aria-hidden="true" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+            <img src={lucienLogo} alt="" aria-hidden="true" style={{ width: 28, height: 28, objectFit: 'contain' }} />
           </button>
         )}
 

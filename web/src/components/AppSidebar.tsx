@@ -166,11 +166,15 @@ export default function AppSidebar({
           return (
             <div key={section.label} className="asb-section">
 
-              {/* Section header — static label per spec */}
+              {/* Section header — static label per spec. "Main" is the sidebar's
+                  only-usually section, so it stays unlabeled; other sections
+                  (e.g. Saved Views) still get their label for contrast. */}
               {expanded ? (
-                <div className="asb-section-header">
-                  <span className="asb-section-label">{t(section.label)}</span>
-                </div>
+                section.label !== 'Main' && (
+                  <div className="asb-section-header">
+                    <span className="asb-section-label">{t(section.label)}</span>
+                  </div>
+                )
               ) : (
                 <div className="asb-section-divider" aria-hidden="true" />
               )}

@@ -2,24 +2,25 @@ import { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import { reportsApi } from '../api/reportsApi';
 import type {
-  AgentPerformanceResponse, AgentEfficiencyRow, AgentReassignmentRow,
-  MonthlyLoanBookResponse, BankReconciliationResponse, BankReconciliationRow,
+  AgentPerformanceResponse, AgentEfficiencyRow,
+  MonthlyLoanBookResponse, DailyVisitCompletionResponse,
 } from '../api/reportsApi';
-import type { UserResponse, ApiResponse, NpaRiskLevel } from '../types';
+import type { UserResponse, ApiResponse } from '../types';
 import { FeatureGate } from '../components/FeatureGate';
 import {
-  Trophy, TrendingDown, Shuffle, BookOpen, Landmark, Loader2, AlertCircle,
-  Banknote, CheckCircle2, Clock,
+  Trophy, TrendingDown, BookOpen, Loader2, AlertCircle,
+  Banknote, CheckCircle2, Users, ChevronDown,
 } from 'lucide-react';
+import '../styles/PlatformSetupPage.css';
 
-// Ground truth: these five ReportingController GET endpoints
-// (agent/rankings, collection-efficiency, reassignment-frequency, loan-book[/history],
-// bank-reconciliation) had wrapper functions in reportsApi.ts but no page ever called
-// them — the async "Generate report" flow covers the same data as a downloadable
-// file, but there was no on-screen live view. This panel is that live view.
-// All five are gated server-side by @RequiresFeature(ADVANCED_REPORTS); mirrored
-// here with <FeatureGate> so non-entitled orgs see the standard upgrade lock
-// instead of a raw 403.
+// Ground truth: these ReportingController GET endpoints (agent/rankings,
+// collection-efficiency, loan-book[/history], visit-completion/daily) had
+// wrapper functions in reportsApi.ts but no page ever called them — the async
+// "Generate report" flow covers similar data as a downloadable file, but there
+// was no on-screen live view. This panel is that live view. Rankings/Collection/
+// Loan-book are gated server-side by @RequiresFeature(ADVANCED_REPORTS);
+// mirrored here with <FeatureGate> so non-entitled orgs see the standard
+// upgrade lock instead of a raw 403. (visit-completion/daily has no such gate.)
 
 function fmtINR(v: number | null | undefined): string {
   const n = Number(v ?? 0);
@@ -42,13 +43,6 @@ function fmtDateOnly(s: string | null | undefined): string {
   if (!s) return '—';
   return new Date(s).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-
-const RISK_LABELS: Record<NpaRiskLevel, string> = {
-  LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', CRITICAL: 'Critical',
-};
-const RISK_COLORS: Record<NpaRiskLevel, string> = {
-  LOW: 'var(--ink-tertiary)', MEDIUM: 'var(--warning)', HIGH: 'var(--danger)', CRITICAL: 'var(--danger)',
-};
 
 function ErrorBanner({ text }: { text: string }) {
   return (
@@ -127,7 +121,7 @@ function useAgentNames(organizationId: string) {
   return useCallback((id: string) => names[id] || `${id.slice(0, 8)}…`, [names]);
 }
 
-// ── Rankings ─────────────────────────────────────────────────────────────────
+// ── Agent report (rankings) ─────────────────────────────────────────────────
 function RankingsTab({ organizationId }: { organizationId: string }) {
   const agentLabel = useAgentNames(organizationId);
   const [date, setDate] = useState(todayStr());
@@ -184,7 +178,7 @@ function RankingsTab({ organizationId }: { organizationId: string }) {
   );
 }
 
-// ── Collection efficiency ────────────────────────────────────────────────────
+// ── Collection report (efficiency) ──────────────────────────────────────────
 function CollectionTab({ organizationId }: { organizationId: string }) {
   const agentLabel = useAgentNames(organizationId);
   const [from, setFrom] = useState(monthStartStr());
@@ -245,63 +239,6 @@ function CollectionTab({ organizationId }: { organizationId: string }) {
   );
 }
 
-// ── Reassignment frequency ───────────────────────────────────────────────────
-function ReassignmentTab({ organizationId }: { organizationId: string }) {
-  const agentLabel = useAgentNames(organizationId);
-  const [from, setFrom] = useState(monthStartStr());
-  const [to, setTo] = useState(todayStr());
-  const [data, setData] = useState<{ totalReassignments: number; avgReassignmentsPerAgent: number; agentBreakdown: AgentReassignmentRow[] } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!organizationId) return;
-    setLoading(true); setError(null);
-    try {
-      setData(await reportsApi.getReassignmentFrequency(organizationId, from, to));
-    } catch {
-      setError('Could not load reassignment frequency.');
-    } finally { setLoading(false); }
-  }, [organizationId, from, to]);
-
-  useEffect(() => { load(); }, [load]);
-
-  return (
-    <div>
-      <DateRangeControls from={from} to={to} setFrom={setFrom} setTo={setTo} loading={loading} onRefresh={load} />
-      {error && <ErrorBanner text={error} />}
-      {data && !loading && (
-        <>
-          <KpiStrip items={[
-            { icon: Shuffle, label: 'Total reassignments', value: data.totalReassignments },
-            { icon: Shuffle, label: 'Avg per agent', value: Number(data.avgReassignmentsPerAgent ?? 0).toFixed(1) },
-          ]} />
-          {data.agentBreakdown.length === 0 ? <EmptyNote text="No reassignments in this range." /> : (
-            <DataTable
-              keyFn={r => r.agentId as string}
-              columns={[
-                { key: 'agent', label: 'Agent' },
-                { key: 'out', label: 'Reassigned out', align: 'right' },
-                { key: 'in', label: 'Reassigned in', align: 'right' },
-                { key: 'net', label: 'Net', align: 'right' },
-                { key: 'rate', label: 'Rate', align: 'right' },
-              ]}
-              rows={data.agentBreakdown.map(r => ({
-                agentId: r.agentId,
-                agent: agentLabel(r.agentId),
-                out: r.reassignedOut,
-                in: r.reassignedIn,
-                net: r.netReassignments,
-                rate: Number(r.reassignmentRate ?? 0).toFixed(2),
-              }))}
-            />
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
 // ── Loan book ─────────────────────────────────────────────────────────────────
 function LoanBookTab({ organizationId }: { organizationId: string }) {
   const now = new Date();
@@ -332,11 +269,14 @@ function LoanBookTab({ organizationId }: { organizationId: string }) {
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="ds-input" style={{ height: 32, width: 130 }}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <option key={i + 1} value={i + 1}>{new Date(2000, i, 1).toLocaleString('default', { month: 'long' })}</option>
-          ))}
-        </select>
+        <div className="ps-select-wrap" style={{ width: 130 }}>
+          <select value={month} onChange={e => setMonth(Number(e.target.value))} className="ds-select" style={{ height: 32, width: '100%' }}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{new Date(2000, i, 1).toLocaleString('default', { month: 'long' })}</option>
+            ))}
+          </select>
+          <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+        </div>
         <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} className="ds-input" style={{ height: 32, width: 90 }} />
         {loading && <Loader2 size={14} className="ds-spin" />}
       </div>
@@ -380,12 +320,11 @@ function LoanBookTab({ organizationId }: { organizationId: string }) {
   );
 }
 
-// ── Bank reconciliation ──────────────────────────────────────────────────────
-function ReconciliationTab({ organizationId }: { organizationId: string }) {
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
-  const [data, setData] = useState<BankReconciliationResponse | null>(null);
+// ── Visit report (daily visit completion) ───────────────────────────────────
+function VisitTab({ organizationId }: { organizationId: string }) {
+  const agentLabel = useAgentNames(organizationId);
+  const [date, setDate] = useState(todayStr());
+  const [data, setData] = useState<DailyVisitCompletionResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -393,67 +332,46 @@ function ReconciliationTab({ organizationId }: { organizationId: string }) {
     if (!organizationId) return;
     setLoading(true); setError(null);
     try {
-      setData(await reportsApi.getBankReconciliation(organizationId, month, year));
+      setData(await reportsApi.getDailyVisitCompletion(organizationId, date));
     } catch {
-      setError('No reconciliation data for this month.');
+      setError('Could not load visit completion.');
     } finally { setLoading(false); }
-  }, [organizationId, month, year]);
+  }, [organizationId, date]);
 
   useEffect(() => { load(); }, [load]);
-
-  const riskEntries = data ? (Object.entries(data.npaBreakdown) as [NpaRiskLevel, number][]).filter(([, c]) => c > 0) : [];
 
   return (
     <div>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="ds-input" style={{ height: 32, width: 130 }}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <option key={i + 1} value={i + 1}>{new Date(2000, i, 1).toLocaleString('default', { month: 'long' })}</option>
-          ))}
-        </select>
-        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} className="ds-input" style={{ height: 32, width: 90 }} />
+        <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)} className="ds-input" style={{ height: 32, width: 148 }} />
         {loading && <Loader2 size={14} className="ds-spin" />}
       </div>
       {error && <ErrorBanner text={error} />}
       {data && !loading && (
         <>
           <KpiStrip items={[
-            { icon: Banknote, label: 'Grand total', value: fmtINR(data.grandTotalCollected) },
-            { icon: CheckCircle2, label: 'Deposited', value: data.totalDepositedTransactions, sub: fmtINR(data.totalDepositedAmount) },
-            { icon: Clock, label: 'Pending deposit', value: data.totalPendingDeposit, sub: fmtINR(data.totalPendingDepositAmount) },
-            { icon: Banknote, label: 'Cash', value: fmtINR(data.totalCollectedCash) },
-            { icon: Banknote, label: 'UPI', value: fmtINR(data.totalCollectedUpi) },
-            { icon: Banknote, label: 'Cheque / NEFT / RTGS', value: fmtINR(data.totalCollectedCheque + data.totalCollectedNeft + data.totalCollectedRtgs) },
+            { icon: Users, label: 'Agents working', value: data.totalAgentsWorking },
+            { icon: CheckCircle2, label: 'Visited', value: `${data.totalVisited} / ${data.totalAssigned}` },
+            { icon: TrendingDown, label: 'Pending', value: data.totalPending },
+            { icon: TrendingDown, label: 'Completion', value: fmtPct(data.overallCompletionRate) },
           ]} />
-          {riskEntries.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-              {riskEntries.map(([level, count]) => (
-                <span key={level} className="ds-pill" style={{ color: RISK_COLORS[level] }}>
-                  {RISK_LABELS[level]} risk: {count}
-                </span>
-              ))}
-              <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)', alignSelf: 'center' }}>· {fmtINR(data.totalNpaAmount)} at risk</span>
-            </div>
-          )}
-          {data.rows.length === 0 ? <EmptyNote text="No collections recorded this month." /> : (
+          {data.agentRows.length === 0 ? <EmptyNote text="No visit activity for this date." /> : (
             <DataTable
-              keyFn={r => r.collectionId as string}
+              keyFn={r => r.agentId as string}
               columns={[
-                { key: 'receipt', label: 'Receipt' },
-                { key: 'loan', label: 'Loan / Borrower' },
-                { key: 'amount', label: 'Amount', align: 'right' },
-                { key: 'mode', label: 'Mode' },
-                { key: 'status', label: 'Status' },
-                { key: 'deposited', label: 'Deposited', align: 'right' },
+                { key: 'agent', label: 'Agent' },
+                { key: 'assigned', label: 'Assigned', align: 'right' },
+                { key: 'visited', label: 'Visited', align: 'right' },
+                { key: 'pending', label: 'Pending', align: 'right' },
+                { key: 'completion', label: 'Completion', align: 'right' },
               ]}
-              rows={data.rows.map((r: BankReconciliationRow) => ({
-                collectionId: r.collectionId,
-                receipt: r.receiptNumber,
-                loan: `${r.loanNumber ?? '—'} / ${r.borrowerName ?? '—'}`,
-                amount: fmtINR(r.amount),
-                mode: r.paymentMode,
-                status: r.status,
-                deposited: fmtDateOnly(r.depositedDate),
+              rows={data.agentRows.map(r => ({
+                agentId: r.agentId,
+                agent: agentLabel(r.agentId),
+                assigned: r.assigned,
+                visited: r.visited,
+                pending: r.pending,
+                completion: fmtPct(r.completionRate),
               }))}
             />
           )}
@@ -480,14 +398,13 @@ function DateRangeControls({ from, to, setFrom, setTo, loading, onRefresh }: {
 }
 
 // ── Panel shell ───────────────────────────────────────────────────────────────
-type TabKey = 'rankings' | 'collection' | 'reassignment' | 'loanbook' | 'reconciliation';
+type TabKey = 'rankings' | 'collection' | 'loanbook' | 'visit';
 
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
-  { key: 'rankings',       label: 'Agent rankings',        icon: Trophy },
-  { key: 'collection',     label: 'Collection efficiency', icon: TrendingDown },
-  { key: 'reassignment',   label: 'Reassignments',         icon: Shuffle },
-  { key: 'loanbook',       label: 'Loan book',             icon: BookOpen },
-  { key: 'reconciliation', label: 'Bank reconciliation',   icon: Landmark },
+  { key: 'rankings',   label: 'Agent report',      icon: Trophy },
+  { key: 'collection', label: 'Collection report', icon: TrendingDown },
+  { key: 'loanbook',   label: 'Loan book',         icon: BookOpen },
+  { key: 'visit',      label: 'Visit report',      icon: Users },
 ];
 
 export function ReportsAnalyticsPanel({ organizationId }: { organizationId: string }) {
@@ -514,9 +431,8 @@ export function ReportsAnalyticsPanel({ organizationId }: { organizationId: stri
         </div>
         {tab === 'rankings' && <RankingsTab organizationId={organizationId} />}
         {tab === 'collection' && <CollectionTab organizationId={organizationId} />}
-        {tab === 'reassignment' && <ReassignmentTab organizationId={organizationId} />}
         {tab === 'loanbook' && <LoanBookTab organizationId={organizationId} />}
-        {tab === 'reconciliation' && <ReconciliationTab organizationId={organizationId} />}
+        {tab === 'visit' && <VisitTab organizationId={organizationId} />}
       </div>
     </FeatureGate>
   );

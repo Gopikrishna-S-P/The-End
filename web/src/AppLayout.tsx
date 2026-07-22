@@ -24,7 +24,6 @@ import { useAppLayoutState } from './hooks/useAppLayoutState';
 import { proactiveRefresh } from './api/axiosInstance';
 import { useAppNavState } from './hooks/useAppNavState';
 import './styles/AppLayout.css';
-import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext';
 import { loadingSplash } from './utils/loadingSplash';
 
 export default function AppLayout() {
@@ -51,8 +50,7 @@ export default function AppLayout() {
     out.push({ id: 'action:help', label: 'Keyboard shortcuts', category: 'Help', icon: HelpCircle, hint: '?', keywords: ['shortcuts', 'keys'], run: () => s.setHelpOpen(true) });
     out.push({ id: 'action:tour', label: 'Restart product tour', category: 'Help', icon: HelpCircle, keywords: ['tour', 'onboarding'], run: () => tour.start() });
 
-    out.push({ id: 'action:privacy', label: 'Privacy settings', category: 'Privacy', icon: Settings, hint: '/settings/privacy', keywords: ['privacy', 'security'], run: () => navigate('/settings/privacy') });
-    out.push({ id: 'action:billing', label: 'Billing settings', category: 'Billing', icon: Settings, hint: '/settings/billing', keywords: ['billing', 'payment', 'subscription'], run: () => navigate('/settings/billing') });
+    out.push({ id: 'action:billing', label: 'Billing settings', category: 'Billing', icon: Settings, hint: '/app/subscription', keywords: ['billing', 'payment', 'subscription', 'plan'], run: () => navigate('/app/subscription') });
 
     if (s.user) {
       out.push({ id: 'action:profile', label: 'Profile settings', category: 'Account', icon: Settings, hint: '/settings/profile', keywords: ['account', 'preferences'], run: () => navigate('/settings/profile') });
@@ -62,7 +60,6 @@ export default function AppLayout() {
   }, [nav.sections, navigate, s.darkMode, s.soundEnabled, s.user, s.setThemeMode, s.setSoundEnabled, s.setHelpOpen, s.setTopbarCustOpen, s.handleLogout]);
 
   return (
-    <FeatureFlagsProvider>
     <div className={s.layoutCls} ref={s.layoutRef}>
       <a href="#main-content" className="app-skip-link">Skip to main content</a>
       <RouteProgressBar />
@@ -206,6 +203,5 @@ export default function AppLayout() {
         )}
       </div>
     </div>
-    </FeatureFlagsProvider>
   );
 }

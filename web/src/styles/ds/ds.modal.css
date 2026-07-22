@@ -10,11 +10,14 @@
   padding: 16px;
   background: var(--shadow-overlay-scrim);
   animation: ds-overlay-in var(--dur-base) var(--ease-out) both;
+  overflow-y: auto;
 }
 
 .ds-modal {
   width: 100%;
   max-width: 420px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

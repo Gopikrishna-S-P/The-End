@@ -78,7 +78,7 @@
      (--asb-w); --rp-sb-on is the default, --rp-sb-off the collapsed rail. */
   --rp-tb-h:      56px;   /* topbar + sidebar-header height */
   --rp-sb-off:    64px;   /* sidebar — collapsed icon rail */
-  --rp-sb-on:     256px;  /* sidebar — full width (default) */
+  --rp-sb-on:     280px;  /* sidebar — full width (default) */
   --rp-lucien-w:  340px;  /* Lucien panel width */
 
   /* ── Warm stone surface ramp — landing page, pre-login, marketing ─────────

@@ -97,4 +97,29 @@ class SystemPromptServiceImplTest {
         when(repo.findByPromptKeyAndIsActiveTrue("lucien")).thenReturn(Optional.of(updated));
         assertThat(service.resolveActiveTemplate("lucien")).isEqualTo("v2");
     }
+
+    @Test
+    void deletePrompt_evictsCache_soNextResolveFallsBackToDefault() {
+        SystemPromptConfig config = SystemPromptConfig.builder()
+                .id(UUID.randomUUID()).promptKey("lucien").promptTemplate("v1").isActive(true).build();
+        when(repo.findByPromptKeyAndIsActiveTrue("lucien")).thenReturn(Optional.of(config));
+
+        assertThat(service.resolveActiveTemplate("lucien")).isEqualTo("v1");
+
+        when(repo.findByPromptKey("lucien")).thenReturn(Optional.of(config));
+        service.deletePrompt("lucien");
+        verify(repo, times(1)).delete(config);
+
+        when(repo.findByPromptKeyAndIsActiveTrue("lucien")).thenReturn(Optional.empty());
+        assertThat(service.resolveActiveTemplate("lucien")).contains("Lucien");
+    }
+
+    @Test
+    void deletePrompt_unknownKey_doesNotThrowOrCallDelete() {
+        when(repo.findByPromptKey("missing")).thenReturn(Optional.empty());
+
+        service.deletePrompt("missing");
+
+        verify(repo, times(0)).delete(org.mockito.ArgumentMatchers.any());
+    }
 }

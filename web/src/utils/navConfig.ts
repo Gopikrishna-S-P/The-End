@@ -3,7 +3,8 @@ import type { Role } from '../types';
 import {
   BarChart2, Layers, Shuffle, MapPin, Upload, Send,
   CalendarDays, LineChart, Settings2, LayoutDashboard,
-  ClipboardCheck, Play, Receipt, Building2, CreditCard, Flag, Bookmark,
+  ClipboardCheck, Play, Receipt, Building2, Flag, Bookmark,
+  Sparkles, BookOpen, CreditCard, TrendingUp,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -29,7 +30,12 @@ export const NAV_SECTIONS: NavSection[] = [
       // Field roles (FO / CALLER / TRACER) — their whole job in 6 links.
       { label: "Today's Visits", to: '/app/today',        icon: CalendarDays,   alwaysFor: ['FO','CALLER','TRACER'] },
       { label: 'My Cases',       to: '/app/my-cases',      icon: Layers,         alwaysFor: ['FO','CALLER','TRACER'] },
-      { label: 'Start Visit',    to: '/app/start-visit',   icon: Play,           alwaysFor: ['FO','CALLER','TRACER'] },
+      // Ground truth: VisitLogController.java SUBMITTERS = hasAnyRole('FO') only
+      // (physical field visits), and VisitSubmitPage.tsx already hides its own
+      // Submit button unless hasPermission('VISIT_SUBMIT'), which only FO holds.
+      // CALLER/TRACER are phone-based roles with no visit-submit permission —
+      // showing them this link led to a dead-end (case picker, no submit button).
+      { label: 'Start Visit',    to: '/app/start-visit',   icon: Play,           alwaysFor: ['FO'] },
       { label: 'My Attendance',  to: '/app/my-attendance', icon: ClipboardCheck, alwaysFor: ['FO','CALLER','TRACER'] },
 
       // Shared daily driver — everyone who touches money sees this.
@@ -41,6 +47,12 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Loans',          to: '/app/allocations', icon: Layers,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
       { label: 'Visit Logs',     to: '/app/visits',      icon: MapPin,    alwaysFor: ['MANAGER','TL'] },
       { label: 'Reports',        to: '/app/reports',     icon: LineChart, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+      // Ground truth: UploadsPage.tsx self-gates on UPLOAD_READER_ROLES =
+      // [PLATFORM_ADMIN, ORG_ADMIN, MANAGER, TL], and ORG_ADMIN's seeded
+      // permission set (DataSeeder.java) includes FILE_UPLOAD/FILE_VIEW/FILE_DELETE
+      // outright — the page was fully built for these roles but had no sidebar
+      // link, so only PLATFORM_ADMIN could ever discover it.
+      { label: 'File Uploads',  to: '/app/uploads',     icon: Upload,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
 
       // Org admin — same operational hubs, plus team setup instead of field-day tools.
       { label: 'User Setup', to: '/app/users', icon: Settings2, alwaysFor: ['ORG_ADMIN'] },
@@ -48,9 +60,12 @@ export const NAV_SECTIONS: NavSection[] = [
       // Platform admin — a distinct console, not the org workspace at all.
       { label: 'Overview',       to: '/platform/dashboard',     icon: LayoutDashboard, alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'File Uploads',   to: '/app/uploads',            icon: Upload,          alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Lucien Prompts', to: '/app/lucien/prompts',     icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Lucien RAG',     to: '/app/lucien/rag',         icon: BookOpen,        alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Revenue Trend',  to: '/platform/revenue-trend', icon: TrendingUp,      alwaysFor: ['PLATFORM_ADMIN'] },
     ],
   },
 ];

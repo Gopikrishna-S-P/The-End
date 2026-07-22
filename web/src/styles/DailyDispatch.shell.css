@@ -3,11 +3,10 @@
 .dd-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   width: 100%;
-  overflow: hidden;
   gap: 0;
-  padding: 16px;
+  padding: 8px 16px;
   box-sizing: border-box;
 }
 
@@ -55,7 +54,7 @@
 
 /* ── Date navigation — a single bordered control group ───────────────────────── */
 
-/* Date nav — exact db-date-range token match */
+/* Date nav — no background/border, icon + text sit directly on the card surface */
 .dd-date-nav {
   display: flex;
   align-items: center;
@@ -97,18 +96,18 @@
   gap: 8px;
   min-width: 140px;
   justify-content: space-between;
-  padding: 0 4px;
-  height: 32px;
+  padding: 0 10px;
+  height: 38px;
   cursor: pointer;
   border: none;
-  background: var(--bg-surface);
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: transparent;
+  border-radius: 10px;
+  box-shadow: none;
   font-weight: 600;
   transition: background 120ms;
 }
 
-.dd-date-display:hover { background: var(--bg-surface); }
+.dd-date-display:hover { background: var(--bg-subtle); }
 .dd-date-icon { color: var(--ink-solid); flex-shrink: 0; }
 
 .dd-date-label {
@@ -134,17 +133,13 @@
 /* ── Grid — consolidated single-card layout ─────────────────────────────────── */
 
 .dd-main-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
 }
 
 .dd-grid {
   display: flex;
-  flex: 1;
-  min-height: 0;
+  align-items: flex-start;
   gap: 12px;
 }
 
@@ -154,7 +149,6 @@
   flex: 0 0 288px;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   position: relative;
 }
 
@@ -163,19 +157,31 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   min-width: 0;
 }
 
-/* Layout-only for the two panel cards */
+/* Fill the remaining viewport height, same treatment as Collections' table card,
+   so empty/sparse states read as spacious rather than a small box floating over
+   dead page background. Internal lists (.dd-agent-list / .dd-cp-list) already
+   scroll independently via flex:1 + min-height:0. */
 .dd-officers-card,
 .dd-cases-card {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  height: calc(100vh - 220px);
 }
+
+/* Card surface — rounder, softer border to match the topbar customize/help dialog */
+.dd-page .ds-card {
+  border-radius: 16px;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* First card (Field Officers) — accent border, matches the dashboard's first/accent KPI card */
+.dd-page .dd-officers-card {
+  border-color: color-mix(in srgb, var(--ink-solid) 28%, transparent);
+}
+
 
 /* ── Agent select-all button ─────────────────────────────────────────────────── */
 

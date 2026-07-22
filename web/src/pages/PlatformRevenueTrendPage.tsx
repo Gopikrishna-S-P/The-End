@@ -1,10 +1,19 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp, ArrowDown, Minus, RefreshCw } from 'lucide-react';
-import { platformApi, type RevenueTrendPoint } from '../api/platformApi';
+import { platformApi, type RevenueTrendPoint, type RevenueBasis } from '../api/platformApi';
 import './Dashboard.css';
 
 type Granularity = 'daily' | 'monthly' | 'yearly';
+
+const BASIS_LABEL: Record<RevenueBasis, string> = {
+  contracted: 'Billed',
+  collected:  'Received',
+};
+const BASIS_HELP: Record<RevenueBasis, string> = {
+  contracted: 'What active subscriptions are worth per period — ignores failed charges and refunds.',
+  collected:  'What Stripe actually settled. Empty until invoices are backfilled.',
+};
 
 const RANGE_OPTS: Record<Granularity, number[]> = {
   daily:   [7, 30],
@@ -22,11 +31,23 @@ const RANGE_LABEL: Record<Granularity, string> = {
   yearly:  '',
 };
 
-function fmtINR(v: number) {
+function fmtINR(rupees: number) {
+  const v = rupees;
   if (v >= 10_000_000) return `₹${(v / 10_000_000).toFixed(2)}Cr`;
   if (v >= 100_000)    return `₹${(v / 100_000).toFixed(2)}L`;
   if (v >= 1_000)      return `₹${(v / 1_000).toFixed(1)}K`;
   return `₹${Math.round(v)}`;
+}
+
+/**
+ * The API returns `revenue` in rupees on the contracted basis but PAISE on the
+ * collected basis, because the latter comes straight from Stripe. Normalising
+ * once here — at the only place that knows which basis was requested — keeps
+ * every downstream calculation and every fmtINR call in one unit. Anything that
+ * reads `p.revenue` directly instead of going through this is a 100× bug.
+ */
+function toRupees(revenue: number, basis: RevenueBasis) {
+  return basis === 'collected' ? revenue / 100 : revenue;
 }
 
 function useCountUp(target: number, duration = 900) {
@@ -86,16 +107,22 @@ export default function PlatformRevenueTrendPage() {
   const [error,       setError]       = useState(false);
   const [granularity, setGranularity] = useState<Granularity>('monthly');
   const [range,       setRange]       = useState(6);
+  const [basis,       setBasis]       = useState<RevenueBasis>('contracted');
   const [hovIdx,      setHovIdx]      = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const load = useCallback(() => {
     setLoading(true); setError(false);
-    platformApi.getRevenueTrend(granularity, range)
-      .then(d => setRaw(d ?? []))
+    platformApi.getRevenueTrend(granularity, range, basis)
+      .then(d => setRaw(
+        // Normalise to rupees on the way in, so everything below this line --
+        // chart scaling, deltas, totals, every fmtINR call -- shares one unit
+        // and none of it has to know which basis was requested.
+        (d ?? []).map(p => ({ ...p, revenue: toRupees(p.revenue, basis) })),
+      ))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [granularity, range]);
+  }, [granularity, range, basis]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -188,9 +215,9 @@ export default function PlatformRevenueTrendPage() {
   }, [n, cx]);
 
   return (
-    <div className="db-root">
-      <div className="db-content">
-        <div className="db-inner">
+    <div className="db-root" style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+      <div className="db-content" style={{ paddingBottom: 20, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+        <div className="db-inner" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {/* Error state */}
           {error && (
             <div className="db-error-banner" role="alert" style={{ marginBottom: 24 }}>
@@ -222,10 +249,21 @@ export default function PlatformRevenueTrendPage() {
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
-              <div className="ds-card db-card" style={{ padding: 24 }}>
-                <header className="db-card-head" style={{ paddingBottom: 24, marginBottom: 24, borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="ds-card db-card" style={{ padding: 24, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <header className="db-card-head" style={{ flexShrink: 0, paddingBottom: 24, marginBottom: 24, borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <h2 className="db-card-title">Revenue Trend</h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div className="db-trend-range-toggle" style={{ margin: 0 }}>
+                      {(['contracted', 'collected'] as const).map(b => (
+                        <button key={b} type="button"
+                          className={`db-trend-range-btn${basis === b ? ' is-active' : ''}`}
+                          onClick={() => setBasis(b)}
+                          title={BASIS_HELP[b]}
+                        >
+                          {BASIS_LABEL[b]}
+                        </button>
+                      ))}
+                    </div>
                     <div className="db-trend-range-toggle" style={{ margin: 0 }}>
                       {(['daily', 'monthly', 'yearly'] as const).map(g => (
                         <button key={g} type="button"
@@ -256,7 +294,7 @@ export default function PlatformRevenueTrendPage() {
                 </header>
 
                 {/* MOM comparison row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                   {/* This month (current — left) */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <span className="db-kpi2-foot-meta" style={{ letterSpacing: '0.04em', textTransform: 'uppercase' }}>{thisMonth?.month ?? '—'}</span>
@@ -297,20 +335,20 @@ export default function PlatformRevenueTrendPage() {
                 </div>
 
                 {/* Divider with label */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
                   <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
                   <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-tertiary)', letterSpacing: '0.04em' }}>TREND</span>
                   <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
                 </div>
 
                 {/* Chart section */}
-                <div style={{ position: 'relative', width: '100%', height: 280, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                   {/* SVG */}
                   <svg
                     ref={svgRef}
                     viewBox={`0 0 ${W} ${H}`}
                     preserveAspectRatio="none"
-                    style={{ width: '100%', flex: 1, overflow: 'visible', zIndex: 1, cursor: 'crosshair' }}
+                    style={{ width: '100%', flex: 1, minHeight: 0, overflow: 'visible', zIndex: 1, cursor: 'crosshair' }}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={() => setHovIdx(null)}
                     aria-label="Revenue trend chart"
@@ -344,7 +382,9 @@ export default function PlatformRevenueTrendPage() {
                       <text x={W / 2} y={cy(0) - 12}
                         textAnchor="middle" fill="var(--ink-tertiary)"
                         fontSize="11" fontFamily="var(--font-mono)" opacity="0.7">
-                        No revenue yet
+                        {basis === 'collected'
+                          ? 'No settled invoices — run the invoice backfill on the Billing page'
+                          : 'No revenue yet'}
                       </text>
                     )}
 
@@ -441,7 +481,7 @@ export default function PlatformRevenueTrendPage() {
                 </div>
 
                 {/* Stats row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <span className="db-kpi2-foot-meta">Period Total</span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>{fmtINR(periodTotal)}</span>

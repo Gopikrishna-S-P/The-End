@@ -59,6 +59,17 @@ public class SystemPromptServiceImpl implements SystemPromptService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "systemPrompts", key = "#promptKey")
+    public void deletePrompt(String promptKey) {
+        systemPromptConfigRepository.findByPromptKey(promptKey)
+                .ifPresent(config -> {
+                    systemPromptConfigRepository.delete(config);
+                    log.info("Deleted system prompt '{}'", promptKey);
+                });
+    }
+
+    @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "systemPrompts", key = "#promptKey")
     public String resolveActiveTemplate(String promptKey) {

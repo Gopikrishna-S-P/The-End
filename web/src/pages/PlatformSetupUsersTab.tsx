@@ -3,7 +3,7 @@ import { platformApi } from '../api/platformApi';
 import type { OrganizationSummary } from '../api/platformApi';
 import type { UserResponse } from '../types';
 import {
-  Building2, Plus, RefreshCw, AlertCircle, Users, Shield, ChevronDown,
+  Building2, AlertCircle, Users, Shield, ChevronDown,
 } from 'lucide-react';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import { toastBus } from '../utils/toastBus';
@@ -96,11 +96,16 @@ function CreateAdminUserModal({ orgs, onClose, onCreated }: {
   );
 }
 
-export function UsersTab({ orgs }: { orgs: OrganizationSummary[] }) {
+interface UsersTabProps {
+  orgs: OrganizationSummary[];
+  showCreate: boolean;
+  setShowCreate: (v: boolean) => void;
+}
+
+export function UsersTab({ orgs, showCreate, setShowCreate }: UsersTabProps) {
   const [users,    setUsers]    = useState<UserResponse[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
 
   const orgMap = Object.fromEntries(orgs.map(o => [o.id, o.name]));
 
@@ -119,21 +124,6 @@ export function UsersTab({ orgs }: { orgs: OrganizationSummary[] }) {
 
   return (
     <>
-      {/* ── Toolbar ── */}
-      <div className="ps-section-row">
-        <p className="ds-section-label" style={{ margin: 0, padding: 0 }}>
-          {users.length.toLocaleString()} admin account{users.length === 1 ? '' : 's'}
-        </p>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button type="button" onClick={load} className="ds-icon-btn is-sm" title="Refresh" aria-label="Refresh">
-            <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-          </button>
-          <button type="button" onClick={() => setShowCreate(true)} className="ds-btn is-primary">
-            <Plus size={14} /> New admin user
-          </button>
-        </div>
-      </div>
-
       {error && (
         <div className="ps-banner is-error" style={{ marginBottom: 10 }}>
           <AlertCircle size={14} /><span className="ps-banner-content">{error}</span>
@@ -143,7 +133,7 @@ export function UsersTab({ orgs }: { orgs: OrganizationSummary[] }) {
       {/* ── Table ── */}
       <div className="ds-table-card">
         <div className="ds-table-wrap">
-          <table className="ds-table">
+          <table className="ds-table is-no-row-hover ps-table">
             <thead>
               <tr><th>Name</th><th>Email</th><th>Role</th><th>Organization</th><th>Status</th></tr>
             </thead>
@@ -158,7 +148,7 @@ export function UsersTab({ orgs }: { orgs: OrganizationSummary[] }) {
                 ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="ds-table-empty">
+                  <td colSpan={5}>
                     <div className="ds-empty">
                       <span className="ds-empty-icon"><Users size={20} /></span>
                       <span className="ds-empty-title">No admin users yet</span>

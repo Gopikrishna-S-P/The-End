@@ -79,6 +79,15 @@ export default function NotificationPanel({ onClose, onNavigate }: NotificationP
             ))
           )}
         </div>
+
+        {onNavigate && (
+          <div className="app-topbar-custom-footer">
+            <button type="button" className="app-topbar-custom-reset" style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => onNavigate('/app/notifications')}>
+              View all notifications
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body,

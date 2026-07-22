@@ -86,6 +86,18 @@ public class RagDocumentServiceImpl implements RagDocumentService {
 
     @Override
     @Transactional
+    public RagDocumentResponse updateMetadata(UUID documentId, String title, String description) {
+        RagDocument document = ragDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException("RagDocument", documentId));
+        document.setTitle(title);
+        document.setDescription(description);
+        RagDocument saved = ragDocumentRepository.save(document);
+        log.info("RAG document metadata updated: id={}", documentId);
+        return toResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public void supersede(UUID documentId) {
         RagDocument document = ragDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("RagDocument", documentId));

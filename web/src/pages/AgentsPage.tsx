@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import type { UserResponse, ApiResponse } from '../types';
-import { Search, RefreshCw, Users, X, MapPin, Activity, CheckCircle2 } from 'lucide-react';
+import { Search, RefreshCw, Users, X, MapPin, Activity, CheckCircle2, ShieldAlert, ClipboardCheck } from 'lucide-react';
 import { AgentRow } from './AgentRow';
 import TeamStatusTab from '../components/TeamStatusTab';
 import '../styles/AppPage.css';
@@ -105,6 +106,7 @@ const fmtNum = (v?: number | null) => v != null ? v.toLocaleString('en-IN') : '�
 const fmtINR = (n?: number | null) => n != null && Number(n) > 0 ? `₹${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}` : '₹0';
 
 export default function AgentsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const canUpdateUser = hasPermission('USER_UPDATE');
@@ -216,6 +218,18 @@ export default function AgentsPage() {
               )}
             </AnimatePresence>
           </div>
+          <button type="button" onClick={() => navigate('/app/live-track')}
+            className="ds-btn is-secondary">
+            <MapPin size={14} style={{ marginRight: 6 }} /> Live Map
+          </button>
+          <button type="button" onClick={() => navigate('/app/field-ops')}
+            className="ds-btn is-secondary" title="Field Ops (SOS & incidents)" aria-label="Field Ops">
+            <ShieldAlert size={14} />
+          </button>
+          <button type="button" onClick={() => navigate('/app/attendance')}
+            className="ds-btn is-secondary" title="Attendance" aria-label="Attendance">
+            <ClipboardCheck size={14} />
+          </button>
           <button type="button" onClick={load} disabled={loading}
             className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
             <RefreshCw size={14} className={loading ? 'ds-spin' : ''} style={{ marginRight: 6 }} /> Refresh

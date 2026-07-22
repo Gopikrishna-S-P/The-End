@@ -11,5 +11,7 @@ public interface SystemPromptService {
 
     SystemPromptResponse updatePrompt(String promptKey, UpdateSystemPromptRequest request, UUID updatedBy);
 
+    void deletePrompt(String promptKey);
+
     String resolveActiveTemplate(String promptKey);
 }

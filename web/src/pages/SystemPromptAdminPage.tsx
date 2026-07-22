@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Sparkles, Save, Loader2, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, X, Plus, Pen, Trash2, Loader2 } from 'lucide-react';
 import { systemPromptApi } from '../api/systemPromptApi';
 import type { SystemPromptResponse } from '../api/systemPromptApi';
+import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import '../styles/AppPage.css';
+import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
 
 const SUGGESTED_KEYS = ['lucien.system', 'lucien.coach', 'lucien.summarise', 'lucien.classify'];
@@ -20,188 +22,305 @@ const fadeUp: Variants = {
   show:   { opacity: 1, y: 0, transition: { duration: 0.40, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
-};
-
 const MIN_PROMPT_LEN = 50;
 const MAX_PROMPT_LEN = 10000;
 const MAX_DESC_LEN = 500;
 
-export default function SystemPromptAdminPage() {
-  const [key, setKey]                     = useState('lucien.system');
-  const [prompt, setPrompt]               = useState<SystemPromptResponse | null>(null);
-  const [promptTemplate, setPromptTemplate] = useState('');
-  const [description, setDescription]     = useState('');
-  const [loading, setLoading]             = useState(false);
-  const [saving, setSaving]               = useState(false);
-  const [error, setError]                 = useState<string | null>(null);
-  const [warn, setWarn]                   = useState<string | null>(null);
-  const [saved, setSaved]                 = useState(false);
+type RowStatus = 'loading' | 'found' | 'not-found' | 'error';
+interface RowState {
+  status: RowStatus;
+  data?: SystemPromptResponse;
+  error?: string;
+}
 
-  const load = async (k: string) => {
-    setLoading(true); setError(null); setWarn(null); setSaved(false);
-    try {
-      const data = await systemPromptApi.get(k);
-      setPrompt(data); setPromptTemplate(data.promptTemplate || ''); setDescription(data.description || '');
-    } catch (e: any) {
-      setPrompt(null); setPromptTemplate(''); setDescription('');
-      const status = e?.response?.status;
-      if (status === 404) setWarn(`No prompt seeded under "${k}" yet — saving will create it.`);
-      else setError(e?.response?.data?.message || 'Failed to load prompt.');
-    } finally { setLoading(false); }
+const fmtDate = (s?: string | null) =>
+  s ? new Date(s).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+
+export default function SystemPromptAdminPage() {
+  const [customKeys, setCustomKeys] = useState<string[]>([]);
+  const keys = useMemo(() => Array.from(new Set([...SUGGESTED_KEYS, ...customKeys])), [customKeys]);
+  const [rows, setRows] = useState<Record<string, RowState>>({});
+
+  const [showAdd, setShowAdd]           = useState(false);
+  const [newKey, setNewKey]             = useState('');
+  const [newTemplate, setNewTemplate]   = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [addSaving, setAddSaving]       = useState(false);
+  const [addError, setAddError]         = useState<string | null>(null);
+
+  const [editingKey, setEditingKey]     = useState<string | null>(null);
+  const [editTemplate, setEditTemplate] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [saving, setSaving]             = useState(false);
+  const [modalError, setModalError]     = useState<string | null>(null);
+
+  const [savedKey, setSavedKey]         = useState<string | null>(null);
+  const [deletingKey, setDeletingKey]   = useState<string | null>(null);
+
+  const loadAll = useCallback(() => {
+    setRows(prev => {
+      const next = { ...prev };
+      keys.forEach(k => { next[k] = { status: 'loading' }; });
+      return next;
+    });
+    keys.forEach(async (k) => {
+      try {
+        const data = await systemPromptApi.get(k);
+        setRows(prev => ({ ...prev, [k]: { status: 'found', data } }));
+      } catch (e: any) {
+        if (e?.response?.status === 404) setRows(prev => ({ ...prev, [k]: { status: 'not-found' } }));
+        else setRows(prev => ({ ...prev, [k]: { status: 'error', error: e?.response?.data?.message || 'Failed to load' } }));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keys]);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const openEdit = (k: string) => {
+    const row = rows[k];
+    setEditingKey(k);
+    setEditTemplate(row?.data?.promptTemplate ?? '');
+    setEditDescription(row?.data?.description ?? '');
+    setModalError(null);
   };
 
-  const save = async () => {
-    const trimmed = promptTemplate.trim();
-    if (trimmed.length < MIN_PROMPT_LEN) { setError(`Prompt text must be at least ${MIN_PROMPT_LEN} characters.`); return; }
-    if (trimmed.length > MAX_PROMPT_LEN) { setError(`Prompt text must be under ${MAX_PROMPT_LEN} characters.`); return; }
-    setSaving(true); setError(null); setWarn(null); setSaved(false);
+  const handleSaveEdit = async () => {
+    if (!editingKey) return;
+    const trimmed = editTemplate.trim();
+    if (trimmed.length < MIN_PROMPT_LEN) { setModalError(`Prompt text must be at least ${MIN_PROMPT_LEN} characters.`); return; }
+    if (trimmed.length > MAX_PROMPT_LEN) { setModalError(`Prompt text must be under ${MAX_PROMPT_LEN} characters.`); return; }
+    setSaving(true); setModalError(null);
     try {
-      const updated = await systemPromptApi.update(key.trim(), {
-        promptTemplate: trimmed, description: description.trim() || undefined,
+      const updated = await systemPromptApi.update(editingKey, {
+        promptTemplate: trimmed, description: editDescription.trim() || undefined,
       });
-      setPrompt(updated); setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setRows(prev => ({ ...prev, [editingKey]: { status: 'found', data: updated } }));
+      setSavedKey(editingKey);
+      setTimeout(() => setSavedKey(null), 3000);
+      setEditingKey(null);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to save prompt.');
+      setModalError(e?.response?.data?.message || 'Failed to save prompt.');
     } finally { setSaving(false); }
   };
+
+  const handleDelete = async (k: string) => {
+    if (!confirm(`Delete the "${k}" prompt? Lucien will fall back to its built-in default until a new one is created.`)) return;
+    setDeletingKey(k);
+    try {
+      await systemPromptApi.remove(k);
+      setRows(prev => ({ ...prev, [k]: { status: 'not-found' } }));
+    } catch (e: any) {
+      setRows(prev => ({ ...prev, [k]: { ...prev[k], status: 'error', error: e?.response?.data?.message || 'Failed to delete prompt.' } }));
+    } finally { setDeletingKey(null); }
+  };
+
+  const openAdd = () => {
+    setNewKey(''); setNewTemplate(''); setNewDescription(''); setAddError(null); setShowAdd(true);
+  };
+
+  const handleAddSave = async () => {
+    const key = newKey.trim();
+    const trimmed = newTemplate.trim();
+    if (!key) { setAddError('Prompt key is required.'); return; }
+    if (trimmed.length < MIN_PROMPT_LEN) { setAddError(`Prompt text must be at least ${MIN_PROMPT_LEN} characters.`); return; }
+    if (trimmed.length > MAX_PROMPT_LEN) { setAddError(`Prompt text must be under ${MAX_PROMPT_LEN} characters.`); return; }
+    setAddSaving(true); setAddError(null);
+    try {
+      const created = await systemPromptApi.update(key, {
+        promptTemplate: trimmed, description: newDescription.trim() || undefined,
+      });
+      setRows(prev => ({ ...prev, [key]: { status: 'found', data: created } }));
+      setCustomKeys(prev => prev.includes(key) ? prev : [...prev, key]);
+      setSavedKey(key);
+      setTimeout(() => setSavedKey(null), 3000);
+      setShowAdd(false);
+    } catch (e: any) {
+      setAddError(e?.response?.data?.message || 'Failed to create prompt.');
+    } finally { setAddSaving(false); }
+  };
+
+  const editingRow = editingKey ? rows[editingKey] : undefined;
 
   return (
     <div className="db-root">
       <AnimatePresence>
-        {error && (
-          <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-            <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
-            <div className="db-error-body">
-              <span className="db-error-title">{error}</span>
-            </div>
-            <button className="db-error-retry" onClick={() => setError(null)} aria-label="Dismiss">
-              <X size={14} aria-hidden="true" />
-            </button>
-          </motion.div>
-        )}
-        {warn && (
-          <motion.div key="toast-warn" className="db-att-row is-warn" style={{ marginBottom: 24, borderRadius: 8, padding: '12px 16px' }}
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-            <AlertCircle size={14} style={{ color: 'var(--warning)', marginRight: 8 }} />
-            <span style={{ fontSize: 13, color: 'var(--ink-primary)' }}>{warn}</span>
-            <button className="db-error-retry" onClick={() => setWarn(null)} style={{ marginLeft: 'auto', background: 'transparent' }}>
-              <X size={14} aria-hidden="true" />
-            </button>
-          </motion.div>
-        )}
-        {saved && (
+        {savedKey && (
           <motion.div key="toast-ok" className="ds-toast is-ok" role="status"
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}
-            onClick={() => setSaved(false)}>
+            onClick={() => setSavedKey(null)}>
             <CheckCircle2 size={14} />
-            <span>Saved successfully (v{prompt?.version})</span>
+            <span>Saved {savedKey}</span>
             <X size={13} className="ds-toast-x" />
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="db-content">
-        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ maxWidth: 800 }}>
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginBottom: 24 }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)' }}>
-                  <Sparkles size={18} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h2 className="db-card-title">System Prompts</h2>
-                  <span className="db-kpi2-foot-meta">Edit the instructions Lucien loads at runtime</span>
-                </div>
-              </div>
-            </header>
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
+          <motion.div variants={fadeUp} className="db-page-header">
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+              Edit the instructions Lucien loads at runtime
+            </p>
+          </motion.div>
 
-            <div className="db-card-body" style={{ padding: 24 }}>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-                <input
-                  type="text" value={key} onChange={(e) => setKey(e.target.value)}
-                  placeholder="prompt key (e.g. lucien.system)"
-                  className="ds-input"
-                  style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 13, height: 36 }}
-                />
-                <button
-                  type="button" className="ds-btn is-secondary"
-                  onClick={() => load(key.trim())}
-                  disabled={!key.trim() || loading}
-                  style={{ height: 36, width: 80 }}
-                >
-                  {loading ? <Loader2 size={14} className="ds-spin" /> : null}
-                  Load
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-                <span style={{ fontSize: 12, color: 'var(--ink-tertiary)', display: 'flex', alignItems: 'center' }}>Suggested:</span>
-                {SUGGESTED_KEYS.map((k) => (
-                  <button
-                    key={k} type="button"
-                    className="ds-pill is-neutral"
-                    style={{ background: 'var(--bg-subtle)', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
-                    onClick={() => { setKey(k); load(k); }}
-                  >
-                    {k}
-                  </button>
-                ))}
-              </div>
-
-              <div className="ds-field" style={{ marginBottom: 24 }}>
-                <label className="ds-label is-required" htmlFor="prompt-text" style={{ marginBottom: 8, display: 'block' }}>Prompt text</label>
-                <textarea
-                  id="prompt-text" value={promptTemplate}
-                  onChange={(e) => setPromptTemplate(e.target.value.slice(0, MAX_PROMPT_LEN))}
-                  placeholder="You are Lucien, the recovery-ops assistant. …"
-                  rows={14}
-                  className="ds-textarea"
-                  style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.5, padding: '12px 16px', resize: 'vertical' }}
-                />
-                <span style={{ fontSize: 11, color: promptTemplate.trim().length > 0 && promptTemplate.trim().length < MIN_PROMPT_LEN ? 'var(--warning)' : 'var(--ink-tertiary)', display: 'block', marginTop: 4 }}>
-                  {promptTemplate.length}/{MAX_PROMPT_LEN} · minimum {MIN_PROMPT_LEN} characters
-                </span>
-              </div>
-
-              <div className="ds-field" style={{ marginBottom: 24 }}>
-                <label className="ds-label" htmlFor="prompt-context" style={{ marginBottom: 8, display: 'block' }}>Description (optional)</label>
-                <textarea
-                  id="prompt-context" value={description}
-                  onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESC_LEN))}
-                  placeholder="Notes for the next reviewer — what this prompt is for, when to revisit, etc."
-                  rows={3}
-                  className="ds-textarea"
-                  style={{ width: '100%', fontSize: 13, padding: '10px 14px', resize: 'vertical' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-                {prompt ? (
-                  <span className="db-kpi2-foot-meta">
-                    Version {prompt.version} · {prompt.isActive ? 'Active' : 'Inactive'} · Last updated {new Date(prompt.updatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
-                  </span>
-                ) : <span />}
-                <button
-                  type="button" className="ds-btn is-primary"
-                  onClick={save} disabled={saving || promptTemplate.trim().length < MIN_PROMPT_LEN}
-                  style={{ height: 36 }}
-                >
-                  {saving ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Save size={14} style={{ marginRight: 6 }} />}
-                  Save prompt
-                </button>
-              </div>
+          <motion.div variants={fadeUp} className="ds-table-card">
+            <div className="ds-table-wrap">
+              <table className="ds-table is-no-row-hover ps-table">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Status</th>
+                    <th>Version</th>
+                    <th>Description</th>
+                    <th>Last updated</th>
+                    <th className="is-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {keys.map((k) => {
+                    const row = rows[k] ?? { status: 'loading' as RowStatus };
+                    return (
+                      <tr key={k}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-primary)' }}>
+                          {k}
+                        </td>
+                        <td>
+                          {row.status === 'loading' ? (
+                            <span className="ds-skel" style={{ height: 22, width: 74, borderRadius: 999, display: 'block' }} />
+                          ) : row.status === 'found' ? (
+                            <span className={`ds-pill ${row.data!.isActive ? 'is-success' : 'is-neutral'}`}>
+                              {row.data!.isActive ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          ) : row.status === 'not-found' ? (
+                            <span className="ds-pill is-neutral">NOT CREATED</span>
+                          ) : (
+                            <span className="ds-pill is-danger" title={row.error}>ERROR</span>
+                          )}
+                        </td>
+                        <td className="is-mono is-muted">{row.data ? `v${row.data.version}` : '—'}</td>
+                        <td style={{ color: 'var(--ink-secondary)' }}>{row.data?.description || '—'}</td>
+                        <td className="is-mono is-muted" style={{ whiteSpace: 'nowrap' }}>
+                          {row.data ? fmtDate(row.data.updatedAt) : '—'}
+                        </td>
+                        <td className="is-right">
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                            <button type="button" onClick={() => openEdit(k)} className="ds-table-row-action" title="Edit">
+                              <Pen size={14} />
+                            </button>
+                            <button type="button" onClick={() => handleDelete(k)}
+                              className="ds-table-row-action is-danger" title="Delete"
+                              disabled={deletingKey === k || row.status === 'not-found' || row.status === 'loading'}>
+                              {deletingKey === k ? <Loader2 size={14} className="ds-spin" /> : <Trash2 size={14} />}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </motion.section>
+          </motion.div>
         </motion.div>
       </div>
+
+      <button type="button" onClick={openAdd}
+        title="New prompt" aria-label="New prompt"
+        style={{
+          position: 'fixed', bottom: 28, right: 32, zIndex: 50,
+          width: 56, height: 56, borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer',
+          boxShadow: '0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)',
+          transition: 'transform 120ms ease, box-shadow 120ms ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}>
+        <Plus size={24} />
+      </button>
+
+      {showAdd && (
+        <Modal title="New system prompt"
+          subtitle="Creates the prompt for the given key, or overwrites it if one already exists."
+          onClose={() => setShowAdd(false)}>
+          <FormSection title="Prompt">
+            <Input label="Prompt key" value={newKey} onChange={setNewKey}
+              placeholder="e.g. lucien.system" required />
+          </FormSection>
+          <div className="ds-field" style={{ marginBottom: 14 }}>
+            <label className="ds-label is-required" htmlFor="new-prompt-text" style={{ marginBottom: 8, display: 'block' }}>Prompt text</label>
+            <textarea
+              id="new-prompt-text" value={newTemplate}
+              onChange={(e) => setNewTemplate(e.target.value.slice(0, MAX_PROMPT_LEN))}
+              placeholder="You are Lucien, the recovery-ops assistant. …"
+              className="ds-textarea"
+              style={{ width: '100%', height: 200, fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.5, padding: '12px 16px', resize: 'vertical' }}
+            />
+            <span style={{ fontSize: 11, color: 'var(--ink-tertiary)', display: 'block', marginTop: 4 }}>
+              {newTemplate.length}/{MAX_PROMPT_LEN} · minimum {MIN_PROMPT_LEN} characters
+            </span>
+          </div>
+          <div className="ds-field" style={{ marginBottom: 4 }}>
+            <label className="ds-label" htmlFor="new-prompt-desc" style={{ marginBottom: 8, display: 'block' }}>Description (optional)</label>
+            <textarea
+              id="new-prompt-desc" value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value.slice(0, MAX_DESC_LEN))}
+              placeholder="Notes for the next reviewer — what this prompt is for, when to revisit, etc."
+              className="ds-textarea"
+              style={{ width: '100%', height: 70, fontSize: 13, padding: '10px 14px', resize: 'vertical' }}
+            />
+          </div>
+          {addError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, color: 'var(--error)', fontSize: 12.5 }}>
+              <AlertCircle size={13} /><span>{addError}</span>
+            </div>
+          )}
+          <ModalFooter onClose={() => setShowAdd(false)} submitting={addSaving}
+            onSubmit={handleAddSave} label="Create prompt" />
+        </Modal>
+      )}
+
+      {editingKey && (
+        <Modal title="Edit system prompt" subtitle={editingKey} onClose={() => setEditingKey(null)}>
+          <div className="ds-field" style={{ marginBottom: 14 }}>
+            <label className="ds-label is-required" htmlFor="edit-prompt-text" style={{ marginBottom: 8, display: 'block' }}>Prompt text</label>
+            <textarea
+              id="edit-prompt-text" value={editTemplate}
+              onChange={(e) => setEditTemplate(e.target.value.slice(0, MAX_PROMPT_LEN))}
+              placeholder="You are Lucien, the recovery-ops assistant. …"
+              className="ds-textarea"
+              style={{ width: '100%', height: 260, fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.5, padding: '12px 16px', resize: 'vertical' }}
+            />
+            <span style={{ fontSize: 11, color: editTemplate.trim().length > 0 && editTemplate.trim().length < MIN_PROMPT_LEN ? 'var(--warning)' : 'var(--ink-tertiary)', display: 'block', marginTop: 4 }}>
+              {editTemplate.length}/{MAX_PROMPT_LEN} · minimum {MIN_PROMPT_LEN} characters
+            </span>
+          </div>
+          <div className="ds-field" style={{ marginBottom: 4 }}>
+            <label className="ds-label" htmlFor="edit-prompt-desc" style={{ marginBottom: 8, display: 'block' }}>Description (optional)</label>
+            <textarea
+              id="edit-prompt-desc" value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value.slice(0, MAX_DESC_LEN))}
+              placeholder="Notes for the next reviewer — what this prompt is for, when to revisit, etc."
+              className="ds-textarea"
+              style={{ width: '100%', height: 70, fontSize: 13, padding: '10px 14px', resize: 'vertical' }}
+            />
+          </div>
+          {editingRow?.data && (
+            <p style={{ fontSize: 11, color: 'var(--ink-tertiary)', marginTop: 8 }}>
+              Version {editingRow.data.version} · {editingRow.data.isActive ? 'Active' : 'Inactive'} · Last updated {new Date(editingRow.data.updatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+            </p>
+          )}
+          {modalError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, color: 'var(--error)', fontSize: 12.5 }}>
+              <AlertCircle size={13} /><span>{modalError}</span>
+            </div>
+          )}
+          <ModalFooter onClose={() => setEditingKey(null)} submitting={saving}
+            onSubmit={handleSaveEdit} label="Save changes" />
+        </Modal>
+      )}
     </div>
   );
 }

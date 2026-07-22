@@ -138,6 +138,30 @@ class RagDocumentServiceImplTest {
     }
 
     @Test
+    void updateMetadata_savesNewTitleAndDescription() {
+        UUID id = UUID.randomUUID();
+        RagDocument doc = RagDocument.builder().id(id).title("Old title").description("Old desc").build();
+        when(ragDocumentRepository.findById(id)).thenReturn(Optional.of(doc));
+
+        RagDocumentResponse response = service.updateMetadata(id, "New title", "New desc");
+
+        assertThat(doc.getTitle()).isEqualTo("New title");
+        assertThat(doc.getDescription()).isEqualTo("New desc");
+        assertThat(response.getTitle()).isEqualTo("New title");
+        assertThat(response.getDescription()).isEqualTo("New desc");
+        verify(ragDocumentRepository).save(doc);
+    }
+
+    @Test
+    void updateMetadata_notFound_throwsResourceNotFoundException() {
+        UUID id = UUID.randomUUID();
+        when(ragDocumentRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateMetadata(id, "New title", null))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
     void supersede_marksDocumentSuperseded() {
         UUID id = UUID.randomUUID();
         RagDocument doc = RagDocument.builder().id(id).status(RagDocumentStatus.ACTIVE).build();

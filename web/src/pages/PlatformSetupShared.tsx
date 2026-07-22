@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 export function Modal({ title, subtitle, onClose, children }: {
   title: string; subtitle?: string; onClose: () => void; children: ReactNode;
 }) {
-  return (
-    <div className="ds-modal-overlay" onClick={onClose}>
-      <div className="ds-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+  return createPortal(
+    <div className="ds-modal-overlay ps-modal-overlay" onClick={onClose}>
+      <div className="ds-modal ps-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="ds-modal-header">
           <div>
             <div className="ds-modal-title">{title}</div>
@@ -18,7 +19,8 @@ export function Modal({ title, subtitle, onClose, children }: {
         </div>
         <div className="ds-modal-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -44,8 +46,8 @@ export function FormSection({ title, children }: { title: string; children: Reac
   return (
     <div style={{ marginBottom: 14 }}>
       <p style={{
-        fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
-        textTransform: 'uppercase', color: 'var(--ink-tertiary)', marginBottom: 10,
+        fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+        textTransform: 'uppercase', color: '#98A2B3', marginBottom: 10,
         display: 'inline-flex', alignItems: 'center', gap: 6,
       }}>
         <ShieldCheck size={11} />{title}

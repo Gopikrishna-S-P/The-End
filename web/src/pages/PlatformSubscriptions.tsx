@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Building2, CreditCard, CheckCircle, AlertCircle,
   ArrowUpRight, RefreshCw, Download, ExternalLink, X,
-  Clock, TrendingDown,
+  Clock, TrendingDown, Pen, Receipt, Settings2, ChevronDown,
+  ToggleLeft, ToggleRight, RotateCcw, Users, Search, SlidersHorizontal,
+  Gift, Loader2,
 } from 'lucide-react';
 import { platformApi, type PlatformSubRow, type InvoiceRow } from '../api/platformApi';
 import { featureFlagsApi, type FeatureFlag } from '../api/featureFlagsApi';
+import { Modal, ModalFooter } from './PlatformSetupShared';
+import '../styles/AppPage.css';
+import './PlatformSubscriptions.css';
+import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
 
 const stagger = {
@@ -93,13 +98,82 @@ const PLAN_LABEL: Record<string, string> = {
   NONE: '—', STARTER: 'Starter', GROWTH: 'Growth', ENTERPRISE: 'Enterprise',
 };
 
-// ── Subscriber attention row ───────────────────────────────────────────────────
+const PLAN_OPTIONS = ['NONE', 'STARTER', 'GROWTH', 'ENTERPRISE'] as const;
 
-function SubRow({ row, last, onInvoices, onOpenDrawer, onChangePlan, changingPlan }: {
-  row: PlatformSubRow; last?: boolean; onInvoices: () => void;
-  onOpenDrawer: (row: PlatformSubRow) => void;
-  onChangePlan: (orgId: string, plan: string) => void;
-  changingPlan: string | null;
+// ── Filter model ──────────────────────────────────────────────────────────────
+
+type StatusKey = PlatformSubRow['status'];
+type PlanKey   = PlatformSubRow['plan'];
+type PaidKey   = 'ANY' | 'PAID' | 'UNPAID';
+
+/**
+ * Derived conditions worth acting on, as opposed to raw column values.
+ *
+ * <p>Each answers a question the plain status column cannot. `cancelling` in
+ * particular reads `cancelAtPeriodEnd`, which the table displays nowhere -- an
+ * org can be sitting at ACTIVE while already scheduled to lapse, and until now
+ * that was invisible. `unbillable` catches the inverse config error: a paid plan
+ * with no Stripe customer behind it, which can never actually be charged.
+ */
+const ATTENTION = {
+  failing:    { label: 'Payment failing',       test: (r: PlatformSubRow) => r.status === 'PAST_DUE' },
+  endingSoon: { label: 'Trial ends within 7d',  test: (r: PlatformSubRow) => r.status === 'TRIAL' && r.trialDaysLeft > 0 && r.trialDaysLeft <= 7 },
+  expired:    { label: 'Trial expired',         test: (r: PlatformSubRow) => r.status === 'TRIAL' && r.trialDaysLeft <= 0 },
+  cancelling: { label: 'Cancelling at period end', test: (r: PlatformSubRow) => !!r.cancelAtPeriodEnd },
+  unbillable: { label: 'Paid plan, no Stripe customer', test: (r: PlatformSubRow) => !r.stripeCustomerId && r.plan !== 'NONE' },
+  comped:     { label: 'On a comp',                 test: (r: PlatformSubRow) => isCompLive(r) },
+} as const;
+
+/** A grant with a past expiry is history, not access — mirrors OrgSubscription.activeComp(). */
+function isCompLive(r: PlatformSubRow): boolean {
+  if (!r.compedPlan) return false;
+  if (r.compedUntil && new Date(r.compedUntil).getTime() <= Date.now()) return false;
+  return true;
+}
+
+type AttentionKey = keyof typeof ATTENTION;
+
+interface Filters {
+  q: string;
+  statuses: StatusKey[];
+  plans: PlanKey[];
+  paid: PaidKey;
+  attention: AttentionKey[];
+}
+
+const EMPTY_FILTERS: Filters = { q: '', statuses: [], plans: [], paid: 'ANY', attention: [] };
+
+function matches(row: PlatformSubRow, f: Filters): boolean {
+  const q = f.q.trim().toLowerCase();
+  if (q && !row.orgName.toLowerCase().includes(q) && !row.orgCode.toLowerCase().includes(q)) return false;
+  if (f.statuses.length && !f.statuses.includes(row.status)) return false;
+  if (f.plans.length    && !f.plans.includes(row.plan))      return false;
+  if (f.paid === 'PAID'   && !(row.lifetimeRevenue > 0)) return false;
+  if (f.paid === 'UNPAID' && row.lifetimeRevenue > 0)    return false;
+  // Attention conditions are OR'd: selecting two asks "show me either problem",
+  // which is how someone triaging actually reads this list. AND'ing them would
+  // mostly produce empty results, since the conditions are near-exclusive.
+  if (f.attention.length && !f.attention.some(k => ATTENTION[k].test(row))) return false;
+  return true;
+}
+
+function countActive(f: Filters): number {
+  return (f.q.trim() ? 1 : 0) + f.statuses.length + f.plans.length
+       + (f.paid === 'ANY' ? 0 : 1) + f.attention.length;
+}
+
+function toggle<T>(list: T[], v: T): T[] {
+  return list.includes(v) ? list.filter(x => x !== v) : [...list, v];
+}
+
+// ── Subscriber row ────────────────────────────────────────────────────────────
+
+function SubRow({ row, onInvoices, onOpenFlags, onEditPlan, onComp }: {
+  row: PlatformSubRow;
+  onInvoices: () => void;
+  onOpenFlags: () => void;
+  onEditPlan: () => void;
+  onComp: () => void;
 }) {
   const pillCls = STATUS_PILL[row.status] ?? 'is-neutral';
   const dateLabel = row.status === 'TRIAL'
@@ -107,53 +181,383 @@ function SubRow({ row, last, onInvoices, onOpenDrawer, onChangePlan, changingPla
     : fmt(row.currentPeriodEnd);
 
   return (
-    <motion.div variants={fadeUp}
-      className={`db-att-row${last ? '' : ' has-border'}`}
-      style={{ cursor: 'default' }}
+    <motion.tr
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.28 }}
     >
-      <span className="db-att-chip">
-        <Building2 size={15} aria-hidden="true" />
-      </span>
-      <span className="db-att-label" style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <span
-          style={{ fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'underline dotted' }}
-          onClick={() => onOpenDrawer(row)}
-        >
-          {row.orgName}
-        </span>
-        <span style={{ fontSize: 10, color: 'var(--ink-tertiary)', fontFamily: 'var(--mono)' }}>
-          {row.orgCode} · {PLAN_LABEL[row.plan]}
-        </span>
-      </span>
-      <span className="db-att-right" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 11, color: 'var(--ink-tertiary)', fontFamily: 'var(--mono)' }}>{dateLabel}</span>
-        <span className={`ds-pill ${pillCls}`} style={{ fontSize: 10 }}>{row.status.replace('_', ' ')}</span>
-        <select
-          value={row.plan}
-          disabled={changingPlan === row.orgId}
-          onChange={e => onChangePlan(row.orgId, e.target.value)}
-          style={{
-            fontSize: '12px', padding: '3px 8px', borderRadius: '6px',
-            background: 'var(--surface, #1a1a1a)', border: '1px solid var(--border, #2a2a2a)',
-            color: 'inherit', cursor: 'pointer'
-          }}
-        >
-          {(['NONE', 'STARTER', 'GROWTH', 'ENTERPRISE'] as const).map(p => (
-            <option key={p} value={p}>{p}</option>
+      <td>
+        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-primary)' }}>{row.orgName}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-tertiary)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{row.orgCode}</div>
+      </td>
+      <td style={{ color: 'var(--ink-secondary)' }}>
+        {/* Shows what they can use, with what they pay for kept visible beside it —
+            collapsing the two would hide that a plan is being given away. */}
+        {isCompLive(row) ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {PLAN_LABEL[row.compedPlan as PlanKey]}
+            <span className="ds-pill is-info" style={{ fontSize: 10 }}
+              title={[
+                `Comped${row.compedReason ? `: ${row.compedReason}` : ''}`,
+                row.compedUntil ? `Until ${fmt(row.compedUntil)}` : 'No expiry',
+                `Paying for ${PLAN_LABEL[row.plan]}`,
+              ].join('\n')}>
+              Comp
+            </span>
+          </span>
+        ) : PLAN_LABEL[row.plan]}
+      </td>
+      <td><span className={`ds-pill ${pillCls}`}>{row.status.replace('_', ' ')}</span></td>
+      <td className="is-mono is-right" style={{ whiteSpace: 'nowrap' }}
+        title="Total actually settled through Stripe, all time">
+        {row.lifetimeRevenue > 0
+          ? fmtAmount(row.lifetimeRevenue, 'INR')
+          : <span className="is-muted">—</span>}
+      </td>
+      <td className="is-mono is-muted" style={{ whiteSpace: 'nowrap' }}>{dateLabel}</td>
+      <td className="is-right">
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+          <button type="button" onClick={onOpenFlags} className="ds-table-row-action" title="Feature flags">
+            <Settings2 size={14} />
+          </button>
+          <button type="button" onClick={onEditPlan} className="ds-table-row-action" title="Change plan">
+            <Pen size={14} />
+          </button>
+          <button type="button" onClick={onComp} className="ds-table-row-action"
+            title={isCompLive(row) ? 'Edit or remove comp' : 'Grant free access'}>
+            <Gift size={14} />
+          </button>
+          <button type="button" onClick={onInvoices} className="ds-table-row-action"
+            disabled={!row.stripeCustomerId}
+            title={row.stripeCustomerId ? 'View invoices' : 'No Stripe customer'}>
+            <Receipt size={14} />
+          </button>
+        </div>
+      </td>
+    </motion.tr>
+  );
+}
+
+// ── Comp modal ────────────────────────────────────────────────────────────────
+
+/**
+ * Grants, edits or removes free plan access.
+ *
+ * <p>Deliberately separate from "Change plan": that sets what an org is billed
+ * for and is refused outright for Stripe-billed orgs, since Stripe owns the plan
+ * and overwrites it on the next webhook. A comp is the channel that survives.
+ */
+function CompModal({ row, onClose, onSaved }: {
+  row: PlatformSubRow; onClose: () => void; onSaved: () => Promise<void>;
+}) {
+  const live = isCompLive(row);
+  const [plan, setPlan]     = useState<string>(row.compedPlan ?? 'GROWTH');
+  const [reason, setReason] = useState(row.compedReason ?? '');
+  const [until, setUntil]   = useState(row.compedUntil ? row.compedUntil.slice(0, 10) : '');
+  const [busy, setBusy]     = useState(false);
+  const [error, setError]   = useState('');
+
+  const save = async () => {
+    if (!reason.trim()) { setError('Add a reason so the next admin knows why this exists.'); return; }
+    setBusy(true); setError('');
+    try {
+      // Date input gives a local calendar day; send end-of-day UTC so a comp
+      // dated "31 Dec" lasts through the 31st rather than expiring at midnight.
+      await platformApi.grantComp(row.orgId, plan, reason.trim(),
+        until ? new Date(`${until}T23:59:59Z`).toISOString() : null);
+      await onSaved();
+      onClose();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Could not save the comp.');
+      setBusy(false);
+    }
+  };
+
+  const revoke = async () => {
+    setBusy(true); setError('');
+    try {
+      await platformApi.revokeComp(row.orgId);
+      await onSaved();
+      onClose();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Could not remove the comp.');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal title={live ? 'Edit comp' : 'Grant free access'}
+      subtitle={`${row.orgName} · paying for ${PLAN_LABEL[row.plan]}`} onClose={onClose}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <label className="ds-label">Plan to grant</label>
+          <div className="ps-filter-chips" style={{ marginTop: 6 }}>
+            {(['STARTER', 'GROWTH', 'ENTERPRISE'] as const).map(p => (
+              <button key={p} type="button"
+                className={`ps-filter-chip${plan === p ? ' is-on' : ''}`}
+                aria-pressed={plan === p}
+                onClick={() => setPlan(p)}>
+                {PLAN_LABEL[p]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="ds-label" htmlFor="comp-reason">Reason</label>
+          <input id="comp-reason" className="ds-input" value={reason} autoFocus
+            placeholder="Design partner, migration goodwill, pilot…"
+            onChange={e => setReason(e.target.value)} />
+        </div>
+
+        <div>
+          <label className="ds-label" htmlFor="comp-until">Expires</label>
+          <input id="comp-until" type="date" className="ds-input" value={until}
+            min={new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)}
+            onChange={e => setUntil(e.target.value)} />
+          <span className="ds-help">Leave empty for an open-ended grant.</span>
+        </div>
+
+        <p className="ds-help" style={{ margin: 0 }}>
+          Grants access without charging. It does not change what Stripe bills, and it is
+          never counted as revenue.
+        </p>
+
+        {error && <div className="ds-error" role="alert">{error}</div>}
+
+        <div className="ds-modal-actions">
+          {live && (
+            <button type="button" className="ds-btn is-secondary" onClick={revoke} disabled={busy}>
+              Remove comp
+            </button>
+          )}
+          <button type="button" className="ds-btn is-secondary" onClick={onClose} disabled={busy} style={{ flex: 1 }}>
+            Cancel
+          </button>
+          <button type="button" className="ds-btn is-primary" onClick={save} disabled={busy}
+            style={{ flex: 1, justifyContent: 'center' }}>
+            {busy ? <Loader2 size={14} className="ds-spin" /> : <Gift size={14} />}
+            {live ? 'Update comp' : 'Grant access'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Filter toolbar ────────────────────────────────────────────────────────────
+
+/**
+ * Search stays on the toolbar because it is used constantly; everything else
+ * lives behind one trigger so the header does not become a wall of controls.
+ *
+ * <p>Counts next to each option are computed against the *other* active filters,
+ * so a option showing 0 is genuinely a dead end rather than merely unselected.
+ * Options that would return nothing are shown disabled instead of hidden --
+ * "there are no past-due orgs" is useful information, an absent row is not.
+ */
+function FilterBar({ rows, filters, onChange }: {
+  rows: PlatformSubRow[];
+  filters: Filters;
+  onChange: (f: Filters) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (anchorRef.current && !anchorRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const activeCount = countActive(filters);
+  const shown = rows.filter(r => matches(r, filters)).length;
+
+  /** How many rows a given change would yield, holding every other filter steady. */
+  const previewCount = (patch: Partial<Filters>) =>
+    rows.filter(r => matches(r, { ...filters, ...patch })).length;
+
+  return (
+    <>
+      <div className="ds-toolbar">
+        <div className="ds-search">
+          <Search size={14} className="ds-search-icon" aria-hidden="true" />
+          <input
+            className="ds-search-input"
+            placeholder="Search organizations by name or code"
+            value={filters.q}
+            onChange={e => onChange({ ...filters, q: e.target.value })}
+            aria-label="Search organizations"
+          />
+          {filters.q && (
+            <button type="button" className="ds-search-clear" aria-label="Clear search"
+              onClick={() => onChange({ ...filters, q: '' })}>
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
+        <div className="ds-toolbar-divider" aria-hidden="true" />
+
+        <div className="ps-filter-anchor" ref={anchorRef}>
+          <button type="button"
+            className={`ds-filter-btn${open ? ' is-open' : ''}`}
+            onClick={() => setOpen(o => !o)}
+            aria-expanded={open}
+            aria-haspopup="dialog"
+          >
+            {activeCount > 0 && <span className="ds-filter-dot" aria-hidden="true" />}
+            <SlidersHorizontal size={13} aria-hidden="true" />
+            Filter{activeCount > 0 ? ` · ${activeCount}` : ''}
+            <ChevronDown size={12} aria-hidden="true" />
+          </button>
+
+          <AnimatePresence>
+            {open && (
+              <motion.div className="ps-filter-pop" role="dialog" aria-label="Filter organizations"
+                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
+              >
+                <div className="ps-filter-group">
+                  <span className="ps-filter-group-title">Needs attention</span>
+                  <div className="ps-filter-rows">
+                    {(Object.keys(ATTENTION) as AttentionKey[]).map(k => {
+                      const on = filters.attention.includes(k);
+                      const n  = rows.filter(ATTENTION[k].test).length;
+                      return (
+                        <button key={k} type="button"
+                          className={`ps-filter-row${on ? ' is-on' : ''}`}
+                          data-empty={n === 0 && !on}
+                          disabled={n === 0 && !on}
+                          aria-pressed={on}
+                          onClick={() => onChange({ ...filters, attention: toggle(filters.attention, k) })}
+                        >
+                          <span>{ATTENTION[k].label}</span>
+                          <span className="ps-filter-row-n">{n}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="ps-filter-group">
+                  <span className="ps-filter-group-title">Plan</span>
+                  <div className="ps-filter-chips">
+                    {PLAN_OPTIONS.map(p => {
+                      const on = filters.plans.includes(p);
+                      return (
+                        <button key={p} type="button"
+                          className={`ps-filter-chip${on ? ' is-on' : ''}`}
+                          aria-pressed={on}
+                          onClick={() => onChange({ ...filters, plans: toggle(filters.plans, p) })}
+                        >
+                          {PLAN_LABEL[p] === '—' ? 'No plan' : PLAN_LABEL[p]}
+                          <span className="ps-filter-chip-n">{previewCount({ plans: [p] })}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="ps-filter-group">
+                  <span className="ps-filter-group-title">Status</span>
+                  <div className="ps-filter-chips">
+                    {(Object.keys(STATUS_PILL) as StatusKey[]).map(s => {
+                      const on = filters.statuses.includes(s);
+                      return (
+                        <button key={s} type="button"
+                          className={`ps-filter-chip${on ? ' is-on' : ''}`}
+                          aria-pressed={on}
+                          onClick={() => onChange({ ...filters, statuses: toggle(filters.statuses, s) })}
+                        >
+                          {s.replace('_', ' ').toLowerCase()}
+                          <span className="ps-filter-chip-n">{previewCount({ statuses: [s] })}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="ps-filter-group">
+                  <span className="ps-filter-group-title">Revenue</span>
+                  <div className="ps-filter-chips">
+                    {([['ANY', 'Any'], ['PAID', 'Has paid'], ['UNPAID', 'Never paid']] as const).map(([k, label]) => (
+                      <button key={k} type="button"
+                        className={`ps-filter-chip${filters.paid === k ? ' is-on' : ''}`}
+                        aria-pressed={filters.paid === k}
+                        onClick={() => onChange({ ...filters, paid: k })}
+                      >
+                        {label}
+                        <span className="ps-filter-chip-n">{previewCount({ paid: k })}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filtering is live, so the count reports state rather than
+                    promising an action, and the button only does what it says. */}
+                <div className="ps-filter-foot">
+                  <span style={{ flex: 1, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                    {shown} of {rows.length} shown
+                  </span>
+                  <button type="button" className="ds-btn is-primary"
+                    onClick={() => setOpen(false)}>
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {activeCount > 0 && (
+        <div className="ps-active-filters">
+          {filters.q.trim() && (
+            <ActiveChip label={`“${filters.q.trim()}”`} onClear={() => onChange({ ...filters, q: '' })} />
+          )}
+          {filters.attention.map(k => (
+            <ActiveChip key={k} label={ATTENTION[k].label}
+              onClear={() => onChange({ ...filters, attention: toggle(filters.attention, k) })} />
           ))}
-        </select>
-        <button
-          type="button"
-          className="ds-btn is-ghost"
-          style={{ padding: '4px 10px', fontSize: 11, height: 'auto' }}
-          onClick={onInvoices}
-          disabled={!row.stripeCustomerId}
-          title={row.stripeCustomerId ? 'View invoices' : 'No Stripe customer'}
-        >
-          Invoices
-        </button>
-      </span>
-    </motion.div>
+          {filters.plans.map(p => (
+            <ActiveChip key={p} label={PLAN_LABEL[p] === '—' ? 'No plan' : PLAN_LABEL[p]}
+              onClear={() => onChange({ ...filters, plans: toggle(filters.plans, p) })} />
+          ))}
+          {filters.statuses.map(s => (
+            <ActiveChip key={s} label={s.replace('_', ' ').toLowerCase()}
+              onClear={() => onChange({ ...filters, statuses: toggle(filters.statuses, s) })} />
+          ))}
+          {filters.paid !== 'ANY' && (
+            <ActiveChip label={filters.paid === 'PAID' ? 'Has paid' : 'Never paid'}
+              onClear={() => onChange({ ...filters, paid: 'ANY' })} />
+          )}
+          <button type="button" className="ds-btn is-ghost"
+            style={{ padding: '2px 8px', fontSize: 11, height: 'auto' }}
+            onClick={() => onChange(EMPTY_FILTERS)}>
+            Clear all
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ActiveChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="ps-active-chip">
+      {label}
+      <button type="button" className="ps-active-chip-x" onClick={onClear} aria-label={`Remove filter ${label}`}>
+        <X size={11} />
+      </button>
+    </span>
   );
 }
 
@@ -174,82 +578,52 @@ function InvoiceModal({ orgName, orgId, onClose }: {
   }, [orgId]);
 
   return (
-    <div
-      style={{ position:'fixed', inset:0, background:'var(--shadow-overlay-scrim)', zIndex:1000,
-               display:'flex', alignItems:'center', justifyContent:'center',
-               padding:20, backdropFilter:'blur(8px)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
-        className="ds-card"
-        style={{ width: 520, maxWidth: '100%', maxHeight: '80vh', display:'flex', flexDirection:'column', padding: 0, overflow:'hidden' }}
-      >
-        {/* header */}
-        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between',
-                      padding:'18px 20px 14px', borderBottom:'1px solid var(--border)' }}>
-          <div>
-            <div style={{ fontSize:14, fontWeight:700, color:'var(--ink-primary)' }}>Invoices</div>
-            <div style={{ fontSize:12, color:'var(--ink-tertiary)', marginTop:2 }}>{orgName}</div>
+    <Modal title="Invoices" subtitle={orgName} onClose={onClose}>
+      {loading && (
+        <div style={{ textAlign: 'center', padding: 32, fontSize: 13, color: 'var(--ink-tertiary)' }}>Loading…</div>
+      )}
+      {error && (
+        <div style={{ textAlign: 'center', padding: 32, fontSize: 13, color: 'var(--error)' }}>{error}</div>
+      )}
+      {!loading && !error && invoices.length === 0 && (
+        <div style={{ textAlign: 'center', padding: 32, fontSize: 13, color: 'var(--ink-tertiary)' }}>
+          No invoices yet — org may not have a paid subscription.
+        </div>
+      )}
+      {invoices.map((inv, i) => (
+        <div key={inv.id}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                   padding: '10px 0', borderBottom: i < invoices.length - 1 ? '1px solid var(--border)' : 'none' }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)', fontFamily: 'var(--font-mono)' }}>
+              {inv.number || inv.id.slice(0, 14)}
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--ink-tertiary)' }}>{fmt(inv.date)}</span>
           </div>
-          <button type="button" onClick={onClose} className="ds-btn is-ghost"
-            style={{ padding:4, height:'auto', color:'var(--ink-tertiary)' }}>
-            <X size={15} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)', marginRight: 4 }}>
+              {fmtAmount(inv.amountPaid, inv.currency)}
+            </span>
+            <span className={`ds-pill ${STATUS_PILL[inv.status?.toUpperCase()] ?? 'is-neutral'}`} style={{ fontSize: 10 }}>
+              {inv.status}
+            </span>
+            {inv.pdfUrl && (
+              <a href={inv.pdfUrl} target="_blank" rel="noreferrer" className="ds-table-row-action"
+                style={{ textDecoration: 'none' }} title="Download PDF">
+                <Download size={13} />
+              </a>
+            )}
+            {inv.hostedUrl && (
+              <a href={inv.hostedUrl} target="_blank" rel="noreferrer" className="ds-table-row-action"
+                style={{ textDecoration: 'none' }} title="View on Stripe">
+                <ExternalLink size={13} />
+              </a>
+            )}
+          </div>
         </div>
-
-        {/* body */}
-        <div style={{ overflowY:'auto', padding:'8px 20px 16px', flex:1 }}>
-          {loading && (
-            <div style={{ textAlign:'center', padding:32, fontSize:13, color:'var(--ink-tertiary)' }}>Loading…</div>
-          )}
-          {error && (
-            <div style={{ textAlign:'center', padding:32, fontSize:13, color:'var(--error)' }}>{error}</div>
-          )}
-          {!loading && !error && invoices.length === 0 && (
-            <div style={{ textAlign:'center', padding:32, fontSize:13, color:'var(--ink-tertiary)' }}>
-              No invoices yet — org may not have a paid subscription.
-            </div>
-          )}
-          {invoices.map((inv, i) => (
-            <div key={inv.id}
-              style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-                       padding:'10px 0', borderBottom: i < invoices.length - 1 ? '1px solid var(--border)' : 'none' }}
-            >
-              <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                <span style={{ fontSize:13, fontWeight:600, color:'var(--ink-primary)', fontFamily:'var(--mono)' }}>
-                  {inv.number || inv.id.slice(0, 14)}
-                </span>
-                <span style={{ fontSize:11, color:'var(--ink-tertiary)' }}>{fmt(inv.date)}</span>
-              </div>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <span style={{ fontSize:13, fontWeight:700, fontFamily:'var(--mono)', color:'var(--ink-primary)' }}>
-                  {fmtAmount(inv.amountPaid, inv.currency)}
-                </span>
-                <span className={`ds-pill ${STATUS_PILL[inv.status?.toUpperCase()] ?? 'is-neutral'}`} style={{ fontSize:10 }}>
-                  {inv.status}
-                </span>
-                {inv.pdfUrl && (
-                  <a href={inv.pdfUrl} target="_blank" rel="noreferrer" className="ds-btn is-ghost"
-                    style={{ padding:'4px 6px', height:'auto', textDecoration:'none', display:'flex' }} title="Download PDF">
-                    <Download size={13} />
-                  </a>
-                )}
-                {inv.hostedUrl && (
-                  <a href={inv.hostedUrl} target="_blank" rel="noreferrer" className="ds-btn is-ghost"
-                    style={{ padding:'4px 6px', height:'auto', textDecoration:'none', display:'flex' }} title="View on Stripe">
-                    <ExternalLink size={13} />
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    </div>
+      ))}
+    </Modal>
   );
 }
 
@@ -284,16 +658,20 @@ function BillingSkeleton() {
 // ── Platform Billing page ──────────────────────────────────────────────────────
 
 export default function PlatformSubscriptions() {
-  const navigate = useNavigate();
   const [rows, setRows]           = useState<PlatformSubRow[]>([]);
   const [loading, setLoading]     = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [filter, setFilter]       = useState<string>('ALL');
+  const [filters, setFilters]     = useState<Filters>(EMPTY_FILTERS);
   const [invoiceOrg, setInvoiceOrg] = useState<PlatformSubRow | null>(null);
   const [changingPlan, setChangingPlan] = useState<string | null>(null);
+  const [planEditOrg, setPlanEditOrg] = useState<PlatformSubRow | null>(null);
+  const [planValue, setPlanValue] = useState<string>('NONE');
   const [drawerOrg, setDrawerOrg] = useState<PlatformSubRow | null>(null);
   const [drawerFlags, setDrawerFlags] = useState<FeatureFlag[]>([]);
   const [drawerFlagsLoading, setDrawerFlagsLoading] = useState(false);
+  const [compOrg, setCompOrg]     = useState<PlatformSubRow | null>(null);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillMsg, setBackfillMsg] = useState<string | null>(null);
   const aliveRef = useRef(true);
 
   const load = useCallback(async () => {
@@ -315,11 +693,40 @@ export default function PlatformSubscriptions() {
     return () => { aliveRef.current = false; };
   }, [load]);
 
+  /**
+   * Imports historical Stripe invoices into the local mirror. Idempotent, but it
+   * walks the Stripe API once per customer, so it is a deliberate button rather
+   * than something that fires on page load.
+   */
+  const handleBackfill = async () => {
+    setBackfilling(true);
+    setBackfillMsg(null);
+    try {
+      const imported = await platformApi.backfillInvoices();
+      await load();
+      if (aliveRef.current) {
+        setBackfillMsg(imported > 0
+          ? `Imported ${imported} invoice${imported === 1 ? '' : 's'} from Stripe.`
+          : 'No invoices found in Stripe for any org.');
+      }
+    } catch {
+      if (aliveRef.current) setBackfillMsg('Backfill failed — check Stripe configuration.');
+    } finally {
+      if (aliveRef.current) setBackfilling(false);
+    }
+  };
+
+  const openPlanEdit = (row: PlatformSubRow) => {
+    setPlanEditOrg(row);
+    setPlanValue(row.plan);
+  };
+
   const handleChangePlan = async (orgId: string, plan: string) => {
     setChangingPlan(orgId);
     try {
       await platformApi.changePlan(orgId, plan);
       await load();
+      setPlanEditOrg(null);
     } finally {
       setChangingPlan(null);
     }
@@ -354,7 +761,15 @@ export default function PlatformSubscriptions() {
     cancelled:rows.filter(r => r.status === 'CANCELLED').length,
   };
 
-  const visible = filter === 'ALL' ? rows : rows.filter(r => r.status === filter);
+  // Paise, summed across orgs. Zero until the invoice mirror has been backfilled,
+  // which is what the Import button below exists to do.
+  const totalCollected = rows.reduce((sum, r) => sum + (r.lifetimeRevenue ?? 0), 0);
+
+  const visible = rows.filter(r => matches(r, filters));
+
+  /** KPI cards and the attention panel are shortcuts into the same filter model. */
+  const onlyStatus = (s: StatusKey) => setFilters({ ...EMPTY_FILTERS, statuses: [s] });
+  const onlyAttention = (k: AttentionKey) => setFilters({ ...EMPTY_FILTERS, attention: [k] });
 
   const hasAttention = counts.pastDue > 0 || counts.cancelled > 0;
 
@@ -380,8 +795,28 @@ export default function PlatformSubscriptions() {
           ) : (
             <motion.div key="data" variants={stagger} initial="hidden" animate="show" className="db-inner">
 
+              <div className="db-kpi-header">
+                <h2 className="db-kpi-title">Billing</h2>
+                <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 6 }}>
+                  <button type="button" className="ds-btn is-ghost"
+                    style={{ padding:'3px 10px', fontSize:10, height:'auto', letterSpacing:'0.05em', textTransform:'uppercase' }}
+                    onClick={handleBackfill} disabled={backfilling}
+                    title="Import historical invoices from Stripe. Safe to re-run.">
+                    <RotateCcw size={12} className={backfilling ? 'ds-spin' : ''} style={{ marginRight: 5 }} />
+                    {backfilling ? 'Importing…' : 'Import invoices'}
+                  </button>
+                </div>
+              </div>
+
+              {backfillMsg && (
+                <motion.div variants={fadeIn} initial="hidden" animate="show"
+                  className="db-att-row" role="status"
+                  style={{ marginBottom: 16, borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
+                  {backfillMsg}
+                </motion.div>
+              )}
+
               {/* ── KPI row ── */}
-              <p className="ds-section-label db-section-label">Billing overview</p>
               <motion.div className="db-kpi-grid" variants={stagger}>
                 <KpiCard label="Total orgs"    value={fmtNum(counts.total)}
                   subtitle="all subscriptions" icon={Building2} />
@@ -391,8 +826,14 @@ export default function PlatformSubscriptions() {
                   subtitle="14-day trial" icon={Clock} />
                 <KpiCard label="Past due"      value={fmtNum(counts.pastDue)}
                   subtitle={counts.cancelled > 0 ? `${counts.cancelled} cancelled` : undefined}
-                  icon={TrendingDown} onClick={counts.pastDue > 0 ? () => setFilter('PAST_DUE') : undefined} />
+                  icon={TrendingDown} onClick={counts.pastDue > 0 ? () => onlyStatus('PAST_DUE') : undefined} />
+                <KpiCard label="Total collected" value={fmtAmount(totalCollected, 'INR')}
+                  subtitle={totalCollected > 0 ? 'settled via Stripe' : 'import invoices to populate'}
+                  icon={CreditCard}
+                  onClick={totalCollected > 0 ? () => setFilters({ ...EMPTY_FILTERS, paid: 'PAID' }) : undefined} />
               </motion.div>
+
+              <FilterBar rows={rows} filters={filters} onChange={setFilters} />
 
               {/* ── Needs attention ── */}
               {hasAttention && (
@@ -403,7 +844,7 @@ export default function PlatformSubscriptions() {
                       {counts.pastDue > 0 && (
                         <motion.button variants={fadeUp} type="button"
                           className="db-att-row has-border is-urgent"
-                          onClick={() => setFilter('PAST_DUE')}
+                          onClick={() => onlyAttention('failing')}
                           whileHover={{ scale: 1.025, zIndex: 2 }} whileTap={{ scale: 1.010, zIndex: 2 }}
                           transition={{ duration: 0.16, ease: 'easeOut' }}
                         >
@@ -418,7 +859,7 @@ export default function PlatformSubscriptions() {
                       {counts.cancelled > 0 && (
                         <motion.button variants={fadeUp} type="button"
                           className="db-att-row is-warn"
-                          onClick={() => setFilter('CANCELLED')}
+                          onClick={() => onlyStatus('CANCELLED')}
                           whileHover={{ scale: 1.025, zIndex: 2 }} whileTap={{ scale: 1.010, zIndex: 2 }}
                           transition={{ duration: 0.16, ease: 'easeOut' }}
                         >
@@ -436,44 +877,90 @@ export default function PlatformSubscriptions() {
               )}
 
               {/* ── Subscriber list ── */}
-              <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
-                <p className="ds-section-label db-section-label">Subscribers</p>
-                <div style={{ display:'flex', gap:6 }}>
-                  {['ALL','ACTIVE','TRIAL','PAST_DUE','CANCELLED'].map(f => (
-                    <button key={f} type="button"
-                      className={`ds-btn ${filter === f ? 'is-primary' : 'is-ghost'}`}
-                      style={{ padding:'3px 10px', fontSize:10, height:'auto', letterSpacing:'0.05em', textTransform:'uppercase' }}
-                      onClick={() => setFilter(f)}
-                    >
-                      {f.replace('_',' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="ds-section-label db-section-label">Subscribers</p>
 
-              {visible.length === 0 ? (
-                <motion.div variants={fadeIn} className="ds-card" style={{ padding:32, textAlign:'center' }}>
-                  <span style={{ fontSize:13, color:'var(--ink-tertiary)' }}>No subscribers match this filter.</span>
-                </motion.div>
-              ) : (
-                <div className="ds-card db-att-card">
-                  <motion.div variants={stagger} initial="hidden" animate="show">
-                    {visible.map((row, i) => (
-                      <SubRow key={row.orgId} row={row} last={i === visible.length - 1}
-                        onInvoices={() => setInvoiceOrg(row)}
-                        onOpenDrawer={openDrawer}
-                        onChangePlan={handleChangePlan}
-                        changingPlan={changingPlan}
-                      />
-                    ))}
-                  </motion.div>
+              <motion.div variants={fadeUp} className="ds-table-card">
+                <div className="ds-table-wrap">
+                  <table className="ds-table is-no-row-hover ps-table">
+                    <thead>
+                      <tr>
+                        <th>Organization</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th className="is-right">Collected</th>
+                        <th>Period end</th>
+                        <th className="is-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visible.length === 0 ? (
+                        <tr>
+                          <td colSpan={6}>
+                            <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show">
+                              <span className="ds-empty-icon"><Users size={20} /></span>
+                              <span className="ds-empty-title">
+                                {rows.length === 0 ? 'No subscribers yet' : 'Nothing matches'}
+                              </span>
+                              <span className="ds-empty-sub">
+                                {rows.length === 0
+                                  ? 'Organizations appear here once they sign up.'
+                                  : 'Widen or clear the filters to see more organizations.'}
+                              </span>
+                              {rows.length > 0 && countActive(filters) > 0 && (
+                                <div className="ds-empty-actions">
+                                  <button type="button" className="ds-btn is-secondary"
+                                    onClick={() => setFilters(EMPTY_FILTERS)}>
+                                    Clear filters
+                                  </button>
+                                </div>
+                              )}
+                            </motion.div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <AnimatePresence mode="popLayout">
+                          {visible.map(row => (
+                            <SubRow key={row.orgId} row={row}
+                              onInvoices={() => setInvoiceOrg(row)}
+                              onOpenFlags={() => openDrawer(row)}
+                              onEditPlan={() => openPlanEdit(row)}
+                              onComp={() => setCompOrg(row)}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+              </motion.div>
 
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {compOrg && (
+        <CompModal row={compOrg} onClose={() => setCompOrg(null)} onSaved={load} />
+      )}
+
+      {planEditOrg && (
+        <Modal title="Change plan" subtitle={planEditOrg.orgName} onClose={() => setPlanEditOrg(null)}>
+          <div className="ds-field" style={{ marginBottom: 4 }}>
+            <label className="ds-label">Plan</label>
+            <div className="ps-select-wrap">
+              <select value={planValue} onChange={e => setPlanValue(e.target.value)}
+                className="ds-select" style={{ width: '100%' }}>
+                {PLAN_OPTIONS.map(p => <option key={p} value={p}>{PLAN_LABEL[p]}</option>)}
+              </select>
+              <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+            </div>
+          </div>
+          <ModalFooter onClose={() => setPlanEditOrg(null)}
+            submitting={changingPlan === planEditOrg.orgId}
+            onSubmit={() => handleChangePlan(planEditOrg.orgId, planValue)}
+            label="Save plan" />
+        </Modal>
+      )}
 
       <AnimatePresence>
         {invoiceOrg && (
@@ -488,60 +975,53 @@ export default function PlatformSubscriptions() {
 
       {drawerOrg && (
         <>
-          <div onClick={() => setDrawerOrg(null)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
-          <div style={{
-            position: 'fixed', right: 0, top: 0, bottom: 0, width: '360px',
-            background: 'var(--surface-2, #141414)', borderLeft: '1px solid var(--border, #2a2a2a)',
-            padding: '24px', overflowY: 'auto', zIndex: 100,
-            display: 'flex', flexDirection: 'column', gap: '20px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>{drawerOrg.orgName}</h3>
-              <button
-                onClick={() => setDrawerOrg(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '16px', padding: '4px' }}
-              >✕</button>
+          <div className="ds-drawer-overlay" onClick={() => setDrawerOrg(null)} />
+          <div className="ds-drawer is-sm" role="dialog" aria-modal="true">
+            <div className="ds-drawer-header">
+              <div>
+                <div className="ds-drawer-title">{drawerOrg.orgName}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-tertiary)', marginTop: 2 }}>Feature flag overrides</div>
+              </div>
+              <button type="button" onClick={() => setDrawerOrg(null)} className="ds-drawer-close" aria-label="Close">
+                <X size={16} />
+              </button>
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Feature Flags
-            </div>
-            {drawerFlagsLoading ? (
-              <div style={{ color: 'var(--muted)', fontSize: '13px' }}>Loading…</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                {['LUCIEN_AI', 'ADVANCED_REPORTS', 'CUSTOM_INTEGRATIONS'].map(key => {
+            <div className="ds-drawer-body">
+              {drawerFlagsLoading ? (
+                <div style={{ color: 'var(--ink-tertiary)', fontSize: 13 }}>Loading…</div>
+              ) : (
+                ['LUCIEN_AI', 'ADVANCED_REPORTS', 'CUSTOM_INTEGRATIONS'].map(key => {
                   const flag = drawerFlags.find(f => f.flagKey === key);
+                  const enabled = flag?.enabled ?? false;
+                  const isManual = flag?.source === 'MANUAL';
                   return (
                     <div key={key} style={{
-                      display: 'grid', gridTemplateColumns: '1fr auto auto auto',
-                      alignItems: 'center', gap: '10px',
-                      padding: '10px 0', borderBottom: '1px solid var(--border, #2a2a2a)'
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 0', borderBottom: '1px solid var(--border)',
                     }}>
-                      <span style={{ fontSize: '12px' }}>{key.replace(/_/g, ' ')}</span>
-                      <span style={{
-                        fontSize: '10px', padding: '2px 6px', borderRadius: '4px',
-                        background: flag?.source === 'MANUAL' ? 'color-mix(in srgb, var(--warning) 12%, transparent)' : 'var(--bg-hover)',
-                        color: flag?.source === 'MANUAL' ? 'var(--warning)' : 'var(--ink-tertiary)',
-                      }}>
-                        {flag?.source ?? 'PLAN'}
-                      </span>
-                      <input
-                        type="checkbox"
-                        checked={flag?.enabled ?? false}
-                        onChange={e => handleToggleFlag(drawerOrg.orgId, key, e.target.checked)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      {flag?.source === 'MANUAL' ? (
-                        <button
-                          onClick={() => handleResetFlag(drawerOrg.orgId, key)}
-                          style={{ fontSize: '10px', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                        >Reset</button>
-                      ) : <span />}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-primary)' }}>{key.replace(/_/g, ' ')}</span>
+                        <span className={`ds-pill ${isManual ? 'is-warn' : 'is-neutral'}`} style={{ fontSize: 10, alignSelf: 'flex-start' }}>
+                          {flag?.source ?? 'PLAN'}
+                        </span>
+                      </div>
+                      <button type="button" onClick={() => handleToggleFlag(drawerOrg.orgId, key, !enabled)}
+                        className="ds-table-row-action" title={enabled ? 'Disable' : 'Enable'}>
+                        {enabled
+                          ? <ToggleRight size={16} style={{ color: 'var(--success)' }} />
+                          : <ToggleLeft size={16} />}
+                      </button>
+                      {isManual && (
+                        <button type="button" onClick={() => handleResetFlag(drawerOrg.orgId, key)}
+                          className="ds-table-row-action" title="Reset to plan default">
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
                     </div>
                   );
-                })}
-              </div>
-            )}
+                })
+              )}
+            </div>
           </div>
         </>
       )}

@@ -1,9 +1,11 @@
 package com.recoverpro.server.controller.admin;
 
 import com.recoverpro.server.common.dto.response.ApiResponse;
+import com.recoverpro.server.dto.request.UpdateRagDocumentRequest;
 import com.recoverpro.server.dto.response.RagDocumentResponse;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.RagDocumentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -42,6 +44,16 @@ public class RagDocumentAdminController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<RagDocumentResponse>>> list() {
         return ResponseEntity.ok(ApiResponse.success(ragDocumentService.list()));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<RagDocumentResponse>> updateMetadata(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateRagDocumentRequest request) {
+
+        log.info("PUT /api/v1/admin/rag-documents/{}", id);
+        RagDocumentResponse response = ragDocumentService.updateMetadata(id, request.getTitle(), request.getDescription());
+        return ResponseEntity.ok(ApiResponse.success(response, "Document updated"));
     }
 
     @DeleteMapping("/{id}")
