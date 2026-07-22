@@ -9,6 +9,7 @@ import NotificationPanel from './components/NotificationPanel';
 import PageHelpDrawer from './components/PageHelpDrawer';
 import ShortcutsDialog from './components/ShortcutsDialog';
 import TopbarCustomizeDialog from './components/TopbarCustomizeDialog';
+import ProfileSettingsDialog from './components/ProfileSettingsDialog';
 import BreadcrumbContextMenu from './components/BreadcrumbContextMenu';
 import LucienPanel from './components/LucienPanel';
 import GlobalSearchModal from './components/GlobalSearchModal';
@@ -25,6 +26,7 @@ import { proactiveRefresh } from './api/axiosInstance';
 import { useAppNavState } from './hooks/useAppNavState';
 import './styles/AppLayout.css';
 import { loadingSplash } from './utils/loadingSplash';
+import { profileSettings } from './utils/profileSettings';
 
 export default function AppLayout() {
   const navigate  = useNavigate();
@@ -70,7 +72,7 @@ export default function AppLayout() {
     out.push({ id: 'action:billing', label: 'Billing settings', category: 'Billing', icon: Settings, hint: '/app/subscription', keywords: ['billing', 'payment', 'subscription', 'plan'], run: () => navigate('/app/subscription') });
 
     if (s.user) {
-      out.push({ id: 'action:profile', label: 'Profile settings', category: 'Account', icon: Settings, hint: '/settings/profile', keywords: ['account', 'preferences'], run: () => navigate('/settings/profile') });
+      out.push({ id: 'action:profile', label: 'Profile settings', category: 'Account', icon: Settings, keywords: ['account', 'preferences'], run: () => profileSettings.show() });
       out.push({ id: 'action:logout', label: 'Sign out', category: 'Account', icon: LogOut, keywords: ['logout', 'signout'], run: () => s.handleLogout() });
     }
     return out;
@@ -94,6 +96,7 @@ export default function AppLayout() {
       <PageHelpDrawer open={s.pageHelpOpen} onClose={() => s.setPageHelpOpen(false)} pathname={location.pathname} />
       <ShortcutsDialog open={s.shortcutsOpen} onClose={() => s.setShortcutsOpen(false)} />
       <TopbarCustomizeDialog open={s.topbarCustOpen} onClose={() => s.setTopbarCustOpen(false)} />
+      <ProfileSettingsDialog />
 
       <BreadcrumbContextMenu
         open={!!s.crumbCtx}
@@ -116,7 +119,7 @@ export default function AppLayout() {
           s.setSidebarCollapsed(v => { const next = !v; localStorage.setItem('rp-sidebar-collapsed', String(next)); return next; });
           s.play();
         }}
-        onProfileSettings={() => navigate('/settings/profile')}
+        onProfileSettings={() => profileSettings.show()}
         onLogout={s.handleLogout}
         user={s.user}
         roleLabel={s.roleLabel}

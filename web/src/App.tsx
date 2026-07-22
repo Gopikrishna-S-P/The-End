@@ -12,7 +12,6 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import MfaSetupPage from './pages/MfaSetupPage';
-import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import Dashboard from './pages/Dashboard';
 import LoansPage from './pages/LoansPage';
 
@@ -147,7 +146,6 @@ function App() {
 
                 {/* Settings (any authenticated user) */}
                 <Route path="/settings/mfa" element={<MfaSetupPage />} />
-                <Route path="/settings/profile" element={<ProfileSettingsPage />} />
 
                 {/* ── /app/* — unified workspace for every org-level role ── */}
                 <Route element={<ProtectedRoute allowedRoles={ANY_ORG_ROLE} />}>

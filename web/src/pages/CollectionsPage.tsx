@@ -12,7 +12,7 @@ import type {
 import {
   ChevronLeft, ChevronRight, Download, CheckCircle2, XCircle,
   Banknote, Clock, FileText, X, SlidersHorizontal, ChevronDown,
-  UserX, Landmark, Link2,
+  UserX,
 } from 'lucide-react';
 import CollectionDetailDrawer from './CollectionDetailDrawer';
 import { CollectionApprovalModal } from './CollectionApprovalModal';
@@ -54,9 +54,6 @@ export default function CollectionsPage() {
   const isAgentView = location.pathname.startsWith('/agent');
   const { hasPermission } = usePermissions();
   const canApprove = hasPermission('COLLECTION_APPROVE');
-  const role = user?.roles?.[0]?.name?.replace('ROLE_', '');
-  const canSeeReconciliation = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN';
-  const canSeePaymentLinks = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'FO';
 
   const [collections,           setCollections]           = useState<CollectionResponse[]>([]);
   const [loading,               setLoading]               = useState(true);
@@ -265,18 +262,6 @@ export default function CollectionsPage() {
                 className="ds-btn is-secondary" title="Non-contactable borrowers" aria-label="Non-contactable borrowers">
                 <UserX size={14} />
               </button>
-              {canSeeReconciliation && (
-                <button type="button" onClick={() => navigate('/app/reconciliation')}
-                  className="ds-btn is-secondary" title="Bank reconciliation" aria-label="Bank reconciliation">
-                  <Landmark size={14} />
-                </button>
-              )}
-              {canSeePaymentLinks && (
-                <button type="button" onClick={() => navigate('/app/payments/links')}
-                  className="ds-btn is-secondary" title="Payment links" aria-label="Payment links">
-                  <Link2 size={14} />
-                </button>
-              )}
               <div ref={exportMenuRef} style={{ position: 'relative' }}>
                 <button
                   type="button"

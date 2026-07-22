@@ -1,0 +1,103 @@
+/* ── ProfileSettingsDialog — same glass/blur recipe as the topbar customize dialog ── */
+
+.ps-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(12, 10, 9, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: ps-dialog-fade var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes ps-dialog-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ps-dialog {
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  animation: ps-dialog-rise var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes ps-dialog-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ps-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.ps-dialog-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  background: linear-gradient(135deg, #111, #444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ps-dialog-title svg { color: #444; }
+
+.ps-dialog-close {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--ink-tertiary);
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms, color 120ms;
+}
+
+.ps-dialog-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #111;
+}
+
+.ps-dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-dialog-backdrop,
+  .ps-dialog {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ps-dialog { max-width: 100%; }
+}

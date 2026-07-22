@@ -5,6 +5,7 @@ import type { MfaSetupResponse, MfaEnableResponse, EnableMfaRequest, ApiResponse
 import { ShieldCheck, ShieldOff, Loader2, ArrowRight } from 'lucide-react';
 import { MfaActiveBlock } from './MfaActiveBlock';
 import { MfaSetupStepFlow } from './MfaSetupStepFlow';
+import { profileSettings } from '../utils/profileSettings';
 import './Dashboard.css';
 import '../styles/MfaSetupPage.css';
 
@@ -136,9 +137,9 @@ export default function MfaSetupPage() {
                   <h2 className="mfa-success-title">MFA disabled</h2>
                   <p className="mfa-success-sub">Two-factor authentication has been removed from your account.</p>
                 </div>
-                <a href="/settings/profile" className="btn-primary">
+                <button type="button" className="btn-primary" onClick={() => profileSettings.show()}>
                   <span className="btn-primary-text">Back to profile</span><ArrowRight size={16} />
-                </a>
+                </button>
               </div>
             )}
 

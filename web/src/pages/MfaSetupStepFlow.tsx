@@ -5,6 +5,7 @@ import {
   AlertCircle, ShieldCheck, KeyRound, Download, Loader2,
 } from 'lucide-react';
 import { OtpBoxes, Steps } from './MfaSetupWidgets';
+import { profileSettings } from '../utils/profileSettings';
 
 interface Props {
   step: 1 | 2 | 3 | 4;
@@ -151,9 +152,9 @@ export function MfaSetupStepFlow({
             <h2 className="mfa-success-title">MFA enabled</h2>
             <p className="mfa-success-sub">Your account is now protected. You'll be asked for a code at each sign-in.</p>
           </div>
-          <a href="/settings/profile" className="btn-primary">
+          <button type="button" className="btn-primary" onClick={() => profileSettings.show()}>
             <span className="btn-primary-text">Go to profile</span><ArrowRight size={16} />
-          </a>
+          </button>
         </div>
       )}
     </>

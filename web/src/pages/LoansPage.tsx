@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   X, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
-  SlidersHorizontal, ChevronDown, FileSliders, ShieldAlert, TrendingDown, Users,
+  SlidersHorizontal, ChevronDown, ShieldAlert, TrendingDown, Users,
 } from 'lucide-react';
 import { allocationsApi } from '../api/allocationsApi';
 import { usersApi } from '../api/usersApi';
@@ -221,10 +221,6 @@ export default function LoansPage() {
                 <Users size={14} />
               </button>
             )}
-            <button type="button" onClick={() => navigate('/app/restructure-proposals')}
-              className="ds-btn is-secondary" title="Restructure proposals" aria-label="Restructure proposals">
-              <FileSliders size={14} />
-            </button>
             {canSeeFraudCases && (
               <button type="button" onClick={() => navigate('/app/fraud-cases')}
                 className="ds-btn is-secondary" title="Fraud cases" aria-label="Fraud cases">
@@ -294,8 +290,8 @@ export default function LoansPage() {
               )}
             </AnimatePresence>
 
-            {/* Scrollable list wrapper fixed to exactly 7 rows (7 * 51px) */}
-            <div className="dd-cp-list-wrap" style={{ height: 357, flex: 'none', overflowY: 'auto' }}>
+            {/* Scrollable list wrapper fills remaining card height */}
+            <div className="dd-cp-list-wrap" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
               <div className="dd-cp-list">
                 {loading ? (
                   Array.from({ length: 8 }).map((_, i) => (

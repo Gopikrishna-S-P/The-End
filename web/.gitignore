@@ -25,3 +25,6 @@ dist-ssr
 
 # Redis persistence dump (local dev runtime artifact)
 dump.rdb
+
+*storybook.log
+storybook-static

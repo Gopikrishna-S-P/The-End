@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { NavLink } from 'react-router-dom';
 import {
   ChevronDown,
   Settings, LogOut,
 } from 'lucide-react';
 import { usePresence, type PresenceStatus } from '../utils/userPresence';
 import { useT } from '../utils/i18n';
+import { profileSettings } from '../utils/profileSettings';
 import './UserMenu.css';
 
 interface UserShape {
@@ -119,17 +119,17 @@ export default function UserMenu({
           </div>
 
           <div className="app-user-dropdown-section">
-            <NavLink
-              to="/settings/profile"
+            <button
+              type="button"
               className="app-user-row"
               role="menuitem"
-              onClick={() => { onClose(); playClick?.(); }}
+              onClick={() => { onClose(); playClick?.(); profileSettings.show(); }}
             >
               <span className="app-user-row-icon">
                 <Settings size={12} aria-hidden="true" />
               </span>
               <span className="app-user-row-label">{t('Profile settings')}</span>
-            </NavLink>
+            </button>
 
             {logoutConfirm ? (
               <div className="app-user-row app-user-logout-confirm" role="menuitem">
