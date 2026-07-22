@@ -14,6 +14,7 @@ import TermsPage from './pages/TermsPage';
 import MfaSetupPage from './pages/MfaSetupPage';
 import Dashboard from './pages/Dashboard';
 import LoansPage from './pages/LoansPage';
+import LoanDetailPage from './pages/LoanDetailPage';
 
 import CaseAssignmentsPage from './pages/CaseAssignmentsPage';
 import CollectionsPage from './pages/CollectionsPage';
@@ -151,6 +152,7 @@ function App() {
                 <Route element={<ProtectedRoute allowedRoles={ANY_ORG_ROLE} />}>
                   <Route path="/app/dashboard" element={<PlatformAdminGuard />} />
                   <Route path="/app/allocations" element={<LoansPage />} />
+                  <Route path="/app/allocations/:id" element={<LoanDetailPage />} />
                   <Route path="/app/cases/unassigned" element={<UnassignedCasesPage />} />
                   <Route path="/app/uploads" element={<UploadsPage />} />
                   <Route path="/app/uploads/:id/errors" element={<UploadErrorsPage />} />

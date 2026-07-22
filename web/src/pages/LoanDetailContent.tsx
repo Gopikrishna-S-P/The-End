@@ -1,8 +1,7 @@
 import { useState, type RefObject, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, FileText, AlertCircle, ChevronDown, RefreshCw, User,
-  ChevronRight,
+  ArrowLeft, AlertCircle, RefreshCw, User,
   IndianRupee, MapPin, Info,
   ArrowRightLeft, Clock,
 } from 'lucide-react';
@@ -65,8 +64,8 @@ export default function LoanDetailContent(p: Props) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 {p.onClose && (
-                  <button type="button" onClick={p.onClose} className="ds-drawer-close" aria-label="Close" style={{ alignSelf: 'center' }}>
-                    <ChevronRight size={16} />
+                  <button type="button" onClick={p.onClose} className="ds-drawer-close" aria-label="Back to loans" style={{ alignSelf: 'center' }}>
+                    <ArrowLeft size={16} />
                   </button>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>

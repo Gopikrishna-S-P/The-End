@@ -5,7 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { assignmentsApi } from '../api/assignmentsApi';
 import { usePermissions } from '../hooks/usePermissions';
 import type { AllocationResponse, AllocationStatus } from '../types';
-import { AlertCircle, RefreshCw, ChevronRight, X, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, RefreshCw, X, CheckCircle2 } from 'lucide-react';
 import LoanDetailContent from './LoanDetailContent';
 import ReassignModal from '../components/ReassignModal';
 import {
@@ -34,12 +34,11 @@ const fadeIn: Variants = {
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
 
-export interface LoanDetailDrawerProps {
-  id: string;
-  onClose: () => void;
-}
+export default function LoanDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const onClose = useCallback(() => navigate('/app/allocations'), [navigate]);
 
-export default function LoanDetailDrawer({ id, onClose }: LoanDetailDrawerProps) {
   const { hasPermission } = usePermissions();
   const canChangeStatus = hasPermission('CASE_ASSIGN');
 
@@ -63,12 +62,6 @@ export default function LoanDetailDrawer({ id, onClose }: LoanDetailDrawerProps)
     setAlloc(null); setAgentName(null); setError(null);
     setNotFound(false); setDrop(false); setConfirming(null);
   }, [id]);
-
-  useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = originalStyle; };
-  }, []);
 
   const loadAllocation = useCallback(async () => {
     if (!id) return;
@@ -176,57 +169,60 @@ export default function LoanDetailDrawer({ id, onClose }: LoanDetailDrawerProps)
   const nextAction = allocation ? NEXT_ACTION_FOR[allocation.status] : null;
 
   if (!id) return null;
+
   if (loading) return (
-    <>
-      <motion.div className="ds-drawer-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
-      <motion.div className="ds-drawer" style={{ width: '70%', height: '100vh', background: 'var(--bg-canvas)', boxShadow: '-24px 0 48px rgba(0,0,0,0.08)' }} role="dialog" aria-modal="true" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200, mass: 0.8 }}>
-        <div className="ds-drawer-body" style={{ background: 'var(--bg-canvas)', position: 'relative' }}>
-          <button type="button" onClick={onClose} className="ds-drawer-close" style={{ position: 'absolute', top: 20, left: 24, zIndex: 10 }} aria-label="Close"><ChevronRight size={16} /></button>
-          <DetailSkeleton />
-        </div>
-      </motion.div>
-    </>
+    <div className="db-root">
+      <div className="db-content">
+        <div className="db-inner"><DetailSkeleton /></div>
+      </div>
+    </div>
   );
 
   if (notFound) return (
-    <>
-      <motion.div className="ds-drawer-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
-      <motion.div className="ds-drawer" style={{ width: '70%', height: '100vh', background: 'var(--bg-canvas)', boxShadow: '-24px 0 48px rgba(0,0,0,0.08)' }} role="dialog" aria-modal="true" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200, mass: 0.8 }}>
-        <div className="ds-drawer-body" style={{ background: 'var(--bg-canvas)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          <button type="button" onClick={onClose} className="ds-drawer-close" style={{ position: 'absolute', top: 20, left: 24, zIndex: 10 }} aria-label="Close"><ChevronRight size={16} /></button>
+    <div className="db-root">
+      <div className="db-content">
+        <div className="db-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
             <AlertCircle size={32} className="ds-empty-icon" style={{ color: 'var(--error)' }} />
             <span className="ds-empty-title">Loan not found</span>
           </motion.div>
         </div>
-      </motion.div>
-    </>
+      </div>
+    </div>
   );
 
   return (
-    <>
-      <motion.div className="ds-drawer-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
-      <motion.div className="ds-drawer" style={{ width: '70%', height: '100vh', background: 'var(--bg-canvas)', boxShadow: '-24px 0 48px rgba(0,0,0,0.08)' }} role="dialog" aria-modal="true" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200, mass: 0.8 }}>
-        <div className="ds-drawer-body" style={{ background: 'var(--bg-canvas)' }}>
-          <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
-            {loading && !allocation ? <DetailSkeleton /> : allocation ? (
-              <motion.div variants={fadeUp}>
-                <LoanDetailContent
-                  allocation={allocation} agentName={agentName} lastKnownLocation={lastKnownLocation}
-                  canChangeStatus={canChangeStatus} groups={groups}
-                  outstandingTone={outstandingTone} daysOverdueTone={daysOverdueTone}
-                  dueDateIso={dueDateIso} daysOverdue={daysOverdue} nextAction={nextAction}
-                  statusUpdating={statusUpdating} statusDropdown={statusDropdown} setDrop={setDrop}
-                  triggerRef={triggerRef} menuRef={menuRef}
-                  requestStatus={requestStatus} onMenuKeyDown={onMenuKeyDown}
-                  onReassign={() => setReassignOpen(true)}
-                  onClose={onClose}
-                />
-              </motion.div>
-            ) : null}
-          </motion.div>
-        </div>
-      </motion.div>
+    <div className="db-root">
+      <div className="db-content">
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
+          {error && (
+            <div className="db-error-banner" role="alert" style={{ marginBottom: 24 }}>
+              <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
+              <div className="db-error-body">
+                <span className="db-error-title">{error}</span>
+              </div>
+              <button className="db-error-retry" onClick={loadAllocation} aria-label="Retry">
+                <RefreshCw size={14} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+          {loading && !allocation ? <DetailSkeleton /> : allocation ? (
+            <motion.div variants={fadeUp}>
+              <LoanDetailContent
+                allocation={allocation} agentName={agentName} lastKnownLocation={lastKnownLocation}
+                canChangeStatus={canChangeStatus} groups={groups}
+                outstandingTone={outstandingTone} daysOverdueTone={daysOverdueTone}
+                dueDateIso={dueDateIso} daysOverdue={daysOverdue} nextAction={nextAction}
+                statusUpdating={statusUpdating} statusDropdown={statusDropdown} setDrop={setDrop}
+                triggerRef={triggerRef} menuRef={menuRef}
+                requestStatus={requestStatus} onMenuKeyDown={onMenuKeyDown}
+                onReassign={() => setReassignOpen(true)}
+                onClose={onClose}
+              />
+            </motion.div>
+          ) : null}
+        </motion.div>
+      </div>
 
       <AnimatePresence>
         {reassignOpen && (
@@ -266,6 +262,6 @@ export default function LoanDetailDrawer({ id, onClose }: LoanDetailDrawerProps)
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

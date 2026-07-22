@@ -8,7 +8,6 @@ import {
 import { allocationsApi } from '../api/allocationsApi';
 import { usersApi } from '../api/usersApi';
 import type { AllocationResponse, UserResponse } from '../types';
-import LoanDetailDrawer from './LoanDetailDrawer';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import { useAuth } from '../AuthContext';
 
@@ -173,8 +172,6 @@ export default function LoansPage() {
     }
   }, [page, searchTerm, fileUploadId, filterAgentId]);
 
-  const [drawerCaseId, setDrawerCaseId] = useState<string | null>(null);
-
   useEffect(() => {
     const c = new AbortController();
     load(c.signal);
@@ -327,12 +324,11 @@ export default function LoansPage() {
                         <motion.div
                           key={c.id}
                           variants={fadeUp}
-                          className={`dd-case-row${drawerCaseId === c.id ? ' is-picked' : ''}`}
-                          onClick={() => setDrawerCaseId(c.id)}
+                          className="dd-case-row"
+                          onClick={() => navigate(`/app/allocations/${c.id}`)}
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e: React.KeyboardEvent) => { if(e.key==='Enter') setDrawerCaseId(c.id); }}
-                          style={{ boxShadow: drawerCaseId === c.id ? 'none' : undefined }}
+                          onKeyDown={(e: React.KeyboardEvent) => { if(e.key==='Enter') navigate(`/app/allocations/${c.id}`); }}
                         >
                           <div className="dd-case-info">
                             <span className="dd-case-borrower">{c.borrowerName || '—'}</span>
@@ -401,12 +397,6 @@ export default function LoansPage() {
         </div>
       </div>
       
-      <AnimatePresence>
-        {drawerCaseId && (
-          <LoanDetailDrawer id={drawerCaseId} onClose={() => setDrawerCaseId(null)} />
-        )}
-      </AnimatePresence>
-
       {/* ── Filter dialog — same Modal/Input/FormSection system as Platform Setup's Edit Org dialog ── */}
       {filterOpen && (
         <Modal title="Filter loans" subtitle="Narrow down the portfolio list" onClose={() => setFilterOpen(false)}>
