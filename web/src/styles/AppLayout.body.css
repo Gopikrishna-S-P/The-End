@@ -18,6 +18,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  position: relative; /* positioning context for .app-bottom-glow overlay */
 }
 
 /* ── Main content ──────────────────────────────────────────────────────────── */
@@ -39,6 +40,28 @@
 
 /* Main content layering */
 .app-main > .app-route-view { position: relative; z-index: 1; margin-top: -12px; }
+
+/* Bottom-of-scroll glow — overlay on .app-body (the non-scrolling flex row),
+   pinned to the visible bottom edge of the content area. It sits OUTSIDE the
+   scroll container on purpose, so it never travels with the content — it
+   stays put at the viewport bottom and simply fades in (opacity) once
+   AppLayout's scroll-position check confirms you've reached the true end of
+   the page (see atScrollEnd in AppLayout.tsx). Applies to every page. */
+.app-bottom-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 220ms var(--ease, ease);
+  background:
+    radial-gradient(60% 100% at 50% 100%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 72%),
+    linear-gradient(to bottom, transparent, var(--bg-canvas) 82%);
+}
+.app-bottom-glow.is-visible { opacity: 1; }
 
 /* ── Skeleton loaders ──────────────────────────────────────────────────────── */
 .app-skel {

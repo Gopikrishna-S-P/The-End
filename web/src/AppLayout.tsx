@@ -35,6 +35,23 @@ export default function AppLayout() {
   useEffect(() => { loadingSplash.hideAfterMin(2000); }, []);
 
   const s = useAppLayoutState();
+
+  // Bottom-of-scroll glow: only shown once the user has actually scrolled
+  // .app-main to its end, re-checked on route change and content resize
+  // (AnimatePresence/async data can change page height without a scroll event).
+  const [atScrollEnd, setAtScrollEnd] = React.useState(false);
+  useEffect(() => {
+    const el = s.mainRef.current;
+    const content = el?.firstElementChild as HTMLElement | null; // .app-route-view — its height, not .app-main's, tracks scrollHeight
+    if (!el || !content) return;
+    const THRESHOLD = 8;
+    const check = () => setAtScrollEnd(el.scrollHeight - el.scrollTop - el.clientHeight <= THRESHOLD);
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    const ro = new ResizeObserver(check);
+    ro.observe(content);
+    return () => { el.removeEventListener('scroll', check); ro.disconnect(); };
+  }, [location.pathname, s.mainRef]);
   const nav = useAppNavState({
     role: s.role,
     historyStack: s.historyStack,
@@ -160,6 +177,9 @@ export default function AppLayout() {
               <Outlet />
             </div>
           </main>
+          {/* Overlay on the non-scrolling body, pinned to the visible bottom —
+              never moves with scroll; JS toggles opacity at the true end. */}
+          <div className={`app-bottom-glow${atScrollEnd ? ' is-visible' : ''}`} aria-hidden="true" />
           <LucienPanel open={s.lucienOpen} onClose={() => s.setLucienOpen(false)} />
         </div>
 

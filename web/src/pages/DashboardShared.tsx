@@ -144,7 +144,7 @@ export function KpiCard({ label, value, sub, trend, trendLabel = 'vs last month'
         <span className="db-kpi2-value">{value}</span>
       )}
       {resolvedSub && <div className="db-kpi2-sub">{resolvedSub}</div>}
-      {sparkline && sparkline.length >= 2 && <Sparkline data={sparkline} color={down ? 'var(--danger)' : 'var(--ink-solid)'} />}
+      {sparkline && sparkline.length >= 2 && <Sparkline data={sparkline} />}
     </motion.button>
   );
 }

@@ -77,8 +77,8 @@ const AccessDenied: React.FC<{ reason?: string }> = ({ reason }) => (
       <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
         {reason || "You do not have permission to access this page. Contact your administrator if you think this is a mistake."}
       </p>
-      <a 
-        href="/dashboard" 
+      <a
+        href="/app/dashboard"
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors"
       >
         Back to Dashboard

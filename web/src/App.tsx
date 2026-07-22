@@ -149,9 +149,6 @@ function App() {
                 <Route path="/settings/mfa" element={<MfaSetupPage />} />
                 <Route path="/settings/profile" element={<ProfileSettingsPage />} />
 
-                {/* Generic dashboard fallback */}
-                <Route path="/dashboard" element={<Dashboard />} />
-
                 {/* ── /app/* — unified workspace for every org-level role ── */}
                 <Route element={<ProtectedRoute allowedRoles={ANY_ORG_ROLE} />}>
                   <Route path="/app/dashboard" element={<PlatformAdminGuard />} />
