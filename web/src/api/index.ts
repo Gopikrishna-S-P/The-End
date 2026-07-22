@@ -18,7 +18,6 @@ export { organizationsApi } from './organizationsApi';
 export { fieldOpsApi } from './fieldOpsApi';
 export { attendanceApi } from './attendanceApi';
 export { visitSessionApi } from './visitSessionApi';
-export { kpiApi, KPI_METRICS } from './kpiApi';
 export { paymentApi } from './paymentApi';
 export {
   default as axiosInstance,

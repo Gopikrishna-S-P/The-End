@@ -5,3 +5,6 @@ dist/
 *.log
 *.zip
 *.tar.gz
+*.dump
+db-dump/
+.claude/

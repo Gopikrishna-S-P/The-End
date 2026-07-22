@@ -21,7 +21,8 @@ function useRipple<T extends HTMLElement>() {
 
 const SNOOZE_KEY = 'rp-mfa-gate-snoozed-until';
 const SNOOZE_MS  = 60 * 60 * 1000;
-const CIRCUMFERENCE = 2 * Math.PI * 25; // r=25
+const RING_R = 21;
+const CIRCUMFERENCE = 2 * Math.PI * RING_R;
 
 interface MfaGateProps {
   mfaEnabled: boolean | undefined;
@@ -74,7 +75,7 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
   const countdown  = Math.ceil((1 - elapsed) * 15);
   const dashOffset = CIRCUMFERENCE * (1 - elapsed);
   const isLocked   = elapsed < 1;
-  const ringColor   = isLocked ? '#0AA550' : '#9ca3af';
+  const ringColor   = isLocked ? 'var(--warning)' : 'rgba(0, 0, 0, 0.35)';
 
   return createPortal(
     <div
@@ -91,19 +92,19 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
         <div className="mfag-top-row">
           <div style={{ position: 'relative', display: 'inline-flex', marginBottom: 0 }}>
             <div className="mfag-icon" aria-hidden="true">
-              <Lock size={20} />
+              <Lock size={18} />
             </div>
-            <svg width={56} height={56} viewBox="0 0 56 56"
+            <svg width={48} height={48} viewBox="0 0 48 48"
               aria-label={`Later available in ${countdown}s`}
-              style={{ position: 'absolute', top: -6, left: -6, pointerEvents: 'none' }}>
-              <circle cx={28} cy={28} r={25} fill="none" stroke="var(--border)" strokeWidth={2} />
+              style={{ position: 'absolute', top: -4, left: -4, pointerEvents: 'none' }}>
+              <circle cx={24} cy={24} r={RING_R} fill="none" stroke="rgba(0, 0, 0, 0.1)" strokeWidth={1.5} />
               <circle
-                cx={28} cy={28} r={25} fill="none"
-                stroke={ringColor} strokeWidth={2}
+                cx={24} cy={24} r={RING_R} fill="none"
+                stroke={ringColor} strokeWidth={1.5}
                 strokeLinecap="round"
                 strokeDasharray={CIRCUMFERENCE}
                 strokeDashoffset={dashOffset}
-                transform="rotate(-90 28 28)"
+                transform="rotate(-90 24 24)"
                 style={{ transition: 'stroke 0.4s' }}
               />
             </svg>

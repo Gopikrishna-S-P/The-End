@@ -73,7 +73,6 @@ import type { Role } from './types';
 const SystemPromptAdminPage = lazy(() => import('./pages/SystemPromptAdminPage'));
 const RagDocumentsPage = lazy(() => import('./pages/RagDocumentsPage'));
 const FeatureFlagsPage = lazy(() => import('./pages/FeatureFlagsPage'));
-const KpiPage = lazy(() => import('./pages/KpiPage'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const MessageTemplatesPage = lazy(() => import('./pages/MessageTemplatesPage'));
 
@@ -201,7 +200,6 @@ function App() {
                   <Route path="/app/settings/roles" element={<RoleManagementPage />} />
                   <Route path="/app/settings/organization" element={<OrganizationSettingsPage />} />
                   <Route path="/app/settings/message-templates" element={<MessageTemplatesPage />} />
-                  <Route path="/app/kpi" element={<KpiPage />} />
                   <Route path="/app/borrowers" element={<BorrowersPage />} />
                   <Route path="/app/fraud-cases" element={<FraudCasesPage />} />
                   <Route path="/app/reconciliation" element={<ReconciliationPage />} />

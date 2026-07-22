@@ -22,19 +22,17 @@ export function ProfileChangePasswordForm({ onSubmit }: Props) {
 
   return (
     <section aria-label="Change password" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-      <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-base)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid var(--border-subtle)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Lock size={18} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h2 className="db-card-title">Change password</h2>
-            <span className="db-kpi2-foot-meta">Update your login password</span>
-          </div>
+      <header className="db-card-head" style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Lock size={18} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h2 className="db-card-title">Password</h2>
+          <span className="db-kpi2-foot-meta">Update your login password</span>
         </div>
       </header>
-      <div style={{ padding: '24px' }}>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: '4px 28px 28px' }}>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 480 }}>
           <div className="ds-field">
             <label className="ds-label" htmlFor="ps-current" style={{ marginBottom: 6, display: 'block' }}>Current password</label>
             <div style={{ position: 'relative' }}>
@@ -84,10 +82,10 @@ export function ProfileChangePasswordForm({ onSubmit }: Props) {
             {errors.confirmPassword && <p style={{ color: 'var(--danger)', fontSize: 12, margin: '4px 0 0 0' }} role="alert">{errors.confirmPassword.message}</p>}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginTop: 4 }}>
             <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>You'll be signed out after changing your password.</span>
-            <button type="submit" disabled={isSubmitting} className="ds-btn is-primary" style={{ height: 36 }}>
-              {isSubmitting ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Lock size={14} style={{ marginRight: 6 }} />}
+            <button type="submit" disabled={isSubmitting} className="ds-btn is-primary" style={{ flexShrink: 0 }}>
+              {isSubmitting ? <Loader2 size={14} className="ds-spin" /> : <Lock size={14} />}
               {isSubmitting ? 'Updating…' : 'Update password'}
             </button>
           </div>

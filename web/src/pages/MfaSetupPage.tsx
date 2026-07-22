@@ -2,16 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import { apiClient } from '../client';
 import type { MfaSetupResponse, MfaEnableResponse, EnableMfaRequest, ApiResponse } from '../types';
-import { ShieldCheck, ShieldOff, Loader2, ArrowRight, ChevronLeft } from 'lucide-react';
-import { Logo } from '../components';
+import { ShieldCheck, ShieldOff, Loader2, ArrowRight } from 'lucide-react';
 import { MfaActiveBlock } from './MfaActiveBlock';
 import { MfaSetupStepFlow } from './MfaSetupStepFlow';
-import '../styles/LoginPage.css';
+import './Dashboard.css';
 import '../styles/MfaSetupPage.css';
 
 export default function MfaSetupPage() {
   const { user, refreshAuth } = useAuth();
-  const [isVisible, setIsVisible] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [setupData, setSetupData] = useState<MfaSetupResponse | null>(null);
   const [otpValue, setOtpValue] = useState('');
@@ -31,7 +29,6 @@ export default function MfaSetupPage() {
   const mfaEnabled = user?.mfaEnabled ?? false;
 
   useEffect(() => {
-    requestAnimationFrame(() => setIsVisible(true));
     if (!mfaEnabled) { initSetup(); } else { setIsInitializing(false); }
   }, [mfaEnabled]);
 
@@ -93,70 +90,73 @@ export default function MfaSetupPage() {
 
   if (isInitializing) {
     return (
-      <div className="signin-page">
-        <div className="mfa-initial-loader">
-          <Loader2 size={28} className="spinner-icon" />
-          <p>Loading MFA settings…</p>
+      <div className="db-root">
+        <div className="db-content">
+          <div className="mfa-initial-loader">
+            <Loader2 size={28} className="spinner-icon" />
+            <p>Loading MFA settings…</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="signin-page mfa-setup" style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 300ms ease-out' }}>
-      <main className="page" role="main">
-        <div className="mfa-shell">
-          <div className="mfa-topbar">
-            <a href="/" aria-label="Recoverpro home" className="mfa-topbar-logo"><Logo height={40} /></a>
-            <a href="/settings/profile" className="mfa-topbar-back"><ChevronLeft size={14} /> Back to profile</a>
-          </div>
-          <div className="mfa-hero">
-            <div className="mfa-hero-badge"><ShieldCheck size={22} /></div>
-            <div className="mfa-hero-text">
-              <div className="mfa-hero-eyebrow">Security · Two-Factor Auth</div>
-              <h1 className="mfa-hero-title">Two-factor <em>authentication.</em></h1>
-              <p className="mfa-hero-sub">Secure your account with an authenticator app — Google Authenticator, Authy, 1Password, or any TOTP-compatible app.</p>
-            </div>
-          </div>
-
-          {mfaEnabled && !disableDone && (
-            <MfaActiveBlock
-              disableMode={disableMode} setDisableMode={setDisableMode}
-              disableOtp={disableOtp} setDisableOtp={setDisableOtp}
-              disableLoading={disableLoading} disableError={disableError}
-              setDisableError={setDisableError} handleDisable={handleDisable}
-            />
-          )}
-
-          {disableDone && (
-            <div className="mfa-success-stack">
-              <div className="mfa-success-icon mfa-success-icon--warn">
-                <ShieldOff size={28} />
+    <div className="db-root">
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="db-inner ds-card db-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={18} />
               </div>
-              <div>
-                <h2 className="mfa-success-title">MFA disabled</h2>
-                <p className="mfa-success-sub">Two-factor authentication has been removed from your account.</p>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h2 className="db-card-title">Two-Factor Authentication</h2>
+                <span className="db-kpi2-foot-meta">Secure your account with an authenticator app</span>
               </div>
-              <a href="/settings/profile" className="btn-primary">
-                <span className="btn-primary-text">Back to profile</span><ArrowRight size={16} />
-              </a>
             </div>
-          )}
+          </header>
 
-          {!mfaEnabled && !disableDone && (
-            <MfaSetupStepFlow
-              step={step} setStep={setStep} setupData={setupData}
-              otpValue={otpValue} setOtpValue={setOtpValue}
-              isLoading={isLoading} error={error} setError={setError}
-              recoveryCodes={recoveryCodes}
-              codesAcknowledged={codesAcknowledged} setCodesAcknowledged={setCodesAcknowledged}
-              copiedSecret={copiedSecret} copiedCodes={copiedCodes}
-              copySecret={copySecret} copyRecoveryCodes={copyRecoveryCodes}
-              downloadRecoveryCodes={downloadRecoveryCodes} handleEnable={handleEnable}
-            />
-          )}
+          <div style={{ padding: 24, flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            {mfaEnabled && !disableDone && (
+              <MfaActiveBlock
+                disableMode={disableMode} setDisableMode={setDisableMode}
+                disableOtp={disableOtp} setDisableOtp={setDisableOtp}
+                disableLoading={disableLoading} disableError={disableError}
+                setDisableError={setDisableError} handleDisable={handleDisable}
+              />
+            )}
+
+            {disableDone && (
+              <div className="mfa-success-stack">
+                <div className="mfa-success-icon mfa-success-icon--warn">
+                  <ShieldOff size={28} />
+                </div>
+                <div>
+                  <h2 className="mfa-success-title">MFA disabled</h2>
+                  <p className="mfa-success-sub">Two-factor authentication has been removed from your account.</p>
+                </div>
+                <a href="/settings/profile" className="btn-primary">
+                  <span className="btn-primary-text">Back to profile</span><ArrowRight size={16} />
+                </a>
+              </div>
+            )}
+
+            {!mfaEnabled && !disableDone && (
+              <MfaSetupStepFlow
+                step={step} setStep={setStep} setupData={setupData}
+                otpValue={otpValue} setOtpValue={setOtpValue}
+                isLoading={isLoading} error={error} setError={setError}
+                recoveryCodes={recoveryCodes}
+                codesAcknowledged={codesAcknowledged} setCodesAcknowledged={setCodesAcknowledged}
+                copiedSecret={copiedSecret} copiedCodes={copiedCodes}
+                copySecret={copySecret} copyRecoveryCodes={copyRecoveryCodes}
+                downloadRecoveryCodes={downloadRecoveryCodes} handleEnable={handleEnable}
+              />
+            )}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

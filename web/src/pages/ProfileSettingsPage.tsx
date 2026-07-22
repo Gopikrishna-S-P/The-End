@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { authApi, clearAllAuthStorage } from '../api';
 import {
   User, Mail, Shield, LogOut, Loader2, AlertCircle,
-  ChevronRight, Building2, Phone, BadgeCheck, X
+  ChevronRight, Building2, Phone, BadgeCheck, X, KeyRound,
 } from 'lucide-react';
 import {
   type UserProfile, type ChangePasswordValues,
@@ -11,6 +11,25 @@ import {
 } from './ProfileSettingsTypes';
 import { ProfileChangePasswordForm } from './ProfileChangePasswordForm';
 import './Dashboard.css';
+
+function SectionHeader({ icon, title, sub, tone }: { icon: React.ReactNode; title: string; sub: string; tone?: 'danger' }) {
+  return (
+    <header className="db-card-head" style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="db-att-chip" style={{
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        background: tone === 'danger' ? 'var(--danger-subtle)' : 'var(--bg-subtle)',
+        color: tone === 'danger' ? 'var(--danger)' : 'var(--ink-solid)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {icon}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <h2 className="db-card-title" style={tone === 'danger' ? { color: 'var(--danger)' } : undefined}>{title}</h2>
+        <span className="db-kpi2-foot-meta">{sub}</span>
+      </div>
+    </header>
+  );
+}
 
 export default function ProfileSettingsPage() {
   const [profile,          setProfile]          = useState<UserProfile | null>(null);
@@ -72,50 +91,39 @@ export default function ProfileSettingsPage() {
         )}
       </AnimatePresence>
 
-      <div className="db-content">
-        <motion.div className="db-inner ds-card db-card" style={{ maxWidth: 640, height: 460, display: 'flex', flexDirection: 'column' }}>
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column' }}>
+        <motion.div className="db-inner ds-card db-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, maxWidth: 860, width: '100%', margin: '0 auto' }}>
           <div className="db-card-body" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
-          
-          {/* ── Account info ── */}
-          <section style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-            <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-base)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <User size={18} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h2 className="db-card-title">Profile Settings</h2>
-                  <span className="db-kpi2-foot-meta">Your personal profile details</span>
-                </div>
-              </div>
-            </header>
-            <div style={{ padding: '24px' }}>
-              {isLoadingProfile ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div className="ds-skel" style={{ width: 56, height: 56, borderRadius: 14 }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    <div className="ds-skel" style={{ height: 18, width: 160 }} />
-                    <div className="ds-skel" style={{ height: 14, width: 220 }} />
-                    <div className="ds-skel" style={{ height: 18, width: 90, borderRadius: 999 }} />
+
+            {/* ── Profile ── */}
+            <section style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <SectionHeader icon={<User size={18} />} title="Profile" sub="Your personal profile details" />
+              <div style={{ padding: '4px 28px 28px' }}>
+                {isLoadingProfile ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div className="ds-skel" style={{ width: 56, height: 56, borderRadius: 14 }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      <div className="ds-skel" style={{ height: 18, width: 160 }} />
+                      <div className="ds-skel" style={{ height: 14, width: 220 }} />
+                      <div className="ds-skel" style={{ height: 18, width: 90, borderRadius: 999 }} />
+                    </div>
                   </div>
-                </div>
-              ) : profileError ? (
-                <div className="db-error-banner" role="alert" style={{ margin: 0 }}>
-                  <AlertCircle size={16} className="db-error-icon" />
-                  <div className="db-error-body">
-                    <span className="db-error-title">{profileError}</span>
+                ) : profileError ? (
+                  <div className="db-error-banner" role="alert" style={{ margin: 0 }}>
+                    <AlertCircle size={16} className="db-error-icon" />
+                    <div className="db-error-body">
+                      <span className="db-error-title">{profileError}</span>
+                    </div>
                   </div>
-                </div>
-              ) : profile ? (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 }}>
-                    <div style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--ink-solid)', color: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                ) : profile ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--ink-solid)', color: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
                       {profile.avatarUrl ? <img src={profile.avatarUrl} alt={profile.name} style={{ width: '100%', height: '100%', borderRadius: 16, objectFit: 'cover' }} /> : getInitials(profile.name)}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
                       <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-primary)' }}>{profile.name || '—'}</span>
                       <span style={{ fontSize: 14, color: 'var(--ink-secondary)' }}>{profile.email}</span>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                         <span className="ds-pill is-info">
                           <BadgeCheck size={11} style={{ marginRight: 4 }} />{ROLE_LABELS[profile.role] ?? profile.role}
                         </span>
@@ -123,8 +131,16 @@ export default function ProfileSettingsPage() {
                       </div>
                     </div>
                   </div>
+                ) : null}
+              </div>
+            </section>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, background: 'var(--bg-subtle)', padding: 16, borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
+            {/* ── Account ── */}
+            {profile && !profileError && (
+              <section style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <SectionHeader icon={<Mail size={18} />} title="Account" sub="Contact and organization details" />
+                <div style={{ padding: '4px 28px 28px' }}>
+                  <div className="ps-account-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, background: 'var(--bg-subtle)', padding: 20, borderRadius: 12, border: '1px solid var(--border-subtle)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span className="db-kpi2-foot-meta">Full name</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-primary)', fontWeight: 500 }}><User size={13} style={{ color: 'var(--ink-tertiary)' }}/>{profile.name || '—'}</span>
@@ -146,73 +162,50 @@ export default function ProfileSettingsPage() {
                       </div>
                     )}
                   </div>
-                </>
-              ) : null}
-            </div>
-          </section>
+                </div>
+              </section>
+            )}
 
-          {/* ── Security ── */}
-          <section style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-            <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-base)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Shield size={18} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h2 className="db-card-title">Security</h2>
-                  <span className="db-kpi2-foot-meta">MFA and linked devices</span>
-                </div>
-              </div>
-            </header>
-            <div style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: `1px solid ${profile?.mfaEnabled ? 'var(--success-subtle)' : 'var(--border-subtle)'}`, borderRadius: 8, background: profile?.mfaEnabled ? 'color-mix(in srgb, var(--success) 4%, transparent)' : 'transparent' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  {profile?.mfaEnabled && (
-                    <div style={{ color: 'var(--success)' }}><Shield size={20} /></div>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>Two-factor authentication</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>
-                      {profile?.mfaEnabled ? 'Active — your account is protected' : 'Not enabled — add extra security'}
-                    </span>
+            {/* ── Password ── */}
+            <ProfileChangePasswordForm onSubmit={onChangePassword} />
+
+            {/* ── Security ── */}
+            <section style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <SectionHeader icon={<KeyRound size={18} />} title="Security" sub="Two-factor authentication" />
+              <div style={{ padding: '4px 28px 28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', border: `1px solid ${profile?.mfaEnabled ? 'var(--success-subtle)' : 'var(--border-subtle)'}`, borderRadius: 12, background: profile?.mfaEnabled ? 'color-mix(in srgb, var(--success) 4%, transparent)' : 'transparent' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
+                    <div style={{ color: profile?.mfaEnabled ? 'var(--success)' : 'var(--ink-tertiary)', flexShrink: 0 }}><Shield size={20} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>Two-factor authentication</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>
+                        {profile?.mfaEnabled ? 'Active — your account is protected' : 'Not enabled — add extra security'}
+                      </span>
+                    </div>
                   </div>
+                  <a href="/settings/mfa" className={`ds-btn ${profile?.mfaEnabled ? 'is-secondary' : 'is-primary'}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                    {profile?.mfaEnabled ? 'Manage' : 'Enable'} <ChevronRight size={13} />
+                  </a>
                 </div>
-                <a href="/settings/mfa" className="db-customize-btn" style={{ textDecoration: 'none', color: profile?.mfaEnabled ? 'var(--ink-primary)' : 'var(--ink-solid)', background: profile?.mfaEnabled ? 'transparent' : 'var(--bg-subtle)' }}>
-                  {profile?.mfaEnabled ? 'Manage' : 'Enable'} <ChevronRight size={13} style={{ marginLeft: 4 }} />
-                </a>
               </div>
-            </div>
-          </section>
+            </section>
 
-          {/* ── Change Password ── */}
-          <ProfileChangePasswordForm onSubmit={onChangePassword} />
-
-          {/* ── Danger Zone ── */}
-          <section>
-            <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-base)', position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--danger-subtle)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <LogOut size={18} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h2 className="db-card-title" style={{ color: 'var(--danger)' }}>Danger Zone</h2>
-                  <span className="db-kpi2-foot-meta">Sign out of your account</span>
+            {/* ── Danger Zone ── */}
+            <section>
+              <SectionHeader icon={<LogOut size={18} />} title="Danger Zone" sub="Sign out of your account" tone="danger" />
+              <div style={{ padding: '4px 28px 28px' }}>
+                <div style={{ padding: '18px 20px', border: '1px solid var(--danger-subtle)', borderRadius: 12, background: 'color-mix(in srgb, var(--danger) 3%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--danger)' }}>Sign out of this device</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>You'll need to sign in again to access Recoverpro.</span>
+                  </div>
+                  <button type="button" onClick={() => setShowLogoutConfirm(true)}
+                    className="ds-btn is-primary" style={{ background: 'var(--danger)', color: '#fff', border: 'none', flexShrink: 0 }}>
+                    <LogOut size={14} /> Sign out
+                  </button>
                 </div>
               </div>
-            </header>
-            <div style={{ padding: '24px' }}>
-              <div style={{ padding: '20px 24px', border: '1px solid var(--danger-subtle)', borderRadius: 12, background: 'color-mix(in srgb, var(--danger) 3%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--danger)' }}>Sign out of this device</span>
-                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>You'll need to sign in again to access Recoverpro.</span>
-                </div>
-                <button type="button" onClick={() => setShowLogoutConfirm(true)}
-                  className="ds-btn is-primary" style={{ background: 'var(--danger)', color: '#fff', border: 'none' }}>
-                  <LogOut size={14} /> Sign out
-                </button>
-              </div>
-            </div>
-          </section>
+            </section>
 
           </div>
         </motion.div>

@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Redis persistence dump (local dev runtime artifact)
+dump.rdb

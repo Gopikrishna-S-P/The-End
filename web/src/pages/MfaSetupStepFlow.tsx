@@ -71,10 +71,12 @@ export function MfaSetupStepFlow({
               {setupData.manualEntryKey && <p className="mfa-manual-key">Manual key: {setupData.manualEntryKey}</p>}
             </div>
           </div>
-          <button type="button" onClick={() => setStep(2)} className="btn-primary">
-            <span className="btn-primary-text">I've scanned it — continue</span>
-            <ArrowRight size={16} />
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 32 }}>
+            <button type="button" onClick={() => setStep(2)} className="btn-primary" style={{ marginBottom: 0 }}>
+              <span className="btn-primary-text">Continue</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </>
       )}
 
@@ -131,9 +133,11 @@ export function MfaSetupStepFlow({
               <span className="mfa-ack-text">I have saved my recovery codes in a secure location.</span>
             </label>
           </div>
-          <button type="button" onClick={() => setStep(4)} disabled={!codesAcknowledged} className="btn-primary">
-            <span className="btn-primary-text">Done</span><ArrowRight size={16} />
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="button" onClick={() => setStep(4)} disabled={!codesAcknowledged} className="btn-primary">
+              <span className="btn-primary-text">Done</span><ArrowRight size={16} />
+            </button>
+          </div>
         </>
       )}
 

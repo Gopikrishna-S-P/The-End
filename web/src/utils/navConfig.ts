@@ -101,7 +101,6 @@ export const ROUTE_LABELS: Record<string, string> = {
   '/app/non-contactables': 'Non-Contactables',
   '/app/calendar': 'Holiday Calendar',
   '/app/field-ops': 'Field Ops',
-  '/app/kpi': 'KPI Dashboard',
   '/app/portfolio-risk': 'Portfolio Risk',
   '/app/payments/links': 'Payment Links',
   '/app/borrowers': 'Borrowers',

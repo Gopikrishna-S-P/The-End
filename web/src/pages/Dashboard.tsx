@@ -5,7 +5,7 @@ import {
   CheckCircle, ArrowUpRight, ArrowUp, ArrowDown, Minus,
   ClipboardCheck, Handshake, UserPlus, Route, Navigation,
   AlertCircle, RefreshCw, Banknote, Users2, Briefcase, Activity,
-  Building2, TrendingUp, Gauge,
+  Building2, TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { dashboardApi } from '../api/dashboardApi';
@@ -387,12 +387,6 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {isOrgAdmin && (
-                    <button type="button" onClick={() => navigate('/app/kpi')}
-                      className="ds-btn is-secondary" title="KPI dashboard" aria-label="KPI dashboard">
-                      <Gauge size={14} />
-                    </button>
-                  )}
                   <div className="db-kpi-toggle" role="group" aria-label="KPI view">
                     <button type="button"
                       className={`db-kpi-toggle-btn${kpiView === 'today' ? ' is-active' : ''}`}

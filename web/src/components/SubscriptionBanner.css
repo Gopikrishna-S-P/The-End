@@ -22,11 +22,15 @@
   position: relative;
   width: 100%;
   max-width: 400px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: var(--radius-lg);
   padding: 36px 32px 32px;
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -39,22 +43,23 @@
 }
 
 .sub-wall-icon {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: none;
+  color: var(--danger);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
+  margin-top: 3px;
 }
 
 .sub-wall-title {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #111;
   letter-spacing: -0.02em;
   margin: 0 0 10px;
   font-family: var(--font-sans);
@@ -63,7 +68,7 @@
 .sub-wall-body {
   font-size: 13.5px;
   line-height: 1.6;
-  color: var(--text-secondary);
+  color: rgba(0, 0, 0, 0.6);
   margin: 0 0 24px;
   font-family: var(--font-sans);
   max-width: 300px;
@@ -91,7 +96,7 @@
 
 .sub-wall-hint {
   font-size: 11.5px;
-  color: var(--text-tertiary);
+  color: rgba(0, 0, 0, 0.5);
   margin: 0;
   font-family: var(--font-sans);
 }
@@ -103,14 +108,14 @@
   border-radius: var(--radius-sm);
   border: none;
   background: transparent;
-  color: var(--text-tertiary);
+  color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background var(--dur-fast), color var(--dur-fast);
 }
-.sub-wall-close:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.sub-wall-close:hover { background: rgba(0, 0, 0, 0.05); color: #111; }
 
 /* ── Trial banner — slim info strip ───────────────────────────────────────── */
 .sub-banner {
