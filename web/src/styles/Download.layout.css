@@ -59,8 +59,10 @@
   animation: dl-fadeUp 500ms var(--ease) 0ms forwards;
   position: relative;
   background-color: #ffffff;
+  /* dot-grid effect temporarily disabled
   background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
   background-size: 28px 28px;
+  */
 }
 
 .download-header::after {

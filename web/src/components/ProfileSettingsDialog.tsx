@@ -13,11 +13,9 @@ import { ProfileDangerZoneSection } from '../pages/ProfileDangerZoneSection';
 import { LogoutConfirmDialog } from '../pages/LogoutConfirmDialog';
 import { ProfileSettingsToast, type ToastState } from '../pages/ProfileSettingsToast';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-import { profileSettings, useProfileSettingsOpen } from '../utils/profileSettings';
+import { profileSettings, useProfileSettingsOpen, type SettingsTab } from '../utils/profileSettings';
 import '../pages/Dashboard.css';
 import './ProfileSettingsDialog.css';
-
-type SettingsTab = 'general' | 'account' | 'billing' | 'security' | 'danger';
 
 const NAV_ITEMS: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { key: 'general',  label: 'General',     icon: <Compass size={16} /> },
@@ -49,7 +47,7 @@ export default function ProfileSettingsDialog() {
   }, [open]);
 
   useEffect(() => {
-    if (open) setActiveTab('general');
+    if (open) setActiveTab(profileSettings.getTab());
   }, [open]);
 
   useEffect(() => {

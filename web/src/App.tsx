@@ -11,7 +11,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
-import MfaSetupPage from './pages/MfaSetupPage';
 import Dashboard from './pages/Dashboard';
 import LoansPage from './pages/LoansPage';
 import LoanDetailPage from './pages/LoanDetailPage';
@@ -145,9 +144,6 @@ function App() {
             {/* ── Authenticated routes with shared layout ── */}
             <Route element={<ProtectedRoute />}>
               <Route element={<FeatureFlagsProvider><AppLayout /></FeatureFlagsProvider>}>
-
-                {/* Settings (any authenticated user) */}
-                <Route path="/settings/mfa" element={<MfaSetupPage />} />
 
                 {/* ── /app/* — unified workspace for every org-level role ── */}
                 <Route element={<ProtectedRoute allowedRoles={ANY_ORG_ROLE} />}>

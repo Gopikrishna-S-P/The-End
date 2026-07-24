@@ -182,7 +182,7 @@ export default function LoansPage() {
   }, [load]);
 
   return (
-    <div className="db-root">
+    <div className="db-root alloc-root">
       <AnimatePresence>
         {loadError && (
           <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 
+export type SettingsTab = 'general' | 'account' | 'billing' | 'security' | 'danger';
+
 type Listener = (open: boolean) => void;
 let open = false;
+let tab: SettingsTab = 'general';
 const listeners = new Set<Listener>();
 
 function emit(): void {
@@ -9,8 +12,9 @@ function emit(): void {
 }
 
 export const profileSettings = {
-  show(): void {
-    if (open) return;
+  show(initialTab: SettingsTab = 'general'): void {
+    tab = initialTab;
+    if (open) { emit(); return; }
     open = true;
     emit();
   },
@@ -20,6 +24,7 @@ export const profileSettings = {
     emit();
   },
   get(): boolean { return open; },
+  getTab(): SettingsTab { return tab; },
   subscribe(fn: Listener): () => void {
     listeners.add(fn);
     fn(open);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Check } from 'lucide-react';
+import { profileSettings, useProfileSettingsOpen } from '../utils/profileSettings';
 import './MfaGate.css';
 
 function useRipple<T extends HTMLElement>() {
@@ -29,8 +29,7 @@ interface MfaGateProps {
 }
 
 export default function MfaGate({ mfaEnabled }: MfaGateProps) {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const settingsOpen = useProfileSettingsOpen();
   const [visible,   setVisible]   = useState(false);
   const [elapsed,   setElapsed]   = useState(0); // 0..1 fraction
   const rafRef    = useRef<number | null>(null);
@@ -38,7 +37,7 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
   const cta = useRipple<HTMLButtonElement>();
 
   useEffect(() => {
-    if (mfaEnabled || pathname.startsWith('/settings/mfa')) {
+    if (mfaEnabled || settingsOpen) {
       setVisible(false);
       return;
     }
@@ -49,7 +48,7 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
       return () => window.clearTimeout(t);
     }
     setVisible(true);
-  }, [mfaEnabled, pathname]);
+  }, [mfaEnabled, settingsOpen]);
 
   useEffect(() => {
     if (!visible) return;
@@ -136,7 +135,7 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
             ref={cta.ref}
             type="button"
             className="mfag-btn-primary"
-            onClick={e => { cta.fire(e); navigate('/settings/mfa'); }}
+            onClick={e => { cta.fire(e); profileSettings.show('security'); }}
           >
             Enable now
           </button>

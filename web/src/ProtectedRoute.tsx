@@ -3,7 +3,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { usePermissions } from './hooks/usePermissions';
 import { Logo } from './components/Logo';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import AccessDenied from './components/AccessDenied';
 import './components/LoadingSplash.css';
 import type { Role } from './types';
 
@@ -66,25 +67,5 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   return <Outlet />;
 };
-
-const AccessDenied: React.FC<{ reason?: string }> = ({ reason }) => (
-  <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 flex items-center justify-center px-4">
-    <div className="text-center">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
-        <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
-      </div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-        {reason || "You do not have permission to access this page. Contact your administrator if you think this is a mistake."}
-      </p>
-      <a
-        href="/app/dashboard"
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors"
-      >
-        Back to Dashboard
-      </a>
-    </div>
-  </div>
-);
 
 export default ProtectedRoute;

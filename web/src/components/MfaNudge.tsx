@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../AuthContext';
+import { profileSettings, useProfileSettingsOpen } from '../utils/profileSettings';
 import './MfaNudge.css';
 
 // Snooze cadence — 24h. The user can dismiss for a day, but we re-surface it
@@ -11,15 +11,14 @@ const SNOOZE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export default function MfaNudge() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const settingsOpen = useProfileSettingsOpen();
 
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
     if (!user) { setHidden(true); return; }
     if (user.mfaEnabled) { setHidden(true); return; }
-    if (pathname.startsWith('/settings/mfa')) { setHidden(true); return; }
+    if (settingsOpen) { setHidden(true); return; }
 
     const snoozedUntil = Number(localStorage.getItem(SNOOZE_KEY) ?? 0);
     if (snoozedUntil && snoozedUntil > Date.now()) {
@@ -29,7 +28,7 @@ export default function MfaNudge() {
       return () => window.clearTimeout(t);
     }
     setHidden(false);
-  }, [user, pathname]);
+  }, [user, settingsOpen]);
 
   if (hidden) return null;
 
@@ -54,7 +53,7 @@ export default function MfaNudge() {
           <button
             type="button"
             className="mfa-nudge-cta"
-            onClick={() => navigate('/settings/mfa')}
+            onClick={() => profileSettings.show('security')}
           >
             Enable now <ArrowRight size={13} />
           </button>

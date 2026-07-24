@@ -14,7 +14,6 @@ export { default as ReportsPage } from './ReportsPage';
 export { default as AuditPage } from './AuditPage';
 export { default as AgentsPage } from './AgentsPage';
 
-export { default as MfaSetupPage } from './MfaSetupPage';
 export { default as AttendancePage } from './AttendancePage';
 export { default as MyAttendancePage } from './MyAttendancePage';
 export { default as StartVisitPage } from './StartVisitPage';

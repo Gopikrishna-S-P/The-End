@@ -1,0 +1,122 @@
+/* ── AccessDenied — popup pattern, same chrome as TopbarCustomizeDialog /
+   Help & resources (.app-topbar-custom-backdrop/-dialog): blurred scrim +
+   translucent glass card ── */
+
+.access-denied-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-splash);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(12, 10, 9, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: ad-fade-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes ad-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.access-denied-dialog {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  animation: ad-rise var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes ad-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.access-denied-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.access-denied-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.access-denied-title {
+  font-family: var(--font-sans);
+  font-size: 19px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.access-denied-sub {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 16px;
+}
+
+.access-denied-route-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  margin-bottom: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.access-denied-route-chip code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.access-denied-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.access-denied-btn-primary {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: #0AA550;
+  color: var(--text-on-solid);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms var(--ease);
+}
+.access-denied-btn-primary:hover { background: #088a42; }
