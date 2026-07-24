@@ -1,7 +1,7 @@
 @import './FieldOpsHeader.css';
 @import './FieldOpsMap.css';
 @import './FieldOpsPanel.css';
-@import './FieldOpsCards.css';
+@import './FieldOps.cards.css';
 
 /* ── Error banner ── */
 .fo-error-banner {

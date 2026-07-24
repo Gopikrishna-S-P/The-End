@@ -30,6 +30,21 @@
 *::-webkit-scrollbar-thumb { background: var(--border, #e2e5ea); border-radius: 999px; }
 
 html, body {
+  /* Guard against off-canvas `position:fixed` panels (LucienPanel.css) creating
+     a page-level horizontal scrollbar. Fixed elements are meant to be excluded
+     from the document's scrollable area even when transformed off-screen, but
+     Chromium includes their transformed bounds anyway — confirmed via
+     getBoundingClientRect at viewport 1366/1920/2560: .lucien-panel measures
+     hundreds of px past the right edge purely from its closed-state
+     `transform: translateX(calc(100% + 32px))`, and that alone was producing a
+     real scrollbar and pushing the topbar's search/notification/settings/avatar
+     cluster out of the visible page. */
+  /* Both axes must be set explicitly: overflow-x:hidden alone is silently
+     upgraded back to auto by the browser per spec, because overflow-y was
+     left at its default `visible` (a "visible paired with non-visible"
+     value forces the visible one to auto — it does not stay hidden). */
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: var(--sans);
   /* `font-synthesis: none` prevents browsers from inventing a bold/italic
      when the requested weight isn't available in the loaded face — it
@@ -74,7 +89,3 @@ samp,
 var {
   font-family: var(--mono);
 }
-
-/* Force component-specific CSS to load after global styles (Vite chunk ordering fix) */
-@import "../pages/Dashboard.css";
-@import "./UploadDataPage.css";

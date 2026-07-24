@@ -173,7 +173,7 @@ export function UsersTable({
                             ))}
                             {canCreate && assignableRoles.filter(r => !userRoles.includes(r.name)).length > 0 && (
                               <select value="" onChange={e => { if (e.target.value) onAddRole(u, e.target.value); }}
-                                style={{ fontSize: 11, padding: '0 4px', border: 'none', background: 'transparent', color: 'var(--primary)', cursor: 'pointer' }}>
+                                style={{ fontSize: 11, padding: '0 4px', border: 'none', background: 'transparent', color: 'var(--ink-solid)', cursor: 'pointer' }}>
                                 <option value="">+ add role</option>
                                 {assignableRoles.filter(r => !userRoles.includes(r.name)).map(r => (
                                   <option key={r.id} value={r.name}>{roleLabel(r.name)}</option>

@@ -159,7 +159,7 @@ export default function ActiveVisitCard({ onClosed }: Props) {
           <div style={{ fontWeight: 700, fontSize: 15 }}>
             {session.borrowerName ?? session.loanNumber}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--ds-text-subtle)' }}>{session.loanNumber}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>{session.loanNumber}</div>
         </div>
         <span style={{
           fontSize: 11, fontWeight: 600, color: statusColor,
@@ -169,7 +169,7 @@ export default function ActiveVisitCard({ onClosed }: Props) {
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 13, color: 'var(--ds-text-subtle)' }}>
+      <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 13, color: 'var(--ink-tertiary)' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <Clock size={13} /> {statusFrom ? elapsed(statusFrom) : '—'}
         </span>
@@ -229,7 +229,7 @@ export default function ActiveVisitCard({ onClosed }: Props) {
           className="ds-btn ds-btn--ghost"
           disabled={acting}
           onClick={handleAbandon}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ds-danger, #ef4444)' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--danger)' }}
         >
           <X size={14} /> Abandon
         </button>

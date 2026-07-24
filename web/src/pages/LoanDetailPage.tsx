@@ -16,6 +16,7 @@ import {
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../components/CaseTimeline.css';
+import '../styles/LoanDetailPage.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 

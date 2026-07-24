@@ -2,7 +2,7 @@
 
 .rp-footer {
   background: #E3EDE6;
-  padding: 64px 48px 32px !important;
+  padding: 64px 48px 24px !important;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   border-top: 1px solid var(--border) !important;
@@ -10,8 +10,6 @@
 
 .rp-footer *, .rp-footer *::before, .rp-footer *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 .rp-footer-inner {
@@ -22,8 +20,8 @@
 .rp-footer-top {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 64px;
-  padding-bottom: 56px;
+  gap: 56px;
+  padding-bottom: 40px;
 }
 
 .rp-footer-brand-col {
@@ -43,6 +41,13 @@
   color: var(--ink-secondary, #6B6B6B);
   line-height: 1.5;
   max-width: 240px;
+}
+
+.rp-footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
 }
 
 .rp-footer-col {
@@ -67,13 +72,19 @@
   text-decoration: none;
   transition: color 150ms ease;
   line-height: 1;
+  width: fit-content;
 }
 .rp-footer-link:hover { color: var(--ink-primary, #1A1A1A); }
 
+/* ── Bottom bar ── */
 .rp-footer-bottom {
-  padding-top: 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--border, #C4D4C9);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .rp-footer-copy {
@@ -81,8 +92,24 @@
   color: var(--ink-tertiary, #9B9B9B);
 }
 
+.rp-footer-legal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rp-footer-legal-link {
+  font-size: 12px;
+  color: var(--ink-tertiary, #9B9B9B);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.rp-footer-legal-link:hover { color: var(--ink-primary, #1A1A1A); }
+
+.rp-footer-legal-sep { font-size: 12px; color: var(--border-strong, #A6B8AC); }
+
 @media (max-width: 768px) {
-  .rp-footer { padding: 48px 24px 28px !important; }
+  .rp-footer { padding: 48px 24px 20px !important; }
   .rp-footer-top {
     grid-template-columns: 1fr 1fr;
     gap: 32px;
@@ -92,4 +119,5 @@
 
 @media (max-width: 480px) {
   .rp-footer-top { grid-template-columns: 1fr; }
+  .rp-footer-bottom { flex-direction: column; align-items: flex-start; gap: 10px; }
 }

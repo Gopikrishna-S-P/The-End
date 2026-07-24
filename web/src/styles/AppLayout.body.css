@@ -39,7 +39,10 @@
 .app-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
 /* Main content layering */
-.app-main > .app-route-view { position: relative; z-index: 1; margin-top: -12px; }
+/* No negative margin-top here: .app-main is a scroll container, so anything
+   pulled above its top edge is clipped and unreachable (scrollTop can't go
+   negative) — it permanently ate the first 12px of every page header. */
+.app-main > .app-route-view { position: relative; z-index: 1; }
 
 /* Bottom-of-scroll glow — overlay on .app-body (the non-scrolling flex row),
    pinned to the visible bottom edge of the content area. It sits OUTSIDE the

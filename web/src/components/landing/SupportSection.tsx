@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ArrowRight, CheckCircle, Phone, Mail, Loader2 } from "lucide-react";
+import { ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { FaqItem } from "./FaqItem";
 
-const CONTACT_EMAIL = "recoverpro.offl@gmail.com";
-const CONTACT_PHONE = "+91 99459 14234";
+// Still surfaced, but only in the submit-failure path — a fallback route when
+// the form itself can't deliver.
+const CONTACT_EMAIL = "hello@recoverpro.in";
 
 const FAQS = [
   { q: "Is RecoverPro RBI compliant?",
@@ -129,15 +130,6 @@ export function SupportSection() {
               </>
             )}
           </form>
-
-          <div className="landing-support-contact-details">
-            <a href={`tel:${CONTACT_PHONE.replace(/\s/g, "")}`} className="landing-contact-detail">
-              <Phone size={13} strokeWidth={1.8} />{CONTACT_PHONE}
-            </a>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="landing-contact-detail">
-              <Mail size={13} strokeWidth={1.8} />{CONTACT_EMAIL}
-            </a>
-          </div>
         </div>
       </div>
     </section>

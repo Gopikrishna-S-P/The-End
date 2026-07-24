@@ -106,7 +106,7 @@ export default function MfaSetupPage() {
     <div className="db-root">
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="db-inner ds-card db-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+          <header className="db-card-head" style={{ padding: '16px 24px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ShieldCheck size={18} />

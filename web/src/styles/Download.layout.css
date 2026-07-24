@@ -15,8 +15,6 @@
 .download-page *::before,
 .download-page *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 /* ── Navbar ── */
@@ -51,12 +49,35 @@
   background: var(--bg-subtle);
 }
 
-/* ── Header ── */
+/* ── Header ──────────────────────────────────────────────────────────────────
+   Same dot grid as the landing hero (28px pitch, #D1D5DB), fading out at the
+   bottom so it dissolves into the white page rather than stopping on an edge. */
 .download-header {
   text-align: center;
   padding: 96px 24px 64px;
   opacity: 0;
   animation: dl-fadeUp 500ms var(--ease) 0ms forwards;
+  position: relative;
+  background-color: #ffffff;
+  background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.download-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, #ffffff);
+  pointer-events: none;
+}
+
+/* Keep the copy above the fade overlay. */
+.download-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .download-eyebrow {

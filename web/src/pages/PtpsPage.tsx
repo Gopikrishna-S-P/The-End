@@ -15,6 +15,7 @@ import { PtpCreateModal } from './PtpCreateModal';
 import { STATUS_ICON, PtpRow } from './PtpsHelpers';
 import '../styles/AppPage.css';
 import './Dashboard.css';
+import '../styles/PtpsPage.css';
 
 const PAGE_SIZE = 25;
 

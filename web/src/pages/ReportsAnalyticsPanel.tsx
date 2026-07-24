@@ -78,7 +78,7 @@ function DataTable({ columns, rows, keyFn }: { columns: Col[]; rows: Record<stri
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid var(--border-default)', background: 'var(--bg-canvas)' }}>
+          <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-canvas)' }}>
             {columns.map(c => (
               <th key={c.key} style={{ padding: '7px 10px', textAlign: c.align ?? 'left', fontWeight: 600, fontSize: 10.5, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                 {c.label}

@@ -6,6 +6,7 @@ import { apiClient, unwrapApiResponse } from '../client';
 import type { CaseEvent, CaseTimelineResponse } from '../types';
 import { dayLabel, CASE_EXPORT_OPTIONS, FileDown, FileText, TableIcon } from './CaseTimelineHelpers';
 import { EventRow } from './CaseTimelineEventRow';
+import './CaseTimeline.css';
 
 interface Props { allocationId: string; }
 

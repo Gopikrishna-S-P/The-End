@@ -14,6 +14,7 @@ import { VisitRow } from './VisitRow';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../styles/ds/ds.empty.css';
+import '../styles/VisitsPage.css';
 
 const PAGE_SIZE = 20;
 

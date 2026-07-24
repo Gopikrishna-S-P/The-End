@@ -1,5 +1,11 @@
 /* ── Dashboard ───────────────────────────────────────────────────────────────── */
 
+/* Tokens and ds-* primitives come from AppPage.css, which Dashboard.tsx and
+   PlatformDashboard.tsx now import directly (see the note there). Not imported
+   here on purpose: AppPreviewFrame pulls this file into the public landing
+   page and carries its own scoped token set, so a global :root import would
+   leak app tokens onto the marketing routes. */
+
 /* ── Error banner ── */
 .db-error-banner {
   display: flex;
@@ -1297,6 +1303,22 @@
   align-items: flex-end;
   gap: 8px;
   padding-top: 14px;
+  position: relative;
+}
+
+/* Baseline running under every column — the tracks are capped at 36px and
+   centred, so a border on them would break at each gap. This is one continuous
+   rule instead, sitting between the bars and their month labels. Its offset is
+   the label's line-height (14px) plus the column gap (6px). */
+.db-bars::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  height: 1px;
+  background: var(--border-strong);
+  pointer-events: none;
 }
 .db-bar-col {
   flex: 1;
@@ -1323,18 +1345,26 @@
   background: var(--bg-subtle);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
+/* Any month with a value reads green. The old 32% mix against --bg-subtle
+   desaturated so far it looked grey, so a month with real collections was
+   indistinguishable from an empty track. The peak still leads with full
+   --ink-solid; the rest sit a step back but stay unambiguously green. */
 .db-bar-fill {
   width: 100%;
   border-radius: var(--radius-md) var(--radius-md) 2px 2px;
-  background: color-mix(in srgb, var(--ink-solid) 32%, var(--bg-subtle));
+  /* Literal fallback inside the mix: if the token ever fails to resolve again,
+     the bar degrades to green rather than to no background at all. */
+  background: color-mix(in srgb, var(--ink-solid, #0AA550) 68%, #ffffff);
   min-height: 2px;
   transition: filter .18s ease, background-color .18s ease;
 }
-.db-bar-fill.is-peak { background: var(--ink-solid); }
+.db-bar-fill.is-peak { background: var(--ink-solid, #0AA550); }
 .db-bar-col:hover .db-bar-fill { filter: brightness(1.08); }
 .db-bar-label {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
+  /* Fixed so .db-bars::after can sit on a predictable baseline offset. */
+  line-height: 14px;
   color: var(--ink-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1375,22 +1405,25 @@
   color: var(--ink-secondary);
   flex-shrink: 0;
 }
+/* Was 22px. The floor here is set by .db-hbar-val-inline — the lead bar sets
+   its value inside the fill, so the track has to clear that line box. */
 .db-hbar-track {
-  height: 22px;
-  border-radius: var(--radius-md);
+  height: 14px;
+  border-radius: 999px;
   background: var(--bg-subtle);
   overflow: hidden;
 }
 .db-hbar-fill {
   height: 100%;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
   display: flex; align-items: center; justify-content: flex-end;
-  padding-right: 9px;
+  padding-right: 8px;
 }
 .db-hbar-val-inline {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 10px;
   font-weight: 700;
+  line-height: 1;
   color: var(--text-on-solid);
   white-space: nowrap;
 }
@@ -1408,7 +1441,7 @@
   .db-rail .db-card { flex: 1; }
 }
 @media (max-width: 760px) {
-  .db-kpi-band { grid-template-columns: repeat(2, 1fr); }
+  .db-kpi-band { grid-template-columns: 1fr; }
   .db-rail { flex-direction: column; }
   .db-bar-cap { display: none; }
 }

@@ -239,7 +239,7 @@ export default function AgentsPage() {
 
       <div className="dd-main-container">
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--ds-text-subtle)', textTransform: 'uppercase', letterSpacing: 1 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: 1 }}>
             Live Field Status
           </h2>
           <TeamStatusTab />

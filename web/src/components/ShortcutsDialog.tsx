@@ -7,6 +7,7 @@ import {
 } from '../utils/keymap';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import './TopbarCustomizeDialog.css';
+import './ShortcutsDialog.css';
 
 interface ShortcutsDialogProps {
   open: boolean;

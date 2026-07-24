@@ -5,6 +5,7 @@ import { notifications, useNotifications } from '../utils/notifications';
 import { confetti } from '../utils/confetti';
 import { NotifItem } from './NotifItem';
 import './TopbarCustomizeDialog.css';
+import './NotificationPanel.css';
 
 interface NotificationPanelProps {
   onClose: () => void;

@@ -10,6 +10,7 @@ import { ShieldCheck, Plus, X, Loader2, AlertCircle } from 'lucide-react';
 import { RoleCard, type EditState } from './RoleManagementRoleCard';
 import '../styles/AppPage.css';
 import './Dashboard.css';
+import '../styles/RoleManagementPage.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 

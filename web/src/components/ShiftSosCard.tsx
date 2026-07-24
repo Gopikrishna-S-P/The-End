@@ -200,7 +200,7 @@ export default function ShiftSosCard() {
           <div style={{ fontWeight: 700, fontSize: 15 }}>
             {activeIncidentId ? 'SOS active' : onShift ? 'On duty' : 'Off duty'}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--ds-text-subtle)' }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>
             {onShift && shift?.startedAt ? `Shift started ${elapsed(shift.startedAt)} ago` : 'Start your shift to begin field tracking'}
           </div>
         </div>

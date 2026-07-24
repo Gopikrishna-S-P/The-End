@@ -177,14 +177,43 @@
   --z-dropdown: 200;
   --z-elevated: 300;
   --z-modal:    500;
-  --z-toast:    800;
-  --z-palette: 9000;
+  --z-toast:    800;   /* ds-toast (ds.toast.css) — inline, page-scoped notices */
+
+  /* Floating-UI tier (9000-9500): previously 14+ components hardcoded their
+     own values in this range with no shared scale, in an order that mostly
+     made sense but was never enforced or documented. Named here in ascending
+     visual-priority order so the relationship between tiers is explicit. */
+  --z-decorative:   9000;  /* NoiseOverlay — ambient background effect */
+  --z-drawer:       9050;  /* PageHelpDrawer, SplitPaneDrawer */
+  --z-panel:        9100;  /* TopbarCustomizeDialog (+ CommandPalette, which
+                               shares its CSS), ProfileSettingsDialog,
+                               NotificationPrefsDialog, FeedbackDialog,
+                               ActivityPanel */
+  --z-dialog:       9200;  /* WhatsNewModal, ShortcutsDialog */
+  --z-toast-global: 9250;  /* Toasts, NotificationToasts — app-shell-level,
+                               must stay visible above any open dialog/panel.
+                               Separate from --z-toast (ds-toast): that one is
+                               deliberately lower, for inline page notices. */
+  --z-context-menu: 9300;  /* SlashMenu, BreadcrumbContextMenu */
+  --z-tour:         9400;  /* TourOverlay */
+  --z-celebration:  9500;  /* ConfettiHost */
+
   --z-skip:   10000;
+
+  /* Full-page takeover tier: nothing else is mounted/interactive while these
+     show, so they sit above even --z-skip. */
+  --z-loader: 99998;  /* BrandedLoader */
+  --z-splash: 99999;  /* LoadingSplash */
 
   /* ── Layout dimensions ────────────────────────────────────────────────── */
   --rp-tb-h:     56px;
   --rp-sb-off:   64px;
-  --rp-sb-on:   280px;
+  /* Fluid within a floor/ceiling so the sidebar holds ~15-20% of the viewport
+     across every common laptop and monitor instead of drifting (it was a fixed
+     280px = 21.9% at 1280, but only 10.9% at 2560). The floor stops nav labels
+     truncating on small screens; the ceiling stops a 27" monitor rendering a
+     460px sidebar of mostly whitespace. */
+  --rp-sb-on:   clamp(240px, 18vw, 384px);
   --rp-lucien-w: 340px;
 
   /* ── Forward compat: anything still referencing old rp-* ink/surface ──── */

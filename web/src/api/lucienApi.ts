@@ -60,8 +60,13 @@ export const lucienApi = {
     return response.data.data;
   },
 
-  sendMessage: async (data: ChatRequest): Promise<ChatResponse> => {
-    const response = await axiosInstance.post<ApiResponse<ChatResponse>>('/api/v1/lucien/chat', data);
+  /**
+   * `signal` lets the caller abort an in-flight reply — this is what backs the
+   * composer's "Stop" control. Aborting only cancels the client's wait; the
+   * server-side turn may still complete and be visible in session history.
+   */
+  sendMessage: async (data: ChatRequest, signal?: AbortSignal): Promise<ChatResponse> => {
+    const response = await axiosInstance.post<ApiResponse<ChatResponse>>('/api/v1/lucien/chat', data, { signal });
     return response.data.data;
   },
 

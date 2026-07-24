@@ -7,6 +7,7 @@ import { LucienHistoryPanel } from './LucienHistoryPanel';
 import { LucienMessages } from './LucienMessages';
 import '../styles/AppPage.css';
 import './Dashboard.css';
+import '../styles/LucienPage.css';
 
 interface PendingConfirm {
   actionId: string;

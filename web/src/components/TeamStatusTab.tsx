@@ -61,7 +61,7 @@ export default function TeamStatusTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Calendar size={14} style={{ color: 'var(--ds-text-subtle)' }} />
+          <Calendar size={14} style={{ color: 'var(--ink-tertiary)' }} />
           <input
             type="date"
             value={date}
@@ -78,7 +78,7 @@ export default function TeamStatusTab() {
           )}
         </div>
         {!loading && summary.length > 0 && (
-          <span style={{ fontSize: 12.5, color: 'var(--ds-text-subtle)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 12.5, color: 'var(--ink-tertiary)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Navigation size={13} /> {fmtKm(totalDistance)} total · {totalSessions} visit{totalSessions === 1 ? '' : 's'} · {summary.length} officer{summary.length === 1 ? '' : 's'}
           </span>
         )}
@@ -115,7 +115,7 @@ export default function TeamStatusTab() {
                     <td>{e.activeLoanNumber ?? '—'} {e.activeBorrowerName ? `· ${e.activeBorrowerName}` : ''}</td>
                     <td>{elapsed(e.statusSince)}</td>
                     <td style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Navigation size={13} style={{ color: 'var(--ds-text-subtle)' }} />
+                      <Navigation size={13} style={{ color: 'var(--ink-tertiary)' }} />
                       {fmtKm(e.totalDistanceMetres)}
                     </td>
                   </tr>

@@ -57,6 +57,19 @@
   gap: 16px;
 }
 
+/* No breakpoint existed for this file at all: the fixed 350px context panel
+   plus its 24px gap plus the container's 80px horizontal padding (454px
+   total) exceeds available content width below ~734px viewport — a hard
+   grid overflow, not just cramping. This route (visit submission) is used
+   by field officers on phones/tablets. */
+@media (max-width: 860px) {
+  .visit-submit-container { padding: 20px 16px; }
+  .visit-submit-content { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .visit-form-grid { grid-template-columns: 1fr; }
+}
+
 /* Submit Action Bar aligned with the new aesthetic */
 .visit-action-bar {
   position: sticky;
@@ -75,7 +88,7 @@
 
 .premium-submit-btn {
   background: var(--brand); /* use brand color */
-  color: var(--brand-on-solid);
+  color: var(--text-on-solid);
   border: none;
   padding: 10px 20px;
   border-radius: var(--radius-md);

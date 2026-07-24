@@ -16,6 +16,7 @@ import '../styles/DailyDispatchPage.css';
 import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
 import './Dashboard.css';
+import '../styles/CaseAssignmentsPage.css';
 
 export type AssignTab = 'assign' | 'reassign';
 

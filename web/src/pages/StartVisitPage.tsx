@@ -119,7 +119,7 @@ export default function StartVisitPage() {
             >
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{c.borrowerName ?? c.loanNumber}</div>
-                <div style={{ fontSize: 12, color: 'var(--ds-text-subtle)' }}>{c.loanNumber}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>{c.loanNumber}</div>
               </div>
               <button
                 className="ds-btn ds-btn--primary"

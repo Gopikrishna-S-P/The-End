@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as RMouseEvent } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { Lock, LogOut, X as XIcon, ChevronRight, PanelLeft } from 'lucide-react';
+import { Lock, LogOut, X as XIcon, PanelLeft } from 'lucide-react';
 import { Logo } from './Logo';
 import { prefetchRoute } from '../utils/routePrefetch';
 import { useT } from '../utils/i18n';
@@ -106,8 +106,9 @@ export default function AppSidebar({
   const hideTip = useCallback(() => setTip(null), []);
   useEffect(() => { if (expanded) setTip(null); }, [expanded]);
 
-  // Running counter for Alt+N keyboard hints (1–9)
-  let kbIndex = 0;
+  // First name only — the surname added nothing the avatar and role line don't
+  // already carry, and it was the first thing to truncate in the footer pill.
+  const displayName = user?.firstName || user?.email || 'Account';
 
   return (
     <aside
@@ -185,9 +186,6 @@ export default function AppSidebar({
                   {section.items.map(item => {
                     const isActive = computeActive(item.to);
                     const label = t(item.label);
-                    kbIndex++;
-                    const kbN = kbIndex <= 9 ? kbIndex : null;
-                    const showKbHint = expanded && !!kbN && !isActive && !item.count && !item.locked;
 
                     return (
                       <li key={item.to}>
@@ -218,14 +216,6 @@ export default function AppSidebar({
                               {item.locked && (
                                 <Lock size={10} style={{ marginLeft: 'auto', color: 'var(--text-tertiary)', opacity: 0.7 }} aria-label="Feature locked" />
                               )}
-                              {showKbHint && (
-                                <span className="asb-kb-hint" aria-hidden="true">Alt+{kbN}</span>
-                              )}
-                              {isActive && (
-                                <div className="asb-action-icon">
-                                  <ChevronRight size={12} aria-hidden="true" />
-                                </div>
-                              )}
                             </>
                           )}
                         </NavLink>
@@ -244,7 +234,7 @@ export default function AppSidebar({
         {collapsed ? (
           <button type="button" className="asb-footer-rail-btn" onClick={onProfileSettings}
             aria-label="Profile settings"
-            onMouseEnter={e => showTip(e, [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Account')}
+            onMouseEnter={e => showTip(e, displayName)}
             onMouseLeave={hideTip}
           >
             <span className="asb-avatar" style={{ background: avatarColor }}>{initials(user)}</span>
@@ -258,9 +248,7 @@ export default function AppSidebar({
               <span className="asb-avatar" style={{ background: avatarColor }}>{initials(user)}</span>
             </span>
             <div className="asb-footer-identity">
-              <span className="asb-footer-name" title={[user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || ''}>
-                {[user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || 'Account'}
-              </span>
+              <span className="asb-footer-name" title={displayName}>{displayName}</span>
               <div className="asb-footer-meta-row">
                 {roleLabel && <span className="asb-footer-role">{roleLabel}</span>}
                 {roleLabel && user?.organizationName && <span className="asb-footer-sep" aria-hidden="true">·</span>}

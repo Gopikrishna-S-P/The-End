@@ -16,6 +16,7 @@ import '../styles/PlatformSetupPage.css';
 import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
 import './Dashboard.css';
+import '../styles/LoansPage.css';
 
 const PAGE_SIZE = 20;
 

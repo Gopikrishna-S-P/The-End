@@ -58,9 +58,14 @@
   position: relative;
 }
 
+/* Border-box only. Do NOT zero margin/padding here: this selector is
+   specificity (0,1,0) and unlayered, so it beat every single-class page rule
+   (.db-content, .db-kpi-card, …) and every Tailwind spacing utility, which
+   live in @layer utilities. Tailwind Preflight already zeroes UA defaults in
+   @layer base, where page CSS can override it. */
 .app-layout *,
 .app-layout *::before,
-.app-layout *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.app-layout *::after { box-sizing: border-box; }
 
 /* ── Focus ring — global for everything inside app shell ──────────────────── */
 .app-layout :focus-visible {

@@ -22,6 +22,7 @@ import { StatusPill, PaymentModePill, fmtINR, fmtDate } from './CollectionsHelpe
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
+import '../styles/CollectionsPage.css';
 
 const PAGE_SIZE = 20;
 

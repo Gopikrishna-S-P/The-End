@@ -13,6 +13,7 @@ import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
 import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
+import '../styles/TodayVisitsPage.css';
 
 const fmtINR = (v?: number | null) =>
   v != null

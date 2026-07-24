@@ -32,7 +32,7 @@ export function FeatureGate({ flagKey, children, hardBlock = false }: FeatureGat
         minHeight: '60vh', padding: '32px'
       }}>
         <div style={{
-          background: 'var(--surface, #1a1a1a)', border: '1px solid var(--border, #2a2a2a)',
+          background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '12px', padding: '40px 48px', maxWidth: '420px',
           textAlign: 'center', display: 'flex', flexDirection: 'column',
           alignItems: 'center', gap: '16px'
@@ -42,13 +42,13 @@ export function FeatureGate({ flagKey, children, hardBlock = false }: FeatureGat
             background: 'rgba(255,255,255,0.05)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <Lock size={22} style={{ color: 'var(--muted, #777)' }} />
+            <Lock size={22} style={{ color: '#777' }} />
           </div>
           <div>
-            <h2 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 600 }}>
+            <h2 style={{ margin: '0 0 6px', fontSize: '17px', fontWeight: 600, color: 'var(--text-on-solid)' }}>
               {label} requires {plan}
             </h2>
-            <p style={{ margin: 0, color: 'var(--muted, #888)', fontSize: '13px', lineHeight: 1.55 }}>
+            <p style={{ margin: 0, color: '#888', fontSize: '13px', lineHeight: 1.55 }}>
               Upgrade your plan to unlock this feature for your organization.
             </p>
           </div>
@@ -95,18 +95,18 @@ export function FeatureGate({ flagKey, children, hardBlock = false }: FeatureGat
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: 'var(--surface, #1a1a1a)', border: '1px solid var(--border, #2a2a2a)',
+              background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '12px', padding: '28px 32px', maxWidth: '360px', width: '90%',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               gap: '14px', textAlign: 'center'
             }}
           >
-            <Lock size={26} style={{ color: 'var(--muted, #777)' }} />
+            <Lock size={26} style={{ color: '#777' }} />
             <div>
-              <h3 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 600 }}>
+              <h3 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 600, color: 'var(--text-on-solid)' }}>
                 Upgrade to {plan}
               </h3>
-              <p style={{ margin: 0, color: 'var(--muted, #888)', fontSize: '13px', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, color: '#888', fontSize: '13px', lineHeight: 1.5 }}>
                 {label} is included in the {plan} plan. Upgrade to unlock it for your organization.
               </p>
             </div>

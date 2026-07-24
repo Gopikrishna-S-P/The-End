@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+// AppPage.css -> ds/ds.css supplies the design tokens (--ink-solid, --border,
+// --radius-*, --text-*) and the ds-* primitives this page renders (ds-card,
+// ds-pill, ds-skel, ds-btn, ds-empty). The AppLayout chain does not define
+// them, so without this the dashboard only looked right when some other lazy
+// route happened to have loaded them first.
+import '../styles/AppPage.css';
+import './Dashboard.css';
 import {
   CheckCircle, ArrowUpRight, ArrowUp, ArrowDown, Minus,
   ClipboardCheck, Handshake, UserPlus, Route, Navigation,

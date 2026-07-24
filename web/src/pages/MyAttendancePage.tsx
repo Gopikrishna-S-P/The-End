@@ -62,9 +62,9 @@ export default function MyAttendancePage() {
                   <td>{formatTime(r.checkedInAt)}</td>
                   <td>
                     {r.lat != null && r.lng != null ? (
-                      <span style={{ color: 'var(--ds-success)' }}>&#10003; Recorded</span>
+                      <span style={{ color: 'var(--success)' }}>&#10003; Recorded</span>
                     ) : (
-                      <span style={{ color: 'var(--ds-text-subtle)' }}>No GPS</span>
+                      <span style={{ color: 'var(--ink-tertiary)' }}>No GPS</span>
                     )}
                   </td>
                 </tr>

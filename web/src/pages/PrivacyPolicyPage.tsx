@@ -158,7 +158,7 @@ export default function PrivacyPolicyPage() {
                 <li>Any revocation, with the reason and timestamp recorded.</li>
               </ul>
               <p>Consent artifacts are immutable once created. A revocation creates a new record rather than modifying the original, preserving the full history. Organisations can view and export consent records for a borrower at any time.</p>
-              <p>Borrowers may withdraw consent by contacting their lender or by writing to us at <a href="mailto:recoverpro.offl@gmail.com">recoverpro.offl@gmail.com</a>. Withdrawal of consent does not affect the lawfulness of processing carried out before withdrawal, and does not override retention obligations mandated by RBI or other regulators.</p>
+              <p>Borrowers may withdraw consent by contacting their lender or by writing to us at <a href="mailto:support@recoverpro.in">support@recoverpro.in</a>. Withdrawal of consent does not affect the lawfulness of processing carried out before withdrawal, and does not override retention obligations mandated by RBI or other regulators.</p>
             </div>
           </section>
 
@@ -174,7 +174,7 @@ export default function PrivacyPolicyPage() {
                 <li><strong>Grievance redressal.</strong> File a complaint with our Grievance Officer (see Section 12). Acknowledgement within 24 hours; resolution within 30 days.</li>
                 <li><strong>Nomination.</strong> Nominate another individual to exercise your rights in the event of death or incapacity, in line with DPDP Act 2023 §14.</li>
               </ul>
-              <p>Staff members exercise most rights through their employing organisation's Org Admin. Borrowers may approach their lender or write directly to us at <a href="mailto:recoverpro.offl@gmail.com">recoverpro.offl@gmail.com</a>.</p>
+              <p>Staff members exercise most rights through their employing organisation's Org Admin. Borrowers may approach their lender or write directly to us at <a href="mailto:support@recoverpro.in">support@recoverpro.in</a>.</p>
             </div>
           </section>
 
@@ -244,8 +244,7 @@ export default function PrivacyPolicyPage() {
               <div className="callout">
                 <div className="callout-label">Grievance Officer · Recoverpro</div>
                 <p className="callout-body">
-                  <strong>Email:</strong> <a href="mailto:recoverpro.offl@gmail.com">recoverpro.offl@gmail.com</a><br />
-                  <strong>Phone:</strong> <a href="tel:+919945914234">+91 99459 14234</a><br />
+                  <strong>Email:</strong> <a href="mailto:support@recoverpro.in">support@recoverpro.in</a><br />
                   <strong>Response time:</strong> Acknowledgement within 24 hours; resolution within 30 days.
                 </p>
               </div>

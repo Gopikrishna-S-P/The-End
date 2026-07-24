@@ -2,7 +2,7 @@
 
 .app-slash-menu {
   position: fixed;
-  z-index: 9300;
+  z-index: var(--z-context-menu);
   min-width: 260px;
   max-width: 360px;
   background: var(--bg-surface);

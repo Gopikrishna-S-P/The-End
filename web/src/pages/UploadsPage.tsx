@@ -272,7 +272,7 @@ export default function UploadsPage() {
           {isPlatformAdmin && selectedOrgId && !confirmedReason && (
             <motion.div variants={fadeUp} className="ds-card" style={{ padding: 16, marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <ShieldAlert size={15} style={{ color: 'var(--ds-warning, #b45309)' }} />
+                <ShieldAlert size={15} style={{ color: 'var(--warning)' }} />
                 <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
               </div>
               <p style={{ fontSize: 13, opacity: 0.75, margin: '0 0 12px' }}>

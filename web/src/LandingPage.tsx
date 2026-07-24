@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { Logo, Footer } from "./components";
 import { AppPreviewFrame } from "./components/AppPreviewFrame";
 import {
-  RecoveryTicker,
   FeatureLedger,
   SupportSection,
 } from "./components/landing";
@@ -33,13 +32,6 @@ function useRipple() {
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
-const STATS = [
-  { value: "Office + field", label: "One platform" },
-  { value: "08:00–19:00",    label: "Calling hours enforced" },
-  { value: "Live",           label: "Field GPS · offline sync" },
-  { value: "100%",           label: "Audit trail" },
-];
-
 const GUARANTEES = [
   "CALLING HOURS 08:00–19:00",
   "CONTACT LIMITS PER CHANNEL",
@@ -58,6 +50,18 @@ export default function LandingPage() {
   const ripple = useRipple();
 
   useScrollReveal();
+
+  useEffect(() => {
+    // SEO Meta Tags
+    document.title = "RecoverPro | Run Recovery Better";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.setAttribute("name", "description");
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute("content", "Allocate accounts, dispatch your field team, log every visit, and reconcile every rupee — on one platform that keeps you inside RBI rules by default.");
+  }, []);
 
   useEffect(() => {
     const userStr = getUserCache();
@@ -131,25 +135,12 @@ export default function LandingPage() {
           }
         </div>
 
-        <div className="landing-stats">
-          {STATS.map((s) => (
-            <div className="landing-stat" key={s.label}>
-              <div className="landing-stat-value">{s.value}</div>
-              <div className="landing-stat-label">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
         {/* ── Product frame — real app preview ── */}
         <AppPreviewFrame />
       </section>
 
-      {/* ── Live ops ticker ── */}
-      <RecoveryTicker />
-
-
       {/* ── 02 · Features ── */}
-      <section className="landing-section landing-section-alt">
+      <section className="landing-section landing-section-alt" id="features">
         <div className="landing-section-head">
           <div>
             <p className="landing-section-label">What's inside</p>
@@ -160,7 +151,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Compliance band — inverted statement ── */}
-      <section className="landing-compliance">
+      <section className="landing-compliance" id="compliance">
         <h2 className="landing-compliance-title">
           Compliance isn't a feature here.<br /><em>It's the floor.</em>
         </h2>

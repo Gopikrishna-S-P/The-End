@@ -12,6 +12,8 @@ import {
   TrendChart, ProgressRing,
   type DonutSlice as Slice,
 } from './DashboardShared';
+// See the note in Dashboard.tsx — same token/primitive dependency.
+import '../styles/AppPage.css';
 import './Dashboard.css';
 
 // ── Chart palette — brand green for the lead category, the validated ordinal

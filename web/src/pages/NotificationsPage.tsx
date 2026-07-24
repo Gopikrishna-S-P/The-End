@@ -12,6 +12,7 @@ import {
   type NotifType,
 } from '../utils/notifications';
 import './Dashboard.css';
+import '../styles/NotificationsPage.css';
 
 type Filter = 'all' | 'unread';
 
@@ -144,7 +145,7 @@ export default function NotificationsPage() {
                     const GroupIcon = TYPE_ICON[group.type];
                     const colorMap: Record<NotifType, string> = {
                       system: 'var(--info)',
-                      mention: 'var(--accent)',
+                      mention: 'var(--brand)',
                       assignment: 'var(--success)',
                       deadline: 'var(--warning)',
                     };

@@ -11,6 +11,7 @@ import {
 import { UploadAddColumnModal } from './UploadAddColumnModal';
 import { UploadDataTable } from './UploadDataTable';
 import type { EditingCell } from './UploadCell';
+import '../styles/UploadDataPage.css';
 const PAGE_SIZE = 50;
 
 // ── Motion variants ────────────────────────────────────────────────────────────

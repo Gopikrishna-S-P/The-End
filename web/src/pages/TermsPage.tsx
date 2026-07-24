@@ -253,8 +253,7 @@ export default function TermsPage() {
               <div className="callout">
                 <div className="callout-label">Recoverpro</div>
                 <p className="callout-body">
-                  <strong>Email:</strong> <a href="mailto:recoverpro.offl@gmail.com">recoverpro.offl@gmail.com</a><br />
-                  <strong>Phone:</strong> <a href="tel:+919945914234">+91 99459 14234</a>
+                  <strong>Email:</strong> <a href="mailto:hello@recoverpro.in">hello@recoverpro.in</a>
                 </p>
               </div>
             </div>

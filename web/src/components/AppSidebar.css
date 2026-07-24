@@ -302,24 +302,9 @@
   color: #111;
 }
 
-/* Action chevron */
-.asb-action-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: transparent;
-  color: rgba(0,0,0,0.2);
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-.asb-root .asb-nav-item.is-active .asb-action-icon {
-  color: #111;
-}
+/* The active row used to end in a chevron, which cost the label 38px (24px box
+   + 14px gap) and said nothing the fill, the bold weight, and the white icon
+   box weren't already saying. Removed so the label gets that width back. */
 
 .asb-badge {
   position: absolute;
@@ -388,30 +373,9 @@
   border-color: var(--asb-border);
 }
 
-/* ── Keyboard shortcut hint ───────────────────────────────────────────────── */
-.asb-kb-hint {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: .12em;
-  color: var(--asb-ink-faint);
-  background: var(--asb-surface);
-  border: 1px solid var(--asb-border);
-  border-radius: var(--radius-xs);
-  padding: 1px 5px;
-  line-height: 1.5;
-  white-space: nowrap;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity var(--dur-fast);
-  pointer-events: none;
-}
-
-.asb-nav-item:hover .asb-kb-hint {
-  opacity: 1;
-  transform: translateX(2px);
-}
+/* The Alt+N hint chip that used to sit at the end of each row is gone — the
+   shortcut is still live and documented in the Shortcuts dialog, so the row
+   keeps its full width for the label. */
 
 /* ── Org workspace anchor ─────────────────────────────────────────────────── */
 .asb-org-anchor {

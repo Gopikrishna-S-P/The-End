@@ -16,39 +16,6 @@
 @import './AppPage.dark-fieldops.css';
 @import './AppPage.hero.css';
 
-.app-page {
-  /* Inherits --bg-canvas, --sans/serif/mono, --ease from .app-layout scope.  */
-  /* Maps remaining aliases to --rp-* primitives — cool-slate, not warm-stone. */
-  --bg-surface:    var(--rp-bg-surface);
-  --bg-subtle:     var(--rp-bg-subtle);
-  --border:        var(--rp-border);
-  --ink-primary:   var(--rp-ink-1);
-  --ink-secondary: var(--rp-ink-2);
-  --ink-tertiary:  var(--rp-ink-3);
-  --error:         var(--rp-error);
-  --error-subtle:  var(--rp-error-subtle);
-  --warn:          var(--rp-warn-ink);
-  --warn-subtle:   var(--rp-warn-bg);
-  --success:       var(--rp-success);
-
-  min-height: 100%;
-  background: var(--bg-subtle);
-  color: var(--ink-primary);
-  font-family: var(--sans);
-  font-size: var(--text-body);       /* enforce 13px baseline across all pages */
-  line-height: var(--lh-normal);     /* enforce 1.55 baseline */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  padding: 0;
-}
-
-.app-page *,
-.app-page *::before,
-.app-page *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
 
 /* ── Shell card ──────────────────────────────────────── */
 .app-page-shell {

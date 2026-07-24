@@ -7,6 +7,7 @@ import {
 import { getPageHelp } from '../utils/pageHelp';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import './TopbarCustomizeDialog.css';
+import './PageHelpDrawer.css';
 
 interface PageHelpDrawerProps {
   open: boolean;

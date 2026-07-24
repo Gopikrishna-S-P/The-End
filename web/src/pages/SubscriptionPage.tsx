@@ -10,6 +10,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import '../styles/AppPage.css';
 import './Dashboard.css';
+import './SubscriptionPage.css';
 
 const stagger: Variants = {
   hidden: {},

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import '../styles/AppPage.css';
 import './Dashboard.css';
+import '../styles/OrganizationSettingsPage.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 

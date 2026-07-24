@@ -8,6 +8,7 @@ import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
+import '../styles/FeatureFlagsPage.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 
