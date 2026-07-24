@@ -88,9 +88,11 @@ export default function LoansPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.roles?.[0]?.name?.replace('ROLE_', '');
-  const canSeeBorrowers = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN';
-  const canSeeFraudCases = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN';
-  const canSeePortfolioRisk = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL';
+  // Temporarily hidden from the Loans toolbar — flip to re-enable.
+  const SHOW_LOANS_QUICK_LINKS = false;
+  const canSeeBorrowers = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN');
+  const canSeeFraudCases = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN');
+  const canSeePortfolioRisk = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm   = searchParams.get('q')         ?? '';
