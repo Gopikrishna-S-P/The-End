@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Lock, Loader2 } from 'lucide-react';
 import { changePasswordSchema, type ChangePasswordValues } from './ProfileSettingsTypes';
 import { EyeOpen, EyeClosed, PasswordStrength } from './ProfileSettingsHelpers';
+import { SectionHeader } from './ProfileSettingsSectionHeader';
 import './Dashboard.css';
 
 interface Props {
@@ -21,17 +22,9 @@ export function ProfileChangePasswordForm({ onSubmit }: Props) {
   const newPassword = watch('newPassword') ?? '';
 
   return (
-    <section aria-label="Change password" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-      <header className="db-card-head" style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div className="db-att-chip" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--bg-subtle)', color: 'var(--ink-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Lock size={18} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h2 className="db-card-title">Password</h2>
-          <span className="db-kpi2-foot-meta">Update your login password</span>
-        </div>
-      </header>
-      <div style={{ padding: '4px 28px 28px' }}>
+    <section className="ps-section" aria-label="Change password">
+      <SectionHeader icon={<Lock size={18} />} title="Password" sub="Choose a strong, unique password" />
+      <div className="ps-section-body">
         <form onSubmit={handleSubmit(onSubmit)} noValidate autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 480 }}>
           <div className="ds-field">
             <label className="ds-label" htmlFor="ps-current" style={{ marginBottom: 6, display: 'block' }}>Current password</label>

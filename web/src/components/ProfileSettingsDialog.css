@@ -91,6 +91,67 @@
   min-height: 0;
 }
 
+/* ── Section chrome — used by every section inside the dialog body ── */
+
+.ps-section {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ps-section:last-child {
+  border-bottom: none;
+}
+
+.ps-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+}
+
+.ps-section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+}
+
+.ps-section-icon.is-danger {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.ps-section-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--ink-primary);
+}
+
+.ps-section-title.is-danger {
+  color: var(--danger);
+}
+
+.ps-section-sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+}
+
+.ps-section-body {
+  padding: 4px 28px 28px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ps-dialog-backdrop,
   .ps-dialog {
