@@ -232,18 +232,15 @@ export default function AppSidebar({
       {/* ── Identity footer ── */}
       <div className="asb-footer" aria-label="Account">
         {collapsed ? (
-          <button type="button" className="asb-footer-rail-btn" onClick={onProfileSettings}
-            aria-label="Profile settings"
+          <div className="asb-footer-rail-btn"
+            aria-label={displayName}
             onMouseEnter={e => showTip(e, displayName)}
             onMouseLeave={hideTip}
           >
             <span className="asb-avatar" style={{ background: avatarColor }}>{initials(user)}</span>
-          </button>
+          </div>
         ) : (
-          <div className="asb-footer-pill" role="button" tabIndex={0}
-            onClick={onProfileSettings}
-            onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onProfileSettings?.()}
-          >
+          <div className="asb-footer-pill">
             <span className="asb-avatar-wrap">
               <span className="asb-avatar" style={{ background: avatarColor }}>{initials(user)}</span>
             </span>

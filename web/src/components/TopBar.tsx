@@ -6,6 +6,7 @@ import {
   Keyboard, BookOpen, Compass, MessageSquare, ExternalLink,
 } from 'lucide-react';
 import { tour } from '../utils/tour';
+import { profileSettings } from '../utils/profileSettings';
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
 
@@ -329,13 +330,12 @@ export default function TopBar(props: TopBarProps) {
         </div>
 
         {/* Settings */}
-        <button 
-          type="button" 
-          className="app-icon-btn" 
-          aria-label="Settings" 
-          data-tooltip="Settings (Ctrl+K)"
-          onClick={onOpenPalette}
-          aria-keyshortcuts="Control+K Meta+K"
+        <button
+          type="button"
+          className="app-icon-btn"
+          aria-label="Settings"
+          data-tooltip="Settings"
+          onClick={() => profileSettings.show()}
         >
           <Settings size={18} aria-hidden="true" />
         </button>

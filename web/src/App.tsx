@@ -52,6 +52,7 @@ import RestructureProposalsPage from './pages/RestructureProposalsPage';
 import NonContactablesPage from './pages/NonContactablesPage';
 import PortfolioRiskPage from './pages/PortfolioRiskPage';
 import LandingPage from './LandingPage';
+import DebugProfileSettings from './DebugProfileSettings';
 import DownloadPage from './pages/DownloadPage';
 import NotificationsPage from './pages/NotificationsPage';
 import MyCasesPage from './pages/MyCasesPage';
@@ -229,6 +230,7 @@ function App() {
             {/* Root — landing page; authenticated users get dashboard link in-page */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/download" element={<DownloadPage />} />
+            <Route path="/__debug-profile" element={<DebugProfileSettings />} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/login" replace />} />

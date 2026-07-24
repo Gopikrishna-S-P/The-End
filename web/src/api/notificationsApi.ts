@@ -3,14 +3,16 @@ import type { ApiResponse } from '../types';
 
 /**
  * Matches server/src/main/java/com/recoverpro/server/controller/NotificationController.java
- * (/api/v1/notifications) exactly — 3 endpoints, `@PreAuthorize("isAuthenticated()")`:
- *   GET    /api/v1/notifications           → unread notifications for the caller (no params, not paged)
- *   PATCH  /api/v1/notifications/read-all   → marks all of the caller's notifications read
- *   PATCH  /api/v1/notifications/{id}/read  → marks one notification read
+ * (/api/v1/notifications), `@PreAuthorize("isAuthenticated()")`:
+ *   GET    /api/v1/notifications             → unread notifications for the caller (no params, not paged)
+ *   GET    /api/v1/notifications/unread-count
+ *   PATCH  /api/v1/notifications/read-all     → marks all of the caller's notifications read
+ *   PATCH  /api/v1/notifications/{id}/read    → marks one notification read
+ *   PATCH  /api/v1/notifications/{id}/dismiss
+ *   PATCH  /api/v1/notifications/{id}/snooze?until=<ISO instant>
+ *   POST   /api/v1/notifications/stream/ticket + GET /stream — SSE push (not yet used client-side)
  *
- * There is NO unread-count endpoint, NO dismiss/delete endpoint, NO snooze endpoint, and NO
- * SSE/WebSocket push endpoint, even though the `AppNotification` entity already has `dismissed`
- * and `snoozedUntil` columns. See BCR-3 in BACKEND-REQUESTS.md.
+ * BCR-3 in BACKEND-REQUESTS.md is stale — dismiss/snooze/unread-count/SSE all exist server-side.
  */
 
 /** Backend NotificationType — matches enums/NotificationType.java exactly. */
@@ -52,5 +54,18 @@ export const notificationsApi = {
 
   markAllRead: async (): Promise<void> => {
     await axiosInstance.patch('/api/v1/notifications/read-all');
+  },
+
+  dismiss: async (id: string): Promise<void> => {
+    await axiosInstance.patch(`/api/v1/notifications/${id}/dismiss`);
+  },
+
+  snooze: async (id: string, until: string): Promise<void> => {
+    await axiosInstance.patch(`/api/v1/notifications/${id}/snooze`, undefined, { params: { until } });
+  },
+
+  unreadCount: async (): Promise<number> => {
+    const res = await axiosInstance.get<ApiResponse<number>>('/api/v1/notifications/unread-count');
+    return res.data.data;
   },
 };

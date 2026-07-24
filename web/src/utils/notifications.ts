@@ -73,10 +73,9 @@ function setState(next: Notification[]): void {
 }
 
 /**
- * The backend has NO push channel for notifications (no SSE/WebSocket endpoint — the
- * `/api/v1/notifications` route only ever returns the caller's current unread set on
- * request). Polling is therefore the *only* delivery mechanism, not a safety net for a
- * stream. See BCR-3 in BACKEND-REQUESTS.md.
+ * The backend does have an SSE stream (GET /api/v1/notifications/stream, ticket-authed via
+ * POST .../stream/ticket) but the client isn't wired to it yet. Polling is the current
+ * delivery mechanism.
  */
 const POLL_INTERVAL_MS = 25_000;
 let pollTimer: number | null = null;
@@ -136,16 +135,10 @@ export const notifications = {
     return { id: '', type: 'system', title: '', createdAt: new Date().toISOString() };
   },
 
-  /**
-   * The backend has no dismiss/delete endpoint (BCR-3). Since GET /api/v1/notifications
-   * only ever returns the caller's *unread* set, marking read has the same visible effect —
-   * the item drops out of the list on the next refresh. Mapped to markRead as the closest
-   * real equivalent instead of calling a route that doesn't exist.
-   */
   async dismiss(id: string): Promise<void> {
     state = state.filter(n => n.id !== id);
     emit();
-    try { await notificationsApi.markRead(id); } catch { refreshNow(); }
+    try { await notificationsApi.dismiss(id); } catch { refreshNow(); }
   },
 
   async markRead(id: string): Promise<void> {
@@ -164,23 +157,19 @@ export const notifications = {
     try { await notificationsApi.markAllRead(); } catch { refreshNow(); }
   },
 
-  /** Equivalent to markAllRead here (see `dismiss` doc) — clears the visible/unread set. */
+  /** Since GET /api/v1/notifications only ever returns the unread set, marking everything
+   * read has the same visible effect as clearing the list. */
   async clearAll(): Promise<void> {
     state = [];
     emit();
     try { await notificationsApi.markAllRead(); } catch { refreshNow(); }
   },
 
-  /**
-   * Local-only — the backend has a `snoozedUntil` column but no endpoint to set it (BCR-3),
-   * and the server-returned list carries no persisted snooze either. This optimistically
-   * hides the item until `durationMs` elapses, but a page reload / next poll will restore it
-   * since nothing was actually persisted server-side.
-   */
-  snooze(id: string, durationMs: number): void {
+  async snooze(id: string, durationMs: number): Promise<void> {
     const until = new Date(Date.now() + durationMs).toISOString();
     state = state.map(n => n.id === id ? { ...n, snoozedUntil: until } : n);
     emit();
+    try { await notificationsApi.snooze(id, until); } catch { refreshNow(); }
   },
 
   refresh(): Promise<void> { return refreshNow(); },

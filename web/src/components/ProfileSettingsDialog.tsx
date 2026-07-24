@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi, clearAllAuthStorage } from '../api';
-import { User, X } from 'lucide-react';
+import { X, Compass, UserRound, CreditCard, KeyRound, ShieldAlert } from 'lucide-react';
 import { type UserProfile, type ChangePasswordValues } from '../pages/ProfileSettingsTypes';
 import { ProfileChangePasswordForm } from '../pages/ProfileChangePasswordForm';
+import { ProfileGeneralSection } from '../pages/ProfileGeneralSection';
 import { ProfileOverviewSection } from '../pages/ProfileOverviewSection';
 import { ProfileAccountSection } from '../pages/ProfileAccountSection';
+import { ProfileBillingSection } from '../pages/ProfileBillingSection';
 import { ProfileSecuritySection } from '../pages/ProfileSecuritySection';
 import { ProfileDangerZoneSection } from '../pages/ProfileDangerZoneSection';
 import { LogoutConfirmDialog } from '../pages/LogoutConfirmDialog';
@@ -14,6 +16,16 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { profileSettings, useProfileSettingsOpen } from '../utils/profileSettings';
 import '../pages/Dashboard.css';
 import './ProfileSettingsDialog.css';
+
+type SettingsTab = 'general' | 'account' | 'billing' | 'security' | 'danger';
+
+const NAV_ITEMS: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
+  { key: 'general',  label: 'General',     icon: <Compass size={16} /> },
+  { key: 'account',  label: 'Account',     icon: <UserRound size={16} /> },
+  { key: 'billing',  label: 'Billing',     icon: <CreditCard size={16} /> },
+  { key: 'security', label: 'Security',    icon: <KeyRound size={16} /> },
+  { key: 'danger',   label: 'Danger Zone', icon: <ShieldAlert size={16} /> },
+];
 
 export default function ProfileSettingsDialog() {
   const open = useProfileSettingsOpen();
@@ -27,12 +39,17 @@ export default function ProfileSettingsDialog() {
   const [isLoggingOut,     setIsLoggingOut]     = useState(false);
   const [toast,            setToast]            = useState<ToastState | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [activeTab,        setActiveTab]        = useState<SettingsTab>('general');
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) setActiveTab('general');
   }, [open]);
 
   useEffect(() => {
@@ -87,12 +104,9 @@ export default function ProfileSettingsDialog() {
       role="presentation"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="rp-profile-settings-title">
+      <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Profile settings">
         <header className="ps-dialog-header">
-          <div className="ps-dialog-title">
-            <User size={16} aria-hidden="true" />
-            <span id="rp-profile-settings-title">Profile settings</span>
-          </div>
+          <h1 className="ps-dialog-title">Settings</h1>
           <button type="button" className="ps-dialog-close" onClick={onClose} aria-label="Close">
             <X size={16} aria-hidden="true" />
           </button>
@@ -100,19 +114,43 @@ export default function ProfileSettingsDialog() {
 
         <ProfileSettingsToast toast={toast} onDismiss={() => setToast(null)} />
 
-        <div className="ps-dialog-body">
-          {/* identity */}
-          <ProfileOverviewSection profile={profile} isLoading={isLoadingProfile} error={profileError} />
+        <div className="ps-dialog-layout">
+          <nav className="ps-sidebar" aria-label="Settings sections">
+            {NAV_ITEMS.map(item => (
+              <button
+                key={item.key}
+                type="button"
+                className={`ps-sidebar-item${activeTab === item.key ? ' is-active' : ''}${item.key === 'danger' ? ' is-danger' : ''}`}
+                onClick={() => setActiveTab(item.key)}
+                aria-current={activeTab === item.key ? 'page' : undefined}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </nav>
 
-          {/* contact / org details — only shown when there's something beyond what's already on the profile card */}
-          {profile && !profileError && <ProfileAccountSection profile={profile} />}
+          <div className="ps-dialog-body">
+            {activeTab === 'general' && <ProfileGeneralSection onClose={onClose} />}
 
-          {/* security-related actions grouped together */}
-          <ProfileChangePasswordForm onSubmit={onChangePassword} />
-          <ProfileSecuritySection profile={profile ?? undefined} onNavigate={onClose} />
+            {activeTab === 'account' && (
+              <>
+                {/* identity */}
+                <ProfileOverviewSection profile={profile} isLoading={isLoadingProfile} error={profileError} />
 
-          {/* destructive action, always last */}
-          <ProfileDangerZoneSection onRequestLogout={() => setShowLogoutConfirm(true)} />
+                {/* contact / org details — only shown when there's something beyond what's already on the profile card */}
+                {profile && !profileError && <ProfileAccountSection profile={profile} />}
+
+                <ProfileChangePasswordForm onSubmit={onChangePassword} />
+              </>
+            )}
+
+            {activeTab === 'billing' && <ProfileBillingSection />}
+
+            {activeTab === 'security' && <ProfileSecuritySection />}
+
+            {activeTab === 'danger' && <ProfileDangerZoneSection onRequestLogout={() => setShowLogoutConfirm(true)} />}
+          </div>
         </div>
       </div>
 

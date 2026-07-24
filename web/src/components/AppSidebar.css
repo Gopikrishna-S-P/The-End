@@ -454,7 +454,8 @@
   user-select: none;
 }
 
-/* Footer pill row — behaves like a Profile Card */
+/* Footer pill row — static identity card (avatar/name/org); the sign-out
+   icon inside it is the only interactive control here. */
 .asb-root .asb-footer-pill {
   display: flex;
   align-items: center;
@@ -463,47 +464,15 @@
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: transparent;
-  cursor: pointer;
-  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
-.asb-root .asb-footer-pill:hover {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.15);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
-}
-
-.asb-root .asb-footer-pill:active {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.asb-root .asb-footer-pill:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-/* Collapsed rail button */
+/* Collapsed rail — static avatar, no click target */
 .asb-root .asb-footer-rail-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 4px 0;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all var(--dur-fast);
-}
-
-.asb-root .asb-footer-rail-btn:hover {
-  background: #F8FAFC;
-  transform: translateX(2px);
-}
-
-.asb-root .asb-footer-rail-btn:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
 }
 
 /* Identity text */

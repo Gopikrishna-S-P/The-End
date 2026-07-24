@@ -5,7 +5,7 @@ import AppSidebar from './components/AppSidebar';
 import RouteProgressBar from './components/RouteProgressBar';
 import CommandPalette, { type PaletteItem } from './components/CommandPalette';
 import ActivityPanel from './components/ActivityPanel';
-import NotificationPanel from './components/NotificationPanel';
+import NotificationsDialog from './components/NotificationsDialog';
 import PageHelpDrawer from './components/PageHelpDrawer';
 import ShortcutsDialog from './components/ShortcutsDialog';
 import TopbarCustomizeDialog from './components/TopbarCustomizeDialog';
@@ -27,6 +27,7 @@ import { useAppNavState } from './hooks/useAppNavState';
 import './styles/AppLayout.css';
 import { loadingSplash } from './utils/loadingSplash';
 import { profileSettings } from './utils/profileSettings';
+import { notificationsDialog, useNotificationsDialogOpen } from './utils/notificationsDialog';
 
 export default function AppLayout() {
   const navigate  = useNavigate();
@@ -37,6 +38,7 @@ export default function AppLayout() {
   useEffect(() => { loadingSplash.hideAfterMin(2000); }, []);
 
   const s = useAppLayoutState();
+  const notifDialogOpen = useNotificationsDialogOpen();
 
   // Bottom-of-scroll glow: only shown once the user has actually scrolled
   // .app-main to its end, re-checked on route change and content resize
@@ -91,12 +93,12 @@ export default function AppLayout() {
       />
       <GlobalSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ActivityPanel open={s.activityOpen} onClose={() => s.setActivityOpen(false)} onNavigate={p => navigate(p)} />
-      {s.notifOpen && <NotificationPanel onClose={() => s.setNotifOpen(false)} onNavigate={p => { s.setNotifOpen(false); navigate(p); }} />}
 
       <PageHelpDrawer open={s.pageHelpOpen} onClose={() => s.setPageHelpOpen(false)} pathname={location.pathname} />
       <ShortcutsDialog open={s.shortcutsOpen} onClose={() => s.setShortcutsOpen(false)} />
       <TopbarCustomizeDialog open={s.topbarCustOpen} onClose={() => s.setTopbarCustOpen(false)} />
       <ProfileSettingsDialog />
+      <NotificationsDialog />
 
       <BreadcrumbContextMenu
         open={!!s.crumbCtx}
@@ -156,8 +158,8 @@ export default function AppLayout() {
           onToggleLucien={() => { s.setLucienOpen(o => !o); s.play(); }}
           notifRef={s.notifRef}
           unreadCount={s.unreadCount}
-          notifOpen={s.notifOpen}
-          onBellClick={() => { s.setNotifOpen(o => !o); s.play(); }}
+          notifOpen={notifDialogOpen}
+          onBellClick={() => { notificationsDialog.show(); s.play(); }}
           topbarHidden={s.topbarHidden}
           onOpenShortcuts={() => { s.setHelpOpen(true); s.play(); }}
           onLogout={s.handleLogout}

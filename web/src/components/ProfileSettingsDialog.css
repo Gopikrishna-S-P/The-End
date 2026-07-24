@@ -21,7 +21,8 @@
 
 .ps-dialog {
   width: 100%;
-  max-width: 640px;
+  max-width: 760px;
+  height: 640px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -46,25 +47,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 14px 24px;
   flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .ps-dialog-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--sans);
-  font-size: 16px;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
   font-weight: 700;
-  color: #111;
-  background: linear-gradient(135deg, #111, #444);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.01em;
+  color: var(--ink-primary);
 }
-
-.ps-dialog-title svg { color: #444; }
 
 .ps-dialog-close {
   width: 34px;
@@ -85,10 +80,64 @@
   color: #111;
 }
 
+.ps-dialog-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.ps-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.ps-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.ps-sidebar-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ink-primary);
+}
+
+.ps-sidebar-item.is-active {
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+}
+
+.ps-sidebar-item.is-danger {
+  color: var(--danger);
+}
+
+.ps-sidebar-item.is-danger:hover,
+.ps-sidebar-item.is-danger.is-active {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger);
+}
+
 .ps-dialog-body {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  min-height: 0;
 }
 
 /* ── Section chrome — used by every section inside the dialog body ── */
@@ -161,4 +210,23 @@
 
 @media (max-width: 640px) {
   .ps-dialog { max-width: 100%; }
+
+  .ps-dialog-layout {
+    flex-direction: column;
+  }
+
+  .ps-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 8px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ps-sidebar-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
