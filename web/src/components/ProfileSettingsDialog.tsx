@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi, clearAllAuthStorage } from '../api';
-import { User, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { type UserProfile, type ChangePasswordValues } from '../pages/ProfileSettingsTypes';
 import { ProfileChangePasswordForm } from '../pages/ProfileChangePasswordForm';
 import { ProfileOverviewSection } from '../pages/ProfileOverviewSection';
@@ -87,12 +87,8 @@ export default function ProfileSettingsDialog() {
       role="presentation"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="rp-profile-settings-title">
+      <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Profile settings">
         <header className="ps-dialog-header">
-          <div className="ps-dialog-title">
-            <User size={16} aria-hidden="true" />
-            <span id="rp-profile-settings-title">Profile settings</span>
-          </div>
           <button type="button" className="ps-dialog-close" onClick={onClose} aria-label="Close">
             <X size={16} aria-hidden="true" />
           </button>

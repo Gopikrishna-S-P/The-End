@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { AlertCircle, CheckCircle2, X, Plus, Pen, Trash2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, X, Plus, SquarePen, Trash2, Loader2 } from 'lucide-react';
 import { systemPromptApi } from '../api/systemPromptApi';
 import type { SystemPromptResponse } from '../api/systemPromptApi';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
@@ -208,7 +208,7 @@ export default function SystemPromptAdminPage() {
                         <td className="is-right">
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
                             <button type="button" onClick={() => openEdit(k)} className="ds-table-row-action" title="Edit">
-                              <Pen size={14} />
+                              <SquarePen size={14} />
                             </button>
                             <button type="button" onClick={() => handleDelete(k)}
                               className="ds-table-row-action is-danger" title="Delete"

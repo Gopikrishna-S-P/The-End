@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usersApi } from '../api/usersApi';
 import type { UserResponse } from '../types';
-import { Pencil, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { SquarePen, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface Props {
   user: UserResponse;
@@ -36,7 +36,7 @@ export function UsersEditModal({ user, onClose, onSaved }: Props) {
         <div className="ds-modal-header">
           <div>
             <div className="ds-modal-title" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <Pencil size={14} style={{ color: 'var(--ink-secondary)' }} />Edit user
+              <SquarePen size={14} style={{ color: 'var(--ink-secondary)' }} />Edit user
             </div>
             <div className="ds-modal-sub">{user.email}</div>
           </div>

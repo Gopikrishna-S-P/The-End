@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { FileText, Trash2, Loader2, AlertCircle, X, Plus, UploadCloud, Pen } from 'lucide-react';
+import { FileText, Trash2, Loader2, AlertCircle, X, Plus, UploadCloud, SquarePen } from 'lucide-react';
 import { ragApi } from '../api/ragApi';
 import type { RagDocumentResponse, RagStatus } from '../api/ragApi';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
@@ -250,7 +250,7 @@ export default function RagDocumentsPage() {
                           <td className="is-right">
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
                               <button type="button" onClick={() => openEdit(d)} className="ds-table-row-action" title="Edit">
-                                <Pen size={14} />
+                                <SquarePen size={14} />
                               </button>
                               <button
                                 type="button"

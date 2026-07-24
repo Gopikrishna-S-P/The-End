@@ -10,7 +10,7 @@ interface Props {
 export function ProfileOverviewSection({ profile, isLoading, error }: Props) {
   return (
     <section className="ps-section">
-      <div className="ps-section-body" style={{ paddingTop: 24 }}>
+      <div className="ps-section-body" style={{ paddingTop: 8 }}>
         {isLoading ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div className="ds-skel" style={{ width: 56, height: 56, borderRadius: 14 }} />

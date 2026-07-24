@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
-  Check, Copy, Pencil, RefreshCw, ShieldAlert, ThumbsDown, ThumbsUp,
+  Check, Copy, SquarePen, RefreshCw, ShieldAlert, ThumbsDown, ThumbsUp,
 } from 'lucide-react';
 import { LucienMarkdown } from './LucienMarkdown';
 import lucienLogo from '../assets/images/lucien-logo.png';
@@ -137,7 +137,7 @@ export function LucienMessage({
               <button type="button" className="lucien-action" disabled={busy}
                 onClick={() => { setDraft(msg.content); setEditing(true); }}
                 title="Edit and resend" aria-label="Edit and resend">
-                <Pencil size={13} aria-hidden="true" />
+                <SquarePen size={13} aria-hidden="true" />
               </button>
             ) : (
               <>

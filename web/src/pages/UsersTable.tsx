@@ -3,7 +3,7 @@ import type { UserResponse, RoleResponse, PagedResponse } from '../types';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Plus, Loader2, X, ToggleLeft, ToggleRight, Trash2,
-  Lock, UserPlus, KeyRound, Pencil, ChevronLeft, ChevronRight, Search, RefreshCw, Edit2, UserCog
+  Lock, UserPlus, KeyRound, ChevronLeft, ChevronRight, Search, RefreshCw, SquarePen
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -188,7 +188,7 @@ export function UsersTable({
                       {canCreate && (
                         <button type="button" onClick={() => onEdit(u)} 
                           style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer', color: '#4b5563', fontSize: 13, fontWeight: 500 }}>
-                          <UserCog size={14} color="#4b5563" /> Edit
+                          <SquarePen size={14} color="#4b5563" /> Edit
                         </button>
                       )}
                       {canCreate && (

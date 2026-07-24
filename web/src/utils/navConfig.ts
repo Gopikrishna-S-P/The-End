@@ -1,10 +1,10 @@
 import type React from 'react';
 import type { Role } from '../types';
 import {
-  BarChart2, Layers, Shuffle, MapPin, Upload, Send,
+  BarChart2, Layers, MapPin, Upload, Send,
   CalendarDays, LineChart, Settings2, LayoutDashboard,
   ClipboardCheck, Play, Receipt, Building2, Flag, Bookmark,
-  Sparkles, BookOpen, CreditCard, TrendingUp,
+  Sparkles, BookOpen, CreditCard,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -40,10 +40,12 @@ export const NAV_SECTIONS: NavSection[] = [
 
       // Shared daily driver — everyone who touches money sees this.
       { label: 'Dashboard',   to: '/app/dashboard',   icon: BarChart2, alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
-      { label: 'Collections', to: '/app/collections', icon: Receipt,   alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
+      { label: 'Collections', to: '/app/collections', icon: Receipt,   alwaysFor: ['MANAGER','TL','FO','CALLER','TRACER'] },
 
-      // Leads (MANAGER / TL) — oversee the day's work.
-      { label: 'Daily Dispatch', to: '/app/dispatch',   icon: Send,      alwaysFor: ['ORG_ADMIN','MANAGER','TL'], permissions: ['DAILY_DISPATCH_CREATE'] },
+      // Leads (MANAGER / TL) — oversee the day's work. File Uploads dropped from
+      // these two roles to stay within the 5-6 cap; it's a periodic data-setup
+      // task, not a daily one, and stays on the sidebar for ORG_ADMIN below.
+      { label: 'Daily Dispatch', to: '/app/dispatch',   icon: Send,      alwaysFor: ['MANAGER','TL'], permissions: ['DAILY_DISPATCH_CREATE'] },
       { label: 'Loans',          to: '/app/allocations', icon: Layers,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
       { label: 'Visit Logs',     to: '/app/visits',      icon: MapPin,    alwaysFor: ['MANAGER','TL'] },
       { label: 'Reports',        to: '/app/reports',     icon: LineChart, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
@@ -52,20 +54,23 @@ export const NAV_SECTIONS: NavSection[] = [
       // permission set (DataSeeder.java) includes FILE_UPLOAD/FILE_VIEW/FILE_DELETE
       // outright — the page was fully built for these roles but had no sidebar
       // link, so only PLATFORM_ADMIN could ever discover it.
-      { label: 'File Uploads',  to: '/app/uploads',     icon: Upload,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+      { label: 'File Uploads',  to: '/app/uploads',     icon: Upload,    alwaysFor: ['ORG_ADMIN'] },
 
       // Org admin — same operational hubs, plus team setup instead of field-day tools.
+      // Daily Dispatch dropped for this role to stay within the cap — it's a
+      // MANAGER/TL day-of-work tool, not an org-admin one.
       { label: 'User Setup', to: '/app/users', icon: Settings2, alwaysFor: ['ORG_ADMIN'] },
 
       // Platform admin — a distinct console, not the org workspace at all.
+      // File Uploads and Revenue Trend dropped to stay within the cap: uploads
+      // aren't a platform-admin task (that's ORG_ADMIN's job above), and revenue
+      // trend is a drill-down still reachable from Billing/Overview.
       { label: 'Overview',       to: '/platform/dashboard',     icon: LayoutDashboard, alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'File Uploads',   to: '/app/uploads',            icon: Upload,          alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Lucien Prompts', to: '/app/lucien/prompts',     icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Lucien RAG',     to: '/app/lucien/rag',         icon: BookOpen,        alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Revenue Trend',  to: '/platform/revenue-trend', icon: TrendingUp,      alwaysFor: ['PLATFORM_ADMIN'] },
     ],
   },
 ];
@@ -109,6 +114,7 @@ export const ROUTE_LABELS: Record<string, string> = {
   '/app/restructure-proposals': 'Restructure Proposals',
   '/app/lucien/prompts': 'Lucien Prompts',
   '/app/lucien/rag': 'Knowledge Base',
+  '/platform/revenue-trend': 'Revenue Trend',
 };
 
 export const SHORTCUTS = [
