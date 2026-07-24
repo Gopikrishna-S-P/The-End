@@ -3,7 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Building2, CreditCard, CheckCircle, AlertCircle,
   ArrowUpRight, RefreshCw, Download, ExternalLink, X,
-  Clock, TrendingDown, Pen, Receipt, Settings2, ChevronDown,
+  Clock, TrendingDown, SquarePen, Receipt, Settings2, ChevronDown,
   ToggleLeft, ToggleRight, RotateCcw, Users, Search, SlidersHorizontal,
   Gift, Loader2,
 } from 'lucide-react';
@@ -220,7 +220,7 @@ function SubRow({ row, onInvoices, onOpenFlags, onEditPlan, onComp }: {
             <Settings2 size={14} />
           </button>
           <button type="button" onClick={onEditPlan} className="ds-table-row-action" title="Change plan">
-            <Pen size={14} />
+            <SquarePen size={14} />
           </button>
           <button type="button" onClick={onComp} className="ds-table-row-action"
             title={isCompLive(row) ? 'Edit or remove comp' : 'Grant free access'}>

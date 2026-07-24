@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Flag, Plus, Loader2, AlertCircle, X, Building2, Globe, ChevronDown, Pen, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Flag, Plus, Loader2, AlertCircle, X, Building2, Globe, ChevronDown, SquarePen, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { featureFlagsApi } from '../api/featureFlagsApi';
 import type { FeatureFlag } from '../api/featureFlagsApi';
 import { platformApi, type OrganizationSummary } from '../api/platformApi';
@@ -334,7 +334,7 @@ export default function FeatureFlagsPage() {
                                           : <ToggleLeft size={16} />}
                                     </button>
                                     <button type="button" onClick={() => openEdit(f)} className="ds-table-row-action" title="Edit">
-                                      <Pen size={14} />
+                                      <SquarePen size={14} />
                                     </button>
                                     <button type="button" onClick={() => handleDeleteFlag(f)}
                                       className="ds-table-row-action is-danger" title="Delete"
@@ -433,7 +433,7 @@ export default function FeatureFlagsPage() {
                                           : <ToggleLeft size={16} />}
                                     </button>
                                     <button type="button" onClick={() => openEdit(f)} className="ds-table-row-action" title="Edit">
-                                      <Pen size={14} />
+                                      <SquarePen size={14} />
                                     </button>
                                     <button type="button" onClick={() => handleDeleteFlag(f)}
                                       className="ds-table-row-action is-danger" title="Delete override"

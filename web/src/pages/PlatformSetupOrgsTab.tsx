@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type OrganizationSummary } from '../api/platformApi';
 import {
-  Building2, AlertCircle, Mail, ToggleLeft, ToggleRight, Pen, Trash2, UserPlus,
+  Building2, AlertCircle, Mail, ToggleLeft, ToggleRight, SquarePen, Trash2, UserPlus,
 } from 'lucide-react';
 import { CreateOrgModal, EditOrgModal, DeleteOrgModal, AssignAdminModal } from './PlatformSetupOrgModals';
 
@@ -114,7 +114,7 @@ export function OrgsTab({ orgs, onOrgsChange, showCreate, setShowCreate }: Props
                             : <ToggleLeft  size={16} />}
                         </button>
                         <button type="button" onClick={() => setEditing(o)} className="ds-table-row-action" title="Edit">
-                          <Pen size={14} />
+                          <SquarePen size={14} />
                         </button>
                         <button type="button" onClick={() => setDeleting(o)}
                           className="ds-table-row-action is-danger" title="Delete">

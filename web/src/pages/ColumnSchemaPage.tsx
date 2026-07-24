@@ -3,7 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { columnSchemasApi, type ColumnSchemaResponse } from '../api/columnSchemasApi';
-import { Plus, Edit2, X, AlertCircle, Columns, Check } from 'lucide-react';
+import { Plus, SquarePen, X, AlertCircle, Columns, Check } from 'lucide-react';
 import { RowForm, type RowFormState, EMPTY_FORM, TYPE_VARIANT } from './ColumnSchemaRowForm';
 import '../styles/AppPage.css';
 import './Dashboard.css';
@@ -195,7 +195,7 @@ export default function ColumnSchemaPage() {
                               <div className="dd-case-right">
                                 <button type="button" onClick={() => { setEditingId(col.id); setAdding(false); }}
                                   className="ds-btn is-secondary is-sm" title="Edit" aria-label="Edit">
-                                  <Edit2 size={12} />
+                                  <SquarePen size={12} />
                                 </button>
                               </div>
                             </motion.div>
