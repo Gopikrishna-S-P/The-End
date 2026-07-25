@@ -10,6 +10,13 @@
   text-align: center;
   color: var(--text-tertiary);
   font-family: var(--font-sans);
+  /* min-height matches Loans' .dd-cp-empty floor (Platform Setup's own stub
+     already renders taller than this from its icon+copy, so this only raises
+     shorter/sparser stubs elsewhere up to the same floor). Deliberately no
+     flex:1 here — stretching the stub to fill a now taller, viewport-height
+     card reads as broken/unfinished, so it stays a modest, content-sized
+     box instead of growing with the card. */
+  min-height: 200px;
 }
 
 .ds-empty-icon {

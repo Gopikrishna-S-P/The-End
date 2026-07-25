@@ -251,9 +251,9 @@ export default function PtpsPage() {
   const brokenCount = useCountUp(statusCounts['BROKEN'] || 0);
 
   return (
-    <div className="db-root">
-      <div className="db-content">
-        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {(!loading && ptps.length > 0) && (
             <div className="db-kpi-band">
               <KpiCard label="Pending" value={pendingCount.toLocaleString('en-IN')} warn
@@ -286,7 +286,7 @@ export default function PtpsPage() {
             )}
           </AnimatePresence>
 
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0 }}>
+          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visiblePtps.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
             <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h2 className="db-card-title">Promise-to-Pay</h2>
@@ -387,7 +387,7 @@ export default function PtpsPage() {
               </div>
             </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none' }}>
+            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
               <table className="ds-table">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>

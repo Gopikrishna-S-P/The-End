@@ -118,6 +118,32 @@
   gap: 0;
 }
 
+/* ── Fill-viewport table card ──────────────────────────────────────────────
+   Reused by list pages whose last card should fill exactly the remaining
+   viewport height (Loans' behaviour), instead of a guessed vh-minus-px
+   offset that can under/overshoot per page's own header height. */
+.db-fill-root {
+  height: 100%;
+  overflow: hidden;
+}
+.db-fill-root .db-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 36px;
+}
+.db-fill-root .db-inner {
+  flex: 1;
+  min-height: 0;
+}
+.db-fill-chain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Page header ── */
 
 .db-card-action-group {

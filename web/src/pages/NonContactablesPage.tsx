@@ -191,9 +191,9 @@ export default function NonContactablesPage() {
   };
 
   return (
-    <div className="db-root">
-      <div className="db-content">
-        <div className="db-inner">
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <div className="db-inner" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <AnimatePresence>
             {toast && (
               <motion.div
@@ -208,7 +208,7 @@ export default function NonContactablesPage() {
             )}
           </AnimatePresence>
 
-          <section className="ds-card db-card" style={{ marginTop: 0 }}>
+          <section className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visibleRecords.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
             <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <h1 className="db-card-title" style={{ fontSize: 18, margin: 0 }}>Non-Contactable Visits</h1>
@@ -258,7 +258,7 @@ export default function NonContactablesPage() {
               </div>
             </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none' }}>
+            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
               <table className="ds-table">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>

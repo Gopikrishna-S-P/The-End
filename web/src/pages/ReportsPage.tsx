@@ -144,7 +144,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <AnimatePresence>
         {actionError && (
           <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
@@ -161,8 +161,8 @@ export default function ReportsPage() {
         )}
       </AnimatePresence>
 
-      <div className="db-content">
-        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
           <motion.div variants={fadeUp} className="db-page-header">
             <div className="db-page-header-left">
@@ -178,8 +178,8 @@ export default function ReportsPage() {
             </button>
           </motion.div>
 
-            <motion.section variants={fadeUp} className="ds-table-card">
-                <div className="ds-table-wrap">
+            <motion.section variants={fadeUp} className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', ...(jobs.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+                <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>
                   <table className="ds-table ps-table">
                     <thead>
                       <tr>

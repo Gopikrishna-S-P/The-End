@@ -153,7 +153,7 @@ export default function AuditPage() {
   ];
 
   return (
-    <div className="dd-page">
+    <div className="dd-page audit-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <AnimatePresence>
         {error && (
           <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
@@ -229,8 +229,8 @@ export default function AuditPage() {
               <button className="db-error-retry" onClick={() => fetchAdminActions(adminPage)} aria-label="Retry"><RefreshCw size={14} /></button>
             </div>
           )}
-          <div className="ds-table-card">
-            <div className="ds-table-wrap">
+          <div className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', ...(adminActions.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+            <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>
               <table className="ds-table">
                 <thead>
                   <tr><th>User</th><th>Action</th><th>Details</th><th>When</th></tr>

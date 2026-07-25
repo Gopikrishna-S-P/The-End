@@ -81,10 +81,10 @@ export default function UploadErrorsPage() {
   }
 
   return (
-    <div className="db-root">
-      <div className="db-content">
-        <motion.div className="db-inner" initial="hidden" animate="show" variants={stagger}>
-          
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <motion.div className="db-inner" initial="hidden" animate="show" variants={stagger} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+
           <div className="db-kpi-header" style={{ marginBottom: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button type="button" onClick={() => navigate(-1)} className="ds-btn is-secondary is-sm">
@@ -132,7 +132,7 @@ export default function UploadErrorsPage() {
             </motion.div>
           )}
 
-          <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', ...(filtered.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
             <header className="db-card-head">
               {allColumns.length > 1 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -154,7 +154,7 @@ export default function UploadErrorsPage() {
               )}
             </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none', borderRadius: 0 }}>
+            <div className="ds-table-wrap" style={{ border: 'none', borderRadius: 0, flex: 1, overflow: 'auto' }}>
               <table className="ds-table">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>

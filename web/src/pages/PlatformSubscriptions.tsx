@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
-  Building2, CreditCard, CheckCircle, AlertCircle,
+  Building2, CreditCard, AlertCircle,
   ArrowUpRight, RefreshCw, Download, ExternalLink, X,
-  Clock, TrendingDown, SquarePen, Receipt, Settings2, ChevronDown,
+  SquarePen, Receipt, Settings2, ChevronDown,
   ToggleLeft, ToggleRight, RotateCcw, Users, Search, SlidersHorizontal,
   Gift, Loader2,
 } from 'lucide-react';
@@ -30,22 +30,6 @@ const fadeIn: Variants = {
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
 
-function useRipple<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const fire = useCallback((e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 2.2;
-    const span = document.createElement('span');
-    span.className = 'db-ripple';
-    span.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
-    el.appendChild(span);
-    span.addEventListener('animationend', () => span.remove(), { once: true });
-  }, []);
-  return { ref, fire };
-}
-
 function fmtNum(v?: number | null) {
   return v != null ? v.toLocaleString('en-IN') : '—';
 }
@@ -57,31 +41,6 @@ function fmt(iso: string | null) {
 
 function fmtAmount(paise: number, currency: string) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(paise / 100);
-}
-
-// ── KPI card ───────────────────────────────────────────────────────────────────
-
-function KpiCard({ label, value, subtitle, icon: Icon, onClick }: {
-  label: string; value: string; subtitle?: string;
-  icon: React.ElementType; onClick?: () => void;
-}) {
-  const { ref, fire } = useRipple<HTMLButtonElement>();
-  return (
-    <motion.button ref={ref} type="button" variants={fadeUp}
-      className={`ds-card${onClick ? ' is-hoverable' : ''} db-kpi-card`}
-      onClick={e => { fire(e); onClick?.(); }} disabled={!onClick}
-      whileHover={{ scale: 1.025, zIndex: 2, boxShadow: '0 4px 12px rgba(12,10,9,.10), 0 2px 4px rgba(12,10,9,.06)' }}
-      whileTap={{ scale: 1.010, zIndex: 2 }}
-      transition={{ duration: 0.16, ease: 'easeOut' }}
-    >
-      <div className="db-kpi-top">
-        <span className="db-kpi-label">{label}</span>
-        <span className="db-kpi-icon-box" aria-hidden="true"><Icon size={14} /></span>
-      </div>
-      <span className="db-kpi-value">{value}</span>
-      {subtitle && <div className="db-kpi-meta"><span className="db-kpi-subtitle">{subtitle}</span></div>}
-    </motion.button>
-  );
 }
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
@@ -386,26 +345,7 @@ function FilterBar({ rows, filters, onChange }: {
 
   return (
     <>
-      <div className="ds-toolbar">
-        <div className="ds-search">
-          <Search size={14} className="ds-search-icon" aria-hidden="true" />
-          <input
-            className="ds-search-input"
-            placeholder="Search organizations by name or code"
-            value={filters.q}
-            onChange={e => onChange({ ...filters, q: e.target.value })}
-            aria-label="Search organizations"
-          />
-          {filters.q && (
-            <button type="button" className="ds-search-clear" aria-label="Clear search"
-              onClick={() => onChange({ ...filters, q: '' })}>
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        <div className="ds-toolbar-divider" aria-hidden="true" />
-
+      <div className="ds-toolbar" style={{ justifyContent: 'flex-end', border: 'none', background: 'transparent', padding: 0, height: 'auto' }}>
         <div className="ps-filter-anchor" ref={anchorRef}>
           <button type="button"
             className={`ds-filter-btn${open ? ' is-open' : ''}`}
@@ -425,6 +365,27 @@ function FilterBar({ rows, filters, onChange }: {
                 initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
               >
+                <div className="ps-filter-group">
+                  <span className="ps-filter-group-title">Search</span>
+                  <div className="ps-filter-search">
+                    <Search size={14} className="ds-search-icon" aria-hidden="true" />
+                    <input
+                      className="ds-search-input"
+                      placeholder="Search by name or code"
+                      value={filters.q}
+                      onChange={e => onChange({ ...filters, q: e.target.value })}
+                      aria-label="Search organizations"
+                      autoFocus
+                    />
+                    {filters.q && (
+                      <button type="button" className="ds-search-clear" aria-label="Clear search"
+                        onClick={() => onChange({ ...filters, q: '' })}>
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="ps-filter-group">
                   <span className="ps-filter-group-title">Needs attention</span>
                   <div className="ps-filter-rows">
@@ -636,14 +597,15 @@ function Skeleton({ w, h, r = 6 }: { w?: string; h: number; r?: number }) {
 function BillingSkeleton() {
   return (
     <motion.div className="db-skeleton" variants={stagger} initial="hidden" animate="show" role="status">
-      <div className="db-kpi-grid">
-        {[0,1,2,3].map(i => (
-          <motion.div key={i} variants={fadeUp} className="ds-card db-kpi-card">
-            <Skeleton w="60%" h={11} /><Skeleton w="75%" h={22} /><Skeleton w="45%" h={10} />
-          </motion.div>
-        ))}
-      </div>
-      <Skeleton w="130px" h={10} r={4} />
+      <motion.div variants={fadeUp} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+        <Skeleton w="140px" h={16} />
+        <div style={{ display: 'flex', gap: 16 }}>
+          <Skeleton w="70px" h={10} />
+          <Skeleton w="70px" h={10} />
+          <Skeleton w="90px" h={10} />
+          <Skeleton w="100px" h={10} />
+        </div>
+      </motion.div>
       <div className="ds-card db-att-card">
         {[0,1,2,3,4].map(i => (
           <motion.div key={i} variants={fadeUp} className="db-att-row has-border">
@@ -816,23 +778,6 @@ export default function PlatformSubscriptions() {
                 </motion.div>
               )}
 
-              {/* ── KPI row ── */}
-              <motion.div className="db-kpi-grid" variants={stagger}>
-                <KpiCard label="Total orgs"    value={fmtNum(counts.total)}
-                  subtitle="all subscriptions" icon={Building2} />
-                <KpiCard label="Active"        value={fmtNum(counts.active)}
-                  subtitle="paid subscribers" icon={CheckCircle} />
-                <KpiCard label="On trial"      value={fmtNum(counts.trial)}
-                  subtitle="14-day trial" icon={Clock} />
-                <KpiCard label="Past due"      value={fmtNum(counts.pastDue)}
-                  subtitle={counts.cancelled > 0 ? `${counts.cancelled} cancelled` : undefined}
-                  icon={TrendingDown} onClick={counts.pastDue > 0 ? () => onlyStatus('PAST_DUE') : undefined} />
-                <KpiCard label="Total collected" value={fmtAmount(totalCollected, 'INR')}
-                  subtitle={totalCollected > 0 ? 'settled via Stripe' : 'import invoices to populate'}
-                  icon={CreditCard}
-                  onClick={totalCollected > 0 ? () => setFilters({ ...EMPTY_FILTERS, paid: 'PAID' }) : undefined} />
-              </motion.div>
-
               <FilterBar rows={rows} filters={filters} onChange={setFilters} />
 
               {/* ── Needs attention ── */}
@@ -877,9 +822,31 @@ export default function PlatformSubscriptions() {
               )}
 
               {/* ── Subscriber list ── */}
-              <p className="ds-section-label db-section-label">Subscribers</p>
-
               <motion.div variants={fadeUp} className="ds-table-card">
+                <header className="db-card-head" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <h2 className="db-card-title">Subscribers</h2>
+                    <span className="db-card-sub" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', textTransform: 'none', letterSpacing: 0, fontSize: 11.5 }}>
+                      {fmtNum(counts.total)} orgs
+                      <span className="db-kpi2-sub-vdiv" />
+                      {fmtNum(counts.active)} active
+                      <span className="db-kpi2-sub-vdiv" />
+                      {fmtNum(counts.trial)} trial
+                      <span className="db-kpi2-sub-vdiv" />
+                      <button type="button" className="ps-stat-link"
+                        disabled={counts.pastDue === 0} onClick={() => onlyStatus('PAST_DUE')}
+                        style={counts.pastDue > 0 ? { color: 'var(--error)' } : undefined}>
+                        {fmtNum(counts.pastDue)} past due{counts.cancelled > 0 ? ` · ${fmtNum(counts.cancelled)} cancelled` : ''}
+                      </button>
+                      <span className="db-kpi2-sub-vdiv" />
+                      <button type="button" className="ps-stat-link"
+                        disabled={totalCollected === 0} onClick={() => setFilters({ ...EMPTY_FILTERS, paid: 'PAID' })}
+                        title={totalCollected === 0 ? 'Import invoices to populate' : 'Settled via Stripe'}>
+                        {fmtAmount(totalCollected, 'INR')} collected
+                      </button>
+                    </span>
+                  </div>
+                </header>
                 <div className="ds-table-wrap">
                   <table className="ds-table is-no-row-hover ps-table">
                     <thead>

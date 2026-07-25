@@ -131,7 +131,7 @@ export default function PortfolioRiskPage() {
   const amounts = report?.amountByRiskLevel ?? {};
 
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <AnimatePresence>
         {actionError && (
           <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
@@ -143,8 +143,8 @@ export default function PortfolioRiskPage() {
         )}
       </AnimatePresence>
 
-      <div className="db-content">
-        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
           <div className="db-kpi-header">
             <h2 className="db-kpi-title">Portfolio Risk</h2>
@@ -214,9 +214,9 @@ export default function PortfolioRiskPage() {
           </motion.div>
 
           {/* ── Records table ── */}
-          <div className="db-grid">
-            <div className="db-span-12">
-              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="db-grid" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', ...(records.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
                 <header className="db-card-head">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <ListFilter size={13} style={{ color: 'var(--ink-tertiary)' }} />
@@ -244,7 +244,7 @@ export default function PortfolioRiskPage() {
                   )}
                 </header>
 
-                <div className="ds-table-wrap" style={{ border: 'none', borderRadius: 0 }}>
+                <div className="ds-table-wrap" style={{ border: 'none', borderRadius: 0, flex: 1, overflow: 'auto' }}>
                   <table className="ds-table">
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>

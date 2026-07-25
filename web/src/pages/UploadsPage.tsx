@@ -9,8 +9,8 @@ import type { FileUploadResponse, PagedResponse } from '../types';
 import {
   File as FileIcon, AlertCircle, Trash2, Upload,
   ChevronLeft, ChevronRight, ChevronDown, CloudUpload,
-  TableProperties, ListChecks, Building2, LayoutGrid,
-  CheckCircle2, Clock, RefreshCw, ShieldAlert
+  TableProperties, Building2, LayoutGrid,
+  CheckCircle2, Clock, ShieldAlert
 } from 'lucide-react';
 import { UploadsModal, UploadStatusBadge } from './UploadsModal';
 import '../styles/AppPage.css';
@@ -35,24 +35,6 @@ const fadeIn: Variants = {
   hidden: { opacity: 0 },
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
-
-// ── Ripple hook ────────────────────────────────────────────────────────────────
-
-function useRipple<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const fire = useCallback((e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 2.2;
-    const span = document.createElement('span');
-    span.className = 'db-ripple';
-    span.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
-    el.appendChild(span);
-    span.addEventListener('animationend', () => span.remove(), { once: true });
-  }, []);
-  return { ref, fire };
-}
 
 // ── Count-up animation ────────────────────────────────────────────────────────
 
@@ -97,33 +79,6 @@ const fmtAbsolute = (s?: string | null) =>
   s ? new Date(s).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
 const fmtNum = (n?: number | null) => (n ?? 0).toLocaleString('en-IN');
-
-// ── KPI card ──────────────────────────────────────────────────────────────────
-
-function KpiCard({ label, value, sub, icon: Icon, accent, onClick }: {
-  label: string; value: string;
-  sub?: React.ReactNode;
-  icon?: React.ElementType; accent?: boolean;
-  onClick?: () => void;
-}) {
-  const { ref, fire } = useRipple<HTMLButtonElement>();
-  return (
-    <motion.button ref={ref} type="button" variants={fadeUp}
-      className={`db-kpi2-card${accent ? ' is-accent' : ''}${onClick ? ' is-hoverable' : ''}`}
-      onClick={e => { fire(e); onClick?.(); }} disabled={!onClick}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
-    >
-      <div className="db-kpi2-top">
-        <span className="db-kpi2-label">{label}</span>
-        {Icon && <span className="db-kpi2-icon"><Icon size={14} aria-hidden="true" /></span>}
-      </div>
-      <span className="db-kpi2-value">{value}</span>
-      {sub && <div className="db-kpi2-sub">{sub}</div>}
-    </motion.button>
-  );
-}
 
 // Mirrors FileUploadController.READERS exactly — PLATFORM_ADMIN, ORG_ADMIN, MANAGER, TL.
 // The /app/uploads route itself is gated more loosely (ANY_ORG_ROLE, incl. FO/CALLER/TRACER),
@@ -301,24 +256,23 @@ export default function UploadsPage() {
             </motion.div>
           )}
 
-          {/* ── KPI Band ── */}
-          <motion.div variants={fadeUp} className="db-kpi-band">
-            <KpiCard label="Total Files" value={fmtNum(filesAnim)} icon={FileIcon} accent
-              sub={<span className="db-kpi2-sub-meta">All-time uploads</span>} />
-            <KpiCard label="Total Rows" value={fmtNum(rowsAnim)} icon={ListChecks}
-              sub={<span className="db-kpi2-sub-meta">Processed system-wide</span>} />
-            <KpiCard label="Failed Rows" value={fmtNum(failedAnim)} icon={AlertCircle} accent={failedAnim > 0}
-              sub={<span className="db-kpi2-sub-meta">Requires attention</span>} />
-            <KpiCard label="Processing" value={fmtNum(inFlightCount)} icon={RefreshCw} accent={inFlightCount > 0}
-              sub={<span className="db-kpi2-sub-meta">In progress right now</span>} />
-          </motion.div>
-
           {/* ── Uploads List ── */}
           <div className="db-grid">
             <div className="db-span-12">
               <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                <header className="db-card-head">
-                  <h2 className="db-card-title">Recent Uploads</h2>
+                <header className="db-card-head" style={{ alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <h2 className="db-card-title">Recent Uploads</h2>
+                    <span className="db-card-sub" style={{ display: 'flex', alignItems: 'center', textTransform: 'none', letterSpacing: 0, fontSize: 11.5 }}>
+                      {fmtNum(filesAnim)} files
+                      <span className="db-kpi2-sub-vdiv" />
+                      {fmtNum(rowsAnim)} rows
+                      <span className="db-kpi2-sub-vdiv" />
+                      <span style={failedAnim > 0 ? { color: 'var(--error)' } : undefined}>{fmtNum(failedAnim)} failed</span>
+                      <span className="db-kpi2-sub-vdiv" />
+                      <span style={inFlightCount > 0 ? { color: 'var(--warning)' } : undefined}>{fmtNum(inFlightCount)} processing</span>
+                    </span>
+                  </div>
                   {totalPages > 1 && !loading && (
                     <div className="up-pagination" style={{ margin: 0, padding: 0, border: 'none', background: 'transparent' }}>
                       <button type="button" className="up-page-btn" style={{ height: 28 }}

@@ -10,6 +10,15 @@
 
 .app-page.audit-trail-page { background: var(--bg-canvas); }
 
+/* ── Admin Actions tab — fill remaining viewport height ────────────────────
+   Scoped to this page only (not the shared .dd-page) so the Admin Actions
+   table card fills exactly like Loans' card, without affecting the other
+   .dd-page users (Visits, Agents, Attendance, etc). */
+.audit-fill-root {
+  height: 100%;
+  overflow: hidden;
+}
+
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 
 .audit-trail-toolbar {
