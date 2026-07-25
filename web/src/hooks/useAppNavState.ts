@@ -24,7 +24,7 @@ export function useAppNavState({ role, historyStack, currentIndex }: Params) {
   const lucienEnabled   = isEnabled('LUCIEN_AI');
   const reportsEnabled  = isEnabled('ADVANCED_REPORTS');
 
-  const LUCIEN_PATHS = new Set(['/app/lucien/prompts', '/app/lucien/rag']);
+  const LUCIEN_PATHS = new Set(['/app/lucien/admin']);
 
   const sections = useMemo(() => {
     const filterItems = (items: NavItem[]) => items

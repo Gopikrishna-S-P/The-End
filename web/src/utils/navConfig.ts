@@ -4,7 +4,7 @@ import {
   BarChart2, Layers, MapPin, Upload, Send,
   CalendarDays, LineChart, Settings2, LayoutDashboard,
   ClipboardCheck, Play, Receipt, Building2, Flag, Bookmark,
-  Sparkles, BookOpen, CreditCard,
+  Sparkles, CreditCard,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -62,15 +62,18 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'User Setup', to: '/app/users', icon: Settings2, alwaysFor: ['ORG_ADMIN'] },
 
       // Platform admin — a distinct console, not the org workspace at all.
-      // File Uploads and Revenue Trend dropped to stay within the cap: uploads
-      // aren't a platform-admin task (that's ORG_ADMIN's job above), and revenue
-      // trend is a drill-down still reachable from Billing/Overview.
+      // Revenue Trend dropped to stay within the cap — it's a drill-down still
+      // reachable from Billing/Overview. File Uploads was dropped for the same
+      // reason, but merging Lucien Prompts/RAG into one entry freed a slot, and
+      // UploadsPage.tsx already self-gates PLATFORM_ADMIN into UPLOAD_READER_ROLES
+      // with its own cross-org picker, so it was fully built for this role and
+      // just missing the link — same gap ORG_ADMIN had below before that fix.
       { label: 'Overview',       to: '/platform/dashboard',     icon: LayoutDashboard, alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Lucien Prompts', to: '/app/lucien/prompts',     icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Lucien RAG',     to: '/app/lucien/rag',         icon: BookOpen,        alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Lucien',         to: '/app/lucien/admin',       icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'File Uploads',   to: '/app/uploads',            icon: Upload,          alwaysFor: ['PLATFORM_ADMIN'] },
     ],
   },
 ];
@@ -112,8 +115,7 @@ export const ROUTE_LABELS: Record<string, string> = {
   '/app/fraud-cases': 'Fraud Cases',
   '/app/reconciliation': 'Reconciliation',
   '/app/restructure-proposals': 'Restructure Proposals',
-  '/app/lucien/prompts': 'Lucien Prompts',
-  '/app/lucien/rag': 'Knowledge Base',
+  '/app/lucien/admin': 'Lucien',
   '/platform/revenue-trend': 'Revenue Trend',
 };
 

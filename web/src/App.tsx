@@ -70,8 +70,7 @@ import TourOverlay from './components/TourOverlay';
 import type { Role } from './types';
 
 
-const SystemPromptAdminPage = lazy(() => import('./pages/SystemPromptAdminPage'));
-const RagDocumentsPage = lazy(() => import('./pages/RagDocumentsPage'));
+const LucienAdminPage = lazy(() => import('./pages/LucienAdminPage'));
 const FeatureFlagsPage = lazy(() => import('./pages/FeatureFlagsPage'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const MessageTemplatesPage = lazy(() => import('./pages/MessageTemplatesPage'));
@@ -211,8 +210,7 @@ function App() {
                   <Route path="/platform/revenue-trend" element={<PlatformRevenueTrendPage />} />
                   <Route path="/platform/setup" element={<PlatformSetupPage />} />
                   <Route path="/platform/feature-flags" element={<FeatureFlagsPage />} />
-                  <Route path="/app/lucien/prompts" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><SystemPromptAdminPage /></FeatureGate>} />
-                  <Route path="/app/lucien/rag" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><RagDocumentsPage /></FeatureGate>} />
+                  <Route path="/app/lucien/admin" element={<FeatureGate flagKey="LUCIEN_AI" hardBlock><LucienAdminPage /></FeatureGate>} />
                 </Route>
 
                 {/* ── Legacy redirects so old bookmarks / JWTs don't 404 ── */}
