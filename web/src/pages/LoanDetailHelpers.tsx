@@ -24,6 +24,31 @@ export const Pill = ({ status }: { status?: string }) => {
 export const ALL_DISPOSITIONS = ['PAID', 'RTP', 'NC_SKIP', 'PTP', 'FOLLOW_UP'] as const;
 export type Disposition = typeof ALL_DISPOSITIONS[number];
 
+// Case/spacing-insensitive lookup into an uploaded row's dynamicData —
+// candidates should list every known column-header variant for the field,
+// confirmed against real uploaded rows (opstool_dump.sql), not just the
+// aspirational list in visitExport.ts's ALLOC_DYN_COLS — e.g. field
+// executive shows up as both "FE" and "FIELD EXECUTIVE" depending on the
+// upload. Placeholder tokens ("-", "NA", "nil", ...) count as absent.
+export const dynField = (dyn: Record<string, unknown>, candidates: string[]): string | undefined => {
+  const lower = Object.fromEntries(
+    Object.entries(dyn).map(([k, v]) => [k.toLowerCase().trim(), v])
+  );
+  for (const key of candidates) {
+    const v = lower[key.toLowerCase().trim()];
+    if (v != null && !isEmptyValue(v)) return String(v).trim();
+  }
+  return undefined;
+};
+
+// "POS Amt" etc. arrive as comma-grouped strings (e.g. "1,023,255") from
+// the uploaded sheet — strip grouping, not decimal points, before parsing.
+export const parseDynAmount = (v: string | undefined): number | null => {
+  if (v == null) return null;
+  const n = Number(v.replace(/,/g, ''));
+  return Number.isFinite(n) ? n : null;
+};
+
 export const bucketFor = (daysOverdue: number | null): { label: string; tone: Tone } | null => {
   if (daysOverdue == null) return null;
   if (daysOverdue <= 0)  return { label: 'Current', tone: 'success' };

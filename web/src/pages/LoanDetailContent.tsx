@@ -8,7 +8,7 @@ import CaseTimeline from '../components/CaseTimeline';
 import type { AllocationResponse, AllocationStatus } from '../types';
 import {
   Pill, Row, fmtCurrency, fmtDate, fmtDT, fmtRelative,
-  FIELD_GROUPS, ALL_DISPOSITIONS, bucketFor,
+  FIELD_GROUPS, ALL_DISPOSITIONS, bucketFor, dynField, parseDynAmount,
   type GroupedFields, type Tone, type NextAction,
 } from './LoanDetailHelpers';
 import './Dashboard.css';
@@ -65,13 +65,21 @@ export default function LoanDetailContent(p: Props) {
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`
       : null;
   const bucket = bucketFor(p.daysOverdue);
+  const bktTagValue = dynField(dyn, ['BKT TAG', 'Bkt Tag', 'bkt_tag', 'BKT']);
+  const securitizationValue = dynField(dyn, ['SECURITIZATION', 'Securitization', 'securitization']);
+  const fieldExecutiveValue = dynField(dyn, ['FE', 'FIELD EXECUTIVE', 'field executive', 'field_executive', 'fieldexecutive']);
+  const posAmt = a.outstandingAmount ?? parseDynAmount(dynField(dyn, ['POS Amt', 'POS AMT', 'POS AMOUNT', 'pos_amount', 'pos_amt']));
 
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flex: 1, minHeight: 0 }}>
 
-      {/* ── Left — fixed summary sidebar, full height, never scrolls ────── */}
-      <aside style={{ width: 320, flexShrink: 0, alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="ds-card db-card" style={{ height: '100%', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ── Left — fixed summary sidebar, sized to content, never scrolls ── */}
+      <aside style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="ds-card db-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--ink-tertiary)' }}>
+            Everything on file for this case.
+          </span>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
@@ -117,7 +125,9 @@ export default function LoanDetailContent(p: Props) {
             ) : (
               dispositionValue && <Pill status={dispositionValue} />
             )}
-            {bucket && <span className={`ds-pill is-${bucket.tone}`}>{bucket.label}</span>}
+            {(bktTagValue || bucket) && (
+              <span className={`ds-pill is-${bucket?.tone ?? 'neutral'}`}>{bktTagValue ?? bucket!.label}</span>
+            )}
             {a.npaFlagged && (
               <span className="ds-pill is-danger" style={{ fontWeight: 600 }}>
                 <AlertCircle size={12} style={{ marginRight: 4 }} /> NPA
@@ -126,13 +136,13 @@ export default function LoanDetailContent(p: Props) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
-            {a.outstandingAmount != null && (
+            {posAmt != null && (
               <div>
                 <span style={{ fontSize: 12, color: 'var(--ink-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <IndianRupee size={12} /> POS (Principal Outstanding)
                 </span>
                 <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-primary)', display: 'block', marginTop: 2 }}>
-                  {fmtCurrency(Number(a.outstandingAmount))}
+                  {fmtCurrency(posAmt)}
                 </span>
                 {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
                   <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600 }}>
@@ -171,6 +181,23 @@ export default function LoanDetailContent(p: Props) {
             </div>
           )}
 
+          {(fieldExecutiveValue || securitizationValue) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
+              {fieldExecutiveValue && (
+                <div>
+                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Field Executive</span>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-primary)', marginTop: 2 }}>{fieldExecutiveValue}</div>
+                </div>
+              )}
+              {securitizationValue && (
+                <div>
+                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Securitization</span>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-primary)', marginTop: 2 }}>{securitizationValue}</div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
             {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
               <button type="button" className="ds-btn is-secondary" onClick={p.onReassign} style={{ height: 32, width: '100%' }}>
@@ -193,7 +220,7 @@ export default function LoanDetailContent(p: Props) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <span style={{ fontSize: 13, color: 'var(--ink-tertiary)' }}>
-            {activeTab === 'details' ? 'Everything on file for this case.' : 'Every visit, collection, PTP, and reassignment on this case, newest first.'}
+            {activeTab === 'activity' && 'Every visit, collection, PTP, and reassignment on this case, newest first.'}
           </span>
           <div className="db-kpi-toggle" style={{ display: 'inline-flex' }}>
             {[
