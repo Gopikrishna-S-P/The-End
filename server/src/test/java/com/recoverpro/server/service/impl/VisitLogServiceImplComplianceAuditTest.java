@@ -5,6 +5,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.dto.request.VisitLogRequest;
 import com.recoverpro.server.enums.GuardType;
 import com.recoverpro.server.mapper.VisitLogMapper;
+import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitImageRepository;
@@ -39,6 +40,7 @@ class VisitLogServiceImplComplianceAuditTest {
     @Mock private VisitLogRepository visitLogRepository;
     @Mock private VisitLogMapper visitLogMapper;
     @Mock private AllocationRepository allocationRepository;
+    @Mock private AllocationAuditLogRepository allocationAuditLogRepository;
     @Mock private UserRepository userRepository;
     @Mock private VisitImageRepository visitImageRepository;
     @Mock private CallingHoursGuard callingHoursGuard;
@@ -53,8 +55,8 @@ class VisitLogServiceImplComplianceAuditTest {
     @BeforeEach
     void setUp() {
         service = new VisitLogServiceImpl(visitLogRepository, visitLogMapper, allocationRepository,
-                userRepository, visitImageRepository, callingHoursGuard, auditLogService,
-                orgIsolationGuard, clamAvScannerClient, complianceAuditService, storagePort);
+                allocationAuditLogRepository, userRepository, visitImageRepository, callingHoursGuard,
+                auditLogService, orgIsolationGuard, clamAvScannerClient, complianceAuditService, storagePort);
     }
 
     @Test

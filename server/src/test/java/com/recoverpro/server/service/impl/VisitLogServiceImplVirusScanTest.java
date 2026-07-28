@@ -3,6 +3,7 @@ package com.recoverpro.server.service.impl;
 import com.recoverpro.server.client.ClamAvScannerClient;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.mapper.VisitLogMapper;
+import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitImageRepository;
@@ -42,6 +43,7 @@ class VisitLogServiceImplVirusScanTest {
     @Mock private VisitLogRepository visitLogRepository;
     @Mock private VisitLogMapper visitLogMapper;
     @Mock private AllocationRepository allocationRepository;
+    @Mock private AllocationAuditLogRepository allocationAuditLogRepository;
     @Mock private UserRepository userRepository;
     @Mock private VisitImageRepository visitImageRepository;
     @Mock private CallingHoursGuard callingHoursGuard;
@@ -58,8 +60,9 @@ class VisitLogServiceImplVirusScanTest {
     @BeforeEach
     void setUp() {
         service = new VisitLogServiceImpl(visitLogRepository, visitLogMapper, allocationRepository,
-                userRepository, visitImageRepository, callingHoursGuard, auditLogService,
-                orgIsolationGuard, clamAvScannerClient, complianceAuditService, new S3OrLocalStoragePort());
+                allocationAuditLogRepository, userRepository, visitImageRepository, callingHoursGuard,
+                auditLogService, orgIsolationGuard, clamAvScannerClient, complianceAuditService,
+                new S3OrLocalStoragePort());
         ReflectionTestUtils.setField(service, "storagePath", tempDir.toString());
     }
 
