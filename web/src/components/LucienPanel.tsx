@@ -5,6 +5,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { lucienApi } from '../api/lucienApi';
+import { extractApiError } from '../utils/extractApiError';
+import { speak, stopSpeaking } from '../utils/speech';
+import { Logo } from './Logo';
 import { LucienMessage, type ChatMessage, type Feedback } from './LucienMessage';
 import { LucienHistory } from './LucienHistory';
 import { LucienComposer } from './LucienComposer';
@@ -87,7 +90,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
   // inert when closed so nothing inside is tabbable behind the app
   useEffect(() => {
     panelRef.current?.toggleAttribute('inert', !open);
-    if (!open) { setError(null); setHistoryOpen(false); }
+    if (!open) { setError(null); setHistoryOpen(false); stopSpeaking(); }
   }, [open]);
 
   // Track whether the reader is pinned to the bottom; only autoscroll if so.
@@ -143,8 +146,9 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       setSessionId(session.sessionId);
       setMessages([]);
       setPendingConfirm(null);
-    } catch {
-      setError('Lucien is unavailable right now. Please try again.');
+    } catch (e) {
+      console.error('Lucien startSession failed', e);
+      setError(extractApiError(e, 'Lucien is unavailable right now. Please try again.'));
     } finally {
       setStarting(false);
       startingRef.current = false;
@@ -174,6 +178,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       createdAt: resp.timestamp,
       modelName: resp.modelName,
     }]);
+    if (resp.reply) speak(resp.reply);
     if (resp.confirmationRequired && resp.pendingActionId) {
       setPendingConfirm({
         actionId: resp.pendingActionId,
@@ -185,6 +190,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
 
   const deliver = useCallback(async (raw: string, userMsgId: string) => {
     if (!sessionId) return;
+    stopSpeaking();
     const controller = new AbortController();
     abortRef.current = controller;
     setSending(true);
@@ -196,7 +202,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       if (controller.signal.aborted) {
         setToast('Stopped.');
       } else {
-        setError('error');
+        console.error('Lucien sendMessage failed', e);
+        setError(extractApiError(e, 'Lucien did not respond. Please try again or start a new chat.'));
         setMessages(prev => prev.filter(m => m.id !== userMsgId));
         setInput(raw);
       }
@@ -256,15 +263,18 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
     setConfirming(true);
     try {
       const resp = await lucienApi.confirmAction(sessionId, { actionId: pendingConfirm.actionId, confirmed });
+      const replyText = resp.reply || (confirmed ? 'Action executed.' : 'Action cancelled.');
       setMessages(prev => [...prev, {
         id: resp.messageId ?? `a-${Date.now()}`,
         role: 'ASSISTANT',
-        content: resp.reply || (confirmed ? 'Action executed.' : 'Action cancelled.'),
+        content: replyText,
         createdAt: resp.timestamp,
         modelName: resp.modelName,
       }]);
-    } catch {
-      setError('error');
+      speak(replyText);
+    } catch (e) {
+      console.error('Lucien confirmAction failed', e);
+      setError(extractApiError(e, 'Failed to process confirmation. Please try again.'));
     } finally {
       setPendingConfirm(null);
       setConfirming(false);
@@ -311,8 +321,9 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       );
       setAtBottom(true);
       window.setTimeout(() => scrollToBottom('auto'), 0);
-    } catch {
-      setError('error');
+    } catch (e) {
+      console.error('Lucien openSession failed', e);
+      setError(extractApiError(e, 'Failed to load that conversation. Please try again.'));
     } finally {
       setLoadingSession(false);
     }
@@ -346,6 +357,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
             <History size={16} aria-hidden="true" />
           </button>
 
+          <Logo height={34} className="lucien-panel-brand" />
+
           <div className="lucien-panel-head-actions">
             <button type="button" className="lucien-panel-icon-btn" onClick={newChat}
               disabled={starting} aria-label="New chat" title="New chat">
@@ -371,8 +384,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
           <div className="lucien-panel-error" role="alert">
             <AlertCircle size={15} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
             <div className="lucien-panel-error-body">
-              <span className="lucien-panel-error-title">Lucien did not respond.</span>
-              <span className="lucien-panel-error-sub">Please try again or start a new chat.</span>
+              <span className="lucien-panel-error-title">{error}</span>
             </div>
             <button type="button" className="lucien-panel-retry"
               onClick={() => { setError(null); if (!sessionId) startSession(); }} aria-label="Retry">

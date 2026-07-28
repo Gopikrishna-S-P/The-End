@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
 import { lucienApi } from '../api/lucienApi';
+import { extractApiError } from '../utils/extractApiError';
 import { History, Plus, Send, Loader2, ShieldAlert, Check, X } from 'lucide-react';
 import { type ChatMessage, type Session } from './LucienHelpers';
 import { LucienHistoryPanel } from './LucienHistoryPanel';
@@ -47,7 +48,10 @@ export default function LucienPage() {
     try {
       const session = await lucienApi.startSession({ agentId, agentFirstName });
       setSessionId(session.sessionId); setMessages([]); setPendingConfirm(null);
-    } catch { setError('Lucien is unavailable right now. Please try again shortly.'); }
+    } catch (e) {
+      console.error('Lucien startSession failed', e);
+      setError(extractApiError(e, 'Lucien is unavailable right now. Please try again shortly.'));
+    }
     finally { setStarting(false); }
   }, [agentId, agentFirstName]);
 
@@ -59,7 +63,10 @@ export default function LucienPage() {
       const raw = await lucienApi.getSessionHistory(sid);
       const msgs: ChatMessage[] = raw.map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt }));
       setMessages(msgs); setSessionId(sid); setShowHistory(false); setPendingConfirm(null);
-    } catch { setError('Failed to load session history.'); }
+    } catch (e) {
+      console.error('Lucien getSessionHistory failed', e);
+      setError(extractApiError(e, 'Failed to load session history.'));
+    }
     finally { setLoadingHistory(false); }
   };
 
@@ -95,8 +102,9 @@ export default function LucienPage() {
           toolName: resp.pendingToolName,
         });
       }
-    } catch {
-      setError('Lucien did not respond. Please try again.');
+    } catch (e) {
+      console.error('Lucien sendMessage failed', e);
+      setError(extractApiError(e, 'Lucien did not respond. Please try again.'));
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     } finally { setSending(false); inputRef.current?.focus(); }
   };
@@ -113,8 +121,9 @@ export default function LucienPage() {
         createdAt: resp.timestamp ?? new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      setError('Failed to process confirmation. Please try again.');
+    } catch (e) {
+      console.error('Lucien confirmAction failed', e);
+      setError(extractApiError(e, 'Failed to process confirmation. Please try again.'));
     } finally {
       setPendingConfirm(null);
       setConfirming(false);
@@ -144,8 +153,9 @@ export default function LucienPage() {
         setSessionId(null); setMessages([]); setPendingConfirm(null);
         await startSession();
       }
-    } catch {
-      setError('Failed to delete session.');
+    } catch (e) {
+      console.error('Lucien deleteSession failed', e);
+      setError(extractApiError(e, 'Failed to delete session.'));
     }
   };
 

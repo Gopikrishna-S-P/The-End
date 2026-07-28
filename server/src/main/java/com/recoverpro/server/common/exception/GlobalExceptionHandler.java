@@ -26,6 +26,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), req);
     }
 
+    @ExceptionHandler(LlamaUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleLlamaUnavailable(LlamaUnavailableException ex, HttpServletRequest req) {
+        log.warn("Lucien AI unavailable: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable", ex.getMessage(), req);
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest req) {
         log.debug("Business rule violation: {}", ex.getMessage());

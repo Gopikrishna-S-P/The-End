@@ -92,8 +92,13 @@ public class LlamaClient {
                 "FRIDAY AI is temporarily unavailable (circuit open). Please try again shortly.");
     }
 
-    /** Embeds a batch of texts. Returns one float vector per input, same order. */
-    @CircuitBreaker(name = "llama", fallbackMethod = "embedFallback")
+    /**
+     * Embeds a batch of texts. Returns one float vector per input, same order.
+     * Uses its own circuit breaker (distinct from "llama" on {@link #chat}) so an
+     * embedding-model outage (e.g. the model isn't pulled) can't trip the breaker
+     * that guards chat, which is otherwise unrelated.
+     */
+    @CircuitBreaker(name = "llamaEmbedding", fallbackMethod = "embedFallback")
     public List<List<Float>> embed(List<String> texts) {
         LlamaEmbeddingRequest request = LlamaEmbeddingRequest.builder()
                 .model(embeddingModel)
