@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -9,6 +10,7 @@ import { useColorScheme } from 'react-native';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { LoadingView } from '@/components/ui';
 import { useTheme } from '@/theme/useTheme';
+import { SosFloatingButton } from '@/components/SosFloatingButton';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,38 +23,45 @@ function RootNavigator() {
   const isAuthenticated = !!user;
 
   return (
-    <Stack screenOptions={{
-      headerShown: false,
-      headerStyle: { backgroundColor: colors.canvas },
-      headerTintColor: colors.ink1,
-      contentStyle: { backgroundColor: colors.canvas },
-    }}
-    >
-      <Stack.Protected guard={isAuthenticated}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="case/[id]/index" options={{ headerShown: true, title: 'Case detail' }} />
-        <Stack.Screen
-          name="case/[id]/visit"
-          options={{ headerShown: true, title: 'Log a visit', presentation: 'modal' }}
-        />
-        <Stack.Screen
-          name="case/[id]/ptp"
-          options={{ headerShown: true, title: 'Promise to pay', presentation: 'modal' }}
-        />
-        <Stack.Screen
-          name="case/[id]/collection"
-          options={{ headerShown: true, title: 'Record collection', presentation: 'modal' }}
-        />
-        <Stack.Screen
-          name="case/[id]/payment-link"
-          options={{ headerShown: true, title: 'Send payment link', presentation: 'modal' }}
-        />
-      </Stack.Protected>
+    <View style={{ flex: 1 }}>
+      <Stack screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: colors.canvas },
+        headerTintColor: colors.ink1,
+        contentStyle: { backgroundColor: colors.canvas },
+      }}
+      >
+        <Stack.Protected guard={isAuthenticated}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="case/[id]/index" options={{ headerShown: true, title: 'Case detail' }} />
+          <Stack.Screen
+            name="case/[id]/visit"
+            options={{ headerShown: true, title: 'Log a visit', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="case/[id]/ptp"
+            options={{ headerShown: true, title: 'Promise to pay', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="case/[id]/collection"
+            options={{ headerShown: true, title: 'Record collection', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="case/[id]/payment-link"
+            options={{ headerShown: true, title: 'Send payment link', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="sos"
+            options={{ headerShown: true, title: '', presentation: 'fullScreenModal' }}
+          />
+        </Stack.Protected>
 
-      <Stack.Protected guard={!isAuthenticated}>
-        <Stack.Screen name="(auth)/login" />
-      </Stack.Protected>
-    </Stack>
+        <Stack.Protected guard={!isAuthenticated}>
+          <Stack.Screen name="(auth)/login" />
+        </Stack.Protected>
+      </Stack>
+      {isAuthenticated ? <SosFloatingButton /> : null}
+    </View>
   );
 }
 

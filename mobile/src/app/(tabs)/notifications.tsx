@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { BellOff, X } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { Text, Badge, EmptyState, LoadingView } from '@/components/ui';

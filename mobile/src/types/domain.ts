@@ -392,6 +392,38 @@ export type NotificationType =
   | 'FO_PTP_EXPIRING_SOON' | 'FO_PTP_BROKEN' | 'FO_COLLECTION_RECORDED' | 'FO_SHIFT_STARTING' | 'FO_DO_NOT_CONTACT'
   | 'MENTION' | 'APPROVAL_DECIDED' | 'REPORT_READY' | 'USER_REQUEST_DECIDED';
 
+// ── Field-agent dashboard (single purpose-built "my day" endpoint) ─────────
+// GET /api/v1/dashboard/field-agent/{agentId} — the same endpoint the web
+// app's own Dashboard.tsx calls for FO users (dashboardApi.fieldAgent).
+
+export interface TodayAssignmentEntry {
+  assignmentId: string;
+  allocationId: string;
+  loanNumber: string;
+  borrowerName: string;
+  status: 'COMPLETED' | 'PENDING';
+  priorityLevel: 'HIGH' | 'NORMAL';
+  sequenceOrder?: number;
+  npaFlagged: boolean;
+}
+
+export interface FieldAgentDashboardResponse {
+  agentId: string;
+  agentFirstName: string;
+  agentLastName: string;
+  today: string;
+  todayTotalCases: number;
+  todayCompletedCases: number;
+  todayPendingCases: number;
+  todayRescheduledCases: number;
+  todayCompletionRate: number;
+  collectedAmountToday: number;
+  collectionsSubmittedToday: number;
+  pendingPtps: number;
+  ptpsDueToday: number;
+  todayAssignments: TodayAssignmentEntry[];
+}
+
 export interface ServerNotification {
   id: string;
   type: NotificationType;

@@ -11,6 +11,7 @@ import { collectionsApi } from '@/api/collectionsApi';
 import { PAYMENT_MODE_OPTIONS } from '@/utils/visitEnumLabels';
 import { todayIso } from '@/utils/date';
 import { extractApiError, isNetworkError } from '@/utils/extractApiError';
+import { newIdempotencyKey } from '@/api/axiosInstance';
 import { enqueueCollection } from '@/utils/offlineQueue';
 import type { AllocationResponse } from '@/types/domain';
 import type { PaymentMode } from '@/types/core';
@@ -85,7 +86,7 @@ export default function CollectionFormScreen() {
           setError("You're offline and have a receipt photo attached — photos can't be queued. Retry once you have signal, or remove the photo to save offline.");
           return;
         }
-        await enqueueCollection(payload);
+        await enqueueCollection({ ...payload, idempotencyKey: newIdempotencyKey() });
         router.replace({ pathname: '/case/[id]', params: { id, savedOffline: '1' } });
         return;
       }

@@ -9,7 +9,7 @@ import type { AllocationResponse } from '@/types/domain';
 
 const DPD_TONE_MAP = { neutral: 'neutral', warn: 'warning', high: 'warning', critical: 'error' } as const;
 
-export function CaseRow({ item }: { item: AllocationResponse }) {
+export function CaseRow({ item, completed }: { item: AllocationResponse; completed?: boolean }) {
   const { colors, spacing } = useTheme();
   const amount = resolveAmount(item);
   const dpd = resolveDPD(item);
@@ -21,6 +21,7 @@ export function CaseRow({ item }: { item: AllocationResponse }) {
           <Text variant="bodyMedium" numberOfLines={1}>{item.borrowerName || 'Unknown borrower'}</Text>
           <Text variant="caption" color="secondary">{item.loanNumber}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s2, marginTop: spacing.s1 }}>
+            {completed ? <Badge tone="success" label="Done today" /> : null}
             {item.latestDisposition ? (
               <Badge tone={dispositionTone(item.latestDisposition)} label={DISP_LABELS[item.latestDisposition]} />
             ) : null}

@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
-import { CalendarCheck, IndianRupee, Handshake, MapPinCheck } from 'lucide-react-native';
+import { CalendarCheck, IndianRupee, Handshake, MapPinCheck, CloudOff, RefreshCw, Radio } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, Button, Card, StatCard, EmptyState, LoadingView } from '@/components/ui';
@@ -11,16 +10,21 @@ import { CaseRow } from '@/components/CaseRow';
 import { dailyDispatchApi } from '@/api/dailyDispatchApi';
 import { allocationsApi } from '@/api/allocationsApi';
 import { attendanceApi } from '@/api/attendanceApi';
-import { collectionsApi } from '@/api/collectionsApi';
-import { ptpsApi } from '@/api/ptpsApi';
-import { todayIso, formatTime } from '@/utils/date';
+import { dashboardApi } from '@/api/dashboardApi';
+import { todayIso, formatTime, formatDurationSince } from '@/utils/date';
 import { formatCurrency } from '@/utils/allocationHeuristics';
 import { extractApiError } from '@/utils/extractApiError';
-import type { AllocationResponse } from '@/types/domain';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
+import { useShiftTracking } from '@/hooks/useShiftTracking';
+import { trySync } from '@/utils/offlineQueue';
+import type { AllocationResponse, FieldAgentDashboardResponse } from '@/types/domain';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
+  const { pending, syncing } = useOfflineSync();
+  const { shift, starting, ending, error: shiftError, startShift, endShift } = useShiftTracking();
+  const [, forceTick] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -28,8 +32,7 @@ export default function HomeScreen() {
   const [checkedInAt, setCheckedInAt] = useState<string | null>(null);
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
-  const [collectionsToday, setCollectionsToday] = useState<number | null>(null);
-  const [ptpsDueToday, setPtpsDueToday] = useState<number | null>(null);
+  const [dashboard, setDashboard] = useState<FieldAgentDashboardResponse | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -41,18 +44,18 @@ export default function HomeScreen() {
     });
 
     const attendancePromise = attendanceApi.me(today, today).catch(() => []);
-    const reportPromise = collectionsApi.myDailyReport(user.id, today).catch(() => null);
-    const ptpPromise = ptpsApi.list({ status: 'PENDING', promisedDateFrom: today, promisedDateTo: today, size: 1 }).catch(() => null);
+    const dashboardPromise = dashboardApi.fieldAgent(user.id).catch(() => null);
 
-    const [cases, attendance, report, ptps] = await Promise.all([
-      casesPromise, attendancePromise, reportPromise, ptpPromise,
-    ]);
+    const [cases, attendance, dash] = await Promise.all([casesPromise, attendancePromise, dashboardPromise]);
 
     setTodayCases(cases);
     setCheckedInAt(attendance[0]?.checkedInAt ?? null);
-    setCollectionsToday(report?.totalAmountSubmitted ?? null);
-    setPtpsDueToday(ptps?.totalElements ?? null);
+    setDashboard(dash);
   }, [user]);
+
+  const completedByAllocationId = new Set(
+    (dashboard?.todayAssignments ?? []).filter((a) => a.status === 'COMPLETED').map((a) => a.allocationId),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -60,6 +63,12 @@ export default function HomeScreen() {
       load().finally(() => setLoading(false));
     }, [load]),
   );
+
+  useEffect(() => {
+    if (!shift) return;
+    const t = setInterval(() => forceTick((n) => n + 1), 60_000);
+    return () => clearInterval(t);
+  }, [shift]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -96,6 +105,24 @@ export default function HomeScreen() {
           <Text variant="title">{user?.firstName ?? 'Field Officer'}</Text>
         </View>
 
+        {pending > 0 ? (
+          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
+            <CloudOff size={18} color={colors.warnBorder} />
+            <Text variant="caption" color="secondary" style={{ flex: 1 }}>
+              {pending} {pending === 1 ? 'item' : 'items'} waiting to sync
+            </Text>
+            <Button
+              label="Sync now"
+              variant="ghost"
+              fullWidth={false}
+              size="md"
+              loading={syncing}
+              onPress={() => trySync()}
+              icon={<RefreshCw size={14} color={colors.accent} />}
+            />
+          </Card>
+        ) : null}
+
         <Card>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
             <View style={{ flex: 1, gap: spacing.s1 }}>
@@ -111,9 +138,29 @@ export default function HomeScreen() {
           </View>
         </Card>
 
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
+            <View style={{ flex: 1, gap: spacing.s1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
+                <Radio size={16} color={shift ? colors.success : colors.ink3} />
+                <Text variant="bodyMedium">Field shift</Text>
+              </View>
+              <Text variant="caption" color="secondary">
+                {shift ? `Live — sharing location for ${formatDurationSince(shift.startedAt)}` : 'Start a shift so your team can see you\'re in the field'}
+              </Text>
+              {shiftError ? <Text variant="caption" color="error">{shiftError}</Text> : null}
+            </View>
+            {shift ? (
+              <Button label="End shift" variant="outline" onPress={endShift} loading={ending} fullWidth={false} size="md" />
+            ) : (
+              <Button label="Start shift" onPress={startShift} loading={starting} fullWidth={false} size="md" />
+            )}
+          </View>
+        </Card>
+
         <View style={{ flexDirection: 'row', gap: spacing.s3 }}>
-          <StatCard icon={IndianRupee} label="Collected today" value={collectionsToday != null ? formatCurrency(collectionsToday) : '—'} tone="success" />
-          <StatCard icon={Handshake} label="PTPs due today" value={ptpsDueToday != null ? String(ptpsDueToday) : '—'} tone="warning" />
+          <StatCard icon={IndianRupee} label="Collected today" value={dashboard ? formatCurrency(dashboard.collectedAmountToday) : '—'} tone="success" />
+          <StatCard icon={Handshake} label="PTPs due today" value={dashboard ? String(dashboard.ptpsDueToday) : '—'} tone="warning" />
         </View>
 
         <View style={{ gap: spacing.s3 }}>
@@ -122,10 +169,18 @@ export default function HomeScreen() {
             <Text variant="caption" color="accent" onPress={() => router.push('/(tabs)/cases')}>View all cases</Text>
           </View>
 
+          {dashboard && dashboard.todayTotalCases > 0 ? (
+            <Text variant="caption" color="secondary">
+              {dashboard.todayCompletedCases} of {dashboard.todayTotalCases} done ({Math.round(dashboard.todayCompletionRate)}%)
+            </Text>
+          ) : null}
+
           {todayCases.length === 0 ? (
             <EmptyState icon={CalendarCheck} title="No visits scheduled today" message="Cases assigned to you will show up here once dispatched." />
           ) : (
-            todayCases.map((item) => <CaseRow key={item.id} item={item} />)
+            todayCases.map((item) => (
+              <CaseRow key={item.id} item={item} completed={completedByAllocationId.has(item.id)} />
+            ))
           )}
         </View>
       </View>

@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
-import { View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { View, Modal, Image, Pressable } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
-  MapPin, Handshake, Link2, Receipt, AlertTriangle, CloudOff,
+  MapPin, Handshake, Link2, Receipt, AlertTriangle, CloudOff, X, ImageIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, Card, Badge, Button, Divider, LoadingView, EmptyState } from '@/components/ui';
@@ -11,12 +10,13 @@ import { allocationsApi } from '@/api/allocationsApi';
 import { casesApi } from '@/api/casesApi';
 import { visitLogApi } from '@/api/visitLogApi';
 import { ptpsApi } from '@/api/ptpsApi';
-import { allocationStatusTone, dispositionTone, DISP_LABELS } from '@/utils/statusStyles';
+import { collectionsApi } from '@/api/collectionsApi';
+import { allocationStatusTone, dispositionTone, collectionStatusTone, DISP_LABELS } from '@/utils/statusStyles';
 import { resolveAmount, formatCurrency } from '@/utils/allocationHeuristics';
 import { mergeTimeline, type TimelineEntry } from '@/utils/mergeTimeline';
 import { styleForEvent } from '@/utils/timelineStyles';
 import { formatDateTime, formatDate } from '@/utils/date';
-import type { AllocationResponse, VisitLogResponse } from '@/types/domain';
+import type { AllocationResponse, CollectionResponse, VisitLogResponse } from '@/types/domain';
 
 function humanizeKey(key: string): string {
   return key
@@ -38,22 +38,27 @@ export default function CaseDetailScreen() {
   const [allocation, setAllocation] = useState<AllocationResponse | null>(null);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [recentVisits, setRecentVisits] = useState<VisitLogResponse[]>([]);
+  const [collections, setCollections] = useState<CollectionResponse[]>([]);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [allocResult, timelineResult, visitsResult, ptpsResult] = await Promise.allSettled([
+    const [allocResult, timelineResult, visitsResult, ptpsResult, collectionsResult] = await Promise.allSettled([
       allocationsApi.getById(id),
       casesApi.getTimeline(id),
       visitLogApi.getByAllocation(id),
       ptpsApi.getByAllocation(id),
+      collectionsApi.getByAllocation(id),
     ]);
 
     if (allocResult.status === 'fulfilled') setAllocation(allocResult.value);
     const events = timelineResult.status === 'fulfilled' ? timelineResult.value.events : [];
     const visits = visitsResult.status === 'fulfilled' ? visitsResult.value : [];
     const ptps = ptpsResult.status === 'fulfilled' ? ptpsResult.value : [];
+    const cols = collectionsResult.status === 'fulfilled' ? collectionsResult.value : [];
 
     setRecentVisits([...visits].sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime()).slice(0, 3));
+    setCollections([...cols].sort((a, b) => new Date(b.collectionDate).getTime() - new Date(a.collectionDate).getTime()));
     setTimeline(mergeTimeline(events, visits, ptps));
   }, [id]);
 
@@ -164,6 +169,36 @@ export default function CaseDetailScreen() {
           </Card>
         ) : null}
 
+        {collections.length > 0 ? (
+          <Card style={{ gap: spacing.s3 }}>
+            <Text variant="headline">Collections</Text>
+            {collections.map((c) => (
+              <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
+                    <Text variant="bodyMedium">{formatCurrency(c.amount)}</Text>
+                    <Badge tone={collectionStatusTone(c.status)} label={c.status.replace('_', ' ')} />
+                  </View>
+                  <Text variant="caption" color="secondary">{formatDate(c.collectionDate)} · {c.paymentMode}</Text>
+                </View>
+                {c.documents?.[0]?.fileUrl ? (
+                  <Pressable onPress={() => setViewerUrl(c.documents![0].fileUrl)}>
+                    <Image source={{ uri: c.documents[0].fileUrl }} style={{ width: 48, height: 48, borderRadius: 8 }} />
+                  </Pressable>
+                ) : (
+                  <View style={{
+                    width: 48, height: 48, borderRadius: 8, backgroundColor: colors.subtle,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}
+                  >
+                    <ImageIcon size={18} color={colors.ink3} />
+                  </View>
+                )}
+              </View>
+            ))}
+          </Card>
+        ) : null}
+
         {Object.keys(allocation.dynamicData || {}).length > 0 ? (
           <Card style={{ gap: spacing.s2 }}>
             <Text variant="headline">Borrower details</Text>
@@ -210,6 +245,26 @@ export default function CaseDetailScreen() {
           )}
         </View>
       </View>
+
+      <Modal visible={!!viewerUrl} transparent animationType="fade" onRequestClose={() => setViewerUrl(null)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }}
+          onPress={() => setViewerUrl(null)}
+        >
+          {viewerUrl ? (
+            <Image source={{ uri: viewerUrl }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+          ) : null}
+          <Pressable
+            onPress={() => setViewerUrl(null)}
+            style={{
+              position: 'absolute', top: 60, right: 20, width: 40, height: 40, borderRadius: 20,
+              backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <X size={22} color="#fff" />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
