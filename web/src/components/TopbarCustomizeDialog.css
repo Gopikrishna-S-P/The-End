@@ -9,8 +9,8 @@
   justify-content: center;
   padding: 20px;
   background: rgba(12, 10, 9, 0.2);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   animation: app-topbar-custom-fade var(--dur-base) var(--ease-out) both;
 }
 
@@ -288,3 +288,30 @@
     transition: none;
   }
 }
+
+/* ── Dark mode ────────────────────────────────────────────────────────────── */
+.app-layout.dark .app-topbar-custom-dialog {
+  background: rgba(21, 23, 28, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.app-layout.dark .app-topbar-custom-title,
+.app-layout.dark .app-topbar-custom-row-label {
+  color: #E8EAED;
+}
+.app-layout.dark .app-topbar-custom-title {
+  background: linear-gradient(135deg, #E8EAED, #9BA1AC);
+  -webkit-background-clip: text;
+}
+.app-layout.dark .app-topbar-custom-title svg { color: #9BA1AC; }
+.app-layout.dark .app-topbar-custom-close:hover { background: rgba(255, 255, 255, 0.06); color: #E8EAED; }
+.app-layout.dark .app-topbar-custom-intro,
+.app-layout.dark .app-topbar-custom-row-desc,
+.app-layout.dark .app-topbar-custom-hint { color: rgba(255, 255, 255, 0.55); }
+.app-layout.dark .app-topbar-custom-row:hover { background: rgba(255, 255, 255, 0.04); }
+.app-layout.dark .app-topbar-custom-tag { background: rgba(255, 255, 255, 0.08); color: #C4C9D2; }
+.app-layout.dark .app-topbar-custom-toggle-track { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1); }
+.app-layout.dark .app-topbar-custom-footer { border-top-color: rgba(255, 255, 255, 0.08); }
+.app-layout.dark .app-topbar-custom-reset { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.1); color: #C4C9D2; }

@@ -37,6 +37,7 @@ public class NpaReportResponse {
     @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class NpaRecordResponse {
+        private UUID id;
         private UUID allocationId;
         private String loanNumber;
         private String borrowerName;

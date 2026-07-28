@@ -4,20 +4,6 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Accent palette — single brand green, no secondary hues ──────────────── */
-  --rp-accent: var(--brand);
-  --rp-accent-hover: var(--ink-solid-hover);
-  --rp-accent-subtle: var(--brand-subtle);
-  --rp-accent-bright: var(--brand);
-  --rp-pink:           #f43f5e; /* used exclusively for notification badge dot */
-
-  /* ── Accent gradient — single-hue green, no teal/cyan/indigo leakage ─────── */
-  --rp-grad: none;
-
-  /* ── Glass ───────────────────────────────────────────────────────────────── */
-  --rp-blur:       blur(16px) saturate(180%);
-  --rp-blur-light: blur(12px) saturate(160%);
-
   /* ── Light-mode surfaces (overridden in .app-layout.dark) ───────────────── */
   /* Cool-neutral gray ramp — SaaS standard */
   --rp-bg-glass:   rgba(255,255,255,.9);

@@ -16,6 +16,7 @@ public class ReportMapper {
     public NpaReportResponse.NpaRecordResponse toNpaRecordResponse(NpaRecord record) {
         if (record == null) return null;
         return NpaReportResponse.NpaRecordResponse.builder()
+                .id(record.getId())
                 .allocationId(record.getAllocationId())
                 .loanNumber(record.getLoanNumber())
                 .borrowerName(record.getBorrowerName())

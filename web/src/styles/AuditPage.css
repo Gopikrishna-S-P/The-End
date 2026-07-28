@@ -1,15 +1,5 @@
 /* ── Audit trail (timeline) — page-specific layout ───────────────────────── */
 
-.audit-trail-page {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 12px;
-  min-height: 100%;
-}
-
-.app-page.audit-trail-page { background: var(--bg-canvas); }
-
 /* ── Admin Actions tab — fill remaining viewport height ────────────────────
    Scoped to this page only (not the shared .dd-page) so the Admin Actions
    table card fills exactly like Loans' card, without affecting the other
@@ -17,116 +7,6 @@
 .audit-fill-root {
   height: 100%;
   overflow: hidden;
-}
-
-/* ── Toolbar ─────────────────────────────────────────────────────────────── */
-
-.audit-trail-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  margin-bottom: 10px;
-}
-
-.audit-trail-toolbar .ds-filter-btn { padding: 0 20px; gap: 8px; height: var(--ds-ctl-h); font-size: 13px; }
-
-.audit-trail-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.audit-trail-chip-x {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0.65;
-  transition: opacity 120ms var(--ease);
-}
-.audit-trail-chip-x:hover { opacity: 1; }
-
-/* ── Filter modal options ────────────────────────────────────────────────── */
-
-.audit-trail-filter-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.audit-trail-filter-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  border-radius: var(--ds-radius-pill);
-  border: 1px solid var(--border);
-  background: var(--bg-subtle);
-  color: var(--ink-secondary);
-  font-family: var(--ds-font-body);
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease);
-}
-.audit-trail-filter-option:hover {
-  border-color: var(--border-strong);
-  color: var(--ink-primary);
-}
-.audit-trail-filter-option.is-active {
-  background: var(--bg-active);
-  border-color: var(--ink-solid);
-  color: var(--ink-solid);
-  font-weight: 500;
-}
-
-.audit-trail-filter-count {
-  font-family: var(--ds-font-num);
-  font-size: 10.5px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: var(--ds-radius-pill);
-  background: var(--bg-surface);
-  color: var(--ink-tertiary);
-  font-feature-settings: 'tnum','zero';
-}
-.audit-trail-filter-option.is-active .audit-trail-filter-count {
-  background: var(--ink-solid);
-  color: var(--text-on-solid);
-}
-
-/* ── Error banner ────────────────────────────────────────────────────────── */
-
-.audit-trail-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 16px;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--danger);
-  background: var(--danger-subtle);
-  border-color: var(--danger-border);
-  margin-bottom: 10px;
-}
-.audit-trail-banner > span { flex: 1; }
-.audit-trail-banner-action {
-  margin-left: auto;
-  border: none;
-  background: none;
-  color: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
 }
 
 /* ── Timeline card ───────────────────────────────────────────────────────── */
@@ -298,18 +178,3 @@
   color: var(--warning);
   font-size: 12.5px;
 }
-
-.audit-trail-skel-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-/* ── Pagination ──────────────────────────────────────────────────────────── */
-
-.audit-trail-pagination {
-  flex-shrink: 0;
-  margin-top: 10px;
-}
-
-

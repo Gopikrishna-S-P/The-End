@@ -66,7 +66,8 @@ export interface PagedResponse<T> {
 export interface LoginRequest {
   email: string;
   password: string;
-  totp_code?: string;
+  totpCode?: string;
+  recoveryCode?: string;
 }
 
 export interface AuthResponse {
@@ -102,7 +103,7 @@ export interface ChangePasswordRequest {
 }
 
 export interface EnableMfaRequest {
-  totp_code: string;
+  totpCode: string;
 }
 
 export interface MfaSetupResponse {

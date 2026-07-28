@@ -2,7 +2,7 @@
 .app-page-drawer-overlay {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: var(--z-modal, 500);
   background: var(--shadow-overlay-scrim);
   animation: app-page-fadein 180ms var(--ease);
 }
@@ -11,7 +11,7 @@
   inset: 0 0 0 auto;
   width: 100%;
   max-width: 560px;
-  z-index: 40;
+  z-index: calc(var(--z-modal, 500) + 1);
   background: var(--bg-canvas);
   border-left: 1px solid var(--border);
   box-shadow:

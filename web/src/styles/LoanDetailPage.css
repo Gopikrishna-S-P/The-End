@@ -11,6 +11,36 @@
   min-height: 100%;
 }
 
+/* ── Fill-viewport root — left summary card stays fixed in place while only
+   the right column scrolls, instead of the whole page scrolling underneath
+   a sticky sidebar. Mirrors LoansPage.css's .alloc-root pattern, scoped to
+   this page only so no other .db-root consumer is affected. ─────────────── */
+.alloc-detail-root {
+  height: 100%;
+  overflow: hidden;
+}
+.alloc-detail-root .db-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 36px;
+}
+.alloc-detail-root .db-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.alloc-detail-split {
+  flex: 1;
+  min-height: 0;
+}
+.alloc-detail-scroll {
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .alloc-detail-shell {
   display: flex;
   flex-direction: column;

@@ -23,6 +23,8 @@ export interface SidebarUser {
 
 export interface AppSidebarProps {
   sections: SidebarSection[];
+  unreadCount?: number;
+  onNotificationsClick?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   onProfileSettings?: () => void;

@@ -34,6 +34,8 @@ export default function LoginPage() {
   const [mfaEmail,           setMfaEmail]           = useState('');
   const [mfaPassword,        setMfaPassword]        = useState('');
   const [totpCode,           setTotpCode]           = useState('');
+  const [useRecoveryCode,    setUseRecoveryCode]    = useState(false);
+  const [recoveryCode,       setRecoveryCode]       = useState('');
 
   const reason = searchParams.get('reason');
   const hasRedirected = useRef(false);
@@ -90,19 +92,26 @@ export default function LoginPage() {
   };
 
   const onSubmitMfa = async () => {
-    if (totpCode.length < 6) { setServerError('Please enter the complete 6-digit code.'); return; }
+    if (useRecoveryCode) {
+      if (recoveryCode.trim().length === 0) { setServerError('Please enter a recovery code.'); return; }
+    } else if (totpCode.length < 6) {
+      setServerError('Please enter the complete 6-digit code.'); return;
+    }
     setIsLoading(true);
     setServerError(null);
     setRememberDevice(rememberDevice);
     loadingSplash.show(0);
     try {
-      await loginWithMfa(mfaEmail, mfaPassword, totpCode);
+      await loginWithMfa(mfaEmail, mfaPassword, totpCode, useRecoveryCode ? recoveryCode.trim() : undefined);
     } catch (err: any) {
       loadingSplash.hide();
       const status = err?.response?.status;
       if (status === 401 || status === 400) {
-        setServerError('Invalid authenticator code. Please check your app and try again.');
+        setServerError(useRecoveryCode
+          ? 'Invalid recovery code. Please check and try again.'
+          : 'Invalid authenticator code. Please check your app and try again.');
         setTotpCode('');
+        setRecoveryCode('');
       } else {
         setServerError('Authentication failed. Please try again.');
       }
@@ -141,9 +150,18 @@ export default function LoginPage() {
                 serverError={serverError}
                 totpCode={totpCode}
                 setTotpCode={setTotpCode}
+                useRecoveryCode={useRecoveryCode}
+                recoveryCode={recoveryCode}
+                setRecoveryCode={setRecoveryCode}
+                onToggleRecoveryCode={() => {
+                  setUseRecoveryCode(v => !v);
+                  setServerError(null);
+                  setTotpCode('');
+                  setRecoveryCode('');
+                }}
                 isLoading={isLoading}
                 onSubmitMfa={onSubmitMfa}
-                onBack={() => { setStage('credentials'); setServerError(null); setTotpCode(''); }}
+                onBack={() => { setStage('credentials'); setServerError(null); setTotpCode(''); setUseRecoveryCode(false); setRecoveryCode(''); }}
               />
             )}
           </div>

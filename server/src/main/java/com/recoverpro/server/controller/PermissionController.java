@@ -19,7 +19,7 @@ public class PermissionController {
 
     /** GET /api/v1/permissions -- returns permissions the caller is allowed to assign */
     @GetMapping
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN', 'ORG_ADMIN', 'ORG_ADMIN')")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN') or hasAuthority('ROLE_ASSIGN')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getAllPermissions() {
         return ResponseEntity.ok(ApiResponse.success(roleService.listPermissionsForCaller()));
     }

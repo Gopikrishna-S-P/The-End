@@ -22,13 +22,11 @@
   flex-direction: column;
   width: var(--rp-sb-on, 280px);
   height: 100%;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--asb-bg);
   overflow: hidden;
   flex-shrink: 0;
   transition: width var(--dur-slow) var(--ease-out);
-  z-index: 50;
+  z-index: var(--z-sidebar, 90);
   contain: paint;
   border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
@@ -170,34 +168,11 @@
   flex-shrink: 0;
 }
 
-/* Rule after label */
-.asb-root .asb-section-rule {
-  flex: 1;
-  height: 1px;
-  background: var(--border-subtle);
-}
-
-/* Chevron */
-.asb-root .asb-section-chevron {
-  color: var(--asb-ink-faint);
-  flex-shrink: 0;
-  opacity: 0;
-  transition: transform var(--dur-base) ease, opacity var(--dur-fast);
-}
-
-.asb-root .asb-section-chevron.is-closed {
-  transform: rotate(-90deg);
-}
-
 /* CSS grid height-collapse trick */
 .asb-root .asb-section-wrap {
   display: grid;
   grid-template-rows: 1fr;
   transition: grid-template-rows var(--dur-slow) var(--ease-out);
-}
-
-.asb-root .asb-section-wrap.is-closed {
-  grid-template-rows: 0fr;
 }
 
 .asb-root .asb-section-wrap>ul {
@@ -243,7 +218,7 @@
   /* Font style matching help & resources row labels */
   font-family: var(--sans);
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 600;
   color: #111;
 
   transition:
@@ -333,11 +308,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.asb-nav-arrow {
-  flex-shrink: 0;
-  color: var(--asb-ink-faint);
 }
 
 /* ── Nav count chip ───────────────────────────────────────────────────────── */
@@ -535,6 +505,7 @@
 
 /* Logout icon button — Subtle destructive action */
 .asb-root .asb-footer-logout-icon {
+  position: relative;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

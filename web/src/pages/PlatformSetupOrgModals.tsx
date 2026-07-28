@@ -159,6 +159,8 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
     if (!orgForm.name.trim()) e.name = 'Required';
     if (!/^[A-Z0-9_-]+$/.test(orgForm.code.trim())) e.code = 'Uppercase letters, digits, underscore or hyphen only';
     if (adminForm.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adminForm.email.trim())) e.adminEmail = 'Invalid email';
+    if (org.orgAdminEmail && !adminForm.firstName.trim()) e.adminFirstName = 'Required';
+    if (org.orgAdminEmail && !adminForm.lastName.trim()) e.adminLastName = 'Required';
     setFieldErr(e); return Object.keys(e).length === 0;
   };
 

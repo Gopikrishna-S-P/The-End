@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { FileText, Trash2, Loader2, AlertCircle, X, Plus, UploadCloud, SquarePen } from 'lucide-react';
 import { ragApi } from '../api/ragApi';
@@ -7,7 +7,6 @@ import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
-import '../styles/RagDocumentsPage.css';
 
 const STATUS_VARIANT: Record<RagStatus, string> = {
   PENDING:    'is-neutral',
@@ -34,7 +33,7 @@ const fadeIn: Variants = {
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
 
-export default function RagDocumentsPage() {
+export default function RagDocumentsPage({ headerExtra }: { headerExtra?: ReactNode }) {
   const [docs, setDocs]             = useState<RagDocumentResponse[]>([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
@@ -136,6 +135,7 @@ export default function RagDocumentsPage() {
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
               Compliance documents Lucien retrieves from — platform-wide
             </p>
+            {headerExtra}
           </motion.div>
 
           {showUpload && (

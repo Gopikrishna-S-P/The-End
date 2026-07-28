@@ -14,7 +14,6 @@ import { StatusPill, fmtFileSize, TERMINAL_STATUSES, REPORT_LABELS } from './Rep
 import { ReportGenerateModal } from './ReportGenerateModal';
 import '../styles/AppPage.css';
 import './Dashboard.css';
-import '../styles/ReportsPage.css';
 
 const PAGE_SIZE   = 20;
 const POLL_MAX_MS = 30_000;

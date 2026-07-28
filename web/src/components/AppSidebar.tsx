@@ -9,6 +9,7 @@ import { useT } from '../utils/i18n';
 import {
   type AppSidebarProps,
 } from './AppSidebarHelpers';
+import { LogoutConfirmDialog } from '../pages/LogoutConfirmDialog';
 import './AppSidebar.css';
 
 export type { SidebarNavItem, SidebarSection, AppSidebarProps } from './AppSidebarHelpers';
@@ -42,6 +43,8 @@ export default function AppSidebar({
   collapsed = false,
   onToggleCollapse,
   onProfileSettings,
+  onNotificationsClick,
+  unreadCount = 0,
   onLogout,
   user,
   roleLabel,
@@ -52,6 +55,7 @@ export default function AppSidebar({
   const expanded = !collapsed;
 
   const [confirmLogout,       setConfirmLogout]       = useState(false);
+  const [isLoggingOut,        setIsLoggingOut]        = useState(false);
   const [pendingTo,           setPendingTo]           = useState<string | null>(null);
   const [scrollMap,           setScrollMap]           = useState({ visible: false, top: 0, height: 0 });
   const [tip,                 setTip]                 = useState<TipState | null>(null);
@@ -254,44 +258,33 @@ export default function AppSidebar({
                 )}
               </div>
             </div>
-            {onLogout && (
-              <button type="button" className="asb-footer-logout-icon"
-                onClick={e => { e.stopPropagation(); setConfirmLogout(true); }}
-                aria-label="Sign out" title="Sign out"
-              >
-                <LogOut size={14} />
-              </button>
-            )}
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {onLogout && (
+                <button type="button" className="asb-footer-logout-icon" style={{ marginLeft: 0 }}
+                  onClick={e => { e.stopPropagation(); setConfirmLogout(true); }}
+                  aria-label="Sign out" title="Sign out"
+                >
+                  <LogOut size={14} />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {/* ── Sign-out confirm popup ── */}
-      {confirmLogout && createPortal(
-        <div className="asb-signout-overlay" role="dialog" aria-modal="true" aria-labelledby="asb-signout-title"
-          onClick={e => { if (e.target === e.currentTarget) setConfirmLogout(false); }}>
-          <div className="asb-signout-window">
-            <div className="asb-signout-titlebar">
-              <LogOut size={13} className="asb-signout-titlebar-icon" aria-hidden="true" />
-              <span className="asb-signout-titlebar-text">Sign out</span>
-              <button type="button" className="asb-signout-close" onClick={() => setConfirmLogout(false)} aria-label="Cancel">
-                <XIcon size={14} />
-              </button>
-            </div>
-            <div className="asb-signout-body">
-              <p className="asb-signout-msg" id="asb-signout-title">Are you sure you want to sign out?</p>
-              <div className="asb-signout-actions">
-                <button ref={rippleCancel.ref} type="button" className="asb-signout-cancel"
-                  onClick={e => { rippleCancel.fire(e); setConfirmLogout(false); }}>Cancel</button>
-                <button ref={rippleConfirm.ref} type="button" className="asb-signout-confirm"
-                  onClick={e => { rippleConfirm.fire(e); setConfirmLogout(false); onLogout?.(); }} autoFocus>
-                  Sign out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body,
+      {createPortal(
+        <LogoutConfirmDialog
+          open={confirmLogout}
+          isLoggingOut={isLoggingOut}
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={() => {
+            setIsLoggingOut(true);
+            onLogout?.();
+          }}
+        />,
+        document.body
       )}
 
       {tip && (

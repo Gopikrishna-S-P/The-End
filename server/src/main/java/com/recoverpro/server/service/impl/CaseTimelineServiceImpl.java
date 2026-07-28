@@ -4,11 +4,13 @@ import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.dto.response.CaseEventResponse;
 import com.recoverpro.server.dto.response.CaseTimelineResponse;
 import com.recoverpro.server.dto.response.RestructureProposalResponse;
+import com.recoverpro.server.entity.AllocationAuditLog;
 import com.recoverpro.server.entity.AssignmentAuditLog;
 import com.recoverpro.server.entity.CollectionAuditLog;
 import com.recoverpro.server.entity.PtpAuditLog;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.CaseEventType;
+import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AssignmentAuditLogRepository;
 import com.recoverpro.server.repository.CollectionAuditLogRepository;
 import com.recoverpro.server.repository.CollectionRepository;
@@ -32,22 +34,24 @@ import java.util.stream.Collectors;
 
 /**
  * Aggregates a case's history from the domain-specific audit logs that
- * already exist (AssignmentAuditLog, PtpAuditLog, CollectionAuditLog) plus
- * RestructureProposal's own lifecycle timestamps. Deliberately does NOT emit
- * PTP_CREATED or any VISIT_* type -- CaseTimeline.tsx already synthesizes
- * those client-side from the visits/ptps endpoints it calls directly, so
- * including them here would duplicate entries in the UI.
+ * already exist (AllocationAuditLog, AssignmentAuditLog, PtpAuditLog,
+ * CollectionAuditLog) plus RestructureProposal's own lifecycle timestamps.
+ * Deliberately does NOT emit PTP_CREATED or any VISIT_* type --
+ * CaseTimeline.tsx already synthesizes those client-side from the
+ * visits/ptps endpoints it calls directly, so including them here would
+ * duplicate entries in the UI.
  *
- * Several CaseEventType values (allocation status/NPA/cooling-off changes,
- * communications, settlements, PTP reschedule, assignment "completed") have
- * no audit trail anywhere in this codebase and are never produced -- see
- * CaseEventType's javadoc.
+ * Several CaseEventType values (NPA/cooling-off changes, communications,
+ * settlements, PTP reschedule, assignment "completed") have no audit trail
+ * anywhere in this codebase and are never produced -- see CaseEventType's
+ * javadoc.
  */
 @Service
 @RequiredArgsConstructor
 public class CaseTimelineServiceImpl implements CaseTimelineService {
 
     private final AllocationService allocationService;
+    private final AllocationAuditLogRepository allocationAuditLogRepository;
     private final AssignmentAuditLogRepository assignmentAuditLogRepository;
     private final PtpAuditLogRepository ptpAuditLogRepository;
     private final CollectionAuditLogRepository collectionAuditLogRepository;
@@ -71,9 +75,12 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
                 ? List.of()
                 : collectionAuditLogRepository.findByCollectionIdInOrderByCreatedAtDesc(collectionIds);
 
+        List<AllocationAuditLog> allocationAuditLogs =
+                allocationAuditLogRepository.findByAllocationIdOrderByCreatedAtDesc(allocationId);
+
         List<RestructureProposalResponse> restructures = restructureProposalService.getByAllocationId(allocationId);
 
-        Map<UUID, User> usersById = resolveUsers(assignmentLogs, ptpLogs, collectionLogs, restructures);
+        Map<UUID, User> usersById = resolveUsers(assignmentLogs, ptpLogs, collectionLogs, allocationAuditLogs, restructures);
 
         List<CaseEventResponse> events = new ArrayList<>();
 
@@ -84,6 +91,32 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
                     .summary("Case created")
                     .sourceTable("ALLOCATION")
                     .sourceId(allocationId)
+                    .build());
+        }
+
+        for (AllocationAuditLog log : allocationAuditLogs) {
+            CaseEventType type = switch (log.getAction()) {
+                case "STATUS_CHANGED" -> CaseEventType.ALLOCATION_STATUS_CHANGED;
+                case "DISPOSITION_CHANGED" -> CaseEventType.ALLOCATION_DISPOSITION_CHANGED;
+                default -> null;
+            };
+            if (type == null) continue;
+
+            String label = type == CaseEventType.ALLOCATION_STATUS_CHANGED ? "Status" : "Disposition";
+            String summary = label + " changed"
+                    + (log.getPreviousValue() != null ? " from " + log.getPreviousValue() : "")
+                    + " to " + log.getNewValue();
+
+            events.add(CaseEventResponse.builder()
+                    .timestamp(log.getCreatedAt())
+                    .eventType(type)
+                    .summary(summary)
+                    .actorId(log.getPerformedBy())
+                    .actorName(displayName(usersById.get(log.getPerformedBy())))
+                    .actorRole(roleOf(usersById.get(log.getPerformedBy())))
+                    .sourceTable("ALLOCATION_AUDIT_LOG")
+                    .sourceId(log.getId())
+                    .narrative(log.getReason())
                     .build());
         }
 
@@ -140,6 +173,7 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
                 case "APPROVED" -> CaseEventType.COLLECTION_APPROVED;
                 case "REJECTED" -> CaseEventType.COLLECTION_REJECTED;
                 case "DEPOSITED" -> CaseEventType.COLLECTION_DEPOSITED;
+                case "CANCELLED" -> CaseEventType.COLLECTION_CANCELLED;
                 default -> null;
             };
             if (type == null) continue;
@@ -214,7 +248,8 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
     }
 
     private Map<UUID, User> resolveUsers(List<AssignmentAuditLog> assignmentLogs, List<PtpAuditLog> ptpLogs,
-                                          List<CollectionAuditLog> collectionLogs, List<RestructureProposalResponse> restructures) {
+                                          List<CollectionAuditLog> collectionLogs, List<AllocationAuditLog> allocationAuditLogs,
+                                          List<RestructureProposalResponse> restructures) {
         Set<UUID> ids = new HashSet<>();
         for (AssignmentAuditLog a : assignmentLogs) {
             ids.add(a.getPerformedBy());
@@ -223,6 +258,7 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
         }
         for (PtpAuditLog p : ptpLogs) ids.add(p.getPerformedBy());
         for (CollectionAuditLog c : collectionLogs) ids.add(c.getPerformedBy());
+        for (AllocationAuditLog a : allocationAuditLogs) ids.add(a.getPerformedBy());
         for (RestructureProposalResponse r : restructures) {
             ids.add(r.getDraftedByUserId());
             ids.add(r.getLenderApprovalUserId());
@@ -250,6 +286,7 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
             case COLLECTION_APPROVED -> "Collection approved";
             case COLLECTION_REJECTED -> "Collection rejected";
             case COLLECTION_DEPOSITED -> "Collection deposited";
+            case COLLECTION_CANCELLED -> "Collection cancelled";
             default -> "Collection updated";
         };
     }

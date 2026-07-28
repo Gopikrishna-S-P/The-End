@@ -43,6 +43,16 @@
 }
 .db-error-retry:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
 
+.db-card-body { padding: 8px 20px 20px; }
+
+/* Row-action variants — like db-error-retry, but for non-error inline actions */
+.db-action-success { background: var(--success-subtle); color: var(--success); }
+.db-action-success:hover { background: color-mix(in srgb, var(--success) 20%, var(--success-subtle)); }
+.db-action-danger { background: var(--danger-subtle); color: var(--danger); }
+.db-action-danger:hover { background: color-mix(in srgb, var(--danger) 20%, var(--danger-subtle)); }
+.db-action-info { background: var(--info-subtle); color: var(--info); }
+.db-action-info:hover { background: color-mix(in srgb, var(--info) 20%, var(--info-subtle)); }
+
 .db-page-hero {
   display: flex;
   align-items: center;

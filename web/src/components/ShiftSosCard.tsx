@@ -132,9 +132,8 @@ export default function ShiftSosCard() {
 
   /**
    * Records a short voice note and uploads it via POST /api/v1/agent/sos/audio.
-   * This is a post-hoc clip upload, not a live stream — the backend has no
-   * WebSocket route registered for live SOS audio relay (see BACKEND-REQUESTS.md BCR-6),
-   * so a supervisor reviews this clip after the fact rather than listening live.
+   * The backend relays each uploaded clip live over /ws/sos-audio
+   * (see SosAudioWebSocketHandler), consumed by the supervisor-facing SosLiveMonitor.
    */
   const handleRecordVoiceNote = async () => {
     if (!activeIncidentId || recordingAudio || uploadingAudio) return;

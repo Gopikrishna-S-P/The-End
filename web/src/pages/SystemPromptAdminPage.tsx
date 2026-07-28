@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { AlertCircle, CheckCircle2, X, Plus, SquarePen, Trash2, Loader2 } from 'lucide-react';
 import { systemPromptApi } from '../api/systemPromptApi';
@@ -7,7 +7,6 @@ import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
-import '../styles/SystemPromptAdminPage.css';
 
 const SUGGESTED_KEYS = ['lucien.system', 'lucien.coach', 'lucien.summarise', 'lucien.classify'];
 
@@ -37,7 +36,7 @@ interface RowState {
 const fmtDate = (s?: string | null) =>
   s ? new Date(s).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: '2-digit' }) : '—';
 
-export default function SystemPromptAdminPage() {
+export default function SystemPromptAdminPage({ headerExtra }: { headerExtra?: ReactNode }) {
   const [customKeys, setCustomKeys] = useState<string[]>([]);
   const keys = useMemo(() => Array.from(new Set([...SUGGESTED_KEYS, ...customKeys])), [customKeys]);
   const [rows, setRows] = useState<Record<string, RowState>>({});
@@ -164,6 +163,7 @@ export default function SystemPromptAdminPage() {
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
               Edit the instructions Lucien loads at runtime
             </p>
+            {headerExtra}
           </motion.div>
 
           <motion.div variants={fadeUp} className="ds-table-card">

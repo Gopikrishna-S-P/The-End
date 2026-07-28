@@ -426,7 +426,7 @@
 }
 .app-notif-snooze-set {
   background: var(--np-ink);
-  color: var(--np-bg);
+  color: var(--text-on-solid, #fff);
   border-color: var(--np-ink);
 }
 .app-notif-snooze-set:hover:not(:disabled) { opacity: 0.85; }

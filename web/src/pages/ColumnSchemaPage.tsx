@@ -7,7 +7,6 @@ import { Plus, SquarePen, X, AlertCircle, Columns, Check } from 'lucide-react';
 import { RowForm, type RowFormState, EMPTY_FORM, TYPE_VARIANT } from './ColumnSchemaRowForm';
 import '../styles/AppPage.css';
 import './Dashboard.css';
-import '../styles/ColumnSchemaPage.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 

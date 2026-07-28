@@ -49,7 +49,7 @@ public class PtpController {
             "amount", "amount",
             "status", "status");
 
-    private static final String SUBMITTERS = "hasAnyRole('FO','FO')";
+    private static final String SUBMITTERS = "hasAnyRole('FO','CALLER')";
     private static final String READERS =
             "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER','ORG_ADMIN')";
     private static final String LEADS =

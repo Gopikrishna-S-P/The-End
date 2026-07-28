@@ -9,7 +9,6 @@ import { useTopbarPrefs } from '../utils/topbarPrefs';
 import { useNotifications } from '../utils/notifications';
 import { useT } from '../utils/i18n';
 import { setFaviconUnreadBadge } from '../utils/faviconBadge';
-import { workspace } from '../utils/workspace';
 import { getRouteAccent, makeAccentFromHex, applyAccent } from '../utils/routeAccent';
 import { keymap, matchEvent } from '../utils/keymap';
 import { tour, hasCompletedTour } from '../utils/tour';
@@ -150,11 +149,6 @@ export function useAppLayoutState() {
   }, [location.pathname]);
 
   useEffect(() => { sounds.setEnabled(soundEnabled); }, [soundEnabled]);
-
-  useEffect(() => {
-    workspace.setCurrent({ id: 'rp-default', name: 'Recoverpro', short: 'RP' });
-    workspace.setList([{ id: 'rp-default', name: 'Recoverpro', short: 'RP' }]);
-  }, []);
 
   const play = useCallback((name: SoundName = 'click') => { sounds.play(name); }, []);
 

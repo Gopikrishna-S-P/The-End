@@ -37,7 +37,7 @@
 .app-page-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--z-modal, 500);
   background: var(--shadow-overlay-scrim);
   display: flex;
   align-items: center;

@@ -7,12 +7,14 @@ import com.recoverpro.server.dto.request.VisitApprovalRequest;
 import com.recoverpro.server.dto.request.VisitLogRequest;
 import com.recoverpro.server.dto.response.VisitLogResponse;
 import com.recoverpro.server.entity.Allocation;
+import com.recoverpro.server.entity.AllocationAuditLog;
 import com.recoverpro.server.entity.VisitImage;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.enums.ApprovalAction;
 import com.recoverpro.server.enums.ApprovalStatus;
 import com.recoverpro.server.enums.VisitStatus;
 import com.recoverpro.server.mapper.VisitLogMapper;
+import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitImageRepository;
@@ -55,6 +57,7 @@ public class VisitLogServiceImpl implements VisitLogService {
     private final VisitLogRepository visitLogRepository;
     private final VisitLogMapper visitLogMapper;
     private final AllocationRepository allocationRepository;
+    private final AllocationAuditLogRepository allocationAuditLogRepository;
     private final UserRepository userRepository;
     private final VisitImageRepository visitImageRepository;
     private final CallingHoursGuard callingHoursGuard;
@@ -133,8 +136,20 @@ public class VisitLogServiceImpl implements VisitLogService {
         log.info("Visit log created: id={} disp={} gpsStatus={}", saved.getId(), saved.getDisp(), saved.getVisitStatus());
 
         if (saved.getDisp() != null) {
+            var previousDisp = allocation.getLatestDisposition();
             allocation.setLatestDisposition(saved.getDisp());
             allocationRepository.save(allocation);
+
+            if (previousDisp != saved.getDisp()) {
+                allocationAuditLogRepository.save(AllocationAuditLog.builder()
+                        .allocationId(allocation.getId())
+                        .action("DISPOSITION_CHANGED")
+                        .performedBy(agentId)
+                        .previousValue(previousDisp == null ? null : previousDisp.name())
+                        .newValue(saved.getDisp().name())
+                        .reason("Set from visit log")
+                        .build());
+            }
         }
 
         return visitLogMapper.toResponse(saved);

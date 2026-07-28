@@ -92,7 +92,7 @@ export default function PortfolioRiskPage() {
     setResolvingId(id); setActionError(null);
     try {
       await npaApi.resolve(id);
-      setRecords(prev => prev.filter(r => r.allocationId !== id));
+      setRecords(prev => prev.filter(r => r.id !== id));
       setTotalElements(n => Math.max(0, n - 1));
     } catch {
       setActionError('Failed to resolve this record.');
@@ -291,9 +291,9 @@ export default function PortfolioRiskPage() {
                             <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--ink-secondary)' }}>{fmtINR(r.outstandingAmount)}</td>
                             <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--ink-secondary)' }}>{fmtDate(r.lastPaymentDate)}</td>
                             <td style={{ padding: '12px 16px', paddingRight: 24, textAlign: 'right' }}>
-                              <button type="button" onClick={() => handleResolve(r.allocationId)} disabled={resolvingId === r.allocationId}
+                              <button type="button" onClick={() => handleResolve(r.id)} disabled={resolvingId === r.id}
                                 className="ds-btn is-secondary is-sm">
-                                {resolvingId === r.allocationId ? <Loader2 size={12} className="ds-spin" /> : <CheckCircle2 size={12} />}
+                                {resolvingId === r.id ? <Loader2 size={12} className="ds-spin" /> : <CheckCircle2 size={12} />}
                                 Resolve
                               </button>
                             </td>

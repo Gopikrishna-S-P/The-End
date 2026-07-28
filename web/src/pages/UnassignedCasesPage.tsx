@@ -209,10 +209,10 @@ export default function UnassignedCasesPage() {
                           key={r.id}
                           variants={fadeUp}
                           className="dd-case-row"
-                          onClick={() => navigate(`/app/cases/${r.id}`)}
+                          onClick={() => navigate(`/app/allocations/${r.id}`)}
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e: React.KeyboardEvent) => { if(e.key==='Enter') navigate(`/app/cases/${r.id}`); }}
+                          onKeyDown={(e: React.KeyboardEvent) => { if(e.key==='Enter') navigate(`/app/allocations/${r.id}`); }}
                         >
                           <div className="dd-case-info">
                             <span className="dd-case-borrower">{r.borrowerName || '—'}</span>

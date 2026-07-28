@@ -205,6 +205,7 @@ export default function TopBar(props: TopBarProps) {
       </div>
 
       <div className="app-topbar-right">
+        <SessionExpiryChip onLogout={onLogout} onExtend={onExtend} />
         <button
           type="button"
           className="app-search-trigger"
@@ -307,35 +308,30 @@ export default function TopBar(props: TopBarProps) {
           )}
         </div>
 
-        {/* Bell */}
-        <span id="sr-bell-desc" className="sr-only">Toggle notification panel</span>
-        <div style={{ position: 'relative' }} ref={notifRef}>
-          <button
-            type="button"
-            className={`app-icon-btn${notifOpen ? ' is-active' : ''}`}
-            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-            aria-describedby="sr-bell-desc"
-            aria-expanded={notifOpen}
-            aria-haspopup="dialog"
-            data-tooltip={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'Notifications'}
-            onClick={onBellClick}
-          >
-            <Bell size={18} aria-hidden="true" />
-            {unreadCount > 0 && (
-              <span className="app-notif-badge" aria-hidden="true">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Settings */}
         <button
           type="button"
           className="app-icon-btn"
+          onClick={onBellClick}
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+          aria-expanded={notifOpen}
+          data-tooltip="Notifications"
+          style={{ position: 'relative' }}
+        >
+          <Bell size={18} aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span aria-hidden="true" style={{
+              position: 'absolute', top: 6, right: 6, width: 7, height: 7,
+              borderRadius: '50%', background: 'var(--danger)',
+            }} />
+          )}
+        </button>
+
+        <button
+          type="button"
+          className="app-icon-btn"
+          onClick={() => profileSettings.show()}
           aria-label="Settings"
           data-tooltip="Settings"
-          onClick={() => profileSettings.show()}
         >
           <Settings size={18} aria-hidden="true" />
         </button>

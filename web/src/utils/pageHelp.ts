@@ -82,7 +82,6 @@ const REGISTRY: Record<string, PageHelp> = {
     description: 'A tamper-evident timeline of every privileged action — who did what, when, and from where.',
     tips: [
       'Impersonation start/stop events show up as a distinct row type.',
-      'Export to CSV for compliance review (button top-right when implemented).',
     ],
   },
 

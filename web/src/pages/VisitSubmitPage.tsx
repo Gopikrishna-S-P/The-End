@@ -16,7 +16,6 @@ import {
   ContactDetailsFields, AfterHoursOverride, Checklist,
 } from './VisitSubmitHelpers';
 import '../styles/AppPage.css';
-import '../styles/VisitSubmitPage.css';
 import '../pages/Dashboard.css';
 const MAX_PTP_DAYS = 90;
 
@@ -91,7 +90,10 @@ export default function VisitSubmitPage() {
   const envRef = useRef<HTMLInputElement>(null);
   const watchRef = useRef<number | null>(null);
 
-  const isOutsideHours = false;
+  const istHour = Number(new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false,
+  }).format(new Date()));
+  const isOutsideHours = istHour < 8 || istHour >= 19;
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   const GPS_ACCURACY_THRESHOLD_M = isMobile ? 50 : 200;
   const gpsAccurate = !!coords && coords.accuracy <= GPS_ACCURACY_THRESHOLD_M;

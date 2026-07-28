@@ -146,16 +146,46 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
                       </div>
                     </div>
 
-                    <div className="dd-case-amt" style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                      <button type="button" className="db-error-retry"
-                        style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', display: 'flex', gap: 6 }}
-                        disabled={fetchingFor === c.id}
-                        onClick={() => openReassign(c.id, c.borrowerName ?? null)}>
-                        {fetchingFor === c.id
-                          ? <Loader2 size={13} className="ds-spin" />
-                          : <ArrowRightLeft size={13} />}
-                        <span style={{ fontSize: 11, fontWeight: 500 }}>Reassign</span>
-                      </button>
+                    <div className="dd-case-amt" style={{ alignItems: 'flex-end', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                      {canDelete && confirmDeleteId === c.id ? (
+                        <>
+                          <button type="button" className="db-error-retry"
+                            style={{ background: 'var(--danger-subtle)', color: 'var(--danger)', border: '1px solid var(--danger-border)', borderRadius: 6, padding: '4px 8px', display: 'flex', gap: 6 }}
+                            disabled={deletingId === c.id}
+                            onClick={() => confirmDelete(c.id)}>
+                            {deletingId === c.id
+                              ? <Loader2 size={13} className="ds-spin" />
+                              : <Trash2 size={13} />}
+                            <span style={{ fontSize: 11, fontWeight: 500 }}>Confirm delete</span>
+                          </button>
+                          <button type="button" className="db-error-retry"
+                            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px' }}
+                            disabled={deletingId === c.id}
+                            onClick={() => setConfirmDeleteId(null)}>
+                            <X size={13} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {canDelete && (
+                            <button type="button" className="db-error-retry"
+                              style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px' }}
+                              title="Delete case"
+                              onClick={() => setConfirmDeleteId(c.id)}>
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                          <button type="button" className="db-error-retry"
+                            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', display: 'flex', gap: 6 }}
+                            disabled={fetchingFor === c.id}
+                            onClick={() => openReassign(c.id, c.borrowerName ?? null)}>
+                            {fetchingFor === c.id
+                              ? <Loader2 size={13} className="ds-spin" />
+                              : <ArrowRightLeft size={13} />}
+                            <span style={{ fontSize: 11, fontWeight: 500 }}>Reassign</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 ))}

@@ -411,29 +411,32 @@ export function ReportsAnalyticsPanel({ organizationId }: { organizationId: stri
   const [tab, setTab] = useState<TabKey>('rankings');
 
   return (
-    <FeatureGate flagKey="ADVANCED_REPORTS">
-      <div className="ds-card db-card" style={{ padding: 20, marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          {TABS.map(t => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setTab(t.key)}
-                className={`ds-btn ${tab === t.key ? 'is-primary' : 'is-secondary'}`}
-                style={{ height: 30, fontSize: 12 }}
-              >
-                <Icon size={13} /> {t.label}
-              </button>
-            );
-          })}
-        </div>
-        {tab === 'rankings' && <RankingsTab organizationId={organizationId} />}
-        {tab === 'collection' && <CollectionTab organizationId={organizationId} />}
-        {tab === 'loanbook' && <LoanBookTab organizationId={organizationId} />}
-        {tab === 'visit' && <VisitTab organizationId={organizationId} />}
+    <div className="ds-card db-card" style={{ padding: 20, marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        {TABS.map(t => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`ds-btn ${tab === t.key ? 'is-primary' : 'is-secondary'}`}
+              style={{ height: 30, fontSize: 12 }}
+            >
+              <Icon size={13} /> {t.label}
+            </button>
+          );
+        })}
       </div>
-    </FeatureGate>
+      {tab === 'visit' ? (
+        <VisitTab organizationId={organizationId} />
+      ) : (
+        <FeatureGate flagKey="ADVANCED_REPORTS">
+          {tab === 'rankings' && <RankingsTab organizationId={organizationId} />}
+          {tab === 'collection' && <CollectionTab organizationId={organizationId} />}
+          {tab === 'loanbook' && <LoanBookTab organizationId={organizationId} />}
+        </FeatureGate>
+      )}
+    </div>
   );
 }

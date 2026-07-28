@@ -5,12 +5,16 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.request.AllocationFilterRequest;
 import com.recoverpro.server.dto.request.BulkAssignToFoRequest;
+import com.recoverpro.server.dto.request.UpdateAllocationDispositionRequest;
 import com.recoverpro.server.dto.request.UpdateAllocationStatusRequest;
 import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.entity.Allocation;
+import com.recoverpro.server.entity.AllocationAuditLog;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.AllocationStatus;
+import com.recoverpro.server.enums.Disp;
 import com.recoverpro.server.mapper.AllocationMapper;
+import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
@@ -37,6 +41,7 @@ import java.util.stream.Collectors;
 public class AllocationServiceImpl implements AllocationService {
 
     private final AllocationRepository allocationRepository;
+    private final AllocationAuditLogRepository allocationAuditLogRepository;
     private final AllocationMapper allocationMapper;
     private final UserRepository userRepository;
     private final OrgIsolationGuard orgIsolationGuard;
@@ -100,7 +105,18 @@ public class AllocationServiceImpl implements AllocationService {
             throw new ResourceNotFoundException("Allocation not found: " + id);
         }
 
+        AllocationStatus previousStatus = allocation.getStatus();
         allocation.setStatus(request.getStatus());
+
+        if (previousStatus != request.getStatus()) {
+            allocationAuditLogRepository.save(AllocationAuditLog.builder()
+                    .allocationId(id)
+                    .action("STATUS_CHANGED")
+                    .performedBy(userId)
+                    .previousValue(previousStatus == null ? null : previousStatus.name())
+                    .newValue(request.getStatus() == null ? null : request.getStatus().name())
+                    .build());
+        }
 
         if (request.getStatus() == AllocationStatus.ASSIGNED && request.getAssignedToUserId() != null) {
             UUID allocationOrgId = allocation.getOrganization().getId();
@@ -114,6 +130,32 @@ public class AllocationServiceImpl implements AllocationService {
         } else if (request.getStatus() == AllocationStatus.UNASSIGNED) {
             allocation.setAssignedToUserId(null);
             allocation.setAssignedAt(null);
+        }
+
+        return allocationMapper.toResponse(allocationRepository.save(allocation));
+    }
+
+    @Override
+    @Transactional
+    public AllocationResponse updateAllocationDisposition(UUID id, UpdateAllocationDispositionRequest request, UUID userId) {
+        Allocation allocation = allocationRepository.findByIdAndIsDeletedFalseForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Allocation not found: " + id));
+        if (!orgIsolationGuard.belongsToOrg(allocation.getOrganization().getId())) {
+            throw new ResourceNotFoundException("Allocation not found: " + id);
+        }
+
+        Disp previousDisp = allocation.getLatestDisposition();
+        allocation.setLatestDisposition(request.getDisposition());
+
+        if (previousDisp != request.getDisposition()) {
+            allocationAuditLogRepository.save(AllocationAuditLog.builder()
+                    .allocationId(id)
+                    .action("DISPOSITION_CHANGED")
+                    .performedBy(userId)
+                    .previousValue(previousDisp == null ? null : previousDisp.name())
+                    .newValue(request.getDisposition() == null ? null : request.getDisposition().name())
+                    .reason(StringUtils.hasText(request.getReason()) ? request.getReason() : "Manually changed")
+                    .build());
         }
 
         return allocationMapper.toResponse(allocationRepository.save(allocation));

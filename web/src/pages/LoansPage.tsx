@@ -4,6 +4,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   X, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
   SlidersHorizontal, ChevronDown, ShieldAlert, TrendingDown, Users,
+  UserCheck, MapPin, Handshake, Receipt,
 } from 'lucide-react';
 import { allocationsApi } from '../api/allocationsApi';
 import { usersApi } from '../api/usersApi';
@@ -16,6 +17,7 @@ import '../styles/PlatformSetupPage.css';
 import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
 import './Dashboard.css';
+import '../styles/UploadsPage.css';
 import '../styles/LoansPage.css';
 
 const PAGE_SIZE = 20;
@@ -156,7 +158,7 @@ export default function LoansPage() {
     try {
       const params: Record<string, string | number> = {
         page, size: PAGE_SIZE,
-        sortBy: 'createdAt', sortDir: 'desc'
+        sortBy: 'createdAt', sortDirection: 'desc'
       };
       if (searchTerm)   params.searchTerm   = searchTerm;
       if (fileUploadId) params.fileUploadId = fileUploadId;
@@ -233,6 +235,22 @@ export default function LoansPage() {
                 <TrendingDown size={14} />
               </button>
             )}
+            <button type="button" onClick={() => navigate('/app/assignments')}
+              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
+              <UserCheck size={14} style={{ marginRight: 6 }} /> Assignments
+            </button>
+            <button type="button" onClick={() => navigate('/app/visits')}
+              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
+              <MapPin size={14} style={{ marginRight: 6 }} /> Visit logs
+            </button>
+            <button type="button" onClick={() => navigate('/app/ptps')}
+              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
+              <Handshake size={14} style={{ marginRight: 6 }} /> PTPs
+            </button>
+            <button type="button" onClick={() => navigate('/app/collections')}
+              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
+              <Receipt size={14} style={{ marginRight: 6 }} /> Collections
+            </button>
             <button
               type="button"
               onClick={openFilterDialog}
@@ -249,11 +267,8 @@ export default function LoansPage() {
         </div>
 
         <div className="dd-shell" style={{ display: 'flex' }}>
-          <div className="ds-card dd-cases-card" style={{ width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="ds-card is-overflow-hidden db-card" style={{ width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-            <header className="dd-cases-head">
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Active Accounts</span>
-            </header>
 
             {/* ── Active-filter chips ── */}
             <AnimatePresence>
@@ -290,33 +305,33 @@ export default function LoansPage() {
               )}
             </AnimatePresence>
 
-            {/* Scrollable list wrapper fills remaining card height */}
-            <div className="dd-cp-list-wrap" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-              <div className="dd-cp-list">
-                {loading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel">
-                      <span className="ds-skel" style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span className="ds-skel" style={{ height: '14px', width: '40%', borderRadius: '4px' }} />
-                        <span className="ds-skel" style={{ height: '11px', width: '25%', borderRadius: '4px' }} />
+            {/* db-card-body — same scrollable list treatment as UploadsPage */}
+            <div className="db-card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: 0 }}>
+              {loading ? (
+                <div style={{ padding: '8px' }}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
+                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
                       </div>
+                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
                     </div>
-                  ))
-                ) : allocations.length === 0 ? (
-                  <motion.div variants={fadeIn} initial="hidden" animate="show" className="dd-cp-empty">
-                    <div className="dd-cp-empty-icon">
-                      <AlertCircle size={20} />
-                    </div>
-                    <span className="dd-cp-empty-title">No loans found</span>
-                    <span className="dd-cp-empty-sub">
-                      {searchTerm || fileUploadId
-                        ? 'Try adjusting your search or clearing filters.'
-                        : 'No loans currently match this status.'}
-                    </span>
-                  </motion.div>
-                ) : (
-                  <motion.div variants={stagger} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
+                  ))}
+                </div>
+              ) : allocations.length === 0 ? (
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                  <AlertCircle size={32} className="ds-empty-icon" />
+                  <span className="ds-empty-title">No loans found</span>
+                  <span className="ds-empty-sub">
+                    {searchTerm || fileUploadId
+                      ? 'Try adjusting your search or clearing filters.'
+                      : 'No loans currently match this status.'}
+                  </span>
+                </motion.div>
+              ) : (
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+                  <motion.div variants={stagger} initial="hidden" animate="show">
                     {allocations.map((c) => {
                       const amt     = resolveAmount(c);
                       const dpd     = resolveDPD(c);
@@ -324,75 +339,97 @@ export default function LoansPage() {
                       const tone    = dpd != null ? dpdTone(dpd) : 'neutral';
 
                       return (
-                        <motion.div
-                          key={c.id}
-                          variants={fadeUp}
-                          className="dd-case-row"
+                        <motion.button key={c.id} variants={fadeUp}
+                          className="db-att-row"
+                          style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
                           onClick={() => navigate(`/app/allocations/${c.id}`)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e: React.KeyboardEvent) => { if(e.key==='Enter') navigate(`/app/allocations/${c.id}`); }}
-                        >
-                          <div className="dd-case-info">
-                            <span className="dd-case-borrower">{c.borrowerName || '—'}</span>
-                            <div className="dd-case-meta">
-                              <span className="dd-case-loan">{loanRef}</span>
+                          whileHover={{ background: 'var(--bg-subtle)' }}>
+
+                          <div style={{ flex: 1, marginLeft: 0 }}>
+                            <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <Users size={13} style={{ color: 'var(--ink-tertiary)' }} />
+                              {c.borrowerName || '—'}
+                            </span>
+                            <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10 }}>
+                              <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                                {loanRef}
+                              </span>
                               {dpd != null && (
                                 <span className={`dd-case-dpd is-${tone}`}>DPD {dpd}</span>
                               )}
                               {c.status && (
-                                <span className="dd-case-product" style={{ background: 'var(--bg-surface)' }}>{c.status}</span>
+                                <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
+                                  {c.status}
+                                </span>
+                              )}
+                              {amt != null && (
+                                <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                                  / {fmtINR(amt)} POS
+                                </span>
                               )}
                             </div>
                           </div>
-                          <div className="dd-case-right">
-                            <div className="dd-case-amount-col">
-                              {amt != null ? (
-                                <>
-                                  <span className="dd-case-amount">{fmtINR(amt)}</span>
-                                  <span className="dd-case-amount-lbl">POS</span>
-                                </>
-                              ) : (
-                                <span style={{ fontSize: '12.5px', fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>—</span>
-                              )}
-                            </div>
-                            <ChevronRightIcon size={14} aria-hidden="true" style={{ color: 'var(--text-tertiary)', flexShrink: 0, opacity: 0.6 }} />
+
+                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <ChevronRightIcon size={16} style={{ color: 'var(--ink-tertiary)' }} />
                           </div>
-                        </motion.div>
+                        </motion.button>
                       );
                     })}
                   </motion.div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* ── Pagination ── */}
             {totalPages > 1 && !loading && (
-              <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                  {' · '}<strong>{totalElements.toLocaleString('en-IN')}</strong> loans
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button
-                    type="button"
-                    className="up-page-btn"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 0}
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="up-page-btn"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= totalPages - 1}
-                    aria-label="Next page"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
+              <footer className="up-pagination" style={{ padding: '8px 20px', borderTop: '1px solid var(--border-subtle)', background: 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button
+                  type="button"
+                  className="up-page-btn minimal-split-btn"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--ink-secondary)', fontWeight: 500, padding: '4px 10px', fontSize: 12.5, opacity: page === 0 ? 0.4 : 1 }}
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 0}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={14} /> Previous
+                </button>
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {(() => {
+                    const WINDOW = 5;
+                    const start = Math.max(0, page - Math.floor(WINDOW / 2));
+                    const adjustedStart = Math.min(start, Math.max(0, totalPages - WINDOW));
+                    const count = Math.min(WINDOW, totalPages - adjustedStart);
+                    return Array.from({ length: count }, (_, i) => adjustedStart + i).map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`up-page-btn${p === page ? ' is-active' : ''}`}
+                        style={p === page ? { width: 24, height: 24, fontSize: 12.5, background: 'var(--bg-subtle)', color: 'var(--ink-primary)', fontWeight: 600, border: 'none' } : { width: 24, height: 24, fontSize: 12.5, background: 'transparent', color: 'var(--ink-secondary)', border: 'none' }}
+                        onClick={() => setPage(p)}
+                        aria-label={`Page ${p + 1}`}
+                        aria-current={p === page ? 'page' : undefined}
+                      >
+                        {p + 1}
+                      </button>
+                    ));
+                  })()}
+                  <span style={{ color: 'var(--ink-tertiary)', fontSize: 12, marginLeft: 6 }}>
+                    of {totalPages}
+                  </span>
                 </div>
+
+                <button
+                  type="button"
+                  className="up-page-btn minimal-split-btn"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--ink-secondary)', fontWeight: 500, padding: '4px 10px', fontSize: 12.5, opacity: page >= totalPages - 1 ? 0.4 : 1 }}
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= totalPages - 1}
+                  aria-label="Next page"
+                >
+                  Next <ChevronRight size={14} />
+                </button>
               </footer>
             )}
 

@@ -30,6 +30,15 @@ import java.util.UUID;
 public class UserController {
 
     private static final String ADMIN_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
+    // Daily Dispatch and Field Agents (Manager/TL) both need to list field officers by role.
+    private static final String LEADS_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')";
+    // A custom role granted USER_CREATE/USER_DELETE via Role Management should be able to use
+    // these endpoints even without ORG_ADMIN/PLATFORM_ADMIN — UserPrincipal already flattens
+    // granted role permissions into plain (non-ROLE_-prefixed) authorities at login.
+    private static final String CAN_CREATE_USER = ADMIN_ROLES + " or hasAuthority('USER_CREATE')";
+    private static final String CAN_DELETE_USER = ADMIN_ROLES + " or hasAuthority('USER_DELETE')";
+    // Viewing the user list/detail is a prerequisite for either action above.
+    private static final String CAN_VIEW_USERS = ADMIN_ROLES + " or hasAuthority('USER_CREATE') or hasAuthority('USER_DELETE')";
 
     private static final Map<String, String> SORTABLE_FIELDS = Map.of(
             "createdAt", "createdAt",
@@ -40,7 +49,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/by-role/{roleName}")
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(LEADS_ROLES)
     public ResponseEntity<ApiResponse<List<UserResponse>>> listByRole(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String roleName) {
@@ -57,7 +66,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_VIEW_USERS)
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -65,7 +74,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_VIEW_USERS)
     public ResponseEntity<ApiResponse<PagedResponse<UserResponse>>> listUsers(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
@@ -86,7 +95,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_CREATE_USER)
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateUserRequest request) {
@@ -140,7 +149,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_DELETE_USER)
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {

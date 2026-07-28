@@ -103,30 +103,31 @@ export default function ProfileSettingsDialog() {
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Profile settings">
-        <header className="ps-dialog-header">
-          <h1 className="ps-dialog-title">Settings</h1>
-          <button type="button" className="ps-dialog-close" onClick={onClose} aria-label="Close">
-            <X size={16} aria-hidden="true" />
-          </button>
-        </header>
+        
+        <nav className="ps-sidebar" aria-label="Settings sections">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.key}
+              type="button"
+              className={`ps-sidebar-item${activeTab === item.key ? ' is-active' : ''}${item.key === 'danger' ? ' is-danger' : ''}`}
+              onClick={() => setActiveTab(item.key)}
+              aria-current={activeTab === item.key ? 'page' : undefined}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-        <ProfileSettingsToast toast={toast} onDismiss={() => setToast(null)} />
+        <div className="ps-dialog-content">
+          <header className="ps-dialog-header">
+            <h1 className="ps-dialog-title">Settings</h1>
+            <button type="button" className="ps-dialog-close" onClick={onClose} aria-label="Close">
+              <X size={16} aria-hidden="true" />
+            </button>
+          </header>
 
-        <div className="ps-dialog-layout">
-          <nav className="ps-sidebar" aria-label="Settings sections">
-            {NAV_ITEMS.map(item => (
-              <button
-                key={item.key}
-                type="button"
-                className={`ps-sidebar-item${activeTab === item.key ? ' is-active' : ''}${item.key === 'danger' ? ' is-danger' : ''}`}
-                onClick={() => setActiveTab(item.key)}
-                aria-current={activeTab === item.key ? 'page' : undefined}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </nav>
+          <ProfileSettingsToast toast={toast} onDismiss={() => setToast(null)} />
 
           <div className="ps-dialog-body">
             {activeTab === 'general' && <ProfileGeneralSection onClose={onClose} />}

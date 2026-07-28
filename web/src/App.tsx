@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { FeatureGate } from './components/FeatureGate';
 import { lazy, Suspense, Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from './AppLayout';
 import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext';
@@ -105,19 +105,36 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
   }
 }
 
+// PLATFORM_ADMIN is deliberately absent from these org-workspace tiers: it's a
+// separate console (see navConfig.ts), and the backend only grants it real
+// cross-org data on the handful of endpoints that route through
+// PlatformAdminAccessGuard.beginCrossOrgAccess (audited, reason-required).
+// Everywhere else, Postgres RLS scopes platform admin's queries to their own
+// seeded platform org, so route access here without the matching backend
+// wiring was a dead end, not a privilege. Uploads and Message Templates are
+// the two exceptions with real wiring, so they keep PLATFORM_ADMIN in their
+// own dedicated role groups below (UPLOAD_ROLES, MESSAGE_TEMPLATE_ROLES).
 const ANY_ORG_ROLE: Role[] = [
-  'PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL', 'FO', 'CALLER', 'TRACER',
+  'ORG_ADMIN', 'MANAGER', 'TL', 'FO', 'CALLER', 'TRACER',
 ];
 
 const ORG_LEAD_ROLES: Role[] = [
-  'PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL',
+  'ORG_ADMIN', 'MANAGER', 'TL',
 ];
 
-const ORG_ADMIN_ROLES: Role[] = ['PLATFORM_ADMIN', 'ORG_ADMIN'];
+const ORG_ADMIN_ROLES: Role[] = ['ORG_ADMIN'];
 
 const PLATFORM_ONLY: Role[] = ['PLATFORM_ADMIN'];
 
-const PAYMENT_ROLES: Role[] = ['PLATFORM_ADMIN', 'ORG_ADMIN', 'FO'];
+const PAYMENT_ROLES: Role[] = ['ORG_ADMIN', 'FO'];
+
+// Matches FileUploadController.READERS exactly (see UploadsPage.tsx's own
+// UPLOAD_READER_ROLES gate) — the audited cross-org bypass is wired for this
+// feature, so platform admin keeps route access here.
+const UPLOAD_ROLES: Role[] = ['PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL'];
+
+// Matches MessageTemplateController's audited PlatformAdminAccessGuard wiring.
+const MESSAGE_TEMPLATE_ROLES: Role[] = ['PLATFORM_ADMIN', 'ORG_ADMIN'];
 
 function App() {
   return (
@@ -142,17 +159,17 @@ function App() {
 
             {/* ── Authenticated routes with shared layout ── */}
             <Route element={<ProtectedRoute />}>
+              {/* Dev-only debug tool — requires login (was previously reachable by anyone). */}
+              <Route path="/__debug-profile" element={<DebugProfileSettings />} />
+
               <Route element={<FeatureFlagsProvider><AppLayout /></FeatureFlagsProvider>}>
 
                 {/* ── /app/* — unified workspace for every org-level role ── */}
                 <Route element={<ProtectedRoute allowedRoles={ANY_ORG_ROLE} />}>
-                  <Route path="/app/dashboard" element={<PlatformAdminGuard />} />
+                  <Route path="/app/dashboard" element={<Dashboard />} />
                   <Route path="/app/allocations" element={<LoansPage />} />
                   <Route path="/app/allocations/:id" element={<LoanDetailPage />} />
                   <Route path="/app/cases/unassigned" element={<UnassignedCasesPage />} />
-                  <Route path="/app/uploads" element={<UploadsPage />} />
-                  <Route path="/app/uploads/:id/errors" element={<UploadErrorsPage />} />
-                  <Route path="/app/uploads/:id/data" element={<UploadDataPage />} />
                   <Route path="/app/assignments" element={<CaseAssignmentsPage />} />
                   <Route path="/app/collections" element={<CollectionsPage />} />
                   <Route path="/app/collections/trend" element={<CollectionMomPage />} />
@@ -169,6 +186,15 @@ function App() {
                   <Route path="/app/my-cases" element={<MyCasesPage />} />
                   <Route path="/app/my-attendance" element={<MyAttendancePage />} />
                   <Route path="/app/start-visit" element={<StartVisitPage />} />
+                </Route>
+
+                {/* ── /app/uploads/* — only tier where platform admin keeps route access
+                     outside PLATFORM_ONLY, matching FileUploadController's audited
+                     cross-org bypass ── */}
+                <Route element={<ProtectedRoute allowedRoles={UPLOAD_ROLES} />}>
+                  <Route path="/app/uploads" element={<UploadsPage />} />
+                  <Route path="/app/uploads/:id/errors" element={<UploadErrorsPage />} />
+                  <Route path="/app/uploads/:id/data" element={<UploadDataPage />} />
                 </Route>
 
                 {/* ── /app/* lead-only routes (Platform/Org admin/Manager/TL) ── */}
@@ -188,14 +214,29 @@ function App() {
                 {/* ── /app/* org-admin routes (PLATFORM_ADMIN / ORG_ADMIN only) ── */}
                 <Route element={<ProtectedRoute allowedRoles={ORG_ADMIN_ROLES} />}>
                   <Route path="/app/subscription" element={<SubscriptionPage />} />
-                  <Route path="/app/users" element={<UsersPage />} />
                   <Route path="/app/users/requests" element={<UserRequestsPage />} />
-                  <Route path="/app/settings/roles" element={<RoleManagementPage />} />
                   <Route path="/app/settings/organization" element={<OrganizationSettingsPage />} />
-                  <Route path="/app/settings/message-templates" element={<MessageTemplatesPage />} />
                   <Route path="/app/borrowers" element={<BorrowersPage />} />
                   <Route path="/app/fraud-cases" element={<FraudCasesPage />} />
                   <Route path="/app/reconciliation" element={<ReconciliationPage />} />
+                </Route>
+
+                {/* ── /app/users, /app/settings/roles — route access matches ColumnSchemaPage's
+                     tier (ORG_LEAD_ROLES): a MANAGER/TL granted USER_CREATE/USER_DELETE/
+                     ROLE_ASSIGN via Role Management can reach these pages, whose own
+                     hasPermission() checks hide the controls they weren't granted. The real
+                     boundary is the backend's matching CAN_CREATE_USER/CAN_ASSIGN_ROLE
+                     @PreAuthorize, not this route. ── */}
+                <Route element={<ProtectedRoute allowedRoles={ORG_LEAD_ROLES} />}>
+                  <Route path="/app/users" element={<UsersPage />} />
+                  <Route path="/app/settings/roles" element={<RoleManagementPage />} />
+                </Route>
+
+                {/* ── /app/settings/message-templates — the other tier where platform admin
+                     keeps route access, matching MessageTemplateController's audited
+                     cross-org bypass ── */}
+                <Route element={<ProtectedRoute allowedRoles={MESSAGE_TEMPLATE_ROLES} />}>
+                  <Route path="/app/settings/message-templates" element={<MessageTemplatesPage />} />
                 </Route>
 
                 {/* ── /app/* payment-tooling routes (org admin + FO, matches PaymentController's own gate) ── */}
@@ -224,7 +265,6 @@ function App() {
             {/* Root — landing page; authenticated users get dashboard link in-page */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/download" element={<DownloadPage />} />
-            <Route path="/__debug-profile" element={<DebugProfileSettings />} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/login" replace />} />
@@ -234,12 +274,6 @@ function App() {
     </AuthProvider>
     </AppErrorBoundary>
   );
-}
-
-function PlatformAdminGuard() {
-  const { user } = useAuth();
-  const isPlatformAdmin = user?.roles?.some(r => r.name === 'ROLE_PLATFORM_ADMIN' || r.name === 'PLATFORM_ADMIN');
-  return isPlatformAdmin ? <Navigate to="/platform/dashboard" replace /> : <Dashboard />;
 }
 
 function LegacyRedirect({ prefix }: { prefix: string }) {

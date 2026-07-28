@@ -91,6 +91,17 @@
 
 .fo-map-overlay.is-warn { color: var(--error); }
 
+/* Dark mode — the map itself switches to dark tiles; this UI sitting on top
+   needs to follow, or it renders as a bright white blob over a dark map. */
+.app-layout.dark .fo-map-badge {
+  background: rgba(21,23,28,.92);
+  border-color: rgba(255,255,255,.1);
+  color: #E8EAED;
+}
+.app-layout.dark .fo-map-overlay {
+  background: rgba(11,13,17,.65);
+}
+
 /* Leaflet marker dots */
 .fo-dot {
   display: block;

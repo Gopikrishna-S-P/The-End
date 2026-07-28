@@ -130,6 +130,7 @@
   background: var(--bg-subtle);
   color: var(--ink-primary);
 }
+.dd-bar-btn-cancel:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .dd-bar-btn-confirm {
   display: inline-flex;

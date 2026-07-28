@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { Bot, Loader2 } from 'lucide-react';
+import { Bot, Loader2, ShieldAlert } from 'lucide-react';
 import { renderMarkdown, SAMPLE_PROMPTS, type ChatMessage } from './LucienHelpers';
 
 interface Props {
@@ -89,7 +89,15 @@ export function LucienMessages({ messages, sending, starting, loadingHistory, er
               ? { background: 'var(--ink-solid)', color: 'var(--text-on-solid)', borderBottomRightRadius: 4 }
               : { background: 'var(--bg-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderBottomLeftRadius: 4 }),
           }}>
-            {msg.role === 'ASSISTANT' ? renderMarkdown(msg.content) : <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>}
+            {msg.blocked ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <ShieldAlert size={14} style={{ marginTop: 2, flexShrink: 0, color: 'var(--warning)' }} />
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 2 }}>Lucien held this one back</div>
+                  <div style={{ color: 'var(--ink-secondary)' }}>{msg.blockReason || 'The request fell outside what Lucien is allowed to answer.'}</div>
+                </div>
+              </div>
+            ) : msg.role === 'ASSISTANT' ? renderMarkdown(msg.content) : <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>}
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, marginTop: 8, letterSpacing: '0.04em', color: msg.role === 'USER' ? 'rgba(255,255,255,0.65)' : 'var(--ink-tertiary)' }}>
               {new Date(msg.createdAt).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}
             </div>

@@ -13,8 +13,17 @@ export function LogoutConfirmDialog({ open, isLoggingOut, onCancel, onConfirm }:
     <AnimatePresence>
       {open && (
         <motion.div className="ds-modal-overlay" onClick={onCancel}
+          style={{ background: 'rgba(12, 10, 9, 0.2)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-          <motion.div className="ds-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}
+          <motion.div className="ds-modal" onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 360,
+              background: 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+            }}
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.15 }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '24px 16px 8px' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--danger-subtle)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>

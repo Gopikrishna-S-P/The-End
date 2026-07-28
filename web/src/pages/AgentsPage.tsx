@@ -9,7 +9,6 @@ import { Search, RefreshCw, Users, X, MapPin, Activity, CheckCircle2, ShieldAler
 import { AgentRow } from './AgentRow';
 import TeamStatusTab from '../components/TeamStatusTab';
 import '../styles/AppPage.css';
-import '../styles/AgentsPage.css';
 import './Dashboard.css';
 
 interface AgentPerformance {

@@ -4,7 +4,7 @@ import {
   Building2, CreditCard, AlertCircle,
   ArrowUpRight, RefreshCw, Download, ExternalLink, X,
   SquarePen, Receipt, Settings2, ChevronDown,
-  ToggleLeft, ToggleRight, RotateCcw, Users, Search, SlidersHorizontal,
+  ToggleLeft, ToggleRight, RotateCcw, FileDown, Users, Search, SlidersHorizontal,
   Gift, Loader2,
 } from 'lucide-react';
 import { platformApi, type PlatformSubRow, type InvoiceRow } from '../api/platformApi';
@@ -345,15 +345,15 @@ function FilterBar({ rows, filters, onChange }: {
 
   return (
     <>
-      <div className="ds-toolbar" style={{ justifyContent: 'flex-end', border: 'none', background: 'transparent', padding: 0, height: 'auto' }}>
+      <div className="ds-toolbar" style={{ width: 'auto', justifyContent: 'flex-end', border: 'none', background: 'transparent', padding: 0, height: 'auto' }}>
         <div className="ps-filter-anchor" ref={anchorRef}>
           <button type="button"
-            className={`ds-filter-btn${open ? ' is-open' : ''}`}
+            style={{ padding: '0 16px', height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', background: '#ffffff', color: 'var(--ink-main, #1e293b)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '6px', fontWeight: 500, letterSpacing: '0.02em', fontSize: 13, cursor: 'pointer' }}
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
             aria-haspopup="dialog"
           >
-            {activeCount > 0 && <span className="ds-filter-dot" aria-hidden="true" />}
+            {activeCount > 0 && <span className="ds-filter-dot" aria-hidden="true" style={{ background: '#0AA550' }} />}
             <SlidersHorizontal size={13} aria-hidden="true" />
             Filter{activeCount > 0 ? ` · ${activeCount}` : ''}
             <ChevronDown size={12} aria-hidden="true" />
@@ -758,15 +758,26 @@ export default function PlatformSubscriptions() {
             <motion.div key="data" variants={stagger} initial="hidden" animate="show" className="db-inner">
 
               <div className="db-kpi-header">
-                <h2 className="db-kpi-title">Billing</h2>
-                <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 6 }}>
-                  <button type="button" className="ds-btn is-ghost"
-                    style={{ padding:'3px 10px', fontSize:10, height:'auto', letterSpacing:'0.05em', textTransform:'uppercase' }}
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+                  You have <strong>{counts.total} organizations</strong>, with <span style={{ color: '#10b981', fontWeight: 500 }}>{counts.active} active</span> and <span style={{ color: '#3b82f6', fontWeight: 500 }}>{counts.trial} on trial</span>.
+                  {counts.pastDue > 0 ? (
+                    <span> <button type="button" onClick={() => onlyStatus('PAST_DUE')} style={{ background: 'none', border: 'none', color: '#ef4444', textDecoration: 'underline', padding: 0, cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit', fontWeight: 500 }}>{counts.pastDue} past due</button>.</span>
+                  ) : (
+                    <span> All accounts are in good standing.</span>
+                  )}
+                  {totalCollected > 0 && (
+                    <span> Total collected: <strong>{fmtAmount(totalCollected, 'INR')}</strong>.</span>
+                  )}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button type="button"
+                    style={{ padding: '0 16px', height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', background: '#0AA550', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 500, letterSpacing:'0.02em', fontSize: 13, cursor: 'pointer' }}
                     onClick={handleBackfill} disabled={backfilling}
                     title="Import historical invoices from Stripe. Safe to re-run.">
-                    <RotateCcw size={12} className={backfilling ? 'ds-spin' : ''} style={{ marginRight: 5 }} />
+                    {backfilling ? <Loader2 size={13} className="ds-spin" /> : <FileDown size={13} />}
                     {backfilling ? 'Importing…' : 'Import invoices'}
                   </button>
+                  <FilterBar rows={rows} filters={filters} onChange={setFilters} />
                 </div>
               </div>
 
@@ -777,8 +788,6 @@ export default function PlatformSubscriptions() {
                   {backfillMsg}
                 </motion.div>
               )}
-
-              <FilterBar rows={rows} filters={filters} onChange={setFilters} />
 
               {/* ── Needs attention ── */}
               {hasAttention && (
@@ -823,30 +832,6 @@ export default function PlatformSubscriptions() {
 
               {/* ── Subscriber list ── */}
               <motion.div variants={fadeUp} className="ds-table-card">
-                <header className="db-card-head" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <h2 className="db-card-title">Subscribers</h2>
-                    <span className="db-card-sub" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', textTransform: 'none', letterSpacing: 0, fontSize: 11.5 }}>
-                      {fmtNum(counts.total)} orgs
-                      <span className="db-kpi2-sub-vdiv" />
-                      {fmtNum(counts.active)} active
-                      <span className="db-kpi2-sub-vdiv" />
-                      {fmtNum(counts.trial)} trial
-                      <span className="db-kpi2-sub-vdiv" />
-                      <button type="button" className="ps-stat-link"
-                        disabled={counts.pastDue === 0} onClick={() => onlyStatus('PAST_DUE')}
-                        style={counts.pastDue > 0 ? { color: 'var(--error)' } : undefined}>
-                        {fmtNum(counts.pastDue)} past due{counts.cancelled > 0 ? ` · ${fmtNum(counts.cancelled)} cancelled` : ''}
-                      </button>
-                      <span className="db-kpi2-sub-vdiv" />
-                      <button type="button" className="ps-stat-link"
-                        disabled={totalCollected === 0} onClick={() => setFilters({ ...EMPTY_FILTERS, paid: 'PAID' })}
-                        title={totalCollected === 0 ? 'Import invoices to populate' : 'Settled via Stripe'}>
-                        {fmtAmount(totalCollected, 'INR')} collected
-                      </button>
-                    </span>
-                  </div>
-                </header>
                 <div className="ds-table-wrap">
                   <table className="ds-table is-no-row-hover ps-table">
                     <thead>

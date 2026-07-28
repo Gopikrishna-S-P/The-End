@@ -13,7 +13,6 @@ import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
 import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
-import '../styles/TodayVisitsPage.css';
 
 const fmtINR = (v?: number | null) =>
   v != null
@@ -99,10 +98,10 @@ export default function TodayVisitsPage() {
         <motion.div
           variants={fadeUp}
           className="dd-case-row"
-          onClick={() => navigate(`/app/visits/${c.id}`)}
+          onClick={() => navigate(`/app/visits/${c.id}/submit`)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/app/visits/${c.id}`); }}
+          onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/app/visits/${c.id}/submit`); }}
         >
           <div className="dd-case-info" style={{ flex: '1 1 40%' }}>
             <span className="dd-case-borrower">{c.borrowerName || 'Unknown borrower'}</span>

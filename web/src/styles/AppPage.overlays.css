@@ -2,7 +2,7 @@
 .app-page-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-modal, 500);
   background: var(--shadow-overlay-scrim);
   display: flex;
   align-items: center;

@@ -43,11 +43,18 @@ export default function StartVisitPage() {
   const loadAssigned = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await axiosInstance.get<ApiResponse<{ content: AllocationResponse[] }>>(
-        '/api/v1/assignments',
-        { params: { status: 'PENDING,IN_PROGRESS', page: 0, size: 50 } }
+      const [pending, inProgress] = await Promise.all(
+        ['PENDING', 'IN_PROGRESS'].map(status =>
+          axiosInstance.get<ApiResponse<{ content: AllocationResponse[] }>>(
+            '/api/v1/assignments',
+            { params: { status, page: 0, size: 50 } }
+          )
+        )
       );
-      setAssignedCases(r.data.data?.content ?? []);
+      setAssignedCases([
+        ...(pending.data.data?.content ?? []),
+        ...(inProgress.data.data?.content ?? []),
+      ]);
     } catch {
       setAssignedCases([]);
     } finally {

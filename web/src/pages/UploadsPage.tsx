@@ -198,105 +198,105 @@ export default function UploadsPage() {
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
 
-          <div className="db-kpi-header">
-            <h2 className="db-kpi-title">File Uploads</h2>
-            <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 12 }}>
-              {isPlatformAdmin && (
-                <div className="up-org-picker" style={{ margin: 0, height: 32 }}>
-                  <Building2 size={13} className="up-org-icon" />
-                  <select
-                    value={selectedOrgId}
-                    onChange={e => setSelectedOrgId(e.target.value)}
-                    disabled={orgsLoading}
-                    className="up-org-select"
-                    style={{ height: '100%' }}
-                  >
-                    {orgsLoading && <option value="">Loading…</option>}
-                    {orgs.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
-                  </select>
-                  <ChevronDown size={13} className="up-org-caret" />
-                </div>
-              )}
+          <div className="db-kpi-header" style={{ gap: 24, flexWrap: 'wrap', minHeight: 48, justifyContent: 'space-between' }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+              You have <strong>{fmtNum(filesAnim)} files</strong> with <strong>{fmtNum(rowsAnim)} rows</strong>, <span style={{ color: failedAnim > 0 ? 'var(--error)' : 'inherit', fontWeight: failedAnim > 0 ? 500 : 'inherit' }}>{fmtNum(failedAnim)} failed</span> and <span style={{ color: inFlightCount > 0 ? 'var(--warning)' : 'inherit', fontWeight: inFlightCount > 0 ? 500 : 'inherit' }}>{fmtNum(inFlightCount)} processing</span>.
+            </p>
+            <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 16, alignItems: 'center' }}>
               <button type="button" className="ds-btn is-secondary" style={{ height: 32 }}
                 onClick={() => navigate('/app/settings/schema')}>
                 <TableProperties size={14} /> Column Schemas
               </button>
             </div>
           </div>
-          
-          {isPlatformAdmin && selectedOrgId && !confirmedReason && (
-            <motion.div variants={fadeUp} className="ds-card" style={{ padding: 16, marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <ShieldAlert size={15} style={{ color: 'var(--warning)' }} />
-                <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
-              </div>
-              <p style={{ fontSize: 13, opacity: 0.75, margin: '0 0 12px' }}>
-                This is recorded against your account in the audit trail, along with the
-                organization you are accessing. Reference a ticket or support case.
-              </p>
-              <form
-                style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
-                onSubmit={e => {
-                  e.preventDefault();
-                  setReasonGranted({ orgId: selectedOrgId, text: accessReason.trim() });
-                }}
-              >
-                <input
-                  className="ds-input"
-                  style={{ flex: 1, minWidth: 240, height: 32 }}
-                  placeholder="e.g. BCR-77 — customer reported failed upload"
-                  value={accessReason}
-                  onChange={e => setReasonDraft({ orgId: selectedOrgId, text: e.target.value })}
-                />
-                <button type="submit" className="ds-btn is-primary" style={{ height: 32 }}
-                  disabled={!accessReason.trim()}>
-                  Confirm &amp; view
-                </button>
-              </form>
-            </motion.div>
-          )}
 
           {/* ── Uploads List ── */}
           <div className="db-grid">
             <div className="db-span-12">
               <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                <header className="db-card-head" style={{ alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <h2 className="db-card-title">Recent Uploads</h2>
-                    <span className="db-card-sub" style={{ display: 'flex', alignItems: 'center', textTransform: 'none', letterSpacing: 0, fontSize: 11.5 }}>
-                      {fmtNum(filesAnim)} files
-                      <span className="db-kpi2-sub-vdiv" />
-                      {fmtNum(rowsAnim)} rows
-                      <span className="db-kpi2-sub-vdiv" />
-                      <span style={failedAnim > 0 ? { color: 'var(--error)' } : undefined}>{fmtNum(failedAnim)} failed</span>
-                      <span className="db-kpi2-sub-vdiv" />
-                      <span style={inFlightCount > 0 ? { color: 'var(--warning)' } : undefined}>{fmtNum(inFlightCount)} processing</span>
-                    </span>
-                  </div>
-                  {totalPages > 1 && !loading && (
-                    <div className="up-pagination" style={{ margin: 0, padding: 0, border: 'none', background: 'transparent' }}>
-                      <button type="button" className="up-page-btn" style={{ height: 28 }}
-                        onClick={() => setPage(p => Math.max(0, p - 1))}
-                        disabled={page === 0} aria-label="Previous page">
-                        <ChevronLeft size={14} />
-                      </button>
-                      <span className="up-page-meta">
-                        Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                      </span>
-                      <button type="button" className="up-page-btn" style={{ height: 28 }}
-                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                        disabled={page === totalPages - 1} aria-label="Next page">
-                        <ChevronRight size={14} />
-                      </button>
+                {(isPlatformAdmin || (totalPages > 1 && !loading)) && (
+                  <header className="db-card-head" style={{ alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '12px 0', flexWrap: 'wrap', gap: 16 }}>
+                    <div style={{ flex: 1, display: 'flex' }}>
+                      {isPlatformAdmin && (
+                        <div style={{ display: 'flex', gap: 16, flex: 1, alignItems: 'flex-start' }}>
+                          {!confirmedReason ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                  <ShieldAlert size={15} style={{ color: 'var(--warning-solid, #d97706)' }} />
+                                  <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
+                                </div>
+                                <p style={{ fontSize: 12, color: 'var(--ink-secondary)', margin: 0 }}>
+                                  All access to tenant data is recorded in the audit trail. Select an organization and reference a ticket or support case.
+                                </p>
+                              </div>
+                              <form
+                                style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+                                onSubmit={e => {
+                                  e.preventDefault();
+                                  setReasonGranted({ orgId: selectedOrgId, text: accessReason.trim() });
+                                }}
+                              >
+                                <input
+                                  className="ds-input"
+                                  style={{ flex: 1, maxWidth: 500, minWidth: 280, height: 32, fontSize: 13 }}
+                                  placeholder="Reason for audit log..."
+                                  value={accessReason}
+                                  onChange={e => setReasonDraft({ orgId: selectedOrgId, text: e.target.value })}
+                                />
+                                <button type="submit" className="ds-btn is-primary" style={{ height: 32, padding: '0 12px', fontSize: 13, flexShrink: 0 }} disabled={!accessReason.trim()}>
+                                  Confirm
+                                </button>
+                              </form>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--success, #10b981)', fontSize: 13, fontWeight: 500, paddingRight: 4, flex: 1, height: 32 }}>
+                              <ShieldAlert size={15} /> Access Confirmed
+                            </div>
+                          )}
+
+                          <div className="up-org-picker" style={{ margin: 0, height: 32, flexShrink: 0 }}>
+                            <Building2 size={13} className="up-org-icon" />
+                            <select
+                              value={selectedOrgId}
+                              onChange={e => setSelectedOrgId(e.target.value)}
+                              disabled={orgsLoading}
+                              className="up-org-select"
+                              style={{ height: '100%', minWidth: 160, fontSize: 13 }}
+                            >
+                              {orgsLoading && <option value="">Loading…</option>}
+                              {orgs.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
+                            </select>
+                            <ChevronDown size={13} className="up-org-caret" />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </header>
+                    {totalPages > 1 && !loading && (
+                      <div className="up-pagination" style={{ margin: 0, padding: 0, border: 'none', background: 'transparent' }}>
+                        <button type="button" className="up-page-btn" style={{ height: 28 }}
+                          onClick={() => setPage(p => Math.max(0, p - 1))}
+                          disabled={page === 0} aria-label="Previous page">
+                          <ChevronLeft size={14} />
+                        </button>
+                        <span className="up-page-meta">
+                          Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
+                        </span>
+                        <button type="button" className="up-page-btn" style={{ height: 28 }}
+                          onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                          disabled={page === totalPages - 1} aria-label="Next page">
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </header>
+                )}
 
                 <div className="db-card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: 0 }}>
                   {loading ? (
                     <div style={{ padding: '8px' }}>
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 12px', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span className="ds-skel" style={{ height: 16, width: '40%' }} />
                         <span className="ds-skel" style={{ height: 12, width: '25%' }} />
@@ -312,14 +312,14 @@ export default function UploadsPage() {
                   <span className="ds-empty-sub">Upload your first allocation file to start importing rows.</span>
                 </motion.div>
               ) : (
-                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 8px' }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
                   <motion.div variants={stagger} initial="hidden" animate="show">
                     {uploads.map((u, idx) => {
                       const isFailed = u.status === 'FAILED' || (u.failedRows ?? 0) > 0;
                       return (
-                        <motion.button key={u.id} variants={fadeUp}
-                          className="db-att-row"
-                          style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
+                          <motion.button key={u.id} variants={fadeUp}
+                            className="db-att-row"
+                            style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
                           onClick={() => navigate(`${basePath}/uploads/${u.id}/data`)}
                           whileHover={{ background: 'var(--bg-subtle)' }}>
 

@@ -34,6 +34,11 @@ export function ProfileBillingSection() {
     setCheckoutLoading(planKey);
     setActionError(null);
     try {
+      if (planKey === 'STARTER') {
+        await subscriptionApi.selectFree();
+        window.location.reload();
+        return;
+      }
       const url = await subscriptionApi.checkout(planKey);
       window.location.href = url;
     } catch {

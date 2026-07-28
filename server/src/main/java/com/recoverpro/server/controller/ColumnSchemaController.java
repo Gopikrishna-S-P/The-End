@@ -22,10 +22,13 @@ import java.util.UUID;
 public class ColumnSchemaController {
 
     private static final String ADMINS = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
+    // A custom role granted COLUMN_CREATE via Role Management can create schemas without
+    // needing ORG_ADMIN/PLATFORM_ADMIN — see UserController's matching CAN_CREATE_USER.
+    private static final String CAN_CREATE_COLUMN = ADMINS + " or hasAuthority('COLUMN_CREATE')";
 
     private final ColumnSchemaService columnSchemaService;
 
-    @PreAuthorize(ADMINS)
+    @PreAuthorize(CAN_CREATE_COLUMN)
     @PostMapping
     public ResponseEntity<ApiResponse<ColumnSchemaResponse>> createColumnSchema(
             @Valid @RequestBody ColumnSchemaRequest request) {
@@ -44,7 +47,7 @@ public class ColumnSchemaController {
                 columnSchemaService.updateColumnSchema(id, request)));
     }
 
-    @PreAuthorize(ADMINS)
+    @PreAuthorize(CAN_CREATE_COLUMN)
     @GetMapping
     public ResponseEntity<ApiResponse<List<ColumnSchemaResponse>>> getColumnSchemas(
             @RequestParam UUID organizationId) {

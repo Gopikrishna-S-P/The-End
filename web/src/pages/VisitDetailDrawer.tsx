@@ -30,8 +30,8 @@ export interface VisitDetailDrawerProps {
 }
 
 export default function VisitDetailDrawer({ visit, onClose, onChanged, allocation: presetAllocation }: VisitDetailDrawerProps) {
-  const { hasPermission } = usePermissions();
-  const canApprove = hasPermission('VISIT_SUBMIT');
+  const { hasPermission, hasAnyRole } = usePermissions();
+  const canApprove = hasAnyRole('PLATFORM_ADMIN', 'ORG_ADMIN', 'MANAGER', 'TL');
   const canDelete  = hasPermission('FILE_DELETE');
 
   const [allocation, setAllocation] = useState<AllocationResponse | null>(presetAllocation ?? null);

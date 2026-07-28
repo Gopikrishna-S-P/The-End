@@ -3,6 +3,7 @@ package com.recoverpro.server.service;
 import com.recoverpro.server.common.dto.response.PagedResponse;
 import com.recoverpro.server.dto.request.AllocationFilterRequest;
 import com.recoverpro.server.dto.request.BulkAssignToFoRequest;
+import com.recoverpro.server.dto.request.UpdateAllocationDispositionRequest;
 import com.recoverpro.server.dto.request.UpdateAllocationStatusRequest;
 import com.recoverpro.server.dto.response.AllocationResponse;
 
@@ -16,6 +17,8 @@ public interface AllocationService {
     AllocationResponse getAllocationById(UUID id);
 
     AllocationResponse updateAllocationStatus(UUID id, UpdateAllocationStatusRequest request, UUID userId);
+
+    AllocationResponse updateAllocationDisposition(UUID id, UpdateAllocationDispositionRequest request, UUID userId);
 
     void softDeleteAllocation(UUID id, UUID userId);
 

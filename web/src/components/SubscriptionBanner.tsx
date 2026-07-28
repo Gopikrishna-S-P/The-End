@@ -12,7 +12,7 @@ export default function SubscriptionBanner() {
   const navigate = useNavigate();
   const { sub, loading, isExpired, isTrial, isPlatformAdmin } = useSubscription();
   const [visible, setVisible] = useState(false);
-  const [trialDismissed, setTrialDismissed] = useState(false);
+  const [trialVisible, setTrialVisible] = useState(false);
 
   useEffect(() => {
     if (!isExpired) { setVisible(false); return; }
@@ -28,6 +28,25 @@ export default function SubscriptionBanner() {
   const snooze = () => {
     try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS)); } catch {}
     setVisible(false);
+  };
+
+  useEffect(() => {
+    if (!sub || !isTrial || sub.trialDaysLeft > 7) {
+      setTrialVisible(false);
+      return;
+    }
+    const snoozedUntil = Number(localStorage.getItem('rp-trial-snoozed-until') ?? 0);
+    if (snoozedUntil > Date.now()) {
+      setTrialVisible(false);
+      const t = window.setTimeout(() => setTrialVisible(true), snoozedUntil - Date.now());
+      return () => window.clearTimeout(t);
+    }
+    setTrialVisible(true);
+  }, [sub, isTrial]);
+
+  const dismissTrial = () => {
+    try { localStorage.setItem('rp-trial-snoozed-until', String(Date.now() + 60 * 60 * 1000)); } catch {}
+    setTrialVisible(false);
   };
 
   const renew = () => {
@@ -69,18 +88,26 @@ export default function SubscriptionBanner() {
     );
   }
 
-  if (isTrial && sub.trialDaysLeft <= 7 && !trialDismissed) {
+  if (trialVisible) {
     return (
       <div className="sub-banner is-trial" role="status">
-        <Clock size={12} className="sub-banner-icon" aria-hidden="true" />
-        <span className="sub-banner-text">
-          Trial ends in <strong>{sub.trialDaysLeft} day{sub.trialDaysLeft !== 1 ? 's' : ''}</strong>
-        </span>
-        <button type="button" className="sub-banner-btn" onClick={() => navigate('/app/subscription')}>
-          Upgrade <ArrowUpRight size={11} />
-        </button>
-        <button type="button" className="sub-banner-dismiss" onClick={() => setTrialDismissed(true)} aria-label="Dismiss">
-          <X size={13} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Clock size={16} className="sub-banner-icon" aria-hidden="true" />
+          <span className="sub-banner-text">
+            {sub!.trialDaysLeft <= 0 ? (
+              <>Your free trial has <strong>ended</strong>. Please upgrade your subscription immediately to continue using Recoverpro and keep access to all premium features without interruption.</>
+            ) : (
+              <>Your free trial ends in <strong>{sub!.trialDaysLeft} day{sub!.trialDaysLeft !== 1 ? 's' : ''}</strong>. Upgrade your subscription today to ensure uninterrupted access to all your data and premium features.</>
+            )}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginRight: 24 }}>
+          <button type="button" className="sub-banner-btn" onClick={() => navigate('/app/subscription')}>
+            Upgrade <ArrowUpRight size={11} />
+          </button>
+        </div>
+        <button type="button" className="sub-banner-dismiss" onClick={dismissTrial} aria-label="Dismiss">
+          <X size={16} />
         </button>
       </div>
     );

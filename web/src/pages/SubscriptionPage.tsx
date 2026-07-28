@@ -116,6 +116,11 @@ export default function SubscriptionPage() {
   async function handlePlan(plan: string) {
     setBtnLoad(plan);
     try {
+      if (plan === 'STARTER') {
+        await subscriptionApi.selectFree();
+        window.location.reload();
+        return;
+      }
       const url = await subscriptionApi.checkout(plan);
       window.location.href = url;
     } catch {

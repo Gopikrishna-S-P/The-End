@@ -12,12 +12,11 @@ import {
   CheckCircle, ArrowUpRight, ArrowUp, ArrowDown, Minus,
   ClipboardCheck, Handshake, UserPlus, Route, Navigation,
   AlertCircle, RefreshCw, Banknote, Users2, Briefcase, Activity,
-  Building2, TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { dashboardApi } from '../api/dashboardApi';
 import type {
-  OrgOverviewSection, OrgTodaySection, PlatformAdminSection,
+  OrgOverviewSection, OrgTodaySection,
   CollectionsSection, AllocationsSection, TeamSection,
   PtpSummarySection, CallerSection, UnifiedDashboardData,
   TrendPoint, DashboardRole,
@@ -86,122 +85,6 @@ function DashboardSkeleton({ role }: { role: string }) {
   );
 }
 
-// ── Platform admin view ───────────────────────────────────────────────────────
-
-function PlatformAdminView({ platform, navigate }: {
-  platform?: PlatformAdminSection;
-  navigate: (to: string) => void;
-}) {
-  const growth = platform?.collectionGrowthRate ?? null;
-  const gDir = growth == null ? 'flat' : growth > 0 ? 'up' : 'down';
-  const trendData = [...(platform?.monthlyCollectionTrend ?? [])].sort((a, b) => (a.year - b.year) || (a.month - b.month));
-  const TW = 600; const TH = 200; const tPadL = 8; const tPadR = 16; const tPadY = 18;
-
-  const totalOrgs  = platform?.totalOrganizations ?? 0;
-  const activeOrgs = platform?.activeOrganizations ?? 0;
-  const inactiveOrgs = Math.max(0, totalOrgs - activeOrgs);
-
-  const lastMonthVol = platform?.collectionVolumeLastMonth ?? 0;
-  const thisMonthVol = platform?.collectionVolumeThisMonth ?? 0;
-
-  return (
-    <motion.div key="platform" variants={stagger} initial="hidden" animate="show" className="db-inner">
-      <motion.div className="db-kpi-band" variants={stagger}>
-        <KpiCard label="Organizations" value={fmtNum(platform?.totalOrganizations)}
-          icon={Building2} accent
-          sub={<span className="db-kpi2-sub-meta">{fmtNum(platform?.activeOrganizations)} active</span>} />
-        <KpiCard label="Collected this month" value={fmtINR(platform?.collectionVolumeThisMonth ?? 0)}
-          icon={TrendingUp}
-          sub={growth != null
-            ? <span className={`db-kpi2-sub-meta${gDir === 'up' ? ' is-up' : gDir === 'down' ? ' is-down' : ''}`}>
-                {gDir === 'up' ? <ArrowUp size={10} /> : gDir === 'down' ? <ArrowDown size={10} /> : <Minus size={10} />}
-                {Math.abs(growth).toFixed(1)}% vs last month
-              </span>
-            : undefined} />
-        <KpiCard label="Total users" value={fmtNum(platform?.totalUsers)}
-          icon={Users2}
-          sub={<span className="db-kpi2-sub-meta">across all orgs</span>} />
-        <KpiCard label="Total cases" value={fmtNum(platform?.totalAllocations)}
-          icon={Briefcase}
-          sub={<span className="db-kpi2-sub-meta">system-wide</span>} />
-      </motion.div>
-
-      <div className="db-grid">
-        {/* System trend */}
-        <Card className="db-span-8" title="System-wide collection trend">
-          {trendData.length < 1 ? (
-            <svg className="db-trend-svg" viewBox={`0 0 ${TW} ${TH}`} preserveAspectRatio="none">
-              {[0.25, 0.5, 0.75].map((f, i) => (
-                <line key={i} x1={tPadL} x2={TW - tPadR}
-                  y1={tPadY + f * (TH - tPadY * 2)} y2={tPadY + f * (TH - tPadY * 2)}
-                  stroke="var(--border)" strokeWidth="1" strokeDasharray="4 4" />
-              ))}
-              <text x={TW / 2} y={TH / 2} textAnchor="middle"
-                fill="var(--ink-tertiary)" fontSize="13" style={{ fontFamily: 'var(--font-mono)' }}>No data yet</text>
-            </svg>
-          ) : (
-            <BarChart data={trendData} />
-          )}
-        </Card>
-
-        {/* Org status donut */}
-        <Card className="db-span-4" title="Org status">
-          <div className="db-donut-card">
-            <DonutChart centerLabel="ORGS" slices={[
-              { label: 'Active',   value: activeOrgs,   color: 'var(--ink-solid)' },
-              { label: 'Inactive', value: inactiveOrgs, color: 'var(--ink-tertiary)' },
-            ]} />
-            <div className="db-legend">
-              <div className="db-legend-row">
-                <span className="db-legend-dot" style={{ background: 'var(--ink-solid)' }} />
-                <span className="db-legend-label">Active</span>
-                <span className="db-legend-val">{fmtNum(activeOrgs)}</span>
-              </div>
-              <div className="db-legend-row">
-                <span className="db-legend-dot" style={{ background: 'var(--ink-tertiary)' }} />
-                <span className="db-legend-label">Inactive</span>
-                <span className="db-legend-val">{fmtNum(inactiveOrgs)}</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Top organizations */}
-        <Card className="db-span-6" title="Top organizations">
-          {(platform?.topOrgsByCollection ?? []).length === 0 ? (
-            <div className="db-trend-empty"><span className="db-trend-empty-msg">No org data</span></div>
-          ) : (
-            <HBarList ranked rows={(platform?.topOrgsByCollection ?? []).map(o => ({
-              label: o.name,
-              value: o.userCount,
-              display: `${o.userCount} users`,
-            }))} />
-          )}
-        </Card>
-
-        {/* Month vs last month */}
-        <Card className="db-span-6" title="Month vs last month">
-          <HBarList rows={[
-            { label: 'Last month', value: lastMonthVol, display: fmtINR(lastMonthVol), color: 'var(--border-strong)' },
-            { label: 'This month', value: thisMonthVol, display: fmtINR(thisMonthVol), color: 'var(--ink-solid)' },
-          ]} />
-          {growth != null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10, fontSize: 11.5, fontWeight: 600,
-              color: gDir === 'up' ? 'var(--success, #1D7A3E)' : gDir === 'down' ? 'var(--danger, #B42318)' : 'var(--ink-tertiary)' }}>
-              {gDir === 'up' ? <ArrowUp size={12} /> : gDir === 'down' ? <ArrowDown size={12} /> : <Minus size={12} />}
-              {Math.abs(growth).toFixed(1)}% {gDir === 'up' ? 'growth' : gDir === 'down' ? 'decline' : 'flat'}
-              <span style={{ color: 'var(--ink-tertiary)', fontWeight: 400, marginLeft: 4 }}>platform-wide</span>
-            </div>
-          )}
-          {growth == null && (
-            <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)', marginTop: 10, display: 'block' }}>First month of data</span>
-          )}
-        </Card>
-      </div>
-    </motion.div>
-  );
-}
-
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -229,14 +112,12 @@ export default function Dashboard() {
   const [kpiView, setKpiView] = useState<'today' | 'month'>('today');
 
   const dashRole: DashboardRole = unified?.role ?? (authRole || 'ORG_ADMIN');
-  const isPlatformAdmin  = dashRole === 'PLATFORM_ADMIN';
   const isOrgManagerView = ['ORG_ADMIN', 'MANAGER', 'TL'].includes(dashRole);
   const isOrgAdmin       = dashRole === 'ORG_ADMIN';
   const isTl             = dashRole === 'TL';
   const isFoView         = dashRole === 'FO';
   const isCallerView     = dashRole === 'CALLER';
 
-  const platform:    PlatformAdminSection | undefined = unified?.platform;
   const orgOverview: OrgOverviewSection | undefined   = unified?.orgOverview;
   const orgToday:    OrgTodaySection | undefined      = unified?.orgToday;
   const callerToday: CallerSection | undefined        = unified?.callerToday;
@@ -381,8 +262,6 @@ export default function Dashboard() {
             <motion.div key="skeleton" exit={{ opacity: 0 }}>
               <DashboardSkeleton role={authRole} />
             </motion.div>
-          ) : isPlatformAdmin ? (
-            <PlatformAdminView platform={platform} navigate={navigate} />
           ) : isOrgManagerView ? (
             <motion.div key="org" variants={stagger} initial="hidden" animate="show" className="db-inner">
 

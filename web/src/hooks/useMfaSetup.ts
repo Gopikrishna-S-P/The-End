@@ -40,7 +40,7 @@ export function useMfaSetup() {
     if (otpValue.length < 6) { setError('Please enter a complete 6-digit code.'); return; }
     setIsLoading(true); setError(null);
     try {
-      const { data } = await apiClient.post<ApiResponse<MfaEnableResponse>>('/api/v1/auth/mfa/enable', { totp_code: otpValue } as EnableMfaRequest);
+      const { data } = await apiClient.post<ApiResponse<MfaEnableResponse>>('/api/v1/auth/mfa/enable', { totpCode: otpValue } as EnableMfaRequest);
       setRecoveryCodes(data.data?.recoveryCodes ?? []);
       await refreshAuth();
       setStep(3);

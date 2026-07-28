@@ -5,7 +5,6 @@ import { apiClient, unwrapApiResponse } from '../client';
 import { collectionsApi } from '../api/collectionsApi';
 import { usersApi } from '../api/usersApi';
 import { useAuth } from '../AuthContext';
-import { usePermissions } from '../hooks/usePermissions';
 import type {
   CollectionResponse, CollectionStatus, ApprovalAction, PagedResponse, UserResponse,
 } from '../types';
@@ -22,7 +21,6 @@ import { StatusPill, PaymentModePill, fmtINR, fmtDate } from './CollectionsHelpe
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
-import '../styles/CollectionsPage.css';
 
 const PAGE_SIZE = 20;
 
@@ -43,6 +41,7 @@ function csvDownload(filename: string, csv: string) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+const APPROVER_ROLES = ['ROLE_TL', 'ROLE_MANAGER', 'ROLE_ORG_ADMIN', 'ROLE_PLATFORM_ADMIN'];
 const todayIso      = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 const monthStartIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; };
 const yearStartIso  = () => `${new Date().getFullYear()}-01-01`;
@@ -53,8 +52,7 @@ export default function CollectionsPage() {
   const { user } = useAuth();
   const isBankView  = location.pathname.startsWith('/bank');
   const isAgentView = location.pathname.startsWith('/agent');
-  const { hasPermission } = usePermissions();
-  const canApprove = hasPermission('COLLECTION_APPROVE');
+  const canApprove = user?.roles.some((r) => APPROVER_ROLES.includes(r.name)) ?? false;
 
   const [collections,           setCollections]           = useState<CollectionResponse[]>([]);
   const [loading,               setLoading]               = useState(true);
@@ -390,8 +388,8 @@ export default function CollectionsPage() {
                                 <button
                                   type="button"
                                   onClick={() => { setSelectedCollection(c); setApprovalInitialAction('APPROVE'); setShowApprovalModal(true); }}
-                                  className="db-error-retry"
-                                  style={{ background: 'var(--success-subtle)', color: 'var(--success)', padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
+                                  className="db-error-retry db-action-success"
+                                  style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
                                   title="Approve"
                                 >
                                   <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Approve
@@ -399,8 +397,8 @@ export default function CollectionsPage() {
                                 <button
                                   type="button"
                                   onClick={() => { setSelectedCollection(c); setApprovalInitialAction('REJECT'); setShowApprovalModal(true); }}
-                                  className="db-error-retry"
-                                  style={{ background: 'var(--danger-subtle)', color: 'var(--danger)', padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
+                                  className="db-error-retry db-action-danger"
+                                  style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
                                   title="Reject"
                                 >
                                   <XCircle size={12} style={{ marginRight: 4 }} /> Reject
@@ -411,8 +409,8 @@ export default function CollectionsPage() {
                               <button
                                 type="button"
                                 onClick={() => { setSelectedCollection(c); setShowDepositModal(true); }}
-                                className="db-error-retry"
-                                style={{ background: 'var(--info-subtle)', color: 'var(--info)', padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
+                                className="db-error-retry db-action-info"
+                                style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
                                 title="Mark deposited"
                               >
                                 <Banknote size={12} style={{ marginRight: 4 }} /> Deposit

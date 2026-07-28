@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import {
   AlertCircle, AlertTriangle, CheckCircle2, ClipboardCheck, Clock, Coins,
   FileDown, FileText, HandCoins, Handshake, History, Landmark,
-  MailWarning, MapPin, MessageSquare, Pencil, RefreshCw, ShieldAlert, ShieldOff,
+  MailWarning, MapPin, MessageSquare, Pencil, RefreshCw, Repeat, ShieldAlert, ShieldOff,
   Table as TableIcon, UserCheck, UserPlus, UserX, XCircle,
 } from 'lucide-react';
 import type { CaseEventType } from '../types';
@@ -16,6 +16,7 @@ export type EventStyle = {
 export const STYLES: Record<CaseEventType, EventStyle> = {
   ALLOCATION_CREATED:        { icon: FileText,          accent: 'var(--ink-secondary)',    label: 'Loan created' },
   ALLOCATION_STATUS_CHANGED: { icon: RefreshCw,         accent: 'var(--ink-secondary)',    label: 'Status changed' },
+  ALLOCATION_DISPOSITION_CHANGED: { icon: Repeat,       accent: 'var(--ink-secondary)',    label: 'Disposition changed' },
   ALLOCATION_CLOSED:         { icon: CheckCircle2,      accent: 'var(--success, #16a34a)', label: 'Closed' },
   NPA_FLAG_RAISED:           { icon: ShieldAlert,       accent: 'var(--error, #dc2626)',   label: 'NPA flagged' },
   COOLING_OFF_STARTED:       { icon: ShieldOff,         accent: '#a16207',                 label: 'Cooling-off' },
@@ -40,6 +41,7 @@ export const STYLES: Record<CaseEventType, EventStyle> = {
   COLLECTION_APPROVED:       { icon: CheckCircle2,      accent: '#0891b2',                 label: 'Approved' },
   COLLECTION_REJECTED:       { icon: XCircle,           accent: 'var(--error, #dc2626)',   label: 'Rejected' },
   COLLECTION_DEPOSITED:      { icon: Landmark,          accent: '#0891b2',                 label: 'Deposited' },
+  COLLECTION_CANCELLED:      { icon: XCircle,           accent: 'var(--ink-tertiary)',     label: 'Collection cancelled' },
 
   COMMUNICATION_SENT:        { icon: MessageSquare,     accent: 'var(--ink-secondary)',    label: 'Message' },
   COMMUNICATION_SUPPRESSED:  { icon: MailWarning,       accent: '#a16207',                 label: 'Suppressed' },

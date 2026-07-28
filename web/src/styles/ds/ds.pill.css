@@ -28,6 +28,7 @@
 .ds-pill.is-warn     { background: var(--warning-subtle); border-color: var(--warning-border); color: var(--warning); }
 .ds-pill.is-error    { background: var(--danger-subtle);  border-color: var(--danger-border);  color: var(--danger); }
 .ds-pill.is-neutral  { /* default */ }
+.ds-pill.is-accent   { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }
 
 /* Semantic aliases — use these instead of raw success/danger for status labels */
 .ds-pill.is-active   { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }

@@ -1,18 +1,18 @@
-import { useState, type RefObject, type KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect, type RefObject, type KeyboardEvent } from 'react';
 import {
-  ArrowLeft, AlertCircle, RefreshCw, User,
+  AlertCircle, RefreshCw, User,
   IndianRupee, MapPin, Info,
-  ArrowRightLeft, Clock,
+  ArrowRightLeft, ChevronDown, Loader2,
 } from 'lucide-react';
 import CaseTimeline from '../components/CaseTimeline';
 import type { AllocationResponse, AllocationStatus } from '../types';
 import {
   Pill, Row, fmtCurrency, fmtDate, fmtDT, fmtRelative,
-  FIELD_GROUPS,
+  FIELD_GROUPS, ALL_DISPOSITIONS, bucketFor,
   type GroupedFields, type Tone, type NextAction,
 } from './LoanDetailHelpers';
 import './Dashboard.css';
+import '../styles/LoanDetailPage.css';
 
 interface Props {
   allocation: AllocationResponse;
@@ -20,7 +20,6 @@ interface Props {
   lastKnownLocation: { lat: number; lng: number } | null;
   canChangeStatus: boolean;
   onReassign?: () => void;
-  onClose?: () => void;
   groups: GroupedFields | null;
   outstandingTone: Tone;
   daysOverdueTone: Tone;
@@ -34,12 +33,25 @@ interface Props {
   menuRef: RefObject<HTMLDivElement | null>;
   requestStatus: (s: AllocationStatus) => void;
   onMenuKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
+  dispositionUpdating: boolean;
+  requestDisposition: (d: string) => void;
 }
 
 export default function LoanDetailContent(p: Props) {
   const { allocation: a } = p;
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details');
+  const [dispositionOpen, setDispositionOpen] = useState(false);
+  const dispositionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dispositionOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (dispositionRef.current?.contains(e.target as Node)) return;
+      setDispositionOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [dispositionOpen]);
 
   const dyn = (a as unknown as { dynamicData?: Record<string, unknown> }).dynamicData ?? {};
   const dispositionValue = (a.latestDisposition || dyn.disposition || dyn.Disposition || dyn.DISPOSITION) as string | undefined;
@@ -52,210 +64,189 @@ export default function LoanDetailContent(p: Props) {
     : addressText
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`
       : null;
+  const bucket = bucketFor(p.daysOverdue);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
-      {/* ── Identity Header Cards ── */}
-      <div className="db-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-        
-        {/* Main Identity Card */}
-        <div className="ds-card db-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16, gridColumn: '1 / -1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                {p.onClose && (
-                  <button type="button" onClick={p.onClose} className="ds-drawer-close" aria-label="Back to loans" style={{ alignSelf: 'center' }}>
-                    <ArrowLeft size={16} />
-                  </button>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-primary)', margin: 0 }}>
-                    {a.borrowerName || '—'}
-                  </h1>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--ink-secondary)', fontWeight: 500 }}>
-                    {a.loanNumber || '—'}
-                  </span>
-                </div>
-                {dispositionValue && (
-                  <Pill status={dispositionValue} />
-                )}
-                {a.npaFlagged && (
-                  <span className="ds-pill is-danger" style={{ fontWeight: 600 }}>
-                    <AlertCircle size={12} style={{ marginRight: 4 }} /> NPA
-                  </span>
-                )}
-                {mapsHref && (
-                  <a href={mapsHref} target="_blank" rel="noreferrer" 
-                    className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12, textDecoration: 'none', background: 'var(--bg-subtle)' }}>
-                    <MapPin size={12} style={{ marginRight: 6 }} />
-                    {p.lastKnownLocation ? `Last GPS` : 'Address in Maps'}
-                  </a>
-                )}
-              </div>
-            </div>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flex: 1, minHeight: 0 }}>
 
-            <div style={{ display: 'flex', gap: 32, alignItems: 'center', textAlign: 'right' }}>
-              {a.outstandingAmount != null && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <span style={{ fontSize: 13, color: 'var(--ink-secondary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <IndianRupee size={12} /> POS
-                  </span>
-                  <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink-primary)' }}>
-                    {fmtCurrency(Number(a.outstandingAmount))}
-                  </span>
-                  {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
-                    <span style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4, fontWeight: 600 }}>
-                      {a.npaFlagged ? 'NPA flagged' : `${p.daysOverdue} d overdue`}
-                    </span>
-                  )}
-                </div>
-              )}
-              {a.totalDue != null && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                  <span style={{ fontSize: 13, color: 'var(--ink-secondary)', marginBottom: 4 }}>Total Due</span>
-                  <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink-primary)' }}>
-                    {fmtCurrency(Number(a.totalDue))}
-                  </span>
-                  {p.dueDateIso && (
-                    <span style={{ fontSize: 12, color: 'var(--ink-secondary)', marginTop: 4 }}>
-                      Due {fmtDate(p.dueDateIso)}
-                    </span>
-                  )}
-                </div>
-              )}
+      {/* ── Left — fixed summary sidebar, full height, never scrolls ────── */}
+      <aside style={{ width: 320, flexShrink: 0, alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="ds-card db-card" style={{ height: '100%', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+              <h1 style={{ fontSize: 19, fontWeight: 700, color: 'var(--ink-primary)', margin: 0, lineHeight: 1.25, wordBreak: 'break-word' }}>
+                {a.borrowerName || '—'}
+              </h1>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--ink-secondary)', fontWeight: 500 }}>
+                {a.loanNumber || '—'}
+              </span>
             </div>
           </div>
 
-          {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-              <button type="button" className="ds-btn is-secondary" onClick={p.onReassign} style={{ height: 32 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {p.canChangeStatus ? (
+              <div ref={dispositionRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setDispositionOpen(v => !v)}
+                  disabled={p.dispositionUpdating}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', padding: 0, cursor: p.dispositionUpdating ? 'not-allowed' : 'pointer', opacity: p.dispositionUpdating ? 0.6 : 1 }}
+                  aria-label="Change disposition"
+                  aria-expanded={dispositionOpen}
+                >
+                  {dispositionValue ? <Pill status={dispositionValue} /> : <span className="ds-pill">Set disposition</span>}
+                  {p.dispositionUpdating ? <Loader2 size={12} className="ds-spin" /> : <ChevronDown size={12} style={{ color: 'var(--ink-tertiary)' }} />}
+                </button>
+                {dispositionOpen && (
+                  <div className="alloc-dropdown-menu" style={{ left: 0, right: 'auto' }}>
+                    {ALL_DISPOSITIONS.map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        className={`alloc-dropdown-item${d === dispositionValue ? ' is-active' : ''}`}
+                        onClick={() => { p.requestDisposition(d); setDispositionOpen(false); }}
+                        disabled={d === dispositionValue}
+                      >
+                        {d.replace(/_/g, ' ')}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              dispositionValue && <Pill status={dispositionValue} />
+            )}
+            {bucket && <span className={`ds-pill is-${bucket.tone}`}>{bucket.label}</span>}
+            {a.npaFlagged && (
+              <span className="ds-pill is-danger" style={{ fontWeight: 600 }}>
+                <AlertCircle size={12} style={{ marginRight: 4 }} /> NPA
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
+            {a.outstandingAmount != null && (
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--ink-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <IndianRupee size={12} /> POS (Principal Outstanding)
+                </span>
+                <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-primary)', display: 'block', marginTop: 2 }}>
+                  {fmtCurrency(Number(a.outstandingAmount))}
+                </span>
+                {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
+                  <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600 }}>
+                    {a.npaFlagged ? 'NPA flagged' : `${p.daysOverdue} d overdue`}
+                  </span>
+                )}
+              </div>
+            )}
+            {a.totalDue != null && (
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Total due</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-primary)', display: 'block', marginTop: 2 }}>
+                  {fmtCurrency(Number(a.totalDue))}
+                </span>
+                {p.dueDateIso && (
+                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Due {fmtDate(p.dueDateIso)}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {a.assignedToUserId && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
+              <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Assigned to</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-primary)', fontWeight: 600, fontSize: 14 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <User size={12} style={{ color: 'var(--ink-tertiary)' }} />
+                </div>
+                {p.agentName ?? '—'}
+              </div>
+              {a.assignedAt && (
+                <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)' }} title={fmtDT(a.assignedAt)}>
+                  since {fmtRelative(a.assignedAt)}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
+            {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
+              <button type="button" className="ds-btn is-secondary" onClick={p.onReassign} style={{ height: 32, width: '100%' }}>
                 <ArrowRightLeft size={14} style={{ marginRight: 6 }} /> Reassign
               </button>
-            </div>
-          )}
+            )}
+            {mapsHref && (
+              <a href={mapsHref} target="_blank" rel="noreferrer"
+                className="db-customize-btn" style={{ padding: '4px 10px', height: 30, fontSize: 12.5, textDecoration: 'none', background: 'var(--bg-subtle)', width: '100%', justifyContent: 'center' }}>
+                <MapPin size={12} style={{ marginRight: 6 }} />
+                {p.lastKnownLocation ? 'Last GPS location' : 'Address in Maps'}
+              </a>
+            )}
+          </div>
         </div>
-      </div>
+      </aside>
 
-      {/* ── Tabs ── */}
-      <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div className="db-kpi-toggle" style={{ display: 'inline-flex' }}>
-          {[
-            { id: 'details', label: 'Details' },
-            { id: 'activity', label: 'Activity' }
-          ].map(tab => (
-            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id as 'details' | 'activity')}
-              className={`db-kpi-toggle-btn${activeTab === tab.id ? ' is-active' : ''}`}>
-              {tab.label}
-            </button>
-          ))}
+      {/* ── Right — case data, independently scrollable ─────────────────── */}
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <span style={{ fontSize: 13, color: 'var(--ink-tertiary)' }}>
+            {activeTab === 'details' ? 'Everything on file for this case.' : 'Every visit, collection, PTP, and reassignment on this case, newest first.'}
+          </span>
+          <div className="db-kpi-toggle" style={{ display: 'inline-flex' }}>
+            {[
+              { id: 'details', label: 'Details' },
+              { id: 'activity', label: 'Activity' }
+            ].map(tab => (
+              <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id as 'details' | 'activity')}
+                className={`db-kpi-toggle-btn${activeTab === tab.id ? ' is-active' : ''}`}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Related-workspace quick links — these pages aren't in the sidebar for
-            every role, so this is how a case leads onward to its assignment,
-            visit, PTP, and collection history. */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
-            onClick={() => navigate('/app/assignments')}>Assignments</button>
-          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
-            onClick={() => navigate('/app/visits')}>Visit Logs</button>
-          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
-            onClick={() => navigate('/app/ptps')}>PTPs</button>
-          <button type="button" className="db-customize-btn" style={{ padding: '4px 10px', height: 26, fontSize: 12 }}
-            onClick={() => navigate('/app/collections')}>Collections</button>
-        </div>
-      </div>
-
-      {/* ── Content Body ── */}
-      <div className="db-grid" style={{ gridTemplateColumns: '1fr', gap: 24 }}>
-        
+        <div className="alloc-detail-scroll" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
         {activeTab === 'details' && (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
-              {/* System & Metadata Card */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {p.groups && FIELD_GROUPS.map(g => {
+              const entries = p.groups![g.id];
+              if (entries.length === 0) return null;
+              const Icon = g.icon;
+              return (
+                <div key={g.id} className="ds-card db-card">
+                  <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
+                    <h2 className="db-card-title"><Icon size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> {g.label} details</h2>
+                  </header>
+                  <div className="db-card-body" style={{ padding: '4px 20px 8px' }}>
+                    {entries.map(([k, v]) => (
+                      <Row key={k} label={k.replace(/_/g, ' ')}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</Row>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {p.groups && p.groups.other.length > 0 && (
               <div className="ds-card db-card">
                 <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-              <h2 className="db-card-title"><Clock size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> Case metadata</h2>
-            </header>
-            <div className="db-card-body" style={{ padding: '8px 20px 20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', columnGap: 24, rowGap: 0 }}>
-                <Row label="Disposition"><Pill status={dispositionValue || a.status} /></Row>
-                {a.npaFlagged && <Row label="NPA"><span style={{ color: 'var(--danger)', fontWeight: 600 }}>Flagged</span></Row>}
-                <Row label="Row #"><span style={{ fontFamily: 'var(--font-mono)' }}>{a.rowNumber?.toString()}</span></Row>
-                <Row label="Created" title={fmtDT(a.createdAt)}><span style={{ color: 'var(--ink-secondary)' }}>{fmtRelative(a.createdAt)}</span></Row>
-                <Row label="Updated" title={fmtDT(a.updatedAt)}><span style={{ color: 'var(--ink-secondary)' }}>{fmtRelative(a.updatedAt)}</span></Row>
-              </div>
-            </div>
-          </div>
-
-          {/* Assignment Card */}
-          {a.assignedToUserId && (
-            <div className="ds-card db-card">
-              <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-                <h2 className="db-card-title"><User size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> Current assignment</h2>
-              </header>
-              <div className="db-card-body" style={{ padding: '8px 20px 20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', columnGap: 24, rowGap: 0 }}>
-                  <Row label="Assigned to">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-primary)', fontWeight: 600 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <User size={11} style={{ color: 'var(--ink-tertiary)' }} />
-                      </div>
-                      {p.agentName ?? '—'}
-                    </div>
-                  </Row>
-                  {a.assignedAt && (
-                    <Row label="Assigned at" title={fmtDT(a.assignedAt)}>
-                      <span style={{ color: 'var(--ink-secondary)' }}>{fmtRelative(a.assignedAt)}</span>
-                    </Row>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Grouped Dynamic Fields */}
-        {p.groups && FIELD_GROUPS.map(g => {
-          const entries = p.groups![g.id];
-          if (entries.length === 0) return null;
-          const Icon = g.icon;
-          return (
-            <div key={g.id} className="ds-card db-card" style={{ gridColumn: '1 / -1' }}>
-              <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-                <h2 className="db-card-title"><Icon size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> {g.label} details</h2>
-              </header>
-              <div className="db-card-body" style={{ padding: '8px 20px 20px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', columnGap: 32, rowGap: 0 }}>
-                  {entries.map(([k, v]) => (
+                  <h2 className="db-card-title"><Info size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> Additional data</h2>
+                </header>
+                <div className="db-card-body" style={{ padding: '4px 20px 8px' }}>
+                  {p.groups.other.map(([k, v]) => (
                     <Row key={k} label={k.replace(/_/g, ' ')}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</Row>
                   ))}
                 </div>
               </div>
-            </div>
-          );
-        })}
-
-        {/* Other / Extra Data */}
-        {p.groups && p.groups.other.length > 0 && (
-          <div className="ds-card db-card" style={{ gridColumn: '1 / -1' }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-              <h2 className="db-card-title"><Info size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> Additional data</h2>
-            </header>
-            <div className="db-card-body" style={{ padding: '8px 20px 20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', columnGap: 32, rowGap: 0 }}>
-                {p.groups.other.map(([k, v]) => (
-                  <Row key={k} label={k.replace(/_/g, ' ')}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</Row>
-                ))}
-              </div>
-              </div>
-            </div>
-          )}
-          </>
+            )}
+          </div>
         )}
 
-        {/* Timeline Tab */}
         {activeTab === 'activity' && (
-          <div className="ds-card db-card" style={{ gridColumn: '1 / -1', minHeight: 400 }}>
+          <div className="ds-card db-card" style={{ minHeight: 400 }}>
             <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
               <h2 className="db-card-title">Activity Feed</h2>
             </header>
@@ -264,7 +255,7 @@ export default function LoanDetailContent(p: Props) {
             </div>
           </div>
         )}
-
+        </div>
       </div>
     </div>
   );

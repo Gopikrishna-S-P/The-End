@@ -70,8 +70,6 @@ export const collectionsApi = {
     await axiosInstance.patch(`/api/v1/collections/${id}/cancel`);
   },
 
-  // NOTE: no CSV export endpoint exists on CollectionController today (BCR-9 in
-  // BACKEND-REQUESTS.md). This call will 404 until the backend adds one.
   exportCsv: async (params?: { fromDate?: string; toDate?: string }): Promise<string> => {
     const response = await axiosInstance.get<string>('/api/v1/collections/export', {
       params,

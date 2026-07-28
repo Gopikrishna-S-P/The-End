@@ -13,7 +13,7 @@ export function OtpBoxes({ value, onChange, disabled }: OtpBoxesProps) {
     const digit = v.replace(/\D/g, '').slice(-1);
     const cur = (value + '      ').split('').slice(0, 6);
     cur[i] = digit;
-    onChange(cur.join('').replace(/ /g, '').slice(0, digit ? i + 1 : i));
+    onChange(cur.join('').replace(/ /g, ''));
     if (digit && i < 5) setTimeout(() => inputs.current[i + 1]?.focus(), 10);
   };
 

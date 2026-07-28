@@ -55,6 +55,9 @@ export function UploadCell({ value, editing, onStartEdit, onSave, onCancel }: Pr
 
   return (
     <div onClick={onStartEdit} title={value || '—'}
+      role="button" tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStartEdit(); } }}
+      className="ud-cell-editable"
       style={{
         minHeight: 24, minWidth: 60, padding: '3px 4px', borderRadius: 4,
         cursor: 'text', fontSize: 13, color: 'var(--text-primary)',

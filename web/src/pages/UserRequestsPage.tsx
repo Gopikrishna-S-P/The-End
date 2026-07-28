@@ -8,7 +8,6 @@ import { type Tab, StatusPill, RoleBadge } from './UserRequestsHelpers';
 import { UserRequestsReviewModal } from './UserRequestsReviewModal';
 import { UserRequestsSubmitModal } from './UserRequestsSubmitModal';
 import '../styles/AppPage.css';
-import '../styles/UserRequestsPage.css';
 
 export default function UserRequestsPage() {
   const { user } = useAuth();
@@ -16,8 +15,8 @@ export default function UserRequestsPage() {
   const isPlatformAdmin = rawRole === 'PLATFORM_ADMIN';
   const isOrgAdmin = rawRole === 'ORG_ADMIN';
   const canApprove = isPlatformAdmin || isOrgAdmin;
-  const canSubmit = isOrgAdmin;
-  const requestedRole: RequestedRole = isOrgAdmin ? 'ORG_ADMIN' : 'ORG_USER';
+  const canSubmit = isOrgAdmin || isPlatformAdmin;
+  const requestedRole: RequestedRole = isPlatformAdmin ? 'ORG_ADMIN' : 'ORG_USER';
 
   const [tab,            setTab]            = useState<Tab>(canApprove ? 'pending' : 'mine');
   const [pendingData,    setPendingData]    = useState<PagedUserRequests | null>(null);

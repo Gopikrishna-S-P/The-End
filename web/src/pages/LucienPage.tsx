@@ -7,7 +7,6 @@ import { LucienHistoryPanel } from './LucienHistoryPanel';
 import { LucienMessages } from './LucienMessages';
 import '../styles/AppPage.css';
 import './Dashboard.css';
-import '../styles/LucienPage.css';
 
 interface PendingConfirm {
   actionId: string;
@@ -85,7 +84,9 @@ export default function LucienPage() {
     setMessages((prev) => [...prev, optimistic]);
     try {
       const resp = await lucienApi.sendMessage({ sessionId, message: msg });
-      const assistantMsg: ChatMessage = { id: resp.messageId ?? `a-${Date.now()}`, role: 'ASSISTANT', content: resp.reply || '', createdAt: resp.timestamp ?? new Date().toISOString() };
+      const assistantMsg: ChatMessage = resp.blocked
+        ? { id: resp.messageId ?? `a-${Date.now()}`, role: 'ASSISTANT', content: '', blocked: true, blockReason: resp.blockReason, createdAt: resp.timestamp ?? new Date().toISOString() }
+        : { id: resp.messageId ?? `a-${Date.now()}`, role: 'ASSISTANT', content: resp.reply || '', createdAt: resp.timestamp ?? new Date().toISOString() };
       setMessages((prev) => [...prev, assistantMsg]);
       if (resp.confirmationRequired && resp.pendingActionId) {
         setPendingConfirm({

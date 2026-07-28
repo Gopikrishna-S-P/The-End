@@ -13,7 +13,7 @@ import { FieldOpsMapPanel } from './FieldOpsMapPanel';
 import { FieldOpsIncidentPanel } from './FieldOpsIncidentPanel';
 import '../styles/AppPage.css';
 import './Dashboard.css';
-import '../styles/FieldOpsPage.css';
+import '../styles/FieldOpsMap.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 

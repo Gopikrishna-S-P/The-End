@@ -9,6 +9,7 @@ import type { ApiResponse, PagedResponse, NpaRiskLevel } from '../types';
 // "overdue risk", while the wire fields themselves stay true to the DTO.
 
 export interface RiskRecordResponse {
+  id: string;
   allocationId: string;
   loanNumber: string | null;
   borrowerName: string | null;

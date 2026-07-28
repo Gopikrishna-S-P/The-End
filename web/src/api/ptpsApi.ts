@@ -35,8 +35,6 @@ export const ptpsApi = {
     return response.data.data;
   },
 
-  // NOTE: no CSV export endpoint exists on PtpController today (BCR-10 in
-  // BACKEND-REQUESTS.md). This call will 404 until the backend adds one.
   exportCsv: async (params?: { fromDate?: string; toDate?: string }): Promise<string> => {
     const response = await axiosInstance.get<string>('/api/v1/ptps/export', {
       params,

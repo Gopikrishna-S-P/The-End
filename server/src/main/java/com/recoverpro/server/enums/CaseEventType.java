@@ -3,14 +3,16 @@ package com.recoverpro.server.enums;
 /**
  * Mirrors the frontend's CaseEventType union (web/src/types/collections.ts).
  * Not every value is currently emitted by CaseTimelineServiceImpl -- some
- * (ALLOCATION_STATUS_CHANGED, NPA_FLAG_RAISED, COOLING_OFF_STARTED,
- * COMMUNICATION_*, SETTLEMENT_*, PTP_RESCHEDULED, ASSIGNMENT_COMPLETED) have
- * no backing audit trail yet, so they're kept here for contract parity but
- * never produced until that data exists.
+ * (NPA_FLAG_RAISED, COOLING_OFF_STARTED, COMMUNICATION_*, SETTLEMENT_*,
+ * PTP_RESCHEDULED, ASSIGNMENT_COMPLETED) have no backing audit trail yet,
+ * so they're kept here for contract parity but never produced until that
+ * data exists. ALLOCATION_STATUS_CHANGED and ALLOCATION_DISPOSITION_CHANGED
+ * ARE backed, by allocation_audit_logs (see AllocationAuditLog).
  */
 public enum CaseEventType {
     ALLOCATION_CREATED,
     ALLOCATION_STATUS_CHANGED,
+    ALLOCATION_DISPOSITION_CHANGED,
     ALLOCATION_CLOSED,
     NPA_FLAG_RAISED,
     COOLING_OFF_STARTED,
@@ -35,6 +37,7 @@ public enum CaseEventType {
     COLLECTION_APPROVED,
     COLLECTION_REJECTED,
     COLLECTION_DEPOSITED,
+    COLLECTION_CANCELLED,
 
     COMMUNICATION_SENT,
     COMMUNICATION_SUPPRESSED,

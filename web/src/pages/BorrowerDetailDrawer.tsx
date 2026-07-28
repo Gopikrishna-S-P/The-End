@@ -418,13 +418,20 @@ function RiskTab({ borrowerId, canScore }: { borrowerId: string; canScore: boole
   const [loading, setLoading] = useState(true);
   const [scoring, setScoring] = useState(false);
   const [error, setError]     = useState<string | null>(null);
+  const [forbidden, setForbidden] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [featuresJson, setFeaturesJson] = useState('{\n  \n}');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    setLoading(true);
-    riskApi.getLatest(borrowerId).then(setScore).catch(() => setScore(null)).finally(() => setLoading(false));
+    setLoading(true); setForbidden(false);
+    riskApi.getLatest(borrowerId)
+      .then(setScore)
+      .catch((e: any) => {
+        setScore(null);
+        if (e?.response?.status === 403) setForbidden(true);
+      })
+      .finally(() => setLoading(false));
   }, [borrowerId]);
 
   useEffect(() => { load(); }, [load]);
@@ -489,8 +496,12 @@ function RiskTab({ borrowerId, canScore }: { borrowerId: string; canScore: boole
       {!score ? (
         <div className="ds-empty" style={{ padding: '48px 0' }}>
           <Gauge size={28} className="ds-empty-icon" />
-          <span className="ds-empty-title">Not scored yet</span>
-          <span className="ds-empty-sub">{canScore ? 'Compute a risk score to see intent, ability and segment.' : 'This borrower has not been risk-scored yet.'}</span>
+          <span className="ds-empty-title">{forbidden ? "You don't have permission" : 'Not scored yet'}</span>
+          <span className="ds-empty-sub">
+            {forbidden
+              ? "You don't have permission to view this borrower's risk score."
+              : canScore ? 'Compute a risk score to see intent, ability and segment.' : 'This borrower has not been risk-scored yet.'}
+          </span>
         </div>
       ) : (
         <>

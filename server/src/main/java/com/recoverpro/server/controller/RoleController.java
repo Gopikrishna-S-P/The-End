@@ -22,17 +22,20 @@ import java.util.UUID;
 public class RoleController {
 
     private static final String ADMIN_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
+    // A custom role granted ROLE_ASSIGN via Role Management can edit role permissions without
+    // needing ORG_ADMIN/PLATFORM_ADMIN — see UserController's matching CAN_CREATE_USER.
+    private static final String CAN_ASSIGN_ROLE = ADMIN_ROLES + " or hasAuthority('ROLE_ASSIGN')";
 
     private final RoleService roleService;
 
     @GetMapping
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_ASSIGN_ROLE)
     public ResponseEntity<ApiResponse<List<RoleResponse>>> listRoles() {
         return ResponseEntity.ok(ApiResponse.success(roleService.listRolesForCaller()));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_ASSIGN_ROLE)
     public ResponseEntity<ApiResponse<RoleResponse>> getRole(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(roleService.getRoleById(id)));
     }
@@ -46,7 +49,7 @@ public class RoleController {
     }
 
     @PatchMapping("/{id}/permissions")
-    @PreAuthorize(ADMIN_ROLES)
+    @PreAuthorize(CAN_ASSIGN_ROLE)
     public ResponseEntity<ApiResponse<RoleResponse>> updatePermissions(
             @PathVariable UUID id,
             @RequestBody Set<UUID> permissionIds) {

@@ -40,22 +40,7 @@ export default function AppLayout() {
   const s = useAppLayoutState();
   const notifDialogOpen = useNotificationsDialogOpen();
 
-  // Bottom-of-scroll glow: only shown once the user has actually scrolled
-  // .app-main to its end, re-checked on route change and content resize
-  // (AnimatePresence/async data can change page height without a scroll event).
-  const [atScrollEnd, setAtScrollEnd] = React.useState(false);
-  useEffect(() => {
-    const el = s.mainRef.current;
-    const content = el?.firstElementChild as HTMLElement | null; // .app-route-view — its height, not .app-main's, tracks scrollHeight
-    if (!el || !content) return;
-    const THRESHOLD = 8;
-    const check = () => setAtScrollEnd(el.scrollHeight - el.scrollTop - el.clientHeight <= THRESHOLD);
-    check();
-    el.addEventListener('scroll', check, { passive: true });
-    const ro = new ResizeObserver(check);
-    ro.observe(content);
-    return () => { el.removeEventListener('scroll', check); ro.disconnect(); };
-  }, [location.pathname, s.mainRef]);
+
   const nav = useAppNavState({
     role: s.role,
     historyStack: s.historyStack,
@@ -64,6 +49,19 @@ export default function AppLayout() {
 
   const paletteItems = useMemo<PaletteItem[]>(() => {
     const out: PaletteItem[] = [];
+    for (const section of nav.sections) {
+      for (const item of section.items) {
+        out.push({
+          id: `page:${item.to}`,
+          label: item.label,
+          category: section.label,
+          icon: item.icon,
+          hint: item.to,
+          keywords: [section.label],
+          run: () => navigate(item.to),
+        });
+      }
+    }
     out.push({ id: 'action:toggle-dark', label: s.darkMode ? 'Switch to light mode' : 'Switch to dark mode', category: 'Theme', icon: s.darkMode ? Sun : Moon, keywords: ['theme', 'appearance', 'dark', 'light'], run: () => s.setThemeMode(m => m === 'dark' ? 'light' : 'dark') });
     out.push({ id: 'action:sound', label: s.soundEnabled ? 'Mute interaction sounds' : 'Enable interaction sounds', category: 'Theme', icon: s.soundEnabled ? Volume2 : VolumeX, keywords: ['audio', 'mute'], run: () => s.setSoundEnabled(o => !o) });
     out.push({ id: 'action:topbar-cust', label: 'Customize topbar', category: 'Theme', icon: LayoutGrid, keywords: ['topbar', 'customize', 'header', 'buttons'], run: () => s.setTopbarCustOpen(true) });
@@ -122,6 +120,8 @@ export default function AppLayout() {
           s.play();
         }}
         onProfileSettings={() => profileSettings.show()}
+        onNotificationsClick={() => { notificationsDialog.show(); s.play(); }}
+        unreadCount={s.unreadCount}
         onLogout={s.handleLogout}
         user={s.user}
         roleLabel={s.roleLabel}
@@ -176,15 +176,14 @@ export default function AppLayout() {
         <MfaGate mfaEnabled={s.user?.mfaEnabled} />
 
         <SubscriptionBanner />
+        
         <div className="app-body">
           <main className="app-main" id="main-content" tabIndex={-1} ref={s.mainRef}>
             <div key={location.pathname} className={`app-route-view tx-${s.routeTransition}`}>
               <Outlet />
             </div>
           </main>
-          {/* Overlay on the non-scrolling body, pinned to the visible bottom —
-              never moves with scroll; JS toggles opacity at the true end. */}
-          <div className={`app-bottom-glow${atScrollEnd ? ' is-visible' : ''}`} aria-hidden="true" />
+
           <LucienPanel open={s.lucienOpen} onClose={() => s.setLucienOpen(false)} />
         </div>
 

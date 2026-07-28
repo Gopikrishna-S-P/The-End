@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Logo, Footer } from "../components";
 import { useScrollReveal, useScrollProgress } from "../hooks/public-motion";
@@ -22,8 +23,9 @@ const SECTIONS = [
 ];
 
 export default function PrivacyPolicyPage() {
+  const scrollRef = useRef<HTMLDivElement>(null);
   useScrollReveal();
-  useScrollProgress();
+  useScrollProgress(scrollRef);
 
   return (
     <div className="legal-page pm-page-enter">
@@ -37,6 +39,7 @@ export default function PrivacyPolicyPage() {
         </a>
       </header>
 
+      <div className="scroll-region" ref={scrollRef}>
       <main className="shell">
 
         <aside className="sidebar">
@@ -255,6 +258,7 @@ export default function PrivacyPolicyPage() {
       </main>
 
       <Footer />
+      </div>
 
     </div>
   );

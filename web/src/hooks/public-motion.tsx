@@ -28,29 +28,34 @@ export function useScrollReveal(rootRef?: RefObject<HTMLElement | null>) {
   }, [rootRef]);
 }
 
-export function useScrollProgress() {
+export function useScrollProgress(scrollRef?: RefObject<HTMLElement | null>) {
   useEffect(() => {
     if (prefersReducedMotion()) return;
+    const scroller = scrollRef?.current;
     const bar = document.createElement('div');
     bar.className = 'pm-scroll-progress';
     document.body.appendChild(bar);
     let raf = 0;
     const update = () => {
       raf = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      bar.style.setProperty('--pm-scroll', `${max > 0 ? (window.scrollY / max) * 100 : 0}%`);
+      const scrollTop = scroller ? scroller.scrollTop : window.scrollY;
+      const max = scroller
+        ? scroller.scrollHeight - scroller.clientHeight
+        : document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.setProperty('--pm-scroll', `${max > 0 ? (scrollTop / max) * 100 : 0}%`);
     };
     const onScroll = () => { if (raf === 0) raf = window.requestAnimationFrame(update); };
+    const target: EventTarget = scroller ?? window;
     update();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    target.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', update);
     return () => {
-      window.removeEventListener('scroll', onScroll);
+      target.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', update);
       if (raf) window.cancelAnimationFrame(raf);
       bar.remove();
     };
-  }, []);
+  }, [scrollRef]);
 }
 
 export function useMagnetic(strength = 8) {

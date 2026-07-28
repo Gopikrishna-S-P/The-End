@@ -18,7 +18,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginRequest) => Promise<{ mfaRequired: boolean; mfaSessionToken?: string }>;
-  loginWithMfa: (email: string, password: string, totpCode: string) => Promise<void>;
+  loginWithMfa: (email: string, password: string, totpCode: string, recoveryCode?: string) => Promise<void>;
   logout: (allDevices?: boolean) => Promise<void>;
   refreshAuth: () => Promise<void>;
 }
@@ -241,12 +241,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [fireAttendanceCheckIn]);
 
-  const loginWithMfa = useCallback(async (email: string, password: string, totpCode: string) => {
+  const loginWithMfa = useCallback(async (email: string, password: string, totpCode: string, recoveryCode?: string) => {
     try {
       const authData = await authApi.login({
         email,
         password,
-        totp_code: totpCode,
+        ...(recoveryCode ? { recoveryCode } : { totpCode }),
       });
 
       persistAuth(authData);

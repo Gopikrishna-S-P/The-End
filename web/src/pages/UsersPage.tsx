@@ -6,13 +6,12 @@ import { rolesApi } from '../api/rolesApi';
 import type { UserResponse, PagedResponse, RoleResponse } from '../types';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
-import { Plus, RefreshCw, AlertCircle, X, Search, Building2, FileClock, MessageSquareText } from 'lucide-react';
+import { Plus, RefreshCw, AlertCircle, X, Search, Building2, FileClock, MessageSquareText, UserPlus } from 'lucide-react';
 import { UsersTable } from './UsersTable';
 import { UsersEditModal } from './UsersEditModal';
 import { UsersCreateModal } from './UsersCreateModal';
 import { UsersPermissionsModal } from './UsersPermissionsModal';
 import '../styles/AppPage.css';
-import '../styles/UsersPage.css';
 import { Users, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
 import './Dashboard.css';
 
@@ -176,6 +175,12 @@ export default function UsersPage() {
             className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
           >
             <MessageSquareText size={14} style={{ marginRight: 6 }} /> Message templates
+          </button>
+          <button
+            type="button" onClick={() => navigate('/app/users/requests')}
+            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+          >
+            <UserPlus size={14} style={{ marginRight: 6 }} /> Pending requests
           </button>
           <button
             type="button" onClick={load} disabled={loading}

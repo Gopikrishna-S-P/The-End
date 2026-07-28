@@ -69,34 +69,35 @@ export default function NotificationsDialog() {
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Notifications">
-        <header className="ps-dialog-header">
-          <h1 className="ps-dialog-title">Notifications</h1>
-          <button type="button" className="ps-dialog-close" onClick={onClose} aria-label="Close">
-            <X size={16} aria-hidden="true" />
-          </button>
-        </header>
+        
+        <nav className="ps-sidebar" aria-label="Notification sections">
+          {NAV_ITEMS.map(item => {
+            const count = item.key === 'unread' ? unreadCount
+              : item.key === 'all' || item.key === 'preferences' ? undefined
+              : active.filter(n => n.type === item.key).length;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={`ps-sidebar-item${activeTab === item.key ? ' is-active' : ''}`}
+                onClick={() => setActiveTab(item.key)}
+                aria-current={activeTab === item.key ? 'page' : undefined}
+              >
+                {item.icon}
+                {item.label}
+                {!!count && <span className="ds-pill is-neutral" style={{ marginLeft: 'auto', fontSize: 10 }}>{count}</span>}
+              </button>
+            );
+          })}
+        </nav>
 
-        <div className="ps-dialog-layout">
-          <nav className="ps-sidebar" aria-label="Notification sections">
-            {NAV_ITEMS.map(item => {
-              const count = item.key === 'unread' ? unreadCount
-                : item.key === 'all' || item.key === 'preferences' ? undefined
-                : active.filter(n => n.type === item.key).length;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  className={`ps-sidebar-item${activeTab === item.key ? ' is-active' : ''}`}
-                  onClick={() => setActiveTab(item.key)}
-                  aria-current={activeTab === item.key ? 'page' : undefined}
-                >
-                  {item.icon}
-                  {item.label}
-                  {!!count && <span className="ds-pill is-neutral" style={{ marginLeft: 'auto', fontSize: 10 }}>{count}</span>}
-                </button>
-              );
-            })}
-          </nav>
+        <div className="ps-dialog-content">
+          <header className="ps-dialog-header">
+            <h1 className="ps-dialog-title">Notifications</h1>
+            <button type="button" className="ps-dialog-close" onClick={onClose} aria-label="Close">
+              <X size={16} aria-hidden="true" />
+            </button>
+          </header>
 
           <div className="ps-dialog-body">
             {activeTab === 'preferences' ? (

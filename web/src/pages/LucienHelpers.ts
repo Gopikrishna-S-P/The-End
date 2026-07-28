@@ -6,6 +6,9 @@ export interface ChatMessage {
   role: 'USER' | 'ASSISTANT' | 'SYSTEM';
   content: string;
   createdAt: string;
+  /** Server refused this turn on safety grounds — rendered as a notice, not a reply. */
+  blocked?: boolean;
+  blockReason?: string;
 }
 
 export interface Session {

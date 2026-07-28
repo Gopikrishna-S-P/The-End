@@ -21,6 +21,18 @@ export const Pill = ({ status }: { status?: string }) => {
   return <span className={`ds-pill ${variant}`}>{status.replace(/_/g, ' ')}</span>;
 };
 
+export const ALL_DISPOSITIONS = ['PAID', 'RTP', 'NC_SKIP', 'PTP', 'FOLLOW_UP'] as const;
+export type Disposition = typeof ALL_DISPOSITIONS[number];
+
+export const bucketFor = (daysOverdue: number | null): { label: string; tone: Tone } | null => {
+  if (daysOverdue == null) return null;
+  if (daysOverdue <= 0)  return { label: 'Current', tone: 'success' };
+  if (daysOverdue <= 30) return { label: '1-30',     tone: 'neutral' };
+  if (daysOverdue <= 60) return { label: '31-60',    tone: 'warn' };
+  if (daysOverdue <= 90) return { label: '61-90',    tone: 'warn' };
+  return { label: '90+', tone: 'danger' };
+};
+
 export const isEmptyValue = (v: unknown): boolean => {
   if (v == null) return true;
   const EMPTY_VALUES = new Set(['', '-', 'n/a', 'na', 'null', 'undefined', 'none', '0', 'false']);
@@ -177,5 +189,5 @@ export const NEXT_ACTION_FOR: Record<AllocationStatus, NextAction | null> = {
   // Server-driven transition only (restructure workflow) — no direct manual next-action here.
   RESTRUCTURED: null,
 };
-export const ALL_STATUSES: AllocationStatus[] = ['UNASSIGNED', 'ASSIGNED', 'CLOSED'];
+export const ALL_STATUSES: AllocationStatus[] = ['UNASSIGNED', 'ASSIGNED', 'CLOSED', 'RESTRUCTURED'];
 export const STATUSES_REQUIRING_CONFIRM = new Set<AllocationStatus>(['CLOSED']);

@@ -11,7 +11,6 @@ import type { UserResponse, VisitLogResponse } from '../types';
 import { type AgentPerf, type CollectionReport, DispPill } from './AgentDetailHelpers';
 import { hashColor } from '../utils/navConfig';
 import '../styles/AppPage.css';
-import '../styles/AgentDetailPage.css';
 import './Dashboard.css';
 
 // ── Motion variants ────────────────────────────────────────────────────────────

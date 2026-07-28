@@ -34,6 +34,11 @@
   box-sizing: border-box;
 }
 
+.landing :focus-visible {
+  outline: 2px solid var(--focus-ring, #2563EB);
+  outline-offset: 2px;
+}
+
 /* ── Scroll progress ── */
 .landing-progress {
   position: fixed;

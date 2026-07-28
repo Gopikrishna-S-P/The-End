@@ -60,8 +60,8 @@ export function UploadDataTable({
                       </div>
                     ) : (
                       <button type="button" onClick={() => onSetConfirmDeleteCol(col)}
-                        className="db-error-retry"
-                        style={{ width: 20, height: 20, opacity: 0.6, background: 'transparent' }}
+                        className="db-error-retry ud-col-del"
+                        style={{ width: 20, height: 20, background: 'transparent' }}
                         title={`Remove column "${col}"`} aria-label={`Remove column ${col}`}>
                         <X size={11} />
                       </button>

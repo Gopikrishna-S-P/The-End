@@ -174,7 +174,7 @@
 /* Card surface — rounder, softer border to match the topbar customize/help dialog */
 .dd-page .ds-card {
   border-radius: 16px;
-  border-color: rgba(0, 0, 0, 0.08);
+  border-color: var(--border);
 }
 
 /* First card (Field Officers) — accent border, matches the dashboard's first/accent KPI card */

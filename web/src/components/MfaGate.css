@@ -5,7 +5,8 @@
   inset: 0;
   z-index: var(--z-modal, 500);
   background: var(--shadow-overlay-scrim);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,6 +139,24 @@
   transition: background 150ms var(--ease);
 }
 .mfag-btn-primary:hover { background: #088a42; }
+
+/* ── Dark mode ────────────────────────────────────────────────────────────── */
+.app-layout.dark .mfag-card {
+  background: rgba(21, 23, 28, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.app-layout.dark .mfag-title { color: #E8EAED; }
+.app-layout.dark .mfag-sub,
+.app-layout.dark .mfag-checks span { color: rgba(255, 255, 255, 0.6); }
+.app-layout.dark .mfag-btn-cancel {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #C4C9D2;
+}
+.app-layout.dark .mfag-btn-cancel:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); }
 
 /* ── Ripple ── */
 .mfag-ripple {

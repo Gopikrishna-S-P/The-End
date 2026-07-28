@@ -6,6 +6,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.request.AllocationFilterRequest;
 import com.recoverpro.server.dto.request.BulkAssignToFoRequest;
+import com.recoverpro.server.dto.request.UpdateAllocationDispositionRequest;
 import com.recoverpro.server.dto.request.UpdateAllocationStatusRequest;
 import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.enums.AllocationStatus;
@@ -120,6 +121,20 @@ public class AllocationController {
 
         AllocationResponse response = allocationService.updateAllocationStatus(id, request, principal.getId());
         return ResponseEntity.ok(ApiResponse.of("Allocation status updated successfully", response));
+    }
+
+    @PatchMapping("/{id}/disposition")
+    @PreAuthorize(LEADS)
+    public ResponseEntity<ApiResponse<AllocationResponse>> updateAllocationDisposition(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateAllocationDispositionRequest request) {
+
+        AllocationResponse current = allocationService.getAllocationById(id);
+        assertSameTenant(current.getOrganizationId(), principal);
+
+        AllocationResponse response = allocationService.updateAllocationDisposition(id, request, principal.getId());
+        return ResponseEntity.ok(ApiResponse.of("Disposition updated successfully", response));
     }
 
     @DeleteMapping("/{id}")

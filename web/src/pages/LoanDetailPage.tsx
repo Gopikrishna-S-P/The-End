@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import axiosInstance from '../api/axiosInstance';
 import { assignmentsApi } from '../api/assignmentsApi';
@@ -37,8 +37,6 @@ const fadeIn: Variants = {
 
 export default function LoanDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const onClose = useCallback(() => navigate('/app/allocations'), [navigate]);
 
   const { hasPermission } = usePermissions();
   const canChangeStatus = hasPermission('CASE_ASSIGN');
@@ -54,6 +52,7 @@ export default function LoanDetailPage() {
   const [lastKnownLocation, setLastKnownLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [reassignOpen,    setReassignOpen]      = useState(false);
   const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
+  const [dispositionUpdating, setDispositionUpdating] = useState(false);
 
   const triggerRef     = useRef<HTMLButtonElement>(null);
   const menuRef        = useRef<HTMLDivElement>(null);
@@ -110,6 +109,25 @@ export default function LoanDetailPage() {
     if (STATUSES_REQUIRING_CONFIRM.has(newStatus)) { setConfirming(newStatus); setDrop(false); return; }
     commitStatus(newStatus);
   }, [allocation, statusUpdating, commitStatus]);
+
+  const commitDisposition = useCallback(async (newDisposition: string) => {
+    if (!id || !allocation) return;
+    const prev = allocation.latestDisposition;
+    setAlloc(a => a ? { ...a, latestDisposition: newDisposition } : null);
+    setDispositionUpdating(true);
+    try {
+      await axiosInstance.patch(`/api/v1/allocations/${id}/disposition`, { disposition: newDisposition });
+    } catch (err: unknown) {
+      setAlloc(a => a ? { ...a, latestDisposition: prev } : null);
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e?.response?.data?.message ?? 'Disposition update failed.');
+    } finally { setDispositionUpdating(false); }
+  }, [id, allocation]);
+
+  const requestDisposition = useCallback((newDisposition: string) => {
+    if (!allocation || newDisposition === allocation.latestDisposition || dispositionUpdating) return;
+    commitDisposition(newDisposition);
+  }, [allocation, dispositionUpdating, commitDisposition]);
 
   useEffect(() => {
     if (!statusDropdown) return;
@@ -193,11 +211,11 @@ export default function LoanDetailPage() {
   );
 
   return (
-    <div className="db-root">
+    <div className="db-root alloc-detail-root">
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
           {error && (
-            <div className="db-error-banner" role="alert" style={{ marginBottom: 24 }}>
+            <div className="db-error-banner" role="alert" style={{ marginBottom: 24, flexShrink: 0 }}>
               <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
               <div className="db-error-body">
                 <span className="db-error-title">{error}</span>
@@ -208,7 +226,7 @@ export default function LoanDetailPage() {
             </div>
           )}
           {loading && !allocation ? <DetailSkeleton /> : allocation ? (
-            <motion.div variants={fadeUp}>
+            <motion.div variants={fadeUp} className="alloc-detail-split" style={{ display: 'flex', flexDirection: 'column' }}>
               <LoanDetailContent
                 allocation={allocation} agentName={agentName} lastKnownLocation={lastKnownLocation}
                 canChangeStatus={canChangeStatus} groups={groups}
@@ -218,7 +236,7 @@ export default function LoanDetailPage() {
                 triggerRef={triggerRef} menuRef={menuRef}
                 requestStatus={requestStatus} onMenuKeyDown={onMenuKeyDown}
                 onReassign={() => setReassignOpen(true)}
-                onClose={onClose}
+                dispositionUpdating={dispositionUpdating} requestDisposition={requestDisposition}
               />
             </motion.div>
           ) : null}
