@@ -66,7 +66,10 @@ export const lucienApi = {
    * server-side turn may still complete and be visible in session history.
    */
   sendMessage: async (data: ChatRequest, signal?: AbortSignal): Promise<ChatResponse> => {
-    const response = await axiosInstance.post<ApiResponse<ChatResponse>>('/api/v1/lucien/chat', data, { signal });
+    const response = await axiosInstance.post<ApiResponse<ChatResponse>>('/api/v1/lucien/chat', data, {
+      signal,
+      timeout: 300_000,
+    });
     return response.data.data;
   },
 

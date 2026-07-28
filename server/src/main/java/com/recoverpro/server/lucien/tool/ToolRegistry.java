@@ -32,8 +32,13 @@ public class ToolRegistry {
     public String buildSchemaBlock() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n=== AVAILABLE TOOLS ===\n");
+        sb.append("Most messages (greetings, general questions, advice) need NO tool at all — ")
+          .append("just answer directly in plain text with no <tool_call> block.\n");
+        sb.append("Only emit a tool call when you need information or an action this list actually provides.\n");
         sb.append("To call a tool respond with ONLY this format — no other text before or after:\n");
         sb.append("<tool_call>\n{\"name\": \"tool_name\", \"args\": {\"key\": \"value\"}}\n</tool_call>\n\n");
+        sb.append("Example — user says \"Hi\": respond in plain text, e.g. ")
+          .append("\"Hi! How can I help with your cases today?\" — do not call a tool.\n\n");
         sb.append("TOOLS:\n[\n");
         boolean first = true;
         for (LucienTool tool : tools.values()) {
