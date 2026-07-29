@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtHandshakeInterceptor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -14,7 +15,6 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -40,11 +40,14 @@ public class LiveTrackWebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate stringRedisTemplate;
+    private final String podInstanceId;
 
     public LiveTrackWebSocketHandler(ObjectMapper objectMapper,
-                                     StringRedisTemplate stringRedisTemplate) {
+                                     StringRedisTemplate stringRedisTemplate,
+                                     @Qualifier("podInstanceId") String podInstanceId) {
         this.objectMapper        = objectMapper;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.podInstanceId       = podInstanceId;
     }
 
     // Web supervisor sessions — keyed by orgId for tenant-scoped broadcast
@@ -131,13 +134,12 @@ public class LiveTrackWebSocketHandler extends TextWebSocketHandler {
             AgentSnapshot removed = lastPositions.remove(agentId);
             log.info("Live-track agent offline: agentId={}", agentId);
             if (removed != null) {
-                try {
-                    String offline = objectMapper.writeValueAsString(
-                            Map.of("type", "agent-offline", "agentId", agentId));
-                    broadcast(removed.orgId(), offline);
-                    stringRedisTemplate.convertAndSend(
-                            LiveTrackRedisSubscriber.CHANNEL_PREFIX + removed.orgId(), offline);
-                } catch (Exception ignored) {}
+                ObjectNode offline = objectMapper.createObjectNode();
+                offline.put("type", "agent-offline");
+                offline.put("agentId", agentId);
+                offline.put("origin", podInstanceId);
+                broadcast(removed.orgId(), offline);
+                redisPublish(removed.orgId(), offline);
             }
         }
     }
@@ -155,18 +157,29 @@ public class LiveTrackWebSocketHandler extends TextWebSocketHandler {
         redisPublish(orgId, relay);
     }
 
-    /** Called by SosAudioWebSocketHandler to fan location updates to live-track subscribers. */
-    public void relayAgentLocation(String agentId, UUID orgId, JsonNode locationNode) {
-        double  lat      = locationNode.path("lat").asDouble();
-        double  lng      = locationNode.path("lng").asDouble();
-        double  accuracy = locationNode.path("accuracy").asDouble(0);
-        Double  heading  = optionalDouble(locationNode, "heading");
-        Double  speed    = optionalDouble(locationNode, "speed");
-        String  name     = locationNode.path("agentName").asText(null);
-        lastPositions.put(agentId, new AgentSnapshot(orgId, lat, lng, accuracy, heading, speed, name, null, null, false));
-        ObjectNode relay = buildUpdateNode(agentId, lat, lng, accuracy, heading, speed, name, null, null, false);
-        broadcast(orgId, relay);
-        redisPublish(orgId, relay);
+    /**
+     * Called by LiveTrackRedisSubscriber when a live-track message published by a
+     * *different* pod (origin already checked by the caller) arrives via Redis.
+     * Updates this pod's own snapshot cache (so a supervisor who newly subscribes
+     * here still gets an accurate initial snapshot regardless of which pod last
+     * handled that agent's ping) and delivers to this pod's local subscribers only
+     * -- never republishes to Redis, which would echo the message back and forth
+     * between pods indefinitely.
+     */
+    public void deliverFromRedis(UUID orgId, JsonNode node, String rawJson) {
+        String type = node.path("type").asText();
+        if ("agent-update".equals(type)) {
+            String agentId = node.path("agentId").asText();
+            lastPositions.put(agentId, new AgentSnapshot(orgId,
+                    node.path("lat").asDouble(), node.path("lng").asDouble(), node.path("accuracy").asDouble(0),
+                    optionalDouble(node, "heading"), optionalDouble(node, "speed"),
+                    node.path("agentName").asText(null),
+                    node.path("visitSessionId").isMissingNode() ? null : node.path("visitSessionId").asText(null),
+                    optionalDouble(node, "batteryLevel"), node.path("mockDetected").asBoolean(false)));
+        } else if ("agent-offline".equals(type)) {
+            lastPositions.remove(node.path("agentId").asText());
+        }
+        broadcast(orgId, rawJson);
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
@@ -206,6 +219,7 @@ public class LiveTrackWebSocketHandler extends TextWebSocketHandler {
         if (batteryLevel   != null) n.put("batteryLevel",   batteryLevel);
         if (mockDetected)            n.put("mockDetected",   true);
         n.put("ts", System.currentTimeMillis());
+        n.put("origin", podInstanceId);
         return n;
     }
 

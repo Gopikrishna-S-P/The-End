@@ -11,6 +11,8 @@ import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -38,6 +40,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * AgentFieldServiceImpl.storeSosAudio), which now also calls relayAudioChunk() after each
  * successful store, so a supervisor watching an active incident hears each clip as it arrives
  * rather than only ever finding an empty audio history after the fact.
+ *
+ * Fan-out mirrors LiveTrackWebSocketHandler: in-process broadcast to local WS subscribers
+ * (single-node fast path) plus Redis PUBLISH sos-audio:incident:{incidentId} for cross-pod
+ * delivery via SosAudioRedisSubscriber -- a supervisor connected to a different pod than the
+ * one handling the REST audio upload still hears the stream.
  */
 @Slf4j
 @Component
@@ -53,6 +60,9 @@ public class SosAudioWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final IncidentReportRepository incidentRepository;
     private final PlatformAdminAccessGuard platformAdminAccessGuard;
+    private final StringRedisTemplate stringRedisTemplate;
+    @Qualifier("podInstanceId")
+    private final String podInstanceId;
 
     // incidentId -> subscribed supervisor sessions
     private final ConcurrentHashMap<UUID, CopyOnWriteArraySet<WebSocketSession>> subscribersByIncident =
@@ -123,7 +133,9 @@ public class SosAudioWebSocketHandler extends TextWebSocketHandler {
         ObjectNode n = objectMapper.createObjectNode();
         n.put("type", "chunk");
         n.put("chunk", Base64.getEncoder().encodeToString(audioBytes));
+        n.put("origin", podInstanceId);
         broadcast(incidentId, n);
+        redisPublish(incidentId, n);
     }
 
     /** Called by AgentFieldServiceImpl alongside audio, when a fresh location is available. */
@@ -134,29 +146,57 @@ public class SosAudioWebSocketHandler extends TextWebSocketHandler {
         n.put("lng", lng);
         if (accuracy != null) n.put("accuracy", accuracy);
         if (heading != null) n.put("heading", heading);
+        n.put("origin", podInstanceId);
         broadcast(incidentId, n);
+        redisPublish(incidentId, n);
     }
 
     /** Called when an incident is resolved/cancelled, so open monitors know the stream is over. */
     public void relayEnd(UUID incidentId) {
         ObjectNode n = objectMapper.createObjectNode();
         n.put("type", "end");
+        n.put("origin", podInstanceId);
         broadcast(incidentId, n);
+        redisPublish(incidentId, n);
         subscribersByIncident.remove(incidentId);
+    }
+
+    /**
+     * Called by SosAudioRedisSubscriber when a message published by a *different*
+     * pod (origin already checked by the caller) arrives via Redis -- delivers to
+     * this pod's local subscribers only, never republishes, so pods don't echo
+     * each other's messages back and forth indefinitely.
+     */
+    public void deliverFromRedis(UUID incidentId, JsonNode node, String rawJson) {
+        broadcast(incidentId, rawJson);
+        if ("end".equals(node.path("type").asText())) {
+            subscribersByIncident.remove(incidentId);
+        }
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────
 
-    private void broadcast(UUID incidentId, ObjectNode node) {
-        CopyOnWriteArraySet<WebSocketSession> subs = subscribersByIncident.get(incidentId);
-        if (subs == null || subs.isEmpty()) return;
-        String json;
+    private void redisPublish(UUID incidentId, ObjectNode node) {
         try {
-            json = objectMapper.writeValueAsString(node);
+            stringRedisTemplate.convertAndSend(
+                    SosAudioRedisSubscriber.CHANNEL_PREFIX + incidentId,
+                    objectMapper.writeValueAsString(node));
+        } catch (Exception e) {
+            log.warn("SOS audio Redis publish failed (non-fatal): {}", e.getMessage());
+        }
+    }
+
+    private void broadcast(UUID incidentId, ObjectNode node) {
+        try {
+            broadcast(incidentId, objectMapper.writeValueAsString(node));
         } catch (Exception e) {
             log.warn("SOS audio relay serialization failed: {}", e.getMessage());
-            return;
         }
+    }
+
+    private void broadcast(UUID incidentId, String json) {
+        CopyOnWriteArraySet<WebSocketSession> subs = subscribersByIncident.get(incidentId);
+        if (subs == null || subs.isEmpty()) return;
         TextMessage msg = new TextMessage(json);
         for (WebSocketSession sub : subs) {
             if (sub.isOpen()) {
