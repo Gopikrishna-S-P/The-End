@@ -11,18 +11,22 @@
 .app-page-hero .app-page-sub { font-size: 13px; }
 
 /* ── Card pattern ─────────────────────────────────────────────────────────
-   Flat bordered surface — no lift, no shadow. Border carries structure. */
+   Soft-shadow surface that lifts further on hover. */
 .app-page-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   padding: 24px;
+  transition: border-color 180ms var(--ease), box-shadow 180ms var(--ease), transform 180ms var(--ease);
 }
 .app-page-card:hover {
   border-color: var(--border-strong);
-  box-shadow: 0 2px 8px rgba(16,24,40,.04);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
-.app-page-card.is-flat { border: 1px solid var(--border); }
+.app-page-card.is-flat { border: 1px solid var(--border); box-shadow: none; }
+.app-page-card.is-flat:hover { box-shadow: none; transform: none; }
 
 .app-page-card-title {
   font-family: var(--sans);

@@ -27,7 +27,7 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 28px;
   box-shadow:
@@ -63,7 +63,7 @@
   font-family: var(--sans);
   font-size: 17px;
   font-weight: 600;
-  color: #111;
+  color: var(--text-primary);
   letter-spacing: -0.01em;
   margin: 0 0 6px;
 }
@@ -71,7 +71,7 @@
 .mfag-sub {
   font-size: 13px;
   line-height: 1.55;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   margin: 0 0 16px;
 }
 
@@ -88,7 +88,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12.5px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   font-family: var(--sans);
 }
 
@@ -103,9 +103,9 @@
 .mfag-btn-cancel {
   flex: 1;
   height: 40px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-hover);
   color: #333;
   font-size: 13px;
   font-weight: 500;

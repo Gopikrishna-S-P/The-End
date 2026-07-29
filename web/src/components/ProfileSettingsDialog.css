@@ -29,7 +29,7 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow:
     0 24px 48px rgba(0, 0, 0, 0.1),
@@ -83,8 +83,8 @@
 }
 
 .ps-dialog-close:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #111;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .ps-dialog {
@@ -122,12 +122,12 @@
 }
 
 .ps-sidebar-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-hover);
   color: var(--ink-primary);
 }
 
 .ps-sidebar-item.is-active {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-hover);
   color: var(--ink-primary);
 }
 
@@ -172,7 +172,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-hover);
   color: var(--ink-solid);
 }
 

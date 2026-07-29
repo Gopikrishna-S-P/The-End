@@ -28,7 +28,8 @@
   transition: width var(--dur-slow) var(--ease-out);
   z-index: var(--z-sidebar, 90);
   contain: paint;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 1px solid var(--border);
+  box-shadow: 1px 0 0 rgba(16,24,40,0.02), var(--shadow-xs);
 }
 
 .asb-root * {
@@ -219,7 +220,7 @@
   font-family: var(--sans);
   font-size: 14px;
   font-weight: 600;
-  color: #111;
+  color: var(--text-primary);
 
   transition:
     background-color .18s ease,
@@ -231,8 +232,8 @@
 }
 
 .asb-root .asb-nav-item:hover {
-  background: rgba(0, 0, 0, 0.03);
-  color: #111;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .asb-root.is-collapsed .asb-nav-item {
@@ -240,11 +241,11 @@
   padding: 0;
 }
 
-/* Active — brand-subtle fill + brand left bar */
+/* Active — brand-subtle green fill, the one deliberate use of the accent */
 .asb-root .asb-nav-item.is-active,
 .asb-root .asb-nav-item.is-active:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: #111;
+  background: var(--brand-subtle);
+  color: var(--ink-solid-hover, var(--brand));
   font-weight: 600;
   box-shadow: none;
 }
@@ -263,18 +264,23 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: rgba(0,0,0,0.04);
-  color: rgba(0,0,0,0.6);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
   flex-shrink: 0;
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.asb-root .asb-nav-item:hover .asb-nav-icon,
+.asb-root .asb-nav-item:hover .asb-nav-icon {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
 .asb-root .asb-nav-item.is-active .asb-nav-icon {
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  color: #111;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--brand);
 }
 
 /* The active row used to end in a chevron, which cost the label 38px (24px box
@@ -363,7 +369,7 @@
 }
 
 .asb-org-anchor:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-hover);
   transform: translateX(2px);
 }
 
@@ -431,9 +437,14 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: transparent;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--dur-fast) var(--ease-standard);
+}
+.asb-root .asb-footer-pill:hover {
+  box-shadow: var(--shadow-sm);
 }
 
 /* Collapsed rail — static avatar, no click target */
@@ -457,7 +468,7 @@
 .asb-root .asb-footer-name {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
   font-family: var(--font-sans);
   white-space: nowrap;
   overflow: hidden;
@@ -636,7 +647,7 @@
 
 .asb-signout-close:hover {
   background: var(--bg-subtle);
-  color: #111827;
+  color: var(--text-primary);
   transform: translateX(2px);
 }
 
@@ -647,7 +658,7 @@
 .asb-signout-msg {
   font-size: 13.5px;
   font-weight: 500;
-  color: #111827;
+  color: var(--text-primary);
   font-family: var(--font-sans);
   margin: 0 0 18px;
   line-height: 1.5;
@@ -675,7 +686,7 @@
 
 .asb-signout-cancel:hover {
   background: var(--bg-subtle);
-  color: #111827;
+  color: var(--text-primary);
   border-color: var(--border-strong);
   transform: translateX(2px);
 }

@@ -20,9 +20,8 @@
   position: relative;
 }
 
-/* Depth cue once content scrolls — strengthen the border, no shadow (border already carries it). */
+/* Depth cue once content scrolls — the bar lifts further off the canvas. */
 .app-topbar.is-elevated {
-  box-shadow: 0 1px 3px rgba(16,24,40,.05);
 }
 
 /* ── Topbar three-zone layout ──────────────────────────────────────────────
@@ -47,7 +46,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   
-  color: #111;
+  color: var(--text-primary);
   background: linear-gradient(135deg, #111, #444);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -78,8 +77,8 @@
   flex-shrink: 0;
   gap: 2px;
 }
-.app-history-nav .app-history-btn + .app-history-btn { border-radius: 8px; }
-.app-history-nav .app-history-btn:first-child { border-radius: 8px; }
+.app-history-nav .app-history-btn + .app-history-btn { border-radius: var(--radius-sm); }
+.app-history-nav .app-history-btn:first-child { border-radius: var(--radius-sm); }
 
 .app-history-btn {
   width: 28px;
@@ -88,20 +87,20 @@
   min-height: 28px;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   transition:
     background-color .18s ease,
     color .18s ease,
     border-color .18s ease;
 }
 .app-history-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.07);
-  color: #111;
+  background: var(--bg-subtle);
+  color: var(--text-primary);
 }
 .app-history-btn:disabled {
   opacity: .4;
@@ -142,7 +141,7 @@
   letter-spacing: 0;
   min-width: 0;
   
-  color: #111;
+  color: var(--text-primary);
   background: linear-gradient(135deg, #111, #444);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -280,8 +279,8 @@
   height: 28px;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
   margin-left: 4px;
   transition:
@@ -291,8 +290,8 @@
   flex-shrink: 0;
 }
 .app-pagehelp-trigger:hover {
-  background: rgba(0, 0, 0, 0.07);
-  color: #111;
+  background: var(--bg-subtle);
+  color: var(--text-primary);
   transform: scale(1.08);
 }
 

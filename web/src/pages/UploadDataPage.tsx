@@ -5,12 +5,13 @@ import { uploadDataApi, type UploadDataResponse, type UploadRowResponse } from '
 import { usePermissions } from '../hooks/usePermissions';
 import {
   ArrowLeft, Plus, AlertCircle, RefreshCw,
-  Columns3, FileText, ChevronLeft, ChevronRight,
+  Columns3, FileText,
   Database, TableProperties, Download, Check
 } from 'lucide-react';
 import { UploadAddColumnModal } from './UploadAddColumnModal';
 import { UploadDataTable } from './UploadDataTable';
 import type { EditingCell } from './UploadCell';
+import { Pagination } from '../components/Pagination';
 import '../styles/UploadDataPage.css';
 const PAGE_SIZE = 50;
 
@@ -309,24 +310,13 @@ export default function UploadDataPage() {
             </div>
             
             {(response?.totalPages ?? 0) > 1 && (
-              <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{response?.totalPages}</strong>
-                  {' · '}<strong>{response?.totalElements?.toLocaleString('en-IN') ?? 0}</strong> rows
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="up-page-btn"
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={page === 0}>
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="up-page-btn"
-                    onClick={() => setPage(p => Math.min((response?.totalPages ?? 1) - 1, p + 1))}
-                    disabled={page === (response?.totalPages ?? 1) - 1}>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </footer>
+              <Pagination
+                currentPage={page}
+                totalPages={response?.totalPages ?? 1}
+                onPageChange={setPage}
+                totalElements={response?.totalElements ?? 0}
+                itemLabel="rows"
+              />
             )}
               </motion.section>
             </div>

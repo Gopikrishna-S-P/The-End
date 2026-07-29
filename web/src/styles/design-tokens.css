@@ -41,22 +41,22 @@
   --rp-s5: 24px;
   --rp-s6: 32px;
 
-  /* ── Radius ──────────────────────────────────────────────────────────────── */
-  --rp-r-sm: 4px;
-  --rp-r-md: 8px;
-  --rp-r-lg: 12px;
-  --rp-r-xl: 16px;
+  /* ── Radius — Modern SaaS: bigger, softer corners ───────────────────────── */
+  --rp-r-sm: 6px;
+  --rp-r-md: 12px;
+  --rp-r-lg: 18px;
+  --rp-r-xl: 24px;
 
   /* ── Motion ──────────────────────────────────────────────────────────────── */
   --rp-ease: cubic-bezier(0.16,1,0.3,1);
   --rp-t:    150ms var(--rp-ease);
   --rp-t-lg: 300ms var(--rp-ease);
 
-  /* ── Elevation ───────────────────────────────────────────────────────────── */
-  --rp-e1: 0 1px  3px rgba(0,0,0,.06), 0 1px  2px rgba(0,0,0,.04);
-  --rp-e2: 0 4px  8px rgba(0,0,0,.08), 0 2px  4px rgba(0,0,0,.04);
-  --rp-e3: 0 8px 16px rgba(0,0,0,.10), 0 4px  8px rgba(0,0,0,.06);
-  --rp-e4: 0 16px 32px rgba(0,0,0,.14), 0 8px 16px rgba(0,0,0,.08);
+  /* ── Elevation — soft layered shadows, everything floats a little ──────── */
+  --rp-e1: 0 1px  2px rgba(16,24,40,.04), 0 1px  1px rgba(16,24,40,.03);
+  --rp-e2: 0 4px  10px -2px rgba(16,24,40,.08), 0 2px  4px rgba(16,24,40,.05);
+  --rp-e3: 0 10px 24px -4px rgba(16,24,40,.12), 0 4px  8px -2px rgba(16,24,40,.06);
+  --rp-e4: 0 22px 44px -10px rgba(16,24,40,.18), 0 8px 16px -4px rgba(16,24,40,.08);
 
   /* ── Layout dimensions ───────────────────────────────────────────────────────
      --rp-tb-h is density-overridden in AppLayout.css; --rp-lucien-w is
@@ -161,10 +161,10 @@ html.dark {
   --rp-ink-2:      #9BA1AC;
   --rp-ink-3:      #6B7280;
   --rp-accent: var(--brand);
-  --rp-e1: 0 1px  3px rgba(0,0,0,.30);
-  --rp-e2: 0 4px  8px rgba(0,0,0,.40);
-  --rp-e3: 0 8px 16px rgba(0,0,0,.50);
-  --rp-e4: 0 16px 32px rgba(0,0,0,.60);
+  --rp-e1: 0 1px  2px rgba(0,0,0,.30);
+  --rp-e2: 0 4px  10px -2px rgba(0,0,0,.40), 0 1px 3px rgba(0,0,0,.30);
+  --rp-e3: 0 10px 24px -4px rgba(0,0,0,.50), 0 4px 8px -2px rgba(0,0,0,.35);
+  --rp-e4: 0 22px 44px -10px rgba(0,0,0,.65), 0 8px 16px -4px rgba(0,0,0,.45);
   --rp-success:        #22C55E;
   --rp-success-subtle: rgba(34,197,94,.10);
   --rp-error:          #EF4444;

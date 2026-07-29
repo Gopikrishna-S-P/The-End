@@ -119,10 +119,10 @@
 
 /* ── Selectable row state ────────────────────────────── */
 .app-page-table tbody tr.is-selected {
-  background: rgba(12,10,9,.04);
+  background: var(--bg-active);
 }
 .app-page-table tbody tr.is-selected:hover {
-  background: rgba(12,10,9,.06);
+  background: var(--bg-active);
 }
 .app-page-table tbody tr.is-clickable { cursor: pointer; }
 .app-page-table tbody tr:focus-visible {

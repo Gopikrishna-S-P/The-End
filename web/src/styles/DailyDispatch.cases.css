@@ -267,7 +267,7 @@
 
 .dd-case-row:last-child { border-bottom: none; }
 
-.dd-case-row:not(.is-done):hover { background: rgba(0, 0, 0, 0.03); }
+.dd-case-row:not(.is-done):hover { background: var(--bg-hover); }
 
 /* Selected row — active tint + left rail */
 .dd-case-row.is-picked {
@@ -421,8 +421,8 @@
   height: 30px;
   border: none;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.6);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background 120ms, color 120ms;
 }

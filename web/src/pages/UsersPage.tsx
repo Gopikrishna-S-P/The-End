@@ -154,33 +154,33 @@ export default function UsersPage() {
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             type="button" onClick={() => navigate('/app/settings/roles')}
-            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+            className="ds-btn is-ghost"
           >
-            <ShieldCheck size={14} style={{ marginRight: 6 }} /> Manage roles
+            <ShieldCheck size={14} /> Manage roles
           </button>
           <button
             type="button" onClick={() => navigate('/app/settings/organization')}
-            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+            className="ds-btn is-ghost"
           >
-            <Building2 size={14} style={{ marginRight: 6 }} /> Organization
+            <Building2 size={14} /> Organization
           </button>
           <button
             type="button" onClick={() => navigate('/app/audit')}
-            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+            className="ds-btn is-ghost"
           >
-            <FileClock size={14} style={{ marginRight: 6 }} /> Audit logs
+            <FileClock size={14} /> Audit logs
           </button>
           <button
             type="button" onClick={() => navigate('/app/settings/message-templates')}
-            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+            className="ds-btn is-ghost"
           >
-            <MessageSquareText size={14} style={{ marginRight: 6 }} /> Message templates
+            <MessageSquareText size={14} /> Message templates
           </button>
           <button
             type="button" onClick={() => navigate('/app/users/requests')}
-            className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}
+            className="ds-btn is-ghost"
           >
-            <UserPlus size={14} style={{ marginRight: 6 }} /> Pending requests
+            <UserPlus size={14} /> Pending requests
           </button>
           <button
             type="button" onClick={load} disabled={loading}

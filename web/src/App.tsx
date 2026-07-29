@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { FeatureGate } from './components/FeatureGate';
 import { lazy, Suspense, Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
+import * as Sentry from '@sentry/react';
 import { AuthProvider } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from './AppLayout';
@@ -90,7 +91,9 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
   static getDerivedStateFromError(err: Error): ErrorBoundaryState {
     return { hasError: true, message: err.message };
   }
-  componentDidCatch(_err: Error, _info: ErrorInfo) {}
+  componentDidCatch(err: Error, info: ErrorInfo) {
+    Sentry.captureException(err, { extra: { componentStack: info.componentStack } });
+  }
   render() {
     if (this.state.hasError) {
       return (

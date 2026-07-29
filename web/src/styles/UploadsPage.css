@@ -40,52 +40,8 @@
   color: var(--text-tertiary);
 }
 
-/* ── Pagination (in card head) ── */
-.up-pagination {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.up-page-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
-}
-
-.up-page-btn:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-}
-
-.up-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-.up-page-btn.is-active {
-  background: var(--ink-solid);
-  border-color: var(--ink-solid);
-  color: var(--text-on-solid);
-}
-.up-page-btn.is-active:hover:not(:disabled) {
-  background: var(--ink-solid-hover);
-  border-color: var(--ink-solid-hover);
-  color: var(--text-on-solid);
-}
-
-.up-page-meta {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  font-weight: 450;
-  color: var(--text-tertiary);
-  padding: 0 6px;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
+/* ── Pagination — moved to src/styles/index.css (global) ──────────────────
+   .up-pagination/.up-page-btn/.up-page-meta are used by every list page in
+   the app, most of which never import this file. Keeping the rules here
+   made them work only by accident, when some other page's chunk happened
+   to already be loaded in the same session. See index.css. ── */

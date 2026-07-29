@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
-  X, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
+  X, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
   SlidersHorizontal, ChevronDown, ShieldAlert, TrendingDown, Users,
   UserCheck, MapPin, Handshake, Receipt,
 } from 'lucide-react';
@@ -10,6 +10,7 @@ import { allocationsApi } from '../api/allocationsApi';
 import { usersApi } from '../api/usersApi';
 import type { AllocationResponse, UserResponse } from '../types';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
+import { Pagination } from '../components/Pagination';
 import { useAuth } from '../AuthContext';
 
 import '../styles/AppPage.css';
@@ -236,31 +237,27 @@ export default function LoansPage() {
               </button>
             )}
             <button type="button" onClick={() => navigate('/app/assignments')}
-              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
-              <UserCheck size={14} style={{ marginRight: 6 }} /> Assignments
+              className="ds-btn is-ghost">
+              <UserCheck size={14} /> Assignments
             </button>
             <button type="button" onClick={() => navigate('/app/visits')}
-              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
-              <MapPin size={14} style={{ marginRight: 6 }} /> Visit logs
+              className="ds-btn is-ghost">
+              <MapPin size={14} /> Visit logs
             </button>
             <button type="button" onClick={() => navigate('/app/ptps')}
-              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
-              <Handshake size={14} style={{ marginRight: 6 }} /> PTPs
+              className="ds-btn is-ghost">
+              <Handshake size={14} /> PTPs
             </button>
             <button type="button" onClick={() => navigate('/app/collections')}
-              className="db-customize-btn" style={{ height: 36, padding: '0 12px', display: 'flex', alignItems: 'center' }}>
-              <Receipt size={14} style={{ marginRight: 6 }} /> Collections
+              className="ds-btn is-ghost">
+              <Receipt size={14} /> Collections
             </button>
             <button
               type="button"
               onClick={openFilterDialog}
-              className="ds-btn is-secondary"
-              style={{
-                background: filterOpen || hasFilters ? 'var(--ink-solid)' : undefined,
-                color: filterOpen || hasFilters ? 'var(--bg-surface)' : undefined,
-              }}
+              className={`ds-btn ${filterOpen || hasFilters ? 'is-primary' : 'is-secondary'}`}
             >
-              <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+              <SlidersHorizontal size={14} />
               Filter
             </button>
           </div>
@@ -383,54 +380,13 @@ export default function LoansPage() {
 
             {/* ── Pagination ── */}
             {totalPages > 1 && !loading && (
-              <footer className="up-pagination" style={{ padding: '8px 20px', borderTop: '1px solid var(--border-subtle)', background: 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <button
-                  type="button"
-                  className="up-page-btn minimal-split-btn"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--ink-secondary)', fontWeight: 500, padding: '4px 10px', fontSize: 12.5, opacity: page === 0 ? 0.4 : 1 }}
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 0}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={14} /> Previous
-                </button>
-
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {(() => {
-                    const WINDOW = 5;
-                    const start = Math.max(0, page - Math.floor(WINDOW / 2));
-                    const adjustedStart = Math.min(start, Math.max(0, totalPages - WINDOW));
-                    const count = Math.min(WINDOW, totalPages - adjustedStart);
-                    return Array.from({ length: count }, (_, i) => adjustedStart + i).map(p => (
-                      <button
-                        key={p}
-                        type="button"
-                        className={`up-page-btn${p === page ? ' is-active' : ''}`}
-                        style={p === page ? { width: 24, height: 24, fontSize: 12.5, background: 'var(--bg-subtle)', color: 'var(--ink-primary)', fontWeight: 600, border: 'none' } : { width: 24, height: 24, fontSize: 12.5, background: 'transparent', color: 'var(--ink-secondary)', border: 'none' }}
-                        onClick={() => setPage(p)}
-                        aria-label={`Page ${p + 1}`}
-                        aria-current={p === page ? 'page' : undefined}
-                      >
-                        {p + 1}
-                      </button>
-                    ));
-                  })()}
-                  <span style={{ color: 'var(--ink-tertiary)', fontSize: 12, marginLeft: 6 }}>
-                    of {totalPages}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  className="up-page-btn minimal-split-btn"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: 'var(--ink-secondary)', fontWeight: 500, padding: '4px 10px', fontSize: 12.5, opacity: page >= totalPages - 1 ? 0.4 : 1 }}
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= totalPages - 1}
-                  aria-label="Next page"
-                >
-                  Next <ChevronRight size={14} />
-                </button>
-              </footer>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalElements={totalElements}
+                itemLabel="loans"
+              />
             )}
 
           </div>

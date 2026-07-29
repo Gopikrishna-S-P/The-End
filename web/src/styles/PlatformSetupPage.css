@@ -141,7 +141,7 @@
   transition: background 120ms var(--ease), color 120ms var(--ease);
 }
 .ps-row-action:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-hover);
   color: var(--ink-solid);
 }
 .ps-row-action:disabled {
@@ -155,8 +155,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.6);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -213,7 +213,7 @@
 /* ── Table row hover — matches the topbar customize/help dialog's row hover ── */
 
 .db-root .ds-table tbody tr:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-hover);
 }
 
 /* ── Modals — same glass/blur recipe as the topbar customize/help dialog.
@@ -231,7 +231,7 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow:
     0 24px 48px rgba(0, 0, 0, 0.1),
@@ -253,7 +253,7 @@
 .ps-modal .ds-modal-title {
   font-size: 16px;
   font-weight: 700;
-  color: #111;
+  color: var(--text-primary);
   background: linear-gradient(135deg, #111, #444);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -262,7 +262,7 @@
 .ps-modal .ds-modal-sub {
   font-family: var(--sans);
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   line-height: 1.5;
   margin-top: 4px;
 }
@@ -274,8 +274,8 @@
   color: var(--ink-tertiary);
 }
 .ps-modal .ds-modal-close:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #111;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .ps-modal .ds-modal-body {
@@ -303,7 +303,7 @@
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  color: #111;
+  color: var(--text-primary);
 }
 
 .ps-modal .ds-input,

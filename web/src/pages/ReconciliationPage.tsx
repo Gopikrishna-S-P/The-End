@@ -3,10 +3,11 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { reconciliationApi } from '../api/reconciliationApi';
 import { useAuth } from '../AuthContext';
 import type { ReconciliationRunResponse } from '../types';
-import { Landmark, RefreshCw, ChevronLeft, ChevronRight, UploadCloud } from 'lucide-react';
+import { Landmark, RefreshCw, UploadCloud, ChevronRight } from 'lucide-react';
 import ReconciliationRunDetailDrawer from './ReconciliationRunDetailDrawer';
 import { ReconciliationIngestModal } from './ReconciliationIngestModal';
 import { fmtDate, fmtDT } from './LoanDetailHelpers';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
@@ -57,18 +58,21 @@ export default function ReconciliationPage() {
   return (
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <div className="db-page-header">
+          <div className="db-page-header-left">
+            <div className="db-page-titles">
+              <h1 className="db-page-title">Reconciliation</h1>
+              {!loading && totalElements > 0 && (
+                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} runs</span>
+              )}
+            </div>
+          </div>
+        </div>
+
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(runs.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 className="db-card-title">Reconciliation</h2>
-                {!loading && totalElements > 0 && (
-                  <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>
-                    / {totalElements.toLocaleString('en-IN')} runs
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                 <button type="button" onClick={() => setShowIngestModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
                   <UploadCloud size={14} /> Ingest statement
                 </button>
@@ -78,95 +82,90 @@ export default function ReconciliationPage() {
               </div>
             </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
-              <table className="ds-table">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Source</th>
-                    <th style={{ padding: '12px 16px' }}>As of</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Rows</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Matched</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Exceptions</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Match rate</th>
-                    <th style={{ padding: '12px 16px' }}>Ingested</th>
-                    <th className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>View</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadError ? (
-                    <tr><td colSpan={8}>
-                      <div className="ds-empty" style={{ padding: '60px 0' }}>
-                        <span className="ds-empty-title">Reconciliation runs could not be loaded.</span>
-                        <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                          <button type="button" onClick={fetchRuns} className="ds-btn is-secondary">Retry</button>
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+              {loadError ? (
+                <div className="ds-empty" style={{ padding: '60px 0' }}>
+                  <span className="ds-empty-title">Reconciliation runs could not be loaded.</span>
+                  <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                    <button type="button" onClick={fetchRuns} className="ds-btn is-secondary">Retry</button>
+                  </div>
+                </div>
+              ) : loading ? (
+                <div style={{ padding: '8px' }}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
+                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
+                      </div>
+                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
+                    </div>
+                  ))}
+                </div>
+              ) : runs.length === 0 ? (
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                  <Landmark size={32} className="ds-empty-icon" />
+                  <span className="ds-empty-title">No reconciliation runs yet</span>
+                  <span className="ds-empty-sub">Ingest a bank statement to match it against recorded payment transactions.</span>
+                  <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                    <button type="button" onClick={() => setShowIngestModal(true)} className="ds-btn is-primary">Ingest statement</button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div>
+                  {runs.map((r, idx) => (
+                    <motion.button
+                      key={r.id}
+                      variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
+                      initial="hidden" animate="show"
+                      className="db-att-row"
+                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: selected?.id === r.id ? 'var(--bg-active)' : 'transparent' }}
+                      onClick={() => setSelected(r)}
+                      whileHover={{ background: 'var(--bg-subtle)' }}
+                    >
+                      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
+                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Landmark size={13} style={{ color: 'var(--ink-tertiary)' }} />
+                          {r.source}
+                        </span>
+                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
+                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                            As of {fmtDate(r.asOfDate)}
+                          </span>
+                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                            / {r.rowsIngested.toLocaleString('en-IN')} rows
+                          </span>
+                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                            / {r.matched.toLocaleString('en-IN')} matched
+                          </span>
+                          {r.exceptions > 0 && (
+                            <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--danger)' }}>
+                              / {r.exceptions.toLocaleString('en-IN')} exceptions
+                            </span>
+                          )}
+                          <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
+                            / Ingested {fmtDT(r.createdAt)}
+                          </span>
                         </div>
                       </div>
-                    </td></tr>
-                  ) : loading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <tr key={i} style={{ opacity: 1 - i * 0.1, borderBottom: '1px solid var(--border-subtle)' }}>
-                        <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: 130, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 40, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 40, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 40, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 40, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 100, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 22, width: 28, borderRadius: 6, marginLeft: 'auto', display: 'block' }} /></td>
-                      </tr>
-                    ))
-                  ) : runs.length === 0 ? (
-                    <tr><td colSpan={8}>
-                      <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
-                        <Landmark size={32} className="ds-empty-icon" />
-                        <span className="ds-empty-title">No reconciliation runs yet</span>
-                        <span className="ds-empty-sub">Ingest a bank statement to match it against recorded payment transactions.</span>
-                        <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                          <button type="button" onClick={() => setShowIngestModal(true)} className="ds-btn is-primary">Ingest statement</button>
+
+                      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                            {matchRate(r)}
+                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>match rate</span>
                         </div>
-                      </motion.div>
-                    </td></tr>
-                  ) : (
-                    runs.map((r, idx) => (
-                      <motion.tr
-                        key={r.id}
-                        variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
-                        initial="hidden" animate="show"
-                        className={selected?.id === r.id ? 'is-selected' : ''}
-                        onClick={() => setSelected(r)}
-                        style={{ cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)' }}
-                      >
-                        <td style={{ padding: '12px 16px', paddingLeft: 24, fontWeight: 600 }}>{r.source}</td>
-                        <td style={{ padding: '12px 16px' }}>{fmtDate(r.asOfDate)}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{r.rowsIngested.toLocaleString('en-IN')}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{r.matched.toLocaleString('en-IN')}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: r.exceptions > 0 ? 'var(--danger)' : undefined }}>{r.exceptions.toLocaleString('en-IN')}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{matchRate(r)}</td>
-                        <td style={{ padding: '12px 16px' }}>{fmtDT(r.createdAt)}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>
-                          <button type="button" className="ds-btn is-secondary is-sm" onClick={(e) => { e.stopPropagation(); setSelected(r); }}>Open</button>
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
+                      </div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
             </div>
 
             {totalPages > 1 && !loading && (
-              <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalElements.toLocaleString('en-IN')}</strong> runs
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} aria-label="Previous page">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} aria-label="Next page">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="runs" />
             )}
           </motion.section>
         </motion.div>

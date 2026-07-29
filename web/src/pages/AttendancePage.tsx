@@ -3,6 +3,7 @@ import { attendanceApi } from '../api/attendanceApi';
 import type { AttendanceRecord } from '../types';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Download, ChevronLeft, ChevronRight, CalendarDays, MapPin, RefreshCw, Activity } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../styles/ds/ds.empty.css';
@@ -208,23 +209,13 @@ export default function AttendancePage() {
             </div>
 
             {!loading && total > 0 && (
-              <div className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
-                  Page <strong style={{ color: 'var(--text-primary)' }}>{page + 1}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{Math.max(1, totalPages)}</strong>
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="ds-btn is-secondary is-sm"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page <= 0}>
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="ds-btn is-secondary is-sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page + 1 >= Math.max(1, totalPages)}>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                currentPage={page}
+                totalPages={Math.max(1, totalPages)}
+                onPageChange={setPage}
+                totalElements={total}
+                itemLabel="records"
+              />
             )}
           </motion.section>
         </div>

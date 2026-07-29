@@ -89,3 +89,84 @@ samp,
 var {
   font-family: var(--mono);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Shared list-page pagination — used by every paginated list page in the app
+   (Loans, Visits, Ptps, Collections, Uploads, etc.) via the shared
+   <Pagination> component (src/components/Pagination.tsx). Lives here, not in
+   any single page's stylesheet, precisely because it's used everywhere:
+   most list pages don't import each other's page-specific CSS, so a
+   page-scoped definition only worked by accident when some other page's
+   chunk happened to already be loaded in the same session.
+   ───────────────────────────────────────────────────────────────────────── */
+.up-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border, #EBEDF1);
+  background: var(--bg-surface, #fff);
+  flex-shrink: 0;
+}
+
+.up-pagination.is-embedded {
+  padding: 0;
+  border-top: none;
+  background: transparent;
+}
+
+.up-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border, #EBEDF1);
+  border-radius: var(--radius-sm, 9px);
+  background: transparent;
+  color: var(--text-secondary, #475467);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background var(--dur-fast, 140ms), border-color var(--dur-fast, 140ms), color var(--dur-fast, 140ms);
+}
+
+.up-page-btn:hover:not(:disabled) {
+  background: var(--bg-hover, #E8EBF0);
+  border-color: var(--border-strong, #D6DAE1);
+  color: var(--text-primary, #101828);
+}
+
+.up-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.up-page-btn.is-active {
+  background: var(--ink-solid, #0AA550);
+  border-color: var(--ink-solid, #0AA550);
+  color: var(--text-on-solid, #fff);
+}
+.up-page-btn.is-active:hover:not(:disabled) {
+  background: var(--ink-solid-hover, #088A42);
+  border-color: var(--ink-solid-hover, #088A42);
+  color: var(--text-on-solid, #fff);
+}
+
+.up-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.up-page-meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 450;
+  color: var(--text-tertiary, #667085);
+  padding: 0 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.up-page-meta strong { color: var(--text-primary, #101828); font-weight: 600; }

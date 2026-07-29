@@ -1,8 +1,9 @@
 /* ── Card (wraps tables, forms, etc.) ───────────────── */
 .app-page-card {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -59,7 +60,7 @@
   transition: background var(--dur-instant) var(--ease-standard);
 }
 .app-page-table tbody tr:last-child { border-bottom: none; }
-.app-page-table tbody tr:hover { background: #FAFBFC; }
+.app-page-table tbody tr:hover { background: var(--bg-hover); }
 .app-page-table tbody tr:hover td { border-top-color: var(--border-strong); border-bottom-color: var(--border-strong); }
 .app-page-table tbody tr.is-clickable { cursor: pointer; }
 .app-page-table td {

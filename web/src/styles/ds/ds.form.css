@@ -62,7 +62,7 @@
 
 .ds-input:hover,
 .ds-select:hover,
-.ds-textarea:hover { border-color: var(--border-strong); }
+.ds-textarea:hover { border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
 
 .ds-input:focus-visible,
 .ds-select:focus-visible,

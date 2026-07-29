@@ -7,12 +7,13 @@ import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import type { PtpResponse, PtpStatus, PagedResponse } from '../types';
 import {
-  Phone, RefreshCw, ChevronLeft, ChevronRight, Search, X, Download, SlidersHorizontal, Plus,
+  Phone, RefreshCw, Search, X, Download, SlidersHorizontal, Plus,
   Clock, CheckCircle2, AlertTriangle, Activity
 } from 'lucide-react';
 import PtpDetailDrawer from './PtpDetailDrawer';
 import { PtpCreateModal } from './PtpCreateModal';
 import { STATUS_ICON, PtpRow } from './PtpsHelpers';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../styles/PtpsPage.css';
@@ -253,6 +254,17 @@ export default function PtpsPage() {
   return (
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <div className="db-page-header">
+          <div className="db-page-header-left">
+            <div className="db-page-titles">
+              <h1 className="db-page-title">Promise-to-Pay</h1>
+              {!loading && totalElements > 0 && (
+                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} commitments</span>
+              )}
+            </div>
+          </div>
+        </div>
+
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {(!loading && ptps.length > 0) && (
             <div className="db-kpi-band">
@@ -288,15 +300,7 @@ export default function PtpsPage() {
 
           <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visiblePtps.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
             <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 className="db-card-title">Promise-to-Pay</h2>
-                {!loading && totalElements > 0 && (
-                  <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>
-                    / {totalElements.toLocaleString('en-IN')} commitments
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
                   <input
@@ -322,7 +326,7 @@ export default function PtpsPage() {
                   </AnimatePresence>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                   {canUpdate && !isBankView && (
                     <button
                       type="button"
@@ -387,85 +391,60 @@ export default function PtpsPage() {
               </div>
             </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
-              <table className="ds-table">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Loan #</th>
-                    <th style={{ padding: '12px 16px' }}>Borrower</th>
-                    <th style={{ padding: '12px 16px' }}>Agent</th>
-                    <th style={{ padding: '12px 16px' }}>Promised date</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Amount</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Collected</th>
-                    <th style={{ padding: '12px 16px' }}>Status</th>
-                    <th className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>View</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    Array.from({ length: 8 }).map((_, i) => (
-                      <tr key={i} style={{ opacity: 1 - i * 0.1, borderBottom: '1px solid var(--border-subtle)' }}>
-                        <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 110, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 88, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 64, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 64, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 80, borderRadius: 999, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 22, width: 28, borderRadius: 6, marginLeft: 'auto', display: 'block' }} /></td>
-                      </tr>
-                    ))
-                  ) : visiblePtps.length === 0 ? (
-                    <tr>
-                      <td colSpan={8}>
-                        <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
-                          <Phone size={32} className="ds-empty-icon" />
-                          <span className="ds-empty-title">No PTP records found</span>
-                          <span className="ds-empty-sub">
-                            {searchInput
-                              ? 'Nothing on the current page matches your search. Clear the search, or change page / status filters.'
-                              : hasFilters
-                                ? 'No matches for the current filters. Try clearing them.'
-                                : 'PTPs will appear here once field officers record promise-to-pay commitments from borrowers.'}
-                          </span>
-                          {hasFilters && (
-                            <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                              <button type="button" onClick={clearFilters} className="ds-btn is-secondary">Clear filters</button>
-                            </div>
-                          )}
-                        </motion.div>
-                      </td>
-                    </tr>
-                  ) : (
-                    visiblePtps.map((ptp, idx) => (
-                      <PtpRow
-                        key={ptp.id}
-                        ptp={ptp}
-                        isSelected={selectedPtp?.id === ptp.id}
-                        onSelect={setSelectedPtp}
-                        variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.03 } } }}
-                      />
-                    ))
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+              {loading ? (
+                <div style={{ padding: '8px' }}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
+                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
+                      </div>
+                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
+                    </div>
+                  ))}
+                </div>
+              ) : visiblePtps.length === 0 ? (
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                  <Phone size={32} className="ds-empty-icon" />
+                  <span className="ds-empty-title">No PTP records found</span>
+                  <span className="ds-empty-sub">
+                    {searchInput
+                      ? 'Nothing on the current page matches your search. Clear the search, or change page / status filters.'
+                      : hasFilters
+                        ? 'No matches for the current filters. Try clearing them.'
+                        : 'PTPs will appear here once field officers record promise-to-pay commitments from borrowers.'}
+                  </span>
+                  {hasFilters && (
+                    <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                      <button type="button" onClick={clearFilters} className="ds-btn is-secondary">Clear filters</button>
+                    </div>
                   )}
-                </tbody>
-              </table>
+                </motion.div>
+              ) : (
+                <motion.div variants={stagger} initial="hidden" animate="show">
+                  {visiblePtps.map((ptp, idx) => (
+                    <PtpRow
+                      key={ptp.id}
+                      ptp={ptp}
+                      isSelected={selectedPtp?.id === ptp.id}
+                      onSelect={setSelectedPtp}
+                      variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.03 } } }}
+                    />
+                  ))}
+                </motion.div>
+              )}
             </div>
 
             {/* ── Pagination ── */}
             {totalPages > 1 && !loading && (
-              <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalElements.toLocaleString('en-IN')}</strong> records
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} aria-label="Previous page">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} aria-label="Next page">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalElements={totalElements}
+                itemLabel="commitments"
+              />
             )}
           </motion.section>
         </motion.div>

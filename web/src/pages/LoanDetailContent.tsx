@@ -206,8 +206,8 @@ export default function LoanDetailContent(p: Props) {
             )}
             {mapsHref && (
               <a href={mapsHref} target="_blank" rel="noreferrer"
-                className="db-customize-btn" style={{ padding: '4px 10px', height: 30, fontSize: 12.5, textDecoration: 'none', background: 'var(--bg-subtle)', width: '100%', justifyContent: 'center' }}>
-                <MapPin size={12} style={{ marginRight: 6 }} />
+                className="ds-btn is-secondary" style={{ height: 32, width: '100%', textDecoration: 'none' }}>
+                <MapPin size={12} />
                 {p.lastKnownLocation ? 'Last GPS location' : 'Address in Maps'}
               </a>
             )}

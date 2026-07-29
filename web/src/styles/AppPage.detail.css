@@ -95,9 +95,10 @@
   gap: 32px;
   flex-wrap: wrap;
   padding: 18px 22px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 16px;
 }
 .app-page-hero-stat-label {

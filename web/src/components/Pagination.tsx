@@ -5,66 +5,79 @@ interface PaginationProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
+  /** Total row count across all pages — shown as "· N total" when provided. */
+  totalElements?: number;
+  /** Noun for the totalElements count, e.g. "loans", "records". Defaults to "records". */
+  itemLabel?: string;
+  /** Use when this pagination sits inside a card header / toolbar instead of
+   *  as its own bordered footer strip. */
+  embedded?: boolean;
 }
 
-const btnStyle = (disabled: boolean): React.CSSProperties => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  height: 28,
-  padding: '0 10px',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-sm)',
-  background: 'var(--bg-surface)',
-  color: disabled ? 'var(--text-placeholder)' : 'var(--text-secondary)',
-  fontFamily: 'var(--font-sans)',
-  fontSize: 12,
-  fontWeight: 550,
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  transition: 'background var(--dur-fast), border-color var(--dur-fast)',
-  opacity: disabled ? 0.5 : 1,
-});
+const PAGE_WINDOW = 5;
 
 export const Pagination = ({
   currentPage,
   totalPages,
   onPageChange,
   isLoading = false,
+  totalElements,
+  itemLabel = 'records',
+  embedded = false,
 }: PaginationProps) => {
   const prevDisabled = currentPage === 0 || isLoading;
   const nextDisabled = currentPage >= totalPages - 1 || isLoading;
 
+  const start = Math.max(0, currentPage - Math.floor(PAGE_WINDOW / 2));
+  const adjustedStart = Math.min(start, Math.max(0, totalPages - PAGE_WINDOW));
+  const count = Math.min(PAGE_WINDOW, totalPages - adjustedStart);
+  const pageNumbers = Array.from({ length: count }, (_, i) => adjustedStart + i);
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px 16px',
-        borderTop: '1px solid var(--border)',
-        fontFamily: 'var(--font-sans)',
-      }}
-    >
-      <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
-        Page {currentPage + 1} of {totalPages}
+    <div className={`up-pagination${embedded ? ' is-embedded' : ''}`}>
+      <span className="up-page-meta">
+        Page <strong>{currentPage + 1}</strong> of <strong>{totalPages}</strong>
+        {totalElements != null && (
+          <> · <strong>{totalElements.toLocaleString('en-IN')}</strong> {itemLabel}</>
+        )}
       </span>
-      <div style={{ display: 'flex', gap: 6 }}>
+
+      <div className="up-page-numbers">
         <button
+          type="button"
+          className="up-page-btn"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={prevDisabled}
-          style={btnStyle(prevDisabled)}
           aria-label="Previous page"
         >
           <ChevronLeft size={13} />
-          Prev
         </button>
+
+        {adjustedStart > 0 && <span className="up-page-meta" aria-hidden="true">…</span>}
+
+        {pageNumbers.map(p => (
+          <button
+            key={p}
+            type="button"
+            className={`up-page-btn${p === currentPage ? ' is-active' : ''}`}
+            onClick={() => onPageChange(p)}
+            disabled={isLoading}
+            aria-label={`Page ${p + 1}`}
+            aria-current={p === currentPage ? 'page' : undefined}
+          >
+            {p + 1}
+          </button>
+        ))}
+
+        {adjustedStart + count < totalPages && <span className="up-page-meta" aria-hidden="true">…</span>}
+
         <button
+          type="button"
+          className="up-page-btn"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={nextDisabled}
-          style={btnStyle(nextDisabled)}
           aria-label="Next page"
         >
-          Next
           <ChevronRight size={13} />
         </button>
       </div>

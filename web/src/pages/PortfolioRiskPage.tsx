@@ -5,9 +5,10 @@ import { usePermissions } from '../hooks/usePermissions';
 import { npaApi, type RiskReportResponse, type RiskRecordResponse } from '../api/npaApi';
 import type { NpaRiskLevel } from '../types';
 import {
-  ShieldAlert, AlertCircle, ChevronLeft, ChevronRight, RefreshCw,
+  ShieldAlert, AlertCircle, RefreshCw,
   CheckCircle2, X, Loader2, TrendingUp, Wallet, Percent, ListFilter,
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 import './Dashboard.css';
 
 // This screen deliberately never prints the word "NPA" anywhere in its copy —
@@ -232,15 +233,14 @@ export default function PortfolioRiskPage() {
                     ))}
                   </div>
                   {totalPages > 1 && !recordsLoading && (
-                    <div className="up-pagination" style={{ margin: 0 }}>
-                      <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
-                        <ChevronLeft size={14} />
-                      </button>
-                      <span className="up-page-meta">Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong></span>
-                      <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
+                    <Pagination
+                      embedded
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                      totalElements={totalElements}
+                      itemLabel="loans"
+                    />
                   )}
                 </header>
 

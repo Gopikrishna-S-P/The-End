@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallback
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { hasAllPermissions } = usePermissions();
+  const { hasAllPermissions, hasAnyRole } = usePermissions();
 
   // Identical UI to the "Signing you in" LoadingSplash (reuses its CSS). Its
   // z-99999 paints right on top of the HTML boot splash for a seamless handoff.
@@ -50,10 +50,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (allowedRoles && allowedRoles.length > 0) {
-    const userRole = user.roles[0]?.name.replace("ROLE_", "").trim() as Role;
-    const hasValidRole = allowedRoles.includes(userRole);
-    
-    if (!hasValidRole) {
+    // Checks every role the user holds, not just roles[0] -- a multi-role user whose
+    // access-granting role isn't first in the array must still be let through.
+    if (!hasAnyRole(...allowedRoles)) {
       return fallback || <AccessDenied reason="Your role does not have access to this page" />;
     }
   }

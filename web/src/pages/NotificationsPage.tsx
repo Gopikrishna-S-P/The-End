@@ -210,13 +210,13 @@ function NotifRow({ notif, color, onNavigate }: NotifRowProps) {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
           {showOpen && (
-            <button type="button" className="db-customize-btn" style={{ padding: '0 12px', height: 28, background: 'var(--ink-solid)', color: 'var(--bg-surface)' }} onClick={() => { notifications.markRead(notif.id); onNavigate(notif.to!); }}>
-              Open <ArrowRight size={12} style={{ marginLeft: 6 }} />
+            <button type="button" className="ds-btn is-primary is-sm" onClick={() => { notifications.markRead(notif.id); onNavigate(notif.to!); }}>
+              Open <ArrowRight size={12} />
             </button>
           )}
           {showAck && (
-            <button type="button" className="db-customize-btn" style={{ padding: '0 12px', height: 28 }} onClick={() => notifications.markRead(notif.id)} disabled={notif.read}>
-              <Check size={12} style={{ marginRight: 6 }} />
+            <button type="button" className="ds-btn is-secondary is-sm" onClick={() => notifications.markRead(notif.id)} disabled={notif.read}>
+              <Check size={12} />
               {notif.read ? 'Read' : 'Mark read'}
             </button>
           )}

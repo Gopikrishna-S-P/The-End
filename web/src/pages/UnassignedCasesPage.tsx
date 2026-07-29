@@ -5,9 +5,10 @@ import { apiClient, unwrapApiResponse } from '../client';
 import { usePermissions } from '../hooks/usePermissions';
 import type { AllocationResponse, PagedResponse } from '../types';
 import {
-  RefreshCw, Search, ChevronLeft, ChevronRight, UserPlus,
+  RefreshCw, Search, UserPlus,
   AlertCircle, X, ChevronRight as ChevronRightIcon
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 
 import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
@@ -246,32 +247,13 @@ export default function UnassignedCasesPage() {
 
             {/* ── Pagination ── */}
             {totalPages > 1 && !loading && (
-              <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                  {' · '}<strong>{totalElements.toLocaleString('en-IN')}</strong> cases
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button
-                    type="button"
-                    className="up-page-btn"
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="up-page-btn"
-                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={page >= totalPages - 1}
-                    aria-label="Next page"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </footer>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalElements={totalElements}
+                itemLabel="cases"
+              />
             )}
 
           </div>

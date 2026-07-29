@@ -5,7 +5,7 @@
   align-items: center;
   gap: 4px;
   min-width: 22px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
   font-family: var(--font-mono);
   font-size: 11px;

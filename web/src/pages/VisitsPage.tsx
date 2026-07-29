@@ -3,12 +3,13 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { visitsApi } from '../api/visitsApi';
 import type { VisitLogResponse } from '../types';
 import {
-  MapPin, RefreshCw, ChevronLeft, ChevronRight,
+  MapPin, RefreshCw,
   Search, X, ChevronUp, ChevronDown, Download, Upload, SlidersHorizontal, Activity
 } from 'lucide-react';
 import VisitDetailDrawer from './VisitDetailDrawer';
 import VisitExportModal from '../components/VisitExportModal';
 import VisitImportModal from '../components/VisitImportModal';
+import { Pagination } from '../components/Pagination';
 import { useAuth } from '../AuthContext';
 import { VisitRow } from './VisitRow';
 import '../styles/AppPage.css';
@@ -396,23 +397,13 @@ export default function VisitsPage() {
 
             {/* ── Pagination ── */}
             {!loading && visits.length > 0 && (
-              <div className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
-                  Page <strong style={{ color: 'var(--text-primary)' }}>{page + 1}</strong> of <strong style={{ color: 'var(--text-primary)' }}>{Math.max(1, totalPages)}</strong> · <span style={{ fontFamily: 'var(--font-mono)', fontFeatureSettings: '"tnum", "zero"' }}>{totalElements.toLocaleString('en-IN')}</span> visits
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="ds-btn is-secondary is-sm"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page <= 0}>
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="ds-btn is-secondary is-sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page + 1 >= Math.max(1, totalPages)}>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                currentPage={page}
+                totalPages={Math.max(1, totalPages)}
+                onPageChange={setPage}
+                totalElements={totalElements}
+                itemLabel="visits"
+              />
             )}
           </motion.section>
         </div>

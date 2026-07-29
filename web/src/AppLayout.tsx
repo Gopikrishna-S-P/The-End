@@ -18,6 +18,7 @@ import MfaGate from './components/MfaGate';
 import SubscriptionBanner from './components/SubscriptionBanner';
 import PullToRefreshIndicator from './components/PullToRefreshIndicator';
 import TopBar from './components/TopBar';
+import RouteErrorBoundary from './components/RouteErrorBoundary';
 import { bookmarks } from './utils/bookmarks';
 import { tour } from './utils/tour';
 import { SHORTCUTS, NAV_SECTIONS } from './utils/navConfig';
@@ -180,7 +181,9 @@ export default function AppLayout() {
         <div className="app-body">
           <main className="app-main" id="main-content" tabIndex={-1} ref={s.mainRef}>
             <div key={location.pathname} className={`app-route-view tx-${s.routeTransition}`}>
-              <Outlet />
+              <RouteErrorBoundary>
+                <Outlet />
+              </RouteErrorBoundary>
             </div>
           </main>
 

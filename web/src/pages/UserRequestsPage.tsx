@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
-import { UserPlus, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { UserPlus, Clock, Plus } from 'lucide-react';
 import {
   userRequestsApi, type UserCreationRequest, type RequestedRole, type PagedUserRequests,
 } from '../api/userRequestsApi';
 import { type Tab, StatusPill, RoleBadge } from './UserRequestsHelpers';
 import { UserRequestsReviewModal } from './UserRequestsReviewModal';
 import { UserRequestsSubmitModal } from './UserRequestsSubmitModal';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 
 export default function UserRequestsPage() {
@@ -166,20 +167,13 @@ export default function UserRequestsPage() {
               </div>
 
               {activePaged && activePaged.totalPages > 1 && !activeLoading && (
-                <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                  <span className="up-page-meta">
-                    Page <strong>{activePage + 1}</strong> of <strong>{activePaged.totalPages}</strong>
-                    {' · '}<strong>{activePaged.totalElements.toLocaleString('en-IN')}</strong> requests
-                  </span>
-                  <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                    <button type="button" className="up-page-btn" onClick={() => setActivePage(p => Math.max(0, p - 1))} disabled={activePage === 0} aria-label="Previous page">
-                      <ChevronLeft size={14} />
-                    </button>
-                    <button type="button" className="up-page-btn" onClick={() => setActivePage(p => Math.min(activePaged.totalPages - 1, p + 1))} disabled={activePage + 1 >= activePaged.totalPages} aria-label="Next page">
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </footer>
+                <Pagination
+                  currentPage={activePage}
+                  totalPages={activePaged.totalPages}
+                  onPageChange={setActivePage}
+                  totalElements={activePaged.totalElements}
+                  itemLabel="requests"
+                />
               )}
             </div>
           </div>

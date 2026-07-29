@@ -7,12 +7,13 @@ import { usersApi } from '../api/usersApi';
 import type { ReportJobResponse, PagedResponse } from '../types';
 import { reportsApi } from '../api/reportsApi';
 import {
-  FileText, Download, Loader2, ChevronLeft, ChevronRight,
+  FileText, Download, Loader2,
   Plus, X, AlertCircle,
 } from 'lucide-react';
 import { StatusPill, fmtFileSize, TERMINAL_STATUSES, REPORT_LABELS } from './ReportsHelpers';
 import { ReportGenerateModal } from './ReportGenerateModal';
 import { ReportsAnalyticsPanel } from './ReportsAnalyticsPanel';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
@@ -263,19 +264,13 @@ export default function ReportsPage() {
                 </div>
 
                 {totalPages > 1 && !loading && (
-                  <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                    <span className="up-page-meta">
-                      Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                    </span>
-                    <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                      <button type="button" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="up-page-btn" aria-label="Previous page">
-                        <ChevronLeft size={14} />
-                      </button>
-                      <button type="button" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1} className="up-page-btn" aria-label="Next page">
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </div>
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    totalElements={totalElements}
+                    itemLabel="reports"
+                  />
                 )}
               </motion.section>
         </motion.div>

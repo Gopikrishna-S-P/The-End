@@ -6,8 +6,9 @@ import { usePermissions } from '../hooks/usePermissions';
 import type { FileProcessingErrorResponse } from '../types';
 import {
   ArrowLeft, AlertTriangle, AlertCircle, FileX,
-  ChevronLeft, ChevronRight, XOctagon
+  XOctagon
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import '../styles/UploadErrorsPage.css';
 import './Dashboard.css';
@@ -106,19 +107,14 @@ export default function UploadErrorsPage() {
 
             <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 12 }}>
               {totalPages > 1 && !loading && (
-                <div className="up-pagination" style={{ margin: 0 }}>
-                  <button type="button" className="up-page-btn"
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={page === 0}>
-                    <ChevronLeft size={14} />
-                  </button>
-                  <span className="up-page-meta">Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong></span>
-                  <button type="button" className="up-page-btn"
-                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={page >= totalPages - 1}>
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
+                <Pagination
+                  embedded
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  totalElements={totalElements}
+                  itemLabel="errors"
+                />
               )}
             </div>
           </div>

@@ -28,6 +28,7 @@
   justify-content: center;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
   color: var(--text-tertiary);
 }
 

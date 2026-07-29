@@ -1,10 +1,10 @@
 /* â”€â”€ BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .signin-page .btn-primary {
   width: 100%;
-  background: #0AA550;
+  background: var(--ink-solid);
   color: var(--text-on-solid);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-weight: 600;
   font-family: var(--sans);
@@ -18,13 +18,13 @@
   margin-bottom: 24px;
   position: relative;
   transition: background 150ms var(--ease), box-shadow 150ms var(--ease), transform 150ms var(--ease);
-  box-shadow: 0 2px 6px color-mix(in srgb, #0AA550 20%, transparent),
-              0 4px 16px color-mix(in srgb, #0AA550 12%, transparent);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--ink-solid) 20%, transparent),
+              0 4px 16px color-mix(in srgb, var(--ink-solid) 12%, transparent);
 }
 .signin-page .btn-primary:hover:not(:disabled) {
-  background: #088a42;
-  box-shadow: 0 4px 12px color-mix(in srgb, #0AA550 28%, transparent),
-              0 8px 24px color-mix(in srgb, #0AA550 16%, transparent);
+  background: var(--ink-solid-hover);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ink-solid) 28%, transparent),
+              0 8px 24px color-mix(in srgb, var(--ink-solid) 16%, transparent);
   transform: translateY(-1px);
 }
 .signin-page .btn-primary:active:not(:disabled) { transform: translateY(0); }
@@ -219,10 +219,10 @@
 .signin-page .mfa-icon-badge {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
-  background: #EDF7F2;
-  border: 1px solid #C8E6D4;
-  color: #0AA550;
+  border-radius: var(--radius-sm);
+  background: var(--brand-subtle);
+  border: 1px solid var(--success-border);
+  color: var(--ink-solid);
   display: flex;
   align-items: center;
   justify-content: center;

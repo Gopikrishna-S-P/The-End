@@ -8,11 +8,12 @@ import type { OrganizationSummary } from '../api/platformApi';
 import type { FileUploadResponse, PagedResponse } from '../types';
 import {
   File as FileIcon, AlertCircle, Trash2, Upload,
-  ChevronLeft, ChevronRight, ChevronDown, CloudUpload,
+  ChevronRight, ChevronDown, CloudUpload,
   TableProperties, Building2, LayoutGrid,
   CheckCircle2, Clock, ShieldAlert
 } from 'lucide-react';
 import { UploadsModal, UploadStatusBadge } from './UploadsModal';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import '../styles/UploadsPage.css';
 import './Dashboard.css';
@@ -273,21 +274,14 @@ export default function UploadsPage() {
                       )}
                     </div>
                     {totalPages > 1 && !loading && (
-                      <div className="up-pagination" style={{ margin: 0, padding: 0, border: 'none', background: 'transparent' }}>
-                        <button type="button" className="up-page-btn" style={{ height: 28 }}
-                          onClick={() => setPage(p => Math.max(0, p - 1))}
-                          disabled={page === 0} aria-label="Previous page">
-                          <ChevronLeft size={14} />
-                        </button>
-                        <span className="up-page-meta">
-                          Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                        </span>
-                        <button type="button" className="up-page-btn" style={{ height: 28 }}
-                          onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                          disabled={page === totalPages - 1} aria-label="Next page">
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
+                      <Pagination
+                        embedded
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        totalElements={totalElements}
+                        itemLabel="files"
+                      />
                     )}
                   </header>
                 )}

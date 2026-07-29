@@ -1,6 +1,5 @@
 /* ── Card primitive ──────────────────────────────────────────────────────────
-   Bordered surface. No shadow on static cards (borders carry structure).
-   Elevation only on hover (lifted interactive card).
+   Soft-shadow surface, faint border. Hoverable cards lift further on hover.
    ─────────────────────────────────────────────────────────────────────────── */
 
 .ds-card {
@@ -25,11 +24,13 @@
 .ds-card.is-hoverable {
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease-standard),
-              box-shadow var(--dur-fast) var(--ease-standard);
+              box-shadow var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
 }
 .ds-card.is-hoverable:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 .ds-card.is-hoverable:active {
   background: var(--bg-hover);

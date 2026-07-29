@@ -8,11 +8,11 @@
   justify-content: center;
   gap: 6px;
   height: var(--ds-ctl-h);
-  padding: 0 16px;
+  padding: 0 18px;
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
@@ -21,7 +21,9 @@
   color: var(--text-primary);
   transition: background var(--dur-fast) var(--ease-standard),
               border-color var(--dur-fast) var(--ease-standard),
-              color var(--dur-fast) var(--ease-standard);
+              color var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
 }
 
 .ds-btn:hover:not(:disabled) {
@@ -41,30 +43,37 @@
   border-radius: var(--radius-sm);
 }
 
-/* ── Primary — brand fill ───────────────────────────────────────────── */
+/* ── Primary — brand fill, soft shadow that lifts on hover ────────────── */
 .ds-btn.is-primary {
   background: var(--brand);
   border-color: var(--brand);
   color: #ffffff;
+  box-shadow: 0 1px 2px rgba(10,165,80,0.16), var(--shadow-xs);
 }
 .ds-btn.is-primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--brand) 85%, black);
   border-color: color-mix(in srgb, var(--brand) 85%, black);
+  box-shadow: 0 4px 12px -2px rgba(10,165,80,0.32), var(--shadow-sm);
+  transform: translateY(-1px);
 }
 .ds-btn.is-primary:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(10,165,80,0.16);
 }
 
-/* ── Secondary — outlined ─────────────────────────────────────────────────── */
+/* ── Secondary — outlined, gains a soft shadow on hover ──────────────────── */
 .ds-btn.is-secondary {
   background: var(--bg-surface);
   border-color: var(--border-strong);
   color: var(--text-primary);
+  box-shadow: var(--shadow-xs);
 }
 .ds-btn.is-secondary:hover:not(:disabled) {
   background: var(--bg-subtle);
   border-color: var(--border-strong);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 /* ── Ghost — text-only ────────────────────────────────────────────────────── */
@@ -83,10 +92,13 @@
   background: var(--danger-solid);
   border-color: var(--danger-solid);
   color: var(--text-on-solid);
+  box-shadow: 0 1px 2px rgba(217,45,32,0.16), var(--shadow-xs);
 }
 .ds-btn.is-danger:hover:not(:disabled) {
   background: var(--danger);
   border-color: var(--danger);
+  box-shadow: 0 4px 12px -2px rgba(217,45,32,0.28), var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 /* ── Size modifiers ───────────────────────────────────────────────────────── */

@@ -114,9 +114,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-hover);
   border: none;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 700;
@@ -127,8 +127,8 @@
 }
 
 .dd-agent-row.is-active .dd-fo-avatar {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.6);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 /* Skeleton row — matches dd-case-skel */
@@ -183,7 +183,7 @@
   box-sizing: border-box;
 }
 
-.dd-agent-row:hover { background: rgba(0, 0, 0, 0.03); }
+.dd-agent-row:hover { background: var(--bg-hover); }
 
 .dd-agent-row.is-active {
   background: var(--brand-subtle);

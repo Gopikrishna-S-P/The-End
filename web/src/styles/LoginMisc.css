@@ -154,18 +154,20 @@
   gap: 12px;
   padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-primary);
   background: var(--bg-canvas);
-  transition: border-color 150ms, background 150ms, color 150ms;
+  transition: border-color 150ms, background 150ms, color 150ms, box-shadow 150ms, transform 150ms;
 }
 .contact-item:hover {
   border-color: var(--ink-solid);
   background: var(--bg-surface);
   color: var(--ink-solid);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 .contact-item-icon {
   width: 32px;

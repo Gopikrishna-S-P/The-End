@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Search, X, ChevronRight, ChevronLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { Search, X, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { dailyDispatchApi } from '../api/dailyDispatchApi';
 import { allocationsApi } from '../api/allocationsApi';
+import { Pagination } from '../components/Pagination';
 import { useAuth } from '../AuthContext';
 import type { AllocationResponse } from '../types';
 
@@ -271,32 +272,13 @@ export default function MyCasesPage() {
             </div>
           </div>
 
-          <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-            <span className="up-page-meta">
-              Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-              {' · '}<strong>{filtered.length}</strong> cases
-            </span>
-            <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-              <button
-                type="button"
-                className="up-page-btn"
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                aria-label="Previous page"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              <button
-                type="button"
-                className="up-page-btn"
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
-                aria-label="Next page"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </footer>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalElements={filtered.length}
+            itemLabel="cases"
+          />
 
             </div>
           </div>

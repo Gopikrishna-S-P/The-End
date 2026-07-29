@@ -1063,7 +1063,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
 }
 .apf-history-btn.is-disabled { color: rgba(0, 0, 0, 0.22); }
 
@@ -1071,7 +1071,7 @@
   font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 700;
-  color: #111;
+  color: var(--text-primary);
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
@@ -1089,14 +1089,14 @@
   width: 300px;
   padding: 0 12px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
   background: #fff;
   font-family: var(--font-sans);
   font-size: 14px;
   flex-shrink: 0;
 }
-.apf-topbar-search-icon { color: rgba(0, 0, 0, 0.6); flex-shrink: 0; }
-.apf-topbar-search-text { color: rgba(0, 0, 0, 0.5); font-weight: 400; }
+.apf-topbar-search-icon { color: var(--text-secondary); flex-shrink: 0; }
+.apf-topbar-search-text { color: var(--text-tertiary); font-weight: 400; }
 
 .apf-topbar-icon {
   position: relative;
@@ -1106,7 +1106,7 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 .apf-topbar-icon--sep {

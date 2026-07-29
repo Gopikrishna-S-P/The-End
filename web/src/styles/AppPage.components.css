@@ -5,7 +5,7 @@
   gap: 2px;
   justify-content: flex-end;
 }
-.app-page-row-action.is-info:hover    { background: rgba(0, 0, 0, 0.04); color: var(--ink-primary); }
+.app-page-row-action.is-info:hover    { background: var(--bg-hover); color: var(--ink-primary); }
 .app-page-row-action.is-warn:hover    { background: var(--warning-subtle); color: var(--warning); }
 .app-page-row-action.is-error:hover   { background: var(--error-subtle); color: var(--error); }
 .app-page-row-action.is-text {
@@ -23,8 +23,9 @@
 /* ── Section card (for non-table content) ────────────── */
 .app-page-section {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 .app-page-section-header {
@@ -87,9 +88,10 @@
 /* ── Incident card (SOS / field-ops alerts) ──────────── */
 .app-page-incident {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 16px 20px;
   background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;

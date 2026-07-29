@@ -101,8 +101,9 @@
 /* ── Sub-card (smaller card, used inline) ────────────── */
 .app-page-sub-card {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
   overflow: hidden;
   margin-bottom: 12px;
 }

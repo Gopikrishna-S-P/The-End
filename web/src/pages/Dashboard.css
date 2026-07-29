@@ -89,9 +89,10 @@
 .db-root .db-card,
 .db-root .ds-table-card {
   background: var(--bg-surface);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   border-radius: 16px;
+  transition: box-shadow .18s ease, transform .18s ease;
 }
 
 .db-root .ds-table thead {
@@ -109,9 +110,9 @@
 }
 
 .db-root .ds-empty-icon {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-hover);
   border: none;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
 }
 
 /* ── Content area ── */
@@ -333,19 +334,20 @@
 .db-kpi-icon-box {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   flex-shrink: 0;
-  transition: background-color .18s ease, color .18s ease;
+  transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
 }
 .db-kpi-card:hover .db-kpi-icon-box {
-  background: rgba(0, 0, 0, 0.07);
-  color: #111;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
 }
 
 .db-kpi-value {
@@ -463,16 +465,16 @@
 .db-att-row.has-border     { border-bottom: 1px solid var(--border); }
 .db-att-row.is-all-clear   { cursor: default; }
 .db-att-row:not(.is-all-clear) { cursor: pointer; }
-.db-att-row:not(.is-all-clear):hover { background: rgba(0, 0, 0, 0.03); }
+.db-att-row:not(.is-all-clear):hover { background: var(--bg-hover); }
 .db-att-row:focus-visible  { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 
 .db-att-chip {
   width: 28px; height: 28px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
   border: none;
   display: flex; align-items: center; justify-content: center;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 .db-att-chip.is-urgent { background: var(--danger-subtle); border-color: var(--danger-border); color: var(--danger); }
@@ -1074,23 +1076,27 @@
   }
 }
 
-/* ── KPI v2 cards (Stripe-style) ── */
+/* ── KPI v2 cards (Modern SaaS: soft shadow, lifts on hover) ── */
 .db-kpi2-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 24px;
   background: var(--bg-surface);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
   border-radius: 16px;
   text-align: left;
   cursor: pointer;
-  box-shadow: none;
-  transition: border-color .18s ease, transform .18s ease;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
   width: 100%;
 }
 .db-kpi2-card:disabled { cursor: default; }
-.db-kpi2-card.is-hoverable:hover { border-color: rgba(0, 0, 0, 0.16); }
+.db-kpi2-card.is-hoverable:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
 
 .db-kpi2-label {
   font-family: var(--font-sans);
@@ -1252,7 +1258,7 @@
   background: var(--bg-surface);
   color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ── KPI band ── */
@@ -1273,9 +1279,9 @@
   align-items: center;
   justify-content: center;
   width: 28px; height: 28px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 .db-kpi2-card.is-accent {

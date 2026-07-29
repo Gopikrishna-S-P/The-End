@@ -4,11 +4,12 @@ import { fraudCasesApi } from '../api/fraudCasesApi';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import type { FraudCaseResponse, FraudCaseStatus } from '../types';
-import { ShieldAlert, RefreshCw, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Plus, ChevronRight } from 'lucide-react';
 import FraudCaseDetailDrawer from './FraudCaseDetailDrawer';
 import { FraudCaseCreateModal } from './FraudCaseCreateModal';
 import { FRAUD_PILL } from './BorrowersHelpers';
 import { fmtDate, fmtCurrency } from './LoanDetailHelpers';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
@@ -87,18 +88,21 @@ export default function FraudCasesPage() {
   return (
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <div className="db-page-header">
+          <div className="db-page-header-left">
+            <div className="db-page-titles">
+              <h1 className="db-page-title">Fraud Cases</h1>
+              {!loading && totalElements > 0 && (
+                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
+              )}
+            </div>
+          </div>
+        </div>
+
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(cases.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 className="db-card-title">Fraud Cases</h2>
-                {!loading && totalElements > 0 && (
-                  <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>
-                    / {totalElements.toLocaleString('en-IN')} records
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                 <select
                   className="ds-select"
                   value={statusFilter}
@@ -118,95 +122,81 @@ export default function FraudCasesPage() {
               </div>
             </header>
 
-            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
-              <table className="ds-table">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Case #</th>
-                    <th style={{ padding: '12px 16px' }}>Category</th>
-                    <th className="is-right" style={{ padding: '12px 16px' }}>Amount</th>
-                    <th style={{ padding: '12px 16px' }}>Reported</th>
-                    <th style={{ padding: '12px 16px' }}>Status</th>
-                    <th className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>View</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadError ? (
-                    <tr><td colSpan={6}>
-                      <div className="ds-empty" style={{ padding: '60px 0' }}>
-                        <span className="ds-empty-title">Fraud cases could not be loaded.</span>
-                        <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                          <button type="button" onClick={fetchCases} className="ds-btn is-secondary">Retry</button>
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+              {loadError ? (
+                <div className="ds-empty" style={{ padding: '60px 0' }}>
+                  <span className="ds-empty-title">Fraud cases could not be loaded.</span>
+                  <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                    <button type="button" onClick={fetchCases} className="ds-btn is-secondary">Retry</button>
+                  </div>
+                </div>
+              ) : loading ? (
+                <div style={{ padding: '8px' }}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
+                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
+                      </div>
+                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
+                    </div>
+                  ))}
+                </div>
+              ) : cases.length === 0 ? (
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                  <ShieldAlert size={32} className="ds-empty-icon" />
+                  <span className="ds-empty-title">No fraud cases on file</span>
+                  <span className="ds-empty-sub">
+                    {statusFilter ? 'No cases match this status filter.' : 'Cases reported under the RBI Master Direction on Frauds will appear here.'}
+                  </span>
+                  {canTransition && !statusFilter && (
+                    <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                      <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">Report case</button>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div>
+                  {cases.map((c, idx) => (
+                    <motion.button
+                      key={c.id}
+                      variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
+                      initial="hidden" animate="show"
+                      className="db-att-row"
+                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: selected?.id === c.id ? 'var(--bg-active)' : 'transparent' }}
+                      onClick={() => setSelected(c)}
+                      whileHover={{ background: 'var(--bg-subtle)' }}
+                    >
+                      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
+                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <ShieldAlert size={13} style={{ color: 'var(--ink-tertiary)' }} />
+                          {CATEGORY_LABEL[c.category] || c.category}
+                        </span>
+                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
+                          <span className={`ds-pill ${FRAUD_PILL[c.status]}`}>{c.status.replace(/_/g, ' ')}</span>
+                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                            {c.caseNumber}
+                          </span>
+                          <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
+                            / Reported {fmtDate(c.reportedAt)}
+                          </span>
                         </div>
                       </div>
-                    </td></tr>
-                  ) : loading ? (
-                    Array.from({ length: 8 }).map((_, i) => (
-                      <tr key={i} style={{ opacity: 1 - i * 0.1, borderBottom: '1px solid var(--border-subtle)' }}>
-                        <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: 120, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 140, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 80, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
-                        <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 22, width: 90, borderRadius: 999, display: 'block' }} /></td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}><span className="ds-skel" style={{ height: 22, width: 28, borderRadius: 6, marginLeft: 'auto', display: 'block' }} /></td>
-                      </tr>
-                    ))
-                  ) : cases.length === 0 ? (
-                    <tr><td colSpan={6}>
-                      <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
-                        <ShieldAlert size={32} className="ds-empty-icon" />
-                        <span className="ds-empty-title">No fraud cases on file</span>
-                        <span className="ds-empty-sub">
-                          {statusFilter ? 'No cases match this status filter.' : 'Cases reported under the RBI Master Direction on Frauds will appear here.'}
+
+                      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                          {c.amountInvolved != null ? fmtCurrency(c.amountInvolved) : '—'}
                         </span>
-                        {canTransition && !statusFilter && (
-                          <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                            <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">Report case</button>
-                          </div>
-                        )}
-                      </motion.div>
-                    </td></tr>
-                  ) : (
-                    cases.map((c, idx) => (
-                      <motion.tr
-                        key={c.id}
-                        variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
-                        initial="hidden" animate="show"
-                        className={selected?.id === c.id ? 'is-selected' : ''}
-                        onClick={() => setSelected(c)}
-                        style={{ cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)' }}
-                      >
-                        <td style={{ padding: '12px 16px', paddingLeft: 24, fontFamily: 'var(--font-mono)', fontSize: 12.5, fontWeight: 600 }}>{c.caseNumber}</td>
-                        <td style={{ padding: '12px 16px' }}>{CATEGORY_LABEL[c.category] || c.category}</td>
-                        <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{c.amountInvolved != null ? fmtCurrency(c.amountInvolved) : '—'}</td>
-                        <td style={{ padding: '12px 16px' }}>{fmtDate(c.reportedAt)}</td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <span className={`ds-pill ${FRAUD_PILL[c.status]}`}>{c.status.replace(/_/g, ' ')}</span>
-                        </td>
-                        <td className="is-right" style={{ padding: '12px 16px', paddingRight: 24 }}>
-                          <button type="button" className="ds-btn is-secondary is-sm" onClick={(e) => { e.stopPropagation(); setSelected(c); }}>Open</button>
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
+                      </div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
             </div>
 
             {totalPages > 1 && !loading && (
-              <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalElements.toLocaleString('en-IN')}</strong> records
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} aria-label="Previous page">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} aria-label="Next page">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
             )}
           </motion.section>
         </motion.div>

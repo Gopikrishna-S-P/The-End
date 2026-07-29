@@ -1,9 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import * as Sentry from '@sentry/react'
 import './styles/index.css'
 import App from './App'
 import { installNotificationDispatch } from './utils/notificationDispatch'
 import { notifications } from './utils/notifications'
+
+// No-ops until VITE_SENTRY_DSN is supplied at build time (dev/CI builds have
+// none) -- see .env.example for where a real staging/production DSN goes.
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: !!sentryDsn,
+  tracesSampleRate: 1.0,
+});
 
 /* Theme bootstrap — runs before React mounts so the login screen, the
  * auth-loading splash, and any pre-route flash already wear the user's

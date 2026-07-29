@@ -12,10 +12,10 @@
   --bg-hover:    #E8EBF0;   /* row/item hover — distinct from subtle (was identical) */
   --bg-active:   var(--brand-subtle);   /* selected row; green tint */
 
-  /* ── Borders ──────────────────────────────────────────────────────────── */
-  --border:        #E4E7EC; /* default 1px hairline */
-  --border-strong: #D0D5DD; /* hovered/focused card, active row, input hover */
-  --border-subtle: #F0F1F4; /* faintest internal divider */
+  /* ── Borders — softened; shadows now do most of the structural work ───── */
+  --border:        #EBEDF1; /* default 1px hairline */
+  --border-strong: #D6DAE1; /* hovered/focused card, active row, input hover */
+  --border-subtle: #F2F4F7; /* faintest internal divider */
 
   /* ── Text ─────────────────────────────────────────────────────────────── */
   --text-primary:     #101828; /* headings, primary values, money — 15.9:1 */
@@ -98,11 +98,11 @@
   --rp-s5: var(--space-8);
   --rp-s6: var(--space-9);
 
-  /* ── Radius ───────────────────────────────────────────────────────────── */
-  --radius-xs:   4px;   /* badges, chips, tags, checkboxes */
-  --radius-sm:   6px;   /* buttons, inputs, segmented controls */
-  --radius-md:   8px;   /* cards, panels, table outer frame, popovers */
-  --radius-lg:   12px;  /* modals, large containers, empty-state cards */
+  /* ── Radius — Modern SaaS: larger, softer corners throughout ───────────── */
+  --radius-xs:   6px;   /* badges, chips, tags, checkboxes */
+  --radius-sm:   9px;   /* buttons, inputs, segmented controls */
+  --radius-md:   14px;  /* cards, panels, table outer frame, popovers */
+  --radius-lg:   20px;  /* modals, large containers, empty-state cards */
   --radius-full: 999px; /* avatars, status dots, pill toggles */
 
   /* Legacy ds-* aliases */
@@ -117,13 +117,14 @@
   --rp-r-lg: var(--radius-lg);
   --rp-r-xl: var(--radius-lg);
 
-  /* ── Elevation — borders carry structure; shadows only for true floats ── */
+  /* ── Elevation — soft layered shadows carry structure; borders are now
+     faint/optional. Every static surface floats a little (Modern SaaS). ── */
   --shadow-none: none;
-  --shadow-xs:   0 1px 2px rgba(16,24,40,0.05);
-  --shadow-sm:   0 1px 3px rgba(16,24,40,0.10), 0 1px 2px rgba(16,24,40,0.06);
-  --shadow-md:   0 4px 8px -2px rgba(16,24,40,0.10), 0 2px 4px -2px rgba(16,24,40,0.06);
-  --shadow-lg:   0 12px 16px -4px rgba(16,24,40,0.08), 0 4px 6px -2px rgba(16,24,40,0.03);
-  --shadow-overlay-scrim: rgba(16,24,40,0.40);
+  --shadow-xs:   0 1px 2px rgba(16,24,40,0.04);
+  --shadow-sm:   0 2px 6px -1px rgba(16,24,40,0.07), 0 1px 2px rgba(16,24,40,0.05);
+  --shadow-md:   0 10px 24px -6px rgba(16,24,40,0.12), 0 4px 8px -4px rgba(16,24,40,0.06);
+  --shadow-lg:   0 24px 48px -12px rgba(16,24,40,0.18), 0 8px 16px -6px rgba(16,24,40,0.08);
+  --shadow-overlay-scrim: rgba(16,24,40,0.44);
 
   /* Legacy elevation aliases */
   --rp-e1: var(--shadow-xs);
@@ -151,18 +152,18 @@
   --rp-t-lg: var(--dur-slow) var(--ease-out);
   --transition: var(--rp-t);
 
-  /* ── Control sizes (compact default) ─────────────────────────────────── */
-  --ds-row-h:    44px;
-  --ds-ctl-h:    32px;
-  --ds-ctl-h-sm: 28px;
+  /* ── Control sizes — roomier, more comfortable default ─────────────────── */
+  --ds-row-h:    48px;
+  --ds-ctl-h:    36px;
+  --ds-ctl-h-sm: 30px;
 
   /* ── Spacing shorthands ───────────────────────────────────────────────── */
   --ds-gap-row:      8px;
   --ds-gap-section: 12px;
-  --ds-card-px:     16px;
-  --ds-card-py:     12px;
+  --ds-card-px:     20px;
+  --ds-card-py:     16px;
   --ds-page-px:     32px;
-  --ds-page-py:     24px;
+  --ds-page-py:     28px;
 
   /* ── Font references (used by ds-* as --ds-font-body / --ds-font-label) ─ */
   --ds-font-body:  var(--font-sans);
@@ -284,9 +285,9 @@
   --info-subtle: rgba(91,157,240,.10);
   --info-border: rgba(91,157,240,.30);
 
-  --shadow-xs: 0 1px 3px rgba(0,0,0,.30);
-  --shadow-sm: 0 4px 8px rgba(0,0,0,.40);
-  --shadow-md: 0 8px 16px rgba(0,0,0,.50);
-  --shadow-lg: 0 16px 32px rgba(0,0,0,.60);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.30);
+  --shadow-sm: 0 3px 8px -1px rgba(0,0,0,.35), 0 1px 3px rgba(0,0,0,.30);
+  --shadow-md: 0 12px 28px -6px rgba(0,0,0,.50), 0 4px 10px -4px rgba(0,0,0,.35);
+  --shadow-lg: 0 28px 56px -12px rgba(0,0,0,.65), 0 10px 20px -6px rgba(0,0,0,.45);
   --shadow-overlay-scrim: rgba(0,0,0,.60);
 }

@@ -9,14 +9,15 @@ import type {
   CollectionResponse, CollectionStatus, ApprovalAction, PagedResponse, UserResponse,
 } from '../types';
 import {
-  ChevronLeft, ChevronRight, Download, CheckCircle2, XCircle,
-  Banknote, Clock, FileText, X, SlidersHorizontal, ChevronDown,
+  Download, CheckCircle2, XCircle,
+  Banknote, Clock, FileText, X, SlidersHorizontal, ChevronDown, ChevronRight,
   UserX,
 } from 'lucide-react';
 import CollectionDetailDrawer from './CollectionDetailDrawer';
 import { CollectionApprovalModal } from './CollectionApprovalModal';
 import { CollectionDepositModal } from './CollectionDepositModal';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
+import { Pagination } from '../components/Pagination';
 import { StatusPill, PaymentModePill, fmtINR, fmtDate } from './CollectionsHelpers';
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
@@ -311,140 +312,123 @@ export default function CollectionsPage() {
           </div>
 
           <section className="ds-table-card" style={{ marginTop: 0, height: 'calc(100vh - 220px)', display: 'flex', flexDirection: 'column' }}>
-            <div className="ds-table-wrap" style={{ border: 'none', flex: 1, overflow: 'auto' }}>
-              <table className="ds-table ps-table is-no-row-hover">
-                <thead>
-                  <tr>
-                    <th>Loan #</th>
-                    <th>Borrower</th>
-                    <th>Agent</th>
-                    <th>Date</th>
-                    <th className="is-right">Amount</th>
-                    <th>Mode</th>
-                    <th>Status</th>
-                    <th className="is-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    Array.from({ length: 8 }).map((_, i) => (
-                      <tr key={i} style={{ opacity: 1 - i * 0.1 }}>
-                        <td><span className="ds-skel" style={{ height: 14, width: 80, display: 'block' }} /></td>
-                        <td><span className="ds-skel" style={{ height: 14, width: 110, display: 'block' }} /></td>
-                        <td><span className="ds-skel" style={{ height: 14, width: '60%', display: 'block' }} /></td>
-                        <td><span className="ds-skel" style={{ height: 14, width: 70, display: 'block' }} /></td>
-                        <td className="is-right"><span className="ds-skel" style={{ height: 14, width: 72, marginLeft: 'auto', display: 'block' }} /></td>
-                        <td><span className="ds-skel" style={{ height: 22, width: 56, borderRadius: 999, display: 'block' }} /></td>
-                        <td><span className="ds-skel" style={{ height: 22, width: 96, borderRadius: 999, display: 'block' }} /></td>
-                        <td className="is-right"><span className="ds-skel" style={{ height: 14, width: 80, marginLeft: 'auto', display: 'block' }} /></td>
-                      </tr>
-                    ))
-                  ) : visibleCollections.length === 0 ? (
-                    <tr>
-                      <td colSpan={8}>
-                        <motion.div className="ds-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                          <span className="ds-empty-icon"><Banknote size={20} /></span>
-                          <span className="ds-empty-title">{filterSearch ? 'No matches on this page' : 'No collections found'}</span>
-                          <span className="ds-empty-sub">
-                            {filterSearch
-                              ? 'Nothing on the current page matches your search. Clear it, or change the page / other filters.'
-                              : hasFilters
-                                ? 'No collections match the current filters. Clear them to see all records.'
-                                : 'Collections will appear here once field officers submit payments from the mobile app.'}
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+              {loading ? (
+                <div style={{ padding: '8px' }}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
+                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
+                      </div>
+                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
+                    </div>
+                  ))}
+                </div>
+              ) : visibleCollections.length === 0 ? (
+                <motion.div className="ds-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} style={{ padding: '80px 0' }}>
+                  <span className="ds-empty-icon"><Banknote size={20} /></span>
+                  <span className="ds-empty-title">{filterSearch ? 'No matches on this page' : 'No collections found'}</span>
+                  <span className="ds-empty-sub">
+                    {filterSearch
+                      ? 'Nothing on the current page matches your search. Clear it, or change the page / other filters.'
+                      : hasFilters
+                        ? 'No collections match the current filters. Clear them to see all records.'
+                        : 'Collections will appear here once field officers submit payments from the mobile app.'}
+                  </span>
+                  {hasFilters && (
+                    <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                      <button type="button" onClick={clearFilters} className="ds-btn is-secondary">Clear filters</button>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div>
+                  {visibleCollections.map((c, idx) => (
+                    <motion.button
+                      key={c.id}
+                      className="db-att-row"
+                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
+                      aria-label={`Collection of ${fmtINR(c.amount)} on ${fmtDate(c.collectionDate)}`}
+                      onClick={() => setDrawerCollection(c)}
+                      whileHover={{ background: 'var(--bg-subtle)' }}
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: idx * 0.03 }}
+                    >
+                      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
+                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Banknote size={13} style={{ color: 'var(--ink-tertiary)' }} />
+                          {c.borrowerName ?? '—'}
+                        </span>
+                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
+                          <StatusPill status={c.status} />
+                          <PaymentModePill mode={c.paymentMode} />
+                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                            {c.loanNumber ?? '—'}
                           </span>
-                          {hasFilters && (
-                            <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                              <button type="button" onClick={clearFilters} className="ds-btn is-secondary">Clear filters</button>
-                            </div>
-                          )}
-                        </motion.div>
-                      </td>
-                    </tr>
-                  ) : (
-                    visibleCollections.map((c, idx) => (
-                      <motion.tr
-                        key={c.id}
-                        className="is-clickable"
-                        tabIndex={0}
-                        role="row"
-                        aria-label={`Collection of ${fmtINR(c.amount)} on ${fmtDate(c.collectionDate)}`}
-                        onClick={() => setDrawerCollection(c)}
-                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDrawerCollection(c); } }}
-                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: idx * 0.03 }}
-                      >
-                        <td className="is-mono" style={{ fontWeight: 500, color: 'var(--ink-primary)' }}>
-                          {c.loanNumber ?? '—'}
-                        </td>
-                        <td>{c.borrowerName ?? '—'}</td>
-                        <td className="is-muted">{c.agentName ?? '—'}</td>
-                        <td className="is-mono is-muted" style={{ fontSize: 12 }}>{fmtDate(c.collectionDate)}</td>
-                        <td className="is-currency">{fmtINR(c.amount)}</td>
-                        <td><PaymentModePill mode={c.paymentMode} /></td>
-                        <td><StatusPill status={c.status} /></td>
-                        <td className="is-right" onClick={e => e.stopPropagation()}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                            {canApprove && c.status === 'PENDING_APPROVAL' && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => { setSelectedCollection(c); setApprovalInitialAction('APPROVE'); setShowApprovalModal(true); }}
-                                  className="db-error-retry db-action-success"
-                                  style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
-                                  title="Approve"
-                                >
-                                  <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Approve
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => { setSelectedCollection(c); setApprovalInitialAction('REJECT'); setShowApprovalModal(true); }}
-                                  className="db-error-retry db-action-danger"
-                                  style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
-                                  title="Reject"
-                                >
-                                  <XCircle size={12} style={{ marginRight: 4 }} /> Reject
-                                </button>
-                              </>
-                            )}
-                            {canApprove && c.status === 'APPROVED' && (
+                          <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
+                            / {c.agentName ?? '—'}
+                          </span>
+                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                            / {fmtDate(c.collectionDate)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                          {fmtINR(c.amount)}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={e => e.stopPropagation()}>
+                          {canApprove && c.status === 'PENDING_APPROVAL' && (
+                            <>
                               <button
                                 type="button"
-                                onClick={() => { setSelectedCollection(c); setShowDepositModal(true); }}
-                                className="db-error-retry db-action-info"
+                                onClick={() => { setSelectedCollection(c); setApprovalInitialAction('APPROVE'); setShowApprovalModal(true); }}
+                                className="db-error-retry db-action-success"
                                 style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
-                                title="Mark deposited"
+                                title="Approve"
                               >
-                                <Banknote size={12} style={{ marginRight: 4 }} /> Deposit
+                                <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Approve
                               </button>
-                            )}
-                            {c.documents && c.documents.length > 0 && (
-                              <button type="button" className="ds-table-row-action" title="View documents" aria-label="View documents">
-                                <FileText size={14} />
+                              <button
+                                type="button"
+                                onClick={() => { setSelectedCollection(c); setApprovalInitialAction('REJECT'); setShowApprovalModal(true); }}
+                                className="db-error-retry db-action-danger"
+                                style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
+                                title="Reject"
+                              >
+                                <XCircle size={12} style={{ marginRight: 4 }} /> Reject
                               </button>
-                            )}
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                            </>
+                          )}
+                          {canApprove && c.status === 'APPROVED' && (
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedCollection(c); setShowDepositModal(true); }}
+                              className="db-error-retry db-action-info"
+                              style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
+                              title="Mark deposited"
+                            >
+                              <Banknote size={12} style={{ marginRight: 4 }} /> Deposit
+                            </button>
+                          )}
+                          {c.documents && c.documents.length > 0 && (
+                            <button type="button" className="ds-table-row-action" title="View documents" aria-label="View documents">
+                              <FileText size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
+                      </div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
             </div>
 
             {/* ── Pagination ── */}
             {!loading && collections.length > 0 && totalPages > 1 && (
-              <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                <span className="up-page-meta">
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalElements.toLocaleString('en-IN')}</strong> records
-                </span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} aria-label="Previous page">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} aria-label="Next page">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
+              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
             )}
           </section>
         </div>
