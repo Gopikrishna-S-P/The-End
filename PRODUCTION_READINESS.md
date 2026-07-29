@@ -4,6 +4,11 @@ Generated 2026-07-29 from a deep audit of `server/`, `web/`, `mobile/` (security
 deployment automation, frontend-backend wiring, dead code, scalability). Target: production launch
 next week.
 
+**Update, same day:** all Blocker and High items across all three codebases are implemented and
+committed (3 commits — see `git log`). Medium/Low items are untouched, deliberately deferred as
+fast-follows per the original scope decision. Two things came up during implementation that weren't
+in the original audit — see "New findings" at the bottom before treating this as fully closed out.
+
 Scope note: this is a mature codebase (RLS-backed multi-tenancy, Argon2id auth, thorough file-upload
 validation, a real refresh-token flow, a working Redis-backed live-tracking pipeline). The gaps below
 are real but mostly *finishing* work, not foundational rework — nothing found requires re-architecting.
@@ -39,27 +44,36 @@ are real but mostly *finishing* work, not foundational rework — nothing found 
 ## SERVER (`recoverpro/server`)
 
 ### Blocker
-- [ ] Create a Dockerfile (multi-stage: Maven build → JRE-21 runtime, non-root user). Nothing runs
-      this in a container today.
-- [ ] Stand up CI (build + `mvn test` gate on PR, at minimum) before any deploy path exists.
-- [ ] Fix the S3 property-name mismatch: rename the code's `@Value` keys to match the documented
+- [x] Create a Dockerfile (multi-stage: Maven build → JRE-21 runtime, non-root user). Nothing runs
+      this in a container today. *(`server/Dockerfile` + `server/.dockerignore`)*
+- [x] Stand up CI (build + `mvn test` gate on PR, at minimum) before any deploy path exists.
+      *(`.github/workflows/server-ci.yml` — real Postgres+Redis service containers)*
+- [x] Fix the S3 property-name mismatch: rename the code's `@Value` keys to match the documented
       `app.aws.*` properties (or vice versa), and add an explicit `aws.s3.enabled=${AWS_S3_ENABLED:false}`
       line to `application.properties` so the toggle is documented and discoverable.
 
 ### High
-- [ ] Create `application-prod.properties` (or equivalent env-var matrix) with the *corrected* S3 keys,
+- [x] Create `application-prod.properties` (or equivalent env-var matrix) with the *corrected* S3 keys,
       prod logging config, and any other prod-only overrides.
-- [ ] Decide on SOS-audio cross-pod fan-out before scaling past 1 replica: `SosAudioWebSocketHandler`
+- [x] Decide on SOS-audio cross-pod fan-out before scaling past 1 replica: `SosAudioWebSocketHandler`
       has no Redis pub/sub (unlike `LiveTrackWebSocketHandler`, whose fan-out is genuinely complete) —
       a supervisor connected to pod B will never hear SOS audio uploaded via pod A.
-- [ ] Fix the Redis hard-dependency-at-startup issue (item 5 above): make `LiveTrackRedisSubscriber`'s
+      *(Built `SosAudioRedisSubscriber` + origin-tagged publish/deliver, mirroring the live-track
+      pattern — see "New findings" below, that pattern itself turned out to be broken and got fixed
+      as part of this.)*
+- [x] Fix the Redis hard-dependency-at-startup issue (item 5 above): make `LiveTrackRedisSubscriber`'s
       `@PostConstruct` subscribe resilient to Redis being briefly unreachable at boot, matching the
       non-fatal pattern used everywhere else Redis is touched.
+      *(Verified with a real test run: Postgres up / Redis down — previously failed to load the
+      Spring context, now starts cleanly and logs a warning instead.)*
 - [ ] Decide on ClamAV before accepting production file uploads (loan/borrower documents, visit
       photos): provision a daemon and set `clamav.enabled=true`, or explicitly accept the no-AV-scan
-      risk for launch and revisit after.
-- [ ] Document/automate the `ops_platform` BYPASSRLS role creation (`V040` migration) in the deploy
+      risk for launch and revisit after. **Still needs a decision — documented as an open question in
+      `DEPLOYMENT.md`, not resolved.**
+- [x] Document/automate the `ops_platform` BYPASSRLS role creation (`V040` migration) in the deploy
       runbook — today it's a manual "run this as superuser" step outside `flyway migrate`.
+      *(`DEPLOYMENT.md` — also flags that no code actually grants/assumes this role today; worth
+      confirming the intended mechanism before relying on it.)*
 
 ### Medium
 - [ ] Fix Stripe webhook handling so a `dispatch()` failure doesn't still return `200` — today a
@@ -88,24 +102,32 @@ are real but mostly *finishing* work, not foundational rework — nothing found 
 ## WEB (`recoverpro/web`)
 
 ### Blocker
-- [ ] Fix the CSP `connect-src` in `index.html` to allow the real production `wss://` origin, not just
+- [x] Fix the CSP `connect-src` in `index.html` to allow the real production `wss://` origin, not just
       `localhost` — as configured, Live Track and SOS Live Monitor cannot connect in production.
+      *(Switched to `connect-src 'self'`, which covers same-origin ws/wss in every environment.)*
 
 ### High
-- [ ] Add real security headers at the nginx layer: HSTS, X-Content-Type-Options,
+- [x] Add real security headers at the nginx layer: HSTS, X-Content-Type-Options,
       `frame-ancestors`/X-Frame-Options via HTTP header (the current meta-tag version is a documented
       spec no-op — there is effectively no clickjacking protection today), Referrer-Policy.
-- [ ] Compress/resize `src/assets/images/lucien-logo.png` — 1.5MB PNG loaded on every `/app/*` page.
-- [ ] Route-split the heaviest eagerly-loaded pages with `React.lazy` (only 4/59 pages are split
+- [x] Compress/resize `src/assets/images/lucien-logo.png` — 1.5MB PNG loaded on every `/app/*` page.
+      *(1024×1024/1.5MB → 128×128/11.7KB.)*
+- [x] Route-split the heaviest eagerly-loaded pages with `React.lazy` (only 4/59 pages are split
       today) — prioritize the Leaflet pages (`LiveTrackPage`, `FieldOpsPage`), xlsx-touching pages,
       and the whole Platform Admin console. Main bundle is currently 1.9MB.
-- [ ] Wire the notification center to the existing SSE endpoint (`GET /api/v1/notifications/stream`)
+      *(1.92MB → 1.49MB main chunk; also split `VisitsPage` for its xlsx dependency.)*
+- [x] Wire the notification center to the existing SSE endpoint (`GET /api/v1/notifications/stream`)
       instead of 25s polling — the backend capability already exists and is unused.
-- [ ] Verify `/api/v1/analytics/dashboard`, `/api/v1/dashboard/field-agent/{id}`, and
+      *(SSE primary, 120s reconciliation poll underneath, reverts to 25s poll when disconnected.)*
+- [x] Verify `/api/v1/analytics/dashboard`, `/api/v1/dashboard/field-agent/{id}`, and
       `/api/v1/platform/subscriptions/{orgId}/comp` against the live backend route table — not present
       in `feature-inventory.txt`; the dashboard endpoint is the highest-traffic call in the app.
-- [ ] Decide on `pages/ReportsAnalyticsPanel.tsx` — a complete, feature-gated component that is never
+      *(All 3 confirmed correctly implemented server-side — just missing from the doc. Updated
+      `feature-inventory.txt` instead of touching working frontend code.)*
+- [x] Decide on `pages/ReportsAnalyticsPanel.tsx` — a complete, feature-gated component that is never
       mounted anywhere. Wire it into `ReportsPage` or delete it.
+      *(Mounted into `ReportsPage`, above the report-jobs table. Compiles/builds clean; not manually
+      browser-verified against a live backend.)*
 
 ### Medium
 - [ ] Add nginx cache-control headers (long max-age immutable for hashed `/assets/*`) and gzip/brotli.
@@ -139,22 +161,31 @@ are real but mostly *finishing* work, not foundational rework — nothing found 
 ## MOBILE (`recoverpro/mobile`)
 
 ### Blocker
-- [ ] **Fix the offline-queue/backend mismatch for visit logs** (item 2 above) — either replay queued
+- [x] **Fix the offline-queue/backend mismatch for visit logs** (item 2 above) — either replay queued
       visits individually against `POST /api/v1/visit-logs` instead of the batch `/agent/sync`
       endpoint, or add real `VISIT_METADATA` handling server-side. Every offline-queued visit
       currently fails to sync, forever, with no user-visible error.
-- [ ] Create `eas.json` with dev/preview/production build profiles, and add `ios.bundleIdentifier` +
+      *(Chose the individual-replay path, matching the backend's own documented intent.)*
+- [x] Create `eas.json` with dev/preview/production build profiles, and add `ios.bundleIdentifier` +
       `android.package` to `app.json` — both are absent, so `eas build` cannot even start today.
+      *(Bundle id `com.recoverpro.field` is a placeholder — confirm before real store submission.)*
 
 ### High
-- [ ] Add an `Idempotency-Key` header to `visitLogApi.create()` (the backend already supports and
+- [x] Add an `Idempotency-Key` header to `visitLogApi.create()` (the backend already supports and
       expects it — `ptpsApi`/`paymentApi` already do this correctly, visit logs were missed).
-- [ ] Wire up crash reporting (e.g. Sentry via `@sentry/react-native`) — nothing captures production
+      *(Bundled with the Blocker fix above — same key, minted once, reused across offline retries.)*
+- [x] Wire up crash reporting (e.g. Sentry via `@sentry/react-native`) — nothing captures production
       crashes today, and there are zero `console.*` calls anywhere for even manual log inspection.
-- [ ] Add `expo-updates` + a `runtimeVersion`/channel policy so post-launch fixes don't require a full
+      *(No-ops until a real `EXPO_PUBLIC_SENTRY_DSN` is supplied — placeholder in `eas.json`.)*
+- [x] Add `expo-updates` + a `runtimeVersion`/channel policy so post-launch fixes don't require a full
       store resubmission.
-- [ ] Add environment-specific config (`.env.staging`/`.env.production` or `eas.json` env blocks) to
+      *(Fingerprint-based policy; `updates.url`/`extra.eas.projectId` still need a real `eas init`
+      run against an actual Expo account — can't be faked without one.)*
+- [x] Add environment-specific config (`.env.staging`/`.env.production` or `eas.json` env blocks) to
       supply `EXPO_PUBLIC_API_URL` per build profile once `eas.json` exists.
+      *(Production points at `https://recoverpro.in`, inferred from the web app's canonical URL —
+      double-check this; a stale code comment elsewhere references a `.com` domain instead. Preview/
+      staging is left as an explicit placeholder — no staging environment visibly exists yet.)*
 
 ### Medium
 - [ ] Scope or remove `android.usesCleartextTraffic: true` in `app.json` — currently a blanket flag
@@ -191,13 +222,41 @@ are real but mostly *finishing* work, not foundational rework — nothing found 
   item above is really one piece of work (pick a CI provider, wire 3 pipelines) rather than three
   separate efforts.
 
+## New findings from implementing the fixes (not in the original audit)
+
+- **`LiveTrackRedisSubscriber`'s cross-pod delivery was dead code.** The audit's server-agent pass
+  called live-track's Redis fan-out "genuinely complete" — it verified both a publish path and a
+  subscribe path existed, but not that the subscribe path actually delivered anywhere.
+  `addLocalSubscriber`/`removeLocalSubscriber` were never called from anywhere in the codebase, so
+  the subscriber's local-session registry was permanently empty and every cross-pod message it
+  received was silently dropped. In a single-instance deployment this was invisible (the in-process
+  fast path always worked); it would only have surfaced once someone actually scaled past one pod.
+  Fixed by rewiring it to deliver through `LiveTrackWebSocketHandler`'s real subscriber registry, with
+  per-pod origin-tagging added to prevent double-delivery on the publishing pod (a new failure mode
+  the fix itself would otherwise have introduced). The new SOS-audio fan-out was built on the
+  corrected pattern, not the original broken one.
+- **`ops_platform` role (V040 migration) has no code path that grants or assumes it.** Documented as
+  a decision point in `DEPLOYMENT.md` rather than resolved — needs a look at `DATABASE_DESIGN.md §3`
+  or whoever wrote it to confirm the intended mechanism before depending on it.
+- **Domain uncertainty for mobile's production API URL.** Set to `https://recoverpro.in` (matching
+  `web/index.html`'s canonical URL, the strongest evidence found), but `apiConfig.ts`'s own comment
+  gives `.com` as an example — worth a 30-second confirmation before the first real production build.
+- **Full `mvn test` suite was not run.** Only the one test directly relevant to the Redis-resilience
+  fix was run (with real evidence, Postgres up/Redis down, pass confirmed). The first real CI run may
+  surface pre-existing failures unrelated to this pass — check before assuming a red build means a
+  regression.
+- **`ReportsAnalyticsPanel` mount and the SSE notification wiring were verified via `tsc`/`vite build`
+  only**, not in a live browser against a running backend — unlike the live-location-tracking work
+  earlier this session, which was.
+
 ## Suggested order for a one-week runway
-1. **Days 1–2 — fix what's actively broken today** (independent of any deployment work): the mobile
-   offline-sync data-loss bug, the web CSP WebSocket block, the server S3 property mismatch, the
-   Redis-at-startup hard dependency, the Stripe webhook silent-drop.
-2. **Days 2–3 — stand up the deployment path**: server Dockerfile + CI, `eas.json` + mobile bundle
-   identifiers, nginx security headers.
-3. **Days 3–4 — observability**: crash reporting on all three (server APM/logging, web error
-   reporting, mobile Sentry) — you want this live *before* launch, not added after the first incident.
-4. **Days 4–5 — remaining High items**, then Medium/Low as time allows; Low items are safe to ship
-   after launch as fast-follows.
+
+**Blocker + High items across all three codebases are done as of this pass** (see checkboxes above).
+What's left:
+1. **Now** — the two open decisions: ClamAV (server) and confirming the `recoverpro.in` vs `.com`
+   domain (mobile) before a real production build.
+2. **Before first real deploy** — run `eas init` against a real Expo account (populates
+   `updates.url`/`extra.eas.projectId`) and create a real Sentry project (mobile DSN, plus consider
+   web/server error reporting, which weren't in this pass's scope — see Medium items above).
+3. **Whenever convenient** — the Medium items (Stripe webhook silent-drop, N+1 query, per-route error
+   boundaries, etc.) and Low items, both safe to ship as fast-follows after launch.
