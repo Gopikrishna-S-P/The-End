@@ -46,7 +46,7 @@ function showDesktop(notif: Notification): void {
   try {
     const n = new Notification(notif.title, {
       body: notif.body,
-      icon: '/vite.svg',
+      icon: '/favicon.png',
       tag: notif.id,
       silent: true,
     });
