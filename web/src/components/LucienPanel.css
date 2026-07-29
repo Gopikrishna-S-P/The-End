@@ -17,20 +17,14 @@
   transform: translateX(calc(100% + 32px));
   transition: transform 240ms var(--ease);
 
-  /* Floating Glassmorphic Container */
-  background: rgba(255, 255, 255, 0.85); /* Sleek light glass */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* Solid surface, matching the app's other floating panels (login modal,
+     detail drawers) rather than a bespoke glass effect. */
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 
   overflow: hidden;
-}
-.app-layout.dark .lucien-panel {
-  background: rgba(21, 23, 28, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .lucien-panel.is-open {
   transform: translateX(0);
@@ -49,9 +43,7 @@
   .lucien-panel { transition: none; }
 }
 
-/* ── Header — height matches the topbar so the two align ─────────────────────
-   No title and no rule: the panel is already identified by the button that
-   opened it, so the bar carries controls only and lets the thread start clean. */
+/* ── Header — height matches the topbar so the two align ───────────────────── */
 .lucien-panel .lucien-panel-head {
   display: flex;
   align-items: center;
@@ -60,6 +52,14 @@
   padding: 0 10px;
   flex-shrink: 0;
   background: transparent;
+  position: relative;
+}
+.lucien-panel .lucien-panel-brand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 .lucien-panel .lucien-panel-head-actions {
   display: flex;
@@ -92,9 +92,7 @@
   z-index: 3;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--bg-surface);
   animation: lucien-slide-in 160ms var(--ease) both;
 }
 @keyframes lucien-slide-in {
@@ -770,16 +768,46 @@
 /* ── Composer ──────────────────────────────────────────────────────────────── */
 .lucien-composer-wrap {
   flex-shrink: 0;
+  position: relative;
   /* Bottom padding was 10px when the disclaimer sat underneath and supplied the
      rest of the gap; with it gone the composer needs the full inset itself. */
   padding: 6px 12px 14px;
+}
+.lucien-listening-badge {
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  transform: translateY(-100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--danger-border);
+  background: var(--danger-subtle);
+  color: var(--danger);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: lucien-msg-in 140ms var(--ease) both;
+}
+.lucien-listening-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: lucien-mic-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lucien-listening-dot { animation: none; }
 }
 .lucien-composer {
   display: flex;
   align-items: flex-end;
   gap: 4px;
   padding: 5px 6px 5px 4px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: 20px;
   background: var(--bg-surface);
   transition: border-color 140ms, box-shadow 140ms;
@@ -844,8 +872,34 @@
 }
 .lucien-composer-tool:hover { background: var(--bg-subtle); color: var(--ink-primary); }
 .lucien-composer-tool:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.lucien-composer-tool.is-listening {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  animation: lucien-mic-pulse 1.4s ease-in-out infinite;
+}
+@keyframes lucien-mic-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lucien-composer-tool.is-listening { animation: none; }
+}
 
 .lucien-composer-right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.lucien-voice-lang-select {
+  height: 32px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-tertiary);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 140ms, color 140ms;
+}
+.lucien-voice-lang-select:hover { background: var(--bg-subtle); color: var(--ink-primary); }
+.lucien-voice-lang-select:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .lucien-composer-count {
   font-family: var(--font-mono);
   font-size: 10px;

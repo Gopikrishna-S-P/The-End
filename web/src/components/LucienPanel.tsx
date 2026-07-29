@@ -4,7 +4,10 @@ import {
   ShieldAlert, X,
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
-import { lucienApi } from '../api/lucienApi';
+import { lucienApi, type VoiceLang } from '../api/lucienApi';
+import { extractApiError } from '../utils/extractApiError';
+import { speak, stopSpeaking } from '../utils/speech';
+import { Logo } from './Logo';
 import { LucienMessage, type ChatMessage, type Feedback } from './LucienMessage';
 import { LucienHistory } from './LucienHistory';
 import { LucienComposer } from './LucienComposer';
@@ -23,6 +26,7 @@ interface LucienPanelProps {
 }
 
 const HISTORY_KEY = 'lucien-chat-history';
+const VOICE_LANG_KEY = 'lucien-voice-lang';
 const MAX_HISTORY = 60;
 const SEND_DEBOUNCE_MS = 100;
 
@@ -72,6 +76,10 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [loadingSession, setLoadingSession] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<VoiceLang>(() => {
+    const stored = localStorage.getItem(VOICE_LANG_KEY);
+    return (stored as VoiceLang) || 'en';
+  });
 
   const panelRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -84,10 +92,33 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-MAX_HISTORY))); } catch {/* quota */}
   }, [messages]);
 
+  useEffect(() => {
+    try { localStorage.setItem(VOICE_LANG_KEY, voiceLang); } catch {/* quota */}
+  }, [voiceLang]);
+
+  const handleVoiceLangChange = useCallback((lang: VoiceLang) => {
+    setVoiceLang(lang);
+    if (lang !== 'en') setToast("This language's voice isn't available yet — replies will use the English voice.");
+  }, []);
+
+  /**
+   * Speaks a reply aloud via the browser's built-in voice. The local Indic
+   * TTS pipeline (tts-service/ + TranslationService) is CPU-only on agent
+   * hardware — measured at ~8-9 minutes per reply in isolation, and prone to
+   * timing out well past 15 minutes if a second reply overlaps it — so it
+   * isn't wired up here. Replies stay on the instant browser voice regardless
+   * of the selected language until a fast-enough synthesis path (GPU or
+   * hosted API) exists; the backend TTS/translation code is left in place
+   * for that point.
+   */
+  const speakReply = useCallback((text: string) => {
+    speak(text);
+  }, []);
+
   // inert when closed so nothing inside is tabbable behind the app
   useEffect(() => {
     panelRef.current?.toggleAttribute('inert', !open);
-    if (!open) { setError(null); setHistoryOpen(false); }
+    if (!open) { setError(null); setHistoryOpen(false); stopSpeaking(); }
   }, [open]);
 
   // Track whether the reader is pinned to the bottom; only autoscroll if so.
@@ -143,8 +174,9 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       setSessionId(session.sessionId);
       setMessages([]);
       setPendingConfirm(null);
-    } catch {
-      setError('Lucien is unavailable right now. Please try again.');
+    } catch (e) {
+      console.error('Lucien startSession failed', e);
+      setError(extractApiError(e, 'Lucien is unavailable right now. Please try again.'));
     } finally {
       setStarting(false);
       startingRef.current = false;
@@ -174,6 +206,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       createdAt: resp.timestamp,
       modelName: resp.modelName,
     }]);
+    if (resp.reply) speakReply(resp.reply);
     if (resp.confirmationRequired && resp.pendingActionId) {
       setPendingConfirm({
         actionId: resp.pendingActionId,
@@ -181,10 +214,11 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
         toolName: resp.pendingToolName,
       });
     }
-  }, []);
+  }, [speakReply]);
 
   const deliver = useCallback(async (raw: string, userMsgId: string) => {
     if (!sessionId) return;
+    stopSpeaking();
     const controller = new AbortController();
     abortRef.current = controller;
     setSending(true);
@@ -196,7 +230,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       if (controller.signal.aborted) {
         setToast('Stopped.');
       } else {
-        setError('error');
+        console.error('Lucien sendMessage failed', e);
+        setError(extractApiError(e, 'Lucien did not respond. Please try again or start a new chat.'));
         setMessages(prev => prev.filter(m => m.id !== userMsgId));
         setInput(raw);
       }
@@ -256,21 +291,24 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
     setConfirming(true);
     try {
       const resp = await lucienApi.confirmAction(sessionId, { actionId: pendingConfirm.actionId, confirmed });
+      const replyText = resp.reply || (confirmed ? 'Action executed.' : 'Action cancelled.');
       setMessages(prev => [...prev, {
         id: resp.messageId ?? `a-${Date.now()}`,
         role: 'ASSISTANT',
-        content: resp.reply || (confirmed ? 'Action executed.' : 'Action cancelled.'),
+        content: replyText,
         createdAt: resp.timestamp,
         modelName: resp.modelName,
       }]);
-    } catch {
-      setError('error');
+      speakReply(replyText);
+    } catch (e) {
+      console.error('Lucien confirmAction failed', e);
+      setError(extractApiError(e, 'Failed to process confirmation. Please try again.'));
     } finally {
       setPendingConfirm(null);
       setConfirming(false);
       inputRef.current?.focus();
     }
-  }, [sessionId, pendingConfirm]);
+  }, [sessionId, pendingConfirm, speakReply]);
 
   const newChat = useCallback(async () => {
     if (startingRef.current) return;
@@ -311,8 +349,9 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       );
       setAtBottom(true);
       window.setTimeout(() => scrollToBottom('auto'), 0);
-    } catch {
-      setError('error');
+    } catch (e) {
+      console.error('Lucien openSession failed', e);
+      setError(extractApiError(e, 'Failed to load that conversation. Please try again.'));
     } finally {
       setLoadingSession(false);
     }
@@ -346,6 +385,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
             <History size={16} aria-hidden="true" />
           </button>
 
+          <Logo height={34} className="lucien-panel-brand" />
+
           <div className="lucien-panel-head-actions">
             <button type="button" className="lucien-panel-icon-btn" onClick={newChat}
               disabled={starting} aria-label="New chat" title="New chat">
@@ -371,8 +412,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
           <div className="lucien-panel-error" role="alert">
             <AlertCircle size={15} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
             <div className="lucien-panel-error-body">
-              <span className="lucien-panel-error-title">Lucien did not respond.</span>
-              <span className="lucien-panel-error-sub">Please try again or start a new chat.</span>
+              <span className="lucien-panel-error-title">{error}</span>
             </div>
             <button type="button" className="lucien-panel-retry"
               onClick={() => { setError(null); if (!sessionId) startSession(); }} aria-label="Retry">
@@ -495,6 +535,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
               : 'Connecting…'
           }
           onUnavailable={what => setToast(`${what} isn't available yet.`)}
+          voiceLang={voiceLang}
+          onVoiceLangChange={handleVoiceLangChange}
         />
 
         {toast && <div className="lucien-toast" role="status">{toast}</div>}

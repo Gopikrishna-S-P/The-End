@@ -23,6 +23,12 @@ public class RestTemplateConfig {
     @Value("${lucien.llama.read-timeout-ms:60000}")
     private int llamaReadMs;
 
+    @Value("${lucien.tts.connect-timeout-ms:5000}")
+    private int ttsConnectMs;
+
+    @Value("${lucien.tts.read-timeout-ms:60000}")
+    private int ttsReadMs;
+
     @Bean(name = "managerRestTemplate")
     public RestTemplate managerRestTemplate() {
         return build(managerConnectMs, managerReadMs);
@@ -31,6 +37,11 @@ public class RestTemplateConfig {
     @Bean(name = "llamaRestTemplate")
     public RestTemplate llamaRestTemplate() {
         return build(llamaConnectMs, llamaReadMs);
+    }
+
+    @Bean(name = "ttsRestTemplate")
+    public RestTemplate ttsRestTemplate() {
+        return build(ttsConnectMs, ttsReadMs);
     }
 
     private RestTemplate build(int connectMs, int readMs) {

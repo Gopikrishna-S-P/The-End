@@ -6,6 +6,10 @@ export function extractApiError(err: unknown, fallback = 'Something went wrong. 
   if (axios.isAxiosError(err)) {
     if (err.code === 'ERR_CANCELED') return '';
 
+    if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+      return 'The request timed out — the server is taking longer than expected. Please try again.';
+    }
+
     if (!err.response) {
       return 'Network error — check your connection and try again.';
     }

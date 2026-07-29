@@ -1,0 +1,45 @@
+# Lucien Indic TTS microservice — wraps ai4bharat/IndicF5 (F5-TTS-style voice
+# cloning). Recommended: Python 3.10 or 3.11 (IndicF5 upstream target).
+#
+# Setup:
+#   python -m venv .venv
+#   .venv/Scripts/python.exe -m pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+#
+# Also accept the gated model at https://huggingface.co/ai4bharat/IndicF5 and set:
+#   set HF_TOKEN=hf_...
+#
+# CPU-only torch/torchaudio wheels are pulled from the PyTorch index above;
+# everything else resolves from PyPI via --extra-index-url.
+
+fastapi==0.140.13
+uvicorn[standard]==0.51.0
+pydantic==2.13.4
+soundfile==0.14.0
+numpy==2.4.6
+accelerate==0.33.0
+huggingface-hub==0.36.2
+transformers==4.49.0
+tokenizers>=0.21,<0.22
+torch==2.13.0+cpu
+torchaudio==2.11.0+cpu
+
+# IndicF5 inference code (provides the f5_tts package the HF model imports).
+f5-tts @ git+https://github.com/AI4Bharat/IndicF5.git
+
+# Pulled in by IndicF5's trust_remote_code=True model/inference code (F5-TTS lineage).
+cached_path==1.8.10
+click==8.4.2
+datasets==5.0.1
+ema_pytorch==0.8.2
+hydra-core==1.3.4
+librosa==0.11.0
+pydub==0.25.1
+pypinyin==0.55.0
+rjieba==0.2.1
+safetensors==0.8.0
+tomli==2.4.1
+torchdiffeq==0.2.5
+transformers_stream_generator==0.0.5
+unidecode==1.4.0
+vocos==0.1.0
+x_transformers==2.24.0

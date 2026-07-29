@@ -54,6 +54,12 @@ export interface ConfirmActionRequest {
   confirmed: boolean;
 }
 
+/** Languages the local Indic TTS microservice (tts-service/) can speak. */
+export type IndicVoiceLang = 'hi' | 'ta' | 'kn' | 'te';
+
+/** 'en' means "use the browser's built-in voice" — no backend call. */
+export type VoiceLang = 'en' | IndicVoiceLang;
+
 export const lucienApi = {
   startSession: async (data: StartSessionRequest): Promise<SessionResponse> => {
     const response = await axiosInstance.post<ApiResponse<SessionResponse>>('/api/v1/lucien/sessions', data);
@@ -115,5 +121,23 @@ export const lucienApi = {
    */
   deleteSession: async (sessionId: string): Promise<void> => {
     await axiosInstance.delete(`/api/v1/lucien/sessions/${sessionId}`);
+  },
+
+  /**
+   * Synthesizes `text` as spoken audio in an Indic language via the local
+   * tts-service. Silent on failure at the call site is the caller's job —
+   * this suppresses the global error toast (`_noToast`) since voice output
+   * is a nice-to-have that should fall back to browser TTS, not alarm the
+   * user, and skips retries (`_noRetry`) so that fallback happens quickly.
+   */
+  speak: async (text: string, lang: IndicVoiceLang, signal?: AbortSignal): Promise<Blob> => {
+    const response = await axiosInstance.post('/api/v1/lucien/speak', { text, lang }, {
+      signal,
+      responseType: 'blob',
+      timeout: 60_000,
+      _noToast: true,
+      _noRetry: true,
+    });
+    return response.data;
   },
 };
