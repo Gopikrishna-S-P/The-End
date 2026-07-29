@@ -4,11 +4,11 @@ Ollama serving the LLM: a small always-on local process the Java backend
 calls over HTTP, so LucienAgentLoop/LlamaClient don't need to embed Python.
 
 Supports exactly the 4 languages Lucien needs to speak: Hindi, Tamil,
-Kannada, Malayalam. Each is driven by a reference voice clip + its transcript
+Kannada, Telugu. Each is driven by a reference voice clip + its transcript
 (F5-TTS style voice cloning) — IndicF5's own official demo cross-lingually
 pairs a Punjabi reference with Hindi text and a Tamil reference with
-Malayalam text, since no dedicated Hindi/Malayalam reference clip ships with
-the model; we reuse those exact pairings here.
+Telugu/Malayalam text, since no dedicated Hindi/Telugu reference clip ships
+with the model; we reuse those exact pairings here.
 
 Run: .venv/Scripts/python.exe -m uvicorn app:app --host 127.0.0.1 --port 8100
 """
@@ -18,10 +18,32 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
+import torch
+import torchaudio
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 from transformers import AutoModel
+
+
+def _patch_torchaudio_load() -> None:
+    """Use soundfile for reference-audio loading.
+
+    torchaudio 2.11+ defaults to torchcodec, which needs FFmpeg DLLs on Windows.
+    IndicF5 only needs plain WAV loading, so soundfile is enough and avoids that
+    native dependency chain.
+    """
+
+    def _load_with_soundfile(uri, *args, **kwargs):
+        del args, kwargs
+        data, sample_rate = sf.read(uri, always_2d=True)
+        tensor = torch.from_numpy(data.T).float()
+        return tensor, sample_rate
+
+    torchaudio.load = _load_with_soundfile
+
+
+_patch_torchaudio_load()
 
 BASE_DIR = Path(__file__).parent
 PROMPTS_DIR = BASE_DIR / "prompts"
@@ -40,9 +62,9 @@ LANG_PROMPTS = {
         "ref_audio": PROMPTS_DIR / "KAN_F_HAPPY_00001.wav",
         "ref_text": "ನಮ್‌ ಫ್ರಿಜ್ಜಲ್ಲಿ  ಕೂಲಿಂಗ್‌ ಸಮಸ್ಯೆ ಆಗಿ ನಾನ್‌ ಭಾಳ ದಿನದಿಂದ ಒದ್ದಾಡ್ತಿದ್ದೆ, ಆದ್ರೆ ಅದ್ನೀಗ ಮೆಕಾನಿಕ್ ಆಗಿರೋ ನಿಮ್‌ ಸಹಾಯ್ದಿಂದ ಬಗೆಹರಿಸ್ಕೋಬೋದು ಅಂತಾಗಿ ನಿರಾಳ ಆಯ್ತು ನಂಗೆ.",
     },
-    "ml": {
-        # No dedicated Malayalam reference ships with the model — AI4Bharat's
-        # own demo pairs Malayalam text with this same Tamil reference clip.
+    "te": {
+        # No dedicated Telugu reference ships with the model — cross-lingual
+        # synthesis with the Tamil reference clip works well in IndicF5 demos.
         "ref_audio": PROMPTS_DIR / "TAM_F_HAPPY_00001.wav",
         "ref_text": "நான் நெனச்ச மாதிரியே அமேசான்ல பெரிய தள்ளுபடி வந்திருக்கு. கம்மி காசுக்கே அந்தப் புது சேம்சங் மாடல வாங்கிடலாம்.",
     },

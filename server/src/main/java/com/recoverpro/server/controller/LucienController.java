@@ -1,9 +1,11 @@
 package com.recoverpro.server.controller;
 
 import com.recoverpro.server.annotation.RequiresFeature;
+import com.recoverpro.server.client.TtsClient;
 import com.recoverpro.server.config.PlanFeatureMatrix;
 import com.recoverpro.server.dto.request.ChatRequest;
 import com.recoverpro.server.dto.request.ConfirmActionRequest;
+import com.recoverpro.server.dto.request.SpeakRequest;
 import com.recoverpro.server.dto.request.StartSessionRequest;
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.dto.response.PagedResponse;
@@ -12,6 +14,7 @@ import com.recoverpro.server.dto.response.ChatResponse;
 import com.recoverpro.server.dto.response.SessionResponse;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.LucienService;
+import com.recoverpro.server.service.ai.TranslationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,6 +40,8 @@ import java.util.UUID;
 public class LucienController {
 
     private final LucienService lucienService;
+    private final TtsClient ttsClient;
+    private final TranslationService translationService;
 
     @PostMapping("/sessions")
     @RequiresFeature(PlanFeatureMatrix.LUCIEN_AI)
@@ -116,6 +122,20 @@ public class LucienController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<SessionResponse> sessions = lucienService.getSessionsByAgent(agentId, pageable, principal);
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(sessions), "Agent sessions fetched."));
+    }
+
+    /**
+     * Synthesizes speech for Lucien replies in Hindi/Tamil/Kannada/Telugu via the
+     * local Indic TTS microservice (tts-service/, wraps ai4bharat/IndicF5). English
+     * playback stays on the browser's built-in speechSynthesis — no backend call.
+     */
+    @PostMapping(value = "/speak", produces = "audio/wav")
+    @RequiresFeature(PlanFeatureMatrix.LUCIEN_AI)
+    public ResponseEntity<byte[]> speak(@Valid @RequestBody SpeakRequest request) {
+        log.debug("POST /api/v1/lucien/speak -- lang={}, textLen={}", request.getLang(), request.getText().length());
+        String textToSpeak = translationService.translateForSpeech(request.getText(), request.getLang());
+        byte[] audio = ttsClient.synthesize(textToSpeak, request.getLang());
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("audio/wav")).body(audio);
     }
 
     @DeleteMapping("/sessions/{sessionId}")

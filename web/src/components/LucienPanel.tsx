@@ -4,7 +4,7 @@ import {
   ShieldAlert, X,
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
-import { lucienApi } from '../api/lucienApi';
+import { lucienApi, type VoiceLang } from '../api/lucienApi';
 import { extractApiError } from '../utils/extractApiError';
 import { speak, stopSpeaking } from '../utils/speech';
 import { Logo } from './Logo';
@@ -26,6 +26,7 @@ interface LucienPanelProps {
 }
 
 const HISTORY_KEY = 'lucien-chat-history';
+const VOICE_LANG_KEY = 'lucien-voice-lang';
 const MAX_HISTORY = 60;
 const SEND_DEBOUNCE_MS = 100;
 
@@ -75,6 +76,10 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [loadingSession, setLoadingSession] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<VoiceLang>(() => {
+    const stored = localStorage.getItem(VOICE_LANG_KEY);
+    return (stored as VoiceLang) || 'en';
+  });
 
   const panelRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -86,6 +91,29 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
   useEffect(() => {
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-MAX_HISTORY))); } catch {/* quota */}
   }, [messages]);
+
+  useEffect(() => {
+    try { localStorage.setItem(VOICE_LANG_KEY, voiceLang); } catch {/* quota */}
+  }, [voiceLang]);
+
+  const handleVoiceLangChange = useCallback((lang: VoiceLang) => {
+    setVoiceLang(lang);
+    if (lang !== 'en') setToast("This language's voice isn't available yet — replies will use the English voice.");
+  }, []);
+
+  /**
+   * Speaks a reply aloud via the browser's built-in voice. The local Indic
+   * TTS pipeline (tts-service/ + TranslationService) is CPU-only on agent
+   * hardware — measured at ~8-9 minutes per reply in isolation, and prone to
+   * timing out well past 15 minutes if a second reply overlaps it — so it
+   * isn't wired up here. Replies stay on the instant browser voice regardless
+   * of the selected language until a fast-enough synthesis path (GPU or
+   * hosted API) exists; the backend TTS/translation code is left in place
+   * for that point.
+   */
+  const speakReply = useCallback((text: string) => {
+    speak(text);
+  }, []);
 
   // inert when closed so nothing inside is tabbable behind the app
   useEffect(() => {
@@ -178,7 +206,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       createdAt: resp.timestamp,
       modelName: resp.modelName,
     }]);
-    if (resp.reply) speak(resp.reply);
+    if (resp.reply) speakReply(resp.reply);
     if (resp.confirmationRequired && resp.pendingActionId) {
       setPendingConfirm({
         actionId: resp.pendingActionId,
@@ -186,7 +214,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
         toolName: resp.pendingToolName,
       });
     }
-  }, []);
+  }, [speakReply]);
 
   const deliver = useCallback(async (raw: string, userMsgId: string) => {
     if (!sessionId) return;
@@ -271,7 +299,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
         createdAt: resp.timestamp,
         modelName: resp.modelName,
       }]);
-      speak(replyText);
+      speakReply(replyText);
     } catch (e) {
       console.error('Lucien confirmAction failed', e);
       setError(extractApiError(e, 'Failed to process confirmation. Please try again.'));
@@ -280,7 +308,7 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
       setConfirming(false);
       inputRef.current?.focus();
     }
-  }, [sessionId, pendingConfirm]);
+  }, [sessionId, pendingConfirm, speakReply]);
 
   const newChat = useCallback(async () => {
     if (startingRef.current) return;
@@ -507,6 +535,8 @@ export default function LucienPanel({ open, onClose }: LucienPanelProps) {
               : 'Connecting…'
           }
           onUnavailable={what => setToast(`${what} isn't available yet.`)}
+          voiceLang={voiceLang}
+          onVoiceLangChange={handleVoiceLangChange}
         />
 
         {toast && <div className="lucien-toast" role="status">{toast}</div>}

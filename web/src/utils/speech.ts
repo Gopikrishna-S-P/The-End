@@ -31,8 +31,40 @@ export function speak(text: string): void {
   window.speechSynthesis.speak(utterance);
 }
 
+let currentClip: HTMLAudioElement | null = null;
+
+/** Stops both browser speechSynthesis and any HF-TTS audio clip currently playing. */
 export function stopSpeaking(): void {
   if (isSpeechSynthesisSupported()) window.speechSynthesis.cancel();
+  if (currentClip) {
+    currentClip.pause();
+    currentClip.src = '';
+    currentClip = null;
+  }
+}
+
+/**
+ * Plays a synthesized speech clip (e.g. from the tts-service backend),
+ * replacing anything currently being spoken. The object URL is revoked once
+ * playback ends or fails so the blob doesn't leak. Returns the play()
+ * promise so callers can detect and react to playback failures (e.g.
+ * browser autoplay-policy rejection) instead of it failing silently.
+ */
+export function playSpeechClip(audio: Blob): Promise<void> {
+  stopSpeaking();
+  const url = URL.createObjectURL(audio);
+  const el = new Audio(url);
+  currentClip = el;
+  const cleanup = () => {
+    URL.revokeObjectURL(url);
+    if (currentClip === el) currentClip = null;
+  };
+  el.addEventListener('ended', cleanup);
+  el.addEventListener('error', cleanup);
+  return el.play().catch((e) => {
+    cleanup();
+    throw e;
+  });
 }
 
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
@@ -61,17 +93,20 @@ export function isSpeechRecognitionSupported(): boolean {
 /**
  * Starts live dictation. `onTranscript` fires on every interim and final
  * result with the full transcript accumulated so far in this session.
- * Returns a stop() function, or null if the browser has no speech API.
+ * `locale` is a BCP-47 tag (e.g. 'hi-IN'); defaults to the browser's
+ * language when omitted. Returns a stop() function, or null if the browser
+ * has no speech API.
  */
 export function startDictation(
   onTranscript: (transcript: string) => void,
   onEnd: () => void,
+  locale?: string,
 ): (() => void) | null {
   const Ctor = getSpeechRecognitionCtor();
   if (!Ctor) return null;
 
   const recognition = new Ctor();
-  recognition.lang = navigator.language || 'en-US';
+  recognition.lang = locale || navigator.language || 'en-US';
   recognition.continuous = true;
   recognition.interimResults = true;
 

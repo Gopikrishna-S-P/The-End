@@ -32,6 +32,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable", ex.getMessage(), req);
     }
 
+    @ExceptionHandler(TtsUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleTtsUnavailable(TtsUnavailableException ex, HttpServletRequest req) {
+        log.warn("Lucien TTS unavailable: {}", ex.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable", ex.getMessage(), req);
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest req) {
         log.debug("Business rule violation: {}", ex.getMessage());
