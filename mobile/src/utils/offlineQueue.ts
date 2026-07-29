@@ -15,6 +15,11 @@ import type { CreatePtpRequest, SubmitCollectionRequest, VisitLogRequest } from 
 
 const STORAGE_KEY = 'rp_offline_sync_queue';
 
+// A device offline for a long field shift (or stuck on a permanently-failing item -- see
+// trySync()'s per-kind failure handling) could otherwise grow this list of AsyncStorage
+// forever. 100 is generous for a single day's worth of PTPs/collections/visits.
+const MAX_QUEUE_SIZE = 100;
+
 type Listener = (count: number) => void;
 const listeners = new Set<Listener>();
 
@@ -45,22 +50,31 @@ export async function queueCount(): Promise<number> {
   return (await readQueue()).length;
 }
 
-export async function enqueuePtp(ptp: CreatePtpRequest): Promise<void> {
+/** @returns false if the queue is already full (MAX_QUEUE_SIZE) and this item was NOT queued. */
+export async function enqueuePtp(ptp: CreatePtpRequest): Promise<boolean> {
   const queue = await readQueue();
+  if (queue.length >= MAX_QUEUE_SIZE) return false;
   queue.push({ clientId: newClientId(), kind: 'PTP', ptp });
   await writeQueue(queue);
+  return true;
 }
 
-export async function enqueueCollection(collection: SubmitCollectionRequest): Promise<void> {
+/** @returns false if the queue is already full (MAX_QUEUE_SIZE) and this item was NOT queued. */
+export async function enqueueCollection(collection: SubmitCollectionRequest): Promise<boolean> {
   const queue = await readQueue();
+  if (queue.length >= MAX_QUEUE_SIZE) return false;
   queue.push({ clientId: newClientId(), kind: 'COLLECTION', collection });
   await writeQueue(queue);
+  return true;
 }
 
-export async function enqueueVisitMetadata(visit: VisitLogRequest, idempotencyKey: string): Promise<void> {
+/** @returns false if the queue is already full (MAX_QUEUE_SIZE) and this item was NOT queued. */
+export async function enqueueVisitMetadata(visit: VisitLogRequest, idempotencyKey: string): Promise<boolean> {
   const queue = await readQueue();
+  if (queue.length >= MAX_QUEUE_SIZE) return false;
   queue.push({ clientId: newClientId(), kind: 'VISIT_METADATA', visit, idempotencyKey });
   await writeQueue(queue);
+  return true;
 }
 
 export interface SyncResult {

@@ -24,4 +24,19 @@ function resolveApiBaseUrl(): string {
   return 'http://localhost:8080';
 }
 
-export const API_BASE_URL = resolveApiBaseUrl();
+const resolvedBaseUrl = resolveApiBaseUrl();
+
+// android.usesCleartextTraffic is on app-wide (see app.json) so the LAN-IP dev fallback
+// above works on a physical device's Wi-Fi, where a dev server has no TLS cert. That flag
+// has no per-domain scoping in a plain Expo config, so this is the other half of the
+// guard: a release build (__DEV__ false) must never actually resolve to a plain-http
+// URL, whether from a misconfigured EXPO_PUBLIC_API_URL or -- impossible in practice,
+// since it's always set for eas.json's preview/production profiles, but worth guarding
+// anyway -- silently falling through to the dev-only branches above.
+if (!__DEV__ && resolvedBaseUrl.startsWith('http://')) {
+  throw new Error(
+    `Refusing to run a release build against a plain-http API URL (${resolvedBaseUrl}). `
+      + 'Set EXPO_PUBLIC_API_URL to an https:// origin.');
+}
+
+export const API_BASE_URL = resolvedBaseUrl;

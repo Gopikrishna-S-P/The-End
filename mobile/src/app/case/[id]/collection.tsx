@@ -86,7 +86,11 @@ export default function CollectionFormScreen() {
           setError("You're offline and have a receipt photo attached — photos can't be queued. Retry once you have signal, or remove the photo to save offline.");
           return;
         }
-        await enqueueCollection({ ...payload, idempotencyKey: newIdempotencyKey() });
+        const queued = await enqueueCollection({ ...payload, idempotencyKey: newIdempotencyKey() });
+        if (!queued) {
+          setError('Too many items waiting to sync — connect to the internet before saving more offline.');
+          return;
+        }
         router.replace({ pathname: '/case/[id]', params: { id, savedOffline: '1' } });
         return;
       }

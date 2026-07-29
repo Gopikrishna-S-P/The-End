@@ -109,7 +109,11 @@ export default function VisitFormScreen() {
           setFormError("You're offline and have photos attached — photos can't be queued. Retry once you have signal, or remove the photos to save offline.");
           return;
         }
-        await enqueueVisitMetadata(payload, idempotencyKey);
+        const queued = await enqueueVisitMetadata(payload, idempotencyKey);
+        if (!queued) {
+          setFormError('Too many visits waiting to sync — connect to the internet before saving more offline.');
+          return;
+        }
         // No server-issued visit id yet, so PAID/PTP chaining happens after this
         // visit syncs — from the case's "recent visits" list once it appears.
         router.replace({ pathname: '/case/[id]', params: { id, savedOffline: '1' } });

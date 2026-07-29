@@ -59,7 +59,11 @@ export default function PtpFormScreen() {
       router.replace({ pathname: '/case/[id]', params: { id } });
     } catch (e) {
       if (isNetworkError(e)) {
-        await enqueuePtp(payload);
+        const queued = await enqueuePtp(payload);
+        if (!queued) {
+          setError('Too many items waiting to sync — connect to the internet before saving more offline.');
+          return;
+        }
         router.replace({ pathname: '/case/[id]', params: { id, savedOffline: '1' } });
         return;
       }

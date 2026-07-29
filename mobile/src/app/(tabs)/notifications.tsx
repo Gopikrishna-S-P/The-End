@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { BellOff, X } from 'lucide-react-native';
+import { BellOff, WifiOff, X } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { Text, Badge, EmptyState, LoadingView } from '@/components/ui';
 import { notificationsApi } from '@/api/notificationsApi';
@@ -16,10 +16,16 @@ export default function NotificationsScreen() {
   const [items, setItems] = useState<ServerNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
-    const list = await notificationsApi.list();
-    setItems(list);
+    try {
+      const list = await notificationsApi.list();
+      setItems(list);
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
+    }
   }, []);
 
   useFocusEffect(
@@ -31,7 +37,7 @@ export default function NotificationsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await load().catch(() => {});
+    await load();
     setRefreshing(false);
   };
 
@@ -83,7 +89,11 @@ export default function NotificationsScreen() {
             </Pressable>
           </Pressable>
         )}
-        ListEmptyComponent={<EmptyState icon={BellOff} title="You're all caught up" message="New alerts about your cases will show up here." />}
+        ListEmptyComponent={
+          loadError
+            ? <EmptyState icon={WifiOff} title="Couldn't load alerts" message="Pull down to try again." />
+            : <EmptyState icon={BellOff} title="You're all caught up" message="New alerts about your cases will show up here." />
+        }
       />
     </SafeAreaView>
   );

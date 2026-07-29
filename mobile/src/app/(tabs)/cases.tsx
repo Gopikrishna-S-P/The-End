@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Briefcase, Search, X } from 'lucide-react-native';
+import { Briefcase, Search, WifiOff, X } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Text, EmptyState, LoadingView } from '@/components/ui';
@@ -19,11 +19,17 @@ export default function MyCasesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [cases, setCases] = useState<AllocationResponse[]>([]);
   const [search, setSearch] = useState('');
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
-    const paged = await allocationsApi.getMyCases(user.id, { size: 200 });
-    setCases(paged.content);
+    try {
+      const paged = await allocationsApi.getMyCases(user.id, { size: 200 });
+      setCases(paged.content);
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
+    }
   }, [user]);
 
   useFocusEffect(
@@ -35,7 +41,7 @@ export default function MyCasesScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await load().catch(() => {});
+    await load();
     setRefreshing(false);
   };
 
@@ -87,11 +93,15 @@ export default function MyCasesScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={
-          <EmptyState
-            icon={Briefcase}
-            title="No cases found"
-            message={search ? 'Try adjusting your search.' : 'No cases are currently assigned to you.'}
-          />
+          loadError
+            ? <EmptyState icon={WifiOff} title="Couldn't load cases" message="Pull down to try again." />
+            : (
+              <EmptyState
+                icon={Briefcase}
+                title="No cases found"
+                message={search ? 'Try adjusting your search.' : 'No cases are currently assigned to you.'}
+              />
+            )
         }
       />
     </SafeAreaView>
