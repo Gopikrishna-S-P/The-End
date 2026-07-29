@@ -6,6 +6,8 @@ import com.recoverpro.server.repository.AppNotificationRepository;
 import com.recoverpro.server.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +20,19 @@ import java.util.UUID;
 @Transactional
 public class NotificationServiceImpl implements NotificationService {
 
+    // Bounds the previously-unbounded GET /api/v1/notifications response -- unread notifications
+    // are self-limiting in the common case, but with no cap a stale/abandoned account could return
+    // an arbitrarily large payload. Matches UserController's own list-endpoint cap for consistency.
+    private static final int MAX_UNREAD_RETURNED = 200;
+
     private final AppNotificationRepository notificationRepository;
     private final NotificationSseService sseService;
 
     @Override
     @Transactional(readOnly = true)
     public List<AppNotification> getUnreadForUser(UUID userId, UUID orgId) {
-        return notificationRepository.findUnreadByUserAndOrg(userId, orgId);
+        Pageable cap = PageRequest.of(0, MAX_UNREAD_RETURNED);
+        return notificationRepository.findUnreadByUserAndOrg(userId, orgId, cap);
     }
 
     @Override

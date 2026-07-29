@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -242,13 +243,17 @@ public class AgentFieldServiceImpl implements AgentFieldService {
     @Override
     @Transactional(readOnly = true)
     public List<AgentLiveStatusResponse> listActiveAgents(UUID organizationId) {
-        return shiftRepository
-                .findByOrganizationIdAndStatus(organizationId, ShiftStatus.ACTIVE)
-                .stream()
+        List<AgentShift> activeShifts = shiftRepository
+                .findByOrganizationIdAndStatus(organizationId, ShiftStatus.ACTIVE);
+        if (activeShifts.isEmpty()) return List.of();
+
+        List<UUID> agentIds = activeShifts.stream().map(AgentShift::getAgentId).distinct().toList();
+        Map<UUID, AgentLocationPing> latestByAgent = pingRepository.findLatestPerAgent(agentIds).stream()
+                .collect(Collectors.toMap(AgentLocationPing::getAgentId, p -> p));
+
+        return activeShifts.stream()
                 .map(s -> {
-                    AgentLocationPing latest = pingRepository
-                            .findTop20ByAgentIdOrderByRecordedAtDesc(s.getAgentId())
-                            .stream().findFirst().orElse(null);
+                    AgentLocationPing latest = latestByAgent.get(s.getAgentId());
                     return AgentLiveStatusResponse.builder()
                             .shiftId(s.getId())
                             .agentId(s.getAgentId())

@@ -60,6 +60,18 @@ public class StripeWebhookService {
         }
     }
 
+    /**
+     * Undoes claimEvent() after a failed dispatch, so a subsequent Stripe retry can
+     * re-claim and re-attempt this event instead of forever seeing it as already
+     * processed. Runs in its own transaction, same as claimEvent(), since the claim
+     * itself already committed independently and there is nothing for an enclosing
+     * transaction to roll back.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void releaseEventClaim(String eventId) {
+        processedEventRepository.deleteById(eventId);
+    }
+
     @Transactional
     public void handleCheckoutCompleted(Session session) {
         OrgSubscription sub = requireByCustomerId(session.getCustomer());

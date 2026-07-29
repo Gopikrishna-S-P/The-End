@@ -72,6 +72,11 @@ public class StripeWebhookController {
         } catch (Exception e) {
             log.error("Error handling Stripe event {} (type={}): {}",
                     event.getId(), event.getType(), e.getMessage(), e);
+            // Release the claim so Stripe's automatic retry (triggered by this non-200
+            // response) can re-claim and re-attempt instead of hitting the "already
+            // processed" short-circuit above and this failure being silently permanent.
+            stripeWebhookService.releaseEventClaim(event.getId());
+            return ResponseEntity.status(500).body("Processing failed, will retry");
         }
         return ResponseEntity.ok("Processed");
     }

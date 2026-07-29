@@ -10,7 +10,7 @@ class WebhookSecretsStartupCheckTest {
     @Test
     void stripeEnabledWithEmptyWebhookSecret_refusesToStart() {
         StripeConfig stripeConfig = stripeConfig("sk_live_123", "");
-        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig, new DlrProvidersProperties());
+        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig);
 
         assertThatIllegalStateException()
                 .isThrownBy(check::verify)
@@ -20,7 +20,7 @@ class WebhookSecretsStartupCheckTest {
     @Test
     void stripeEnabledWithWebhookSecretSet_startsCleanly() {
         StripeConfig stripeConfig = stripeConfig("sk_live_123", "whsec_abc");
-        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig, new DlrProvidersProperties());
+        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig);
 
         assertThatCode(check::verify).doesNotThrowAnyException();
     }
@@ -28,31 +28,7 @@ class WebhookSecretsStartupCheckTest {
     @Test
     void stripeDisabled_emptyWebhookSecretIsFine() {
         StripeConfig stripeConfig = stripeConfig("", "");
-        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig, new DlrProvidersProperties());
-
-        assertThatCode(check::verify).doesNotThrowAnyException();
-    }
-
-    @Test
-    void dlrProviderConfiguredWithoutSecret_refusesToStart() {
-        DlrProvidersProperties dlr = new DlrProvidersProperties();
-        DlrProvidersProperties.ProviderConfig pc = new DlrProvidersProperties.ProviderConfig();
-        pc.setSecret("");
-        dlr.getProviders().put("twilio", pc);
-        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig("", ""), dlr);
-
-        assertThatIllegalStateException()
-                .isThrownBy(check::verify)
-                .withMessageContaining("twilio");
-    }
-
-    @Test
-    void dlrProviderConfiguredWithSecret_startsCleanly() {
-        DlrProvidersProperties dlr = new DlrProvidersProperties();
-        DlrProvidersProperties.ProviderConfig pc = new DlrProvidersProperties.ProviderConfig();
-        pc.setSecret("s3cr3t");
-        dlr.getProviders().put("twilio", pc);
-        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig("", ""), dlr);
+        WebhookSecretsStartupCheck check = new WebhookSecretsStartupCheck(stripeConfig);
 
         assertThatCode(check::verify).doesNotThrowAnyException();
     }

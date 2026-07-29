@@ -17,12 +17,13 @@
   transform: translateX(calc(100% + 32px));
   transition: transform 240ms var(--ease);
 
-  /* Solid surface, matching the app's other floating panels (login modal,
-     detail drawers) rather than a bespoke glass effect. */
-  background: var(--bg-surface);
+  /* Floating Glassmorphic Container */
+  background: rgba(255, 255, 255, 0.85); /* Sleek light glass */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 
   overflow: hidden;
 }

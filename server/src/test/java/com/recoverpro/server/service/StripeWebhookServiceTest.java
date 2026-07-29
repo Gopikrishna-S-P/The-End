@@ -79,6 +79,13 @@ class StripeWebhookServiceTest {
     }
 
     @Test
+    void releaseEventClaim_deletesTheClaimRow() {
+        webhookService.releaseEventClaim("evt_1");
+
+        verify(processedEventRepository).deleteById("evt_1");
+    }
+
+    @Test
     void handleCheckoutCompleted_activatesSubscriptionAndStoresSubscriptionId() {
         OrgSubscription sub = OrgSubscription.builder()
                 .orgId(UUID.randomUUID())

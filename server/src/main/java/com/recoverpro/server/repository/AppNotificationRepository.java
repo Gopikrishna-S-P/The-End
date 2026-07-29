@@ -23,7 +23,8 @@ public interface AppNotificationRepository extends JpaRepository<AppNotification
            "AND n.readAt IS NULL AND n.dismissed = false " +
            "AND (n.snoozedUntil IS NULL OR n.snoozedUntil <= CURRENT_TIMESTAMP) " +
            "ORDER BY n.createdAt DESC")
-    List<AppNotification> findUnreadByUserAndOrg(@Param("userId") UUID userId, @Param("orgId") UUID orgId);
+    List<AppNotification> findUnreadByUserAndOrg(
+            @Param("userId") UUID userId, @Param("orgId") UUID orgId, Pageable pageable);
 
     @Query("SELECT COUNT(n) FROM AppNotification n WHERE n.recipientId = :userId AND n.organizationId = :orgId " +
            "AND n.readAt IS NULL AND n.dismissed = false " +
