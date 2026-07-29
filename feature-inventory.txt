@@ -96,10 +96,15 @@ shared helpers consumed by the routed pages listed above.
 
 
 ====================================================================
-PART 2 — BACKEND CONTROLLERS & ENDPOINTS (server/src)  50 controllers, ~280 endpoints
+PART 2 — BACKEND CONTROLLERS & ENDPOINTS (server/src)  52 controllers, ~282 endpoints
 ====================================================================
 Legend: PLATFORM_ADMIN = platform-level superadmin (cross-tenant). ORG_ADMIN/MANAGER/TL = tenant
 leads. FO/CALLER/TRACER = field/ops agents. "public" = no auth required.
+
+-- Dashboards --
+UnifiedDashboardController      /api/v1/analytics/dashboard — GET role-aware unified dashboard data, backs /app/dashboard  (any authenticated user)
+FieldAgentDashboardController     /api/v1/dashboard/field-agent/{agentId} — GET FO "my day" summary (today's assignments,
+                                    completion rate, collections, PTPs) — the same endpoint the mobile FO app uses  (FO/leads/admins)
 
 -- Auth & Identity --
 AuthController                /api/v1/auth
@@ -122,7 +127,8 @@ PlatformAnalyticsController        /api/v1/platform/analytics — GET revenue/or
 
 -- Billing / Stripe / Subscriptions --
 SubscriptionController          /api/v1/subscription — GET status, POST free, POST checkout (Stripe), POST portal (billing portal)  (self-service; mutations ORG_ADMIN/PLATFORM_ADMIN)
-PlatformSubscriptionController    /api/v1/platform/subscriptions — list all org subs, revenue-trend, {orgId}/invoices, backfill-invoices, PUT {orgId}/plan  (PLATFORM_ADMIN only)
+PlatformSubscriptionController    /api/v1/platform/subscriptions — list all org subs, revenue-trend, {orgId}/invoices, backfill-invoices, PUT {orgId}/plan,
+                                    PUT/DELETE {orgId}/comp (grant/revoke complimentary plan)  (PLATFORM_ADMIN only)
 StripeWebhookController            /api/v1/webhooks/stripe — POST handle (checkout completed, subscription upsert/delete, invoice paid/failed/finalized)  (public, Stripe-signature verified)
 
 -- Feature Flags --

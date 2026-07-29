@@ -68,4 +68,11 @@ export const notificationsApi = {
     const res = await axiosInstance.get<ApiResponse<number>>('/api/v1/notifications/unread-count');
     return res.data.data;
   },
+
+  /** Short-lived, single-use ticket for the SSE stream below — EventSource can't set an
+   * Authorization header, so it authenticates via ?ticket= instead (see SseTicketService). */
+  issueStreamTicket: async (): Promise<string> => {
+    const res = await axiosInstance.post<ApiResponse<{ ticket: string }>>('/api/v1/notifications/stream/ticket');
+    return res.data.data.ticket;
+  },
 };

@@ -19,7 +19,6 @@ import CaseAssignmentsPage from './pages/CaseAssignmentsPage';
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionMomPage from './pages/CollectionMomPage';
 import UploadsPage from './pages/UploadsPage';
-import VisitsPage from './pages/VisitsPage';
 import AgentsPage from './pages/AgentsPage';
 import ReportsPage from './pages/ReportsPage';
 import AuditPage from './pages/AuditPage';
@@ -30,10 +29,6 @@ import ColumnSchemaPage from './pages/ColumnSchemaPage';
 import RoleManagementPage from './pages/RoleManagementPage';
 import UploadErrorsPage from './pages/UploadErrorsPage';
 import UploadDataPage from './pages/UploadDataPage';
-import PlatformSetupPage from './pages/PlatformSetupPage';
-import PlatformDashboard from './pages/PlatformDashboard';
-import PlatformSubscriptions from './pages/PlatformSubscriptions';
-import PlatformRevenueTrendPage from './pages/PlatformRevenueTrendPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import UnassignedCasesPage from './pages/UnassignedCasesPage';
 import DailyDispatchPage from './pages/DailyDispatchPage';
@@ -43,7 +38,6 @@ import UsersPage from './pages/UsersPage';
 import UserRequestsPage from './pages/UserRequestsPage';
 import OrganizationSettingsPage from './pages/OrganizationSettingsPage';
 import PaymentLinksPage from './pages/PaymentLinksPage';
-import FieldOpsPage from './pages/FieldOpsPage';
 import BorrowersPage from './pages/BorrowersPage';
 import FraudCasesPage from './pages/FraudCasesPage';
 import ReconciliationPage from './pages/ReconciliationPage';
@@ -58,7 +52,6 @@ import MyCasesPage from './pages/MyCasesPage';
 import AttendancePage from './pages/AttendancePage';
 import MyAttendancePage from './pages/MyAttendancePage';
 import StartVisitPage from './pages/StartVisitPage';
-import LiveTrackPage from './pages/LiveTrackPage';
 import LoadingSplash from './components/LoadingSplash';
 import NotificationToasts from './components/NotificationToasts';
 import NoiseOverlay from './components/NoiseOverlay';
@@ -74,6 +67,18 @@ const LucienAdminPage = lazy(() => import('./pages/LucienAdminPage'));
 const FeatureFlagsPage = lazy(() => import('./pages/FeatureFlagsPage'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const MessageTemplatesPage = lazy(() => import('./pages/MessageTemplatesPage'));
+
+// Route-split the heaviest pages: Leaflet (LiveTrackPage/FieldOpsPage), xlsx
+// (VisitsPage pulls it in via VisitExportModal), and the whole Platform Admin
+// console (never loaded by ordinary org users) — previously all four eagerly
+// loaded into the same >1.9MB main chunk as every other page.
+const LiveTrackPage = lazy(() => import('./pages/LiveTrackPage'));
+const FieldOpsPage = lazy(() => import('./pages/FieldOpsPage'));
+const VisitsPage = lazy(() => import('./pages/VisitsPage'));
+const PlatformSetupPage = lazy(() => import('./pages/PlatformSetupPage'));
+const PlatformDashboard = lazy(() => import('./pages/PlatformDashboard'));
+const PlatformSubscriptions = lazy(() => import('./pages/PlatformSubscriptions'));
+const PlatformRevenueTrendPage = lazy(() => import('./pages/PlatformRevenueTrendPage'));
 
 function PageFallback() {
   return <PageSkeleton />;

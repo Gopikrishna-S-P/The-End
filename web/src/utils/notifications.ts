@@ -73,13 +73,22 @@ function setState(next: Notification[]): void {
 }
 
 /**
- * The backend does have an SSE stream (GET /api/v1/notifications/stream, ticket-authed via
- * POST .../stream/ticket) but the client isn't wired to it yet. Polling is the current
- * delivery mechanism.
+ * The backend has a working ticket-authed SSE stream (GET /api/v1/notifications/stream,
+ * ticket minted via POST .../stream/ticket — EventSource can't set an Authorization
+ * header, so it authenticates via ?ticket= instead; see SseTicketService server-side).
+ * SSE is the primary delivery mechanism; a slower poll stays running underneath it as a
+ * reconciliation safety net for a push that got dropped, and becomes the sole mechanism
+ * again whenever the stream is down.
  */
-const POLL_INTERVAL_MS = 25_000;
+const POLL_INTERVAL_MS       = 25_000;
+const POLL_INTERVAL_SSE_MS   = 120_000;
+const SSE_RECONNECT_DELAY_MS = 3_000;
+
 let pollTimer: number | null = null;
 let pollInflight = false;
+let sseConnected = false;
+let es: EventSource | null = null;
+let sseReconnectTimer: number | null = null;
 
 async function refreshNow(): Promise<void> {
   if (pollInflight) return;
@@ -107,12 +116,69 @@ export function refreshStreamToken(): void {
   refreshNow();
 }
 
+function restartPollInterval(): void {
+  if (pollTimer !== null) window.clearInterval(pollTimer);
+  const interval = sseConnected ? POLL_INTERVAL_SSE_MS : POLL_INTERVAL_MS;
+  pollTimer = window.setInterval(() => {
+    if (document.visibilityState === 'visible') refreshNow();
+  }, interval);
+}
+
+function scheduleSseReconnect(): void {
+  if (sseReconnectTimer !== null) return;
+  sseReconnectTimer = window.setTimeout(() => {
+    sseReconnectTimer = null;
+    connectSse();
+  }, SSE_RECONNECT_DELAY_MS);
+}
+
+async function connectSse(): Promise<void> {
+  if (es) return;
+  let ticket: string;
+  try {
+    ticket = await notificationsApi.issueStreamTicket();
+  } catch {
+    scheduleSseReconnect();
+    return;
+  }
+
+  const stream = new EventSource(`/api/v1/notifications/stream?ticket=${encodeURIComponent(ticket)}`);
+  es = stream;
+
+  stream.onopen = () => {
+    sseConnected = true;
+    restartPollInterval();
+  };
+
+  stream.addEventListener('notification', (ev) => {
+    try {
+      const payload = JSON.parse((ev as MessageEvent).data as string) as ServerNotification;
+      const mapped = fromServer(payload);
+      setState([mapped, ...state.filter(n => n.id !== mapped.id)]);
+    } catch { /* malformed push payload — next reconciliation poll will catch up */ }
+  });
+
+  stream.onerror = () => {
+    sseConnected = false;
+    stream.close();
+    if (es === stream) es = null;
+    restartPollInterval();
+    scheduleSseReconnect();
+  };
+}
+
+function disconnectSse(): void {
+  if (sseReconnectTimer !== null) { window.clearTimeout(sseReconnectTimer); sseReconnectTimer = null; }
+  es?.close();
+  es = null;
+  sseConnected = false;
+}
+
 function startPolling(): void {
   if (pollTimer !== null) return;
   refreshNow();
-  pollTimer = window.setInterval(() => {
-    if (document.visibilityState === 'visible') refreshNow();
-  }, POLL_INTERVAL_MS);
+  restartPollInterval();
+  connectSse();
   document.addEventListener('visibilitychange', onVisibilityChange);
   window.addEventListener('focus', refreshNow);
 }
@@ -122,6 +188,7 @@ function stopPolling(): void {
     window.clearInterval(pollTimer);
     pollTimer = null;
   }
+  disconnectSse();
   document.removeEventListener('visibilitychange', onVisibilityChange);
   window.removeEventListener('focus', refreshNow);
 }
