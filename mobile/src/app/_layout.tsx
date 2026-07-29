@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Sentry from '@sentry/react-native';
 import {
   useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
 } from '@expo-google-fonts/inter';
@@ -13,6 +14,15 @@ import { useTheme } from '@/theme/useTheme';
 import { SosFloatingButton } from '@/components/SosFloatingButton';
 
 SplashScreen.preventAutoHideAsync();
+
+// No-ops until EXPO_PUBLIC_SENTRY_DSN is supplied (dev/CI builds have none)
+// -- see eas.json for where a real staging/production DSN should go.
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: !!sentryDsn,
+  tracesSampleRate: 1.0,
+});
 
 function RootNavigator() {
   const { user, isLoading } = useAuth();
@@ -65,7 +75,7 @@ function RootNavigator() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const scheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
@@ -84,3 +94,5 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

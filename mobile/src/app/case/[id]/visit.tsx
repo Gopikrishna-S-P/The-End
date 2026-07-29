@@ -15,6 +15,7 @@ import {
 } from '@/utils/visitEnumLabels';
 import { todayIso } from '@/utils/date';
 import { extractApiError, isNetworkError } from '@/utils/extractApiError';
+import { newIdempotencyKey } from '@/api/axiosInstance';
 import { enqueueVisitMetadata } from '@/utils/offlineQueue';
 import type {
   ClassificationCode, Contactability, Disp, OfficeStatus, ReasonForDefault, ResidenceStatus,
@@ -81,11 +82,18 @@ export default function VisitFormScreen() {
       internalRemarks: internalRemarks || undefined,
     };
 
+    const idempotencyKey = newIdempotencyKey();
+
     setSubmitting(true);
     try {
-      const visit = await visitLogApi.create(payload, photos);
+      const visit = await visitLogApi.create(payload, photos, idempotencyKey);
 
-      if (disp === 'PTP') {
+      if (!visit) {
+        // Idempotent replay -- the server intentionally omits refetching the
+        // original visit. Same fallback as the offline-queue path below: no
+        // id available yet for PAID/PTP chaining, so just go back.
+        router.back();
+      } else if (disp === 'PTP') {
         router.replace({ pathname: '/case/[id]/ptp', params: { id, visitId: visit.id } });
       } else if (disp === 'PAID' && visit.amountCollected) {
         router.replace({
@@ -101,7 +109,7 @@ export default function VisitFormScreen() {
           setFormError("You're offline and have photos attached — photos can't be queued. Retry once you have signal, or remove the photos to save offline.");
           return;
         }
-        await enqueueVisitMetadata(payload);
+        await enqueueVisitMetadata(payload, idempotencyKey);
         // No server-issued visit id yet, so PAID/PTP chaining happens after this
         // visit syncs — from the case's "recent visits" list once it appears.
         router.replace({ pathname: '/case/[id]', params: { id, savedOffline: '1' } });

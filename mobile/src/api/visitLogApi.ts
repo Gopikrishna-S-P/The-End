@@ -9,8 +9,17 @@ export interface VisitPhoto {
 }
 
 export const visitLogApi = {
-  /** POST is multipart: a JSON `data` part plus up to 3 optional image parts. */
-  create: async (data: VisitLogRequest, photos: VisitPhoto[]): Promise<VisitLogResponse> => {
+  /**
+   * POST is multipart: a JSON `data` part plus up to 3 optional image parts.
+   * `idempotencyKey` is optional but should always be passed by callers that might
+   * retry the same logical submission (a network timeout doesn't tell you whether
+   * the server actually received it) -- the backend claims it via VisitLogController's
+   * Idempotency-Key header and replays the existing result instead of double-creating.
+   * On replay the response's `data` is null (server intentionally omits refetching the
+   * original visit), so callers that need the created id should not rely on a replayed
+   * response having one.
+   */
+  create: async (data: VisitLogRequest, photos: VisitPhoto[], idempotencyKey?: string): Promise<VisitLogResponse | null> => {
     const formData = new FormData();
     formData.append('data', {
       string: JSON.stringify(data),
@@ -25,8 +34,11 @@ export const visitLogApi = {
       } as unknown as Blob);
     });
 
-    const response = await axiosInstance.post<ApiResponse<VisitLogResponse>>('/api/v1/visit-logs', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    const response = await axiosInstance.post<ApiResponse<VisitLogResponse | null>>('/api/v1/visit-logs', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+      },
     });
     return response.data.data;
   },

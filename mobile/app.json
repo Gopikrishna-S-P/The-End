@@ -7,9 +7,13 @@
     "icon": "./assets/images/icon.png",
     "scheme": "recoverprofield",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "ios": {
       "icon": "./assets/expo.icon",
       "supportsTablet": false,
+      "bundleIdentifier": "com.recoverpro.field",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "RecoverPro uses your location to verify field visits and attendance check-ins.",
         "NSCameraUsageDescription": "RecoverPro uses your camera to capture visit and collection receipt photos.",
@@ -17,6 +21,7 @@
       }
     },
     "android": {
+      "package": "com.recoverpro.field",
       "adaptiveIcon": {
         "backgroundColor": "#0AA550",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -68,7 +73,8 @@
           "microphonePermission": "RecoverPro records short audio clips only after you trigger an SOS alert, so your supervisor can hear what's happening.",
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true,

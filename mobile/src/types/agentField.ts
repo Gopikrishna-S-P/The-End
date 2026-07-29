@@ -66,6 +66,10 @@ export interface AgentSyncItem {
   collection?: SubmitCollectionRequest;
   ptp?: CreatePtpRequest;
   visit?: VisitLogRequest;
+  /** VISIT_METADATA only -- minted once at enqueue time and reused on every replay
+   * attempt (see offlineQueue.trySync), so a successful-but-response-lost submit
+   * doesn't create a duplicate visit log on the next sync retry. */
+  idempotencyKey?: string;
 }
 
 export interface AgentSyncRequest {
