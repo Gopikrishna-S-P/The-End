@@ -8,6 +8,7 @@ import com.recoverpro.server.entity.ChatSession;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.repository.ChatSessionRepository;
+import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.LucienService;
 import org.junit.jupiter.api.AfterEach;
@@ -25,10 +26,18 @@ class LucienServiceIsolationTest extends AbstractIntegrationTest {
     @Autowired private ChatSessionRepository chatSessionRepository;
 
     private ChatSession sessionForAgentInOrgA;
+    // Tracked separately because whichever principal's actAsUser() ran last in the test body
+    // (e.g. the cross-org stranger) may not match the session's own org, and RLS would silently
+    // no-op the delete below rather than throw -- set explicitly so cleanup always targets the
+    // session's actual org regardless of test-body ordering.
+    private UUID sessionOrgId;
 
     @AfterEach
     void cleanup() {
-        if (sessionForAgentInOrgA != null) chatSessionRepository.deleteById(sessionForAgentInOrgA.getId());
+        if (sessionForAgentInOrgA != null) {
+            RlsOrgIdHolder.set(sessionOrgId);
+            chatSessionRepository.deleteById(sessionForAgentInOrgA.getId());
+        }
     }
 
     @Test
@@ -38,16 +47,19 @@ class LucienServiceIsolationTest extends AbstractIntegrationTest {
 
         User agentInOrgA = createUser(orgA, "ROLE_FO");
 
+        actAsUser(agentInOrgA);
         sessionForAgentInOrgA = chatSessionRepository.save(ChatSession.builder()
                 .agentId(agentInOrgA.getId())
+                .organizationId(orgA.getId())
                 .agentFirstName("Agent")
                 .isActive(true)
                 .totalMessages(0)
                 .build());
+        sessionOrgId = orgA.getId();
 
         // A different org's field officer (not a supervisor) must not read this session's history.
         User strangerInOrgB = createUser(orgB, "ROLE_FO");
-        UserPrincipal strangerPrincipal = new UserPrincipal(strangerInOrgB);
+        UserPrincipal strangerPrincipal = actAsUser(strangerInOrgB);
 
         assertThatThrownBy(() -> lucienService.getSessionHistory(sessionForAgentInOrgA.getId(), strangerPrincipal))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -58,14 +70,15 @@ class LucienServiceIsolationTest extends AbstractIntegrationTest {
         Organization orgA = createOrg("s5-own-a");
         User agentInOrgA = createUser(orgA, "ROLE_FO");
 
+        UserPrincipal ownerPrincipal = actAsUser(agentInOrgA);
         sessionForAgentInOrgA = chatSessionRepository.save(ChatSession.builder()
                 .agentId(agentInOrgA.getId())
+                .organizationId(orgA.getId())
                 .agentFirstName("Agent")
                 .isActive(true)
                 .totalMessages(0)
                 .build());
-
-        UserPrincipal ownerPrincipal = new UserPrincipal(agentInOrgA);
+        sessionOrgId = orgA.getId();
 
         // Should not throw - the owning agent can always access their own session.
         lucienService.getSession(sessionForAgentInOrgA.getId(), ownerPrincipal);
@@ -82,7 +95,7 @@ class LucienServiceIsolationTest extends AbstractIntegrationTest {
     void startSession_ignoresClientSuppliedAgentId_alwaysUsesPrincipal() {
         Organization org = createOrg("s15-spoof");
         User realAgent = createUser(org, "ROLE_FO");
-        UserPrincipal principal = new UserPrincipal(realAgent);
+        UserPrincipal principal = actAsUser(realAgent);
 
         StartSessionRequest spoofedRequest = StartSessionRequest.builder()
                 .agentId(UUID.randomUUID())
@@ -91,6 +104,7 @@ class LucienServiceIsolationTest extends AbstractIntegrationTest {
 
         SessionResponse response = lucienService.startSession(spoofedRequest, principal);
         sessionForAgentInOrgA = chatSessionRepository.findById(response.getSessionId()).orElseThrow();
+        sessionOrgId = org.getId();
 
         assertThat(sessionForAgentInOrgA.getAgentId())
                 .as("the session's agentId (and therefore the rate-limit key) must be the real caller, "

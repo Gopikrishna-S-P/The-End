@@ -33,6 +33,9 @@ public class ChatMessage {
     @Column(name = "agent_id", nullable = false)
     private UUID agentId;
 
+    @Column(name = "organization_id")
+    private UUID organizationId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private ChatRole role;

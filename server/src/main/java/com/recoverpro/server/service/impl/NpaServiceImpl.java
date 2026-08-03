@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.List;
@@ -43,29 +44,55 @@ public class NpaServiceImpl implements NpaService {
     @Override
     @Transactional(readOnly = true)
     public NpaReportResponse getNpaReport(UUID orgId, LocalDate date) {
+        requireOwnOrg(orgId);
         List<NpaRecord> records = npaRecordRepository
-                .findByOrganizationIdAndFlaggedDateAndIsResolvedFalse(orgId, date);
+                .findByOrganizationIdAndFlaggedDateLessThanEqualAndIsResolvedFalse(orgId, date);
         return buildNpaReport(orgId, date, records);
     }
 
+    /**
+     * This used to just re-read whatever was already flagged and never actually ran the sweep --
+     * the frontend's "Re-run sweep" button called this and told the user it had "re-flagged every
+     * case overdue past this many days," but no allocation was ever touched. flagOverdueAllocations
+     * (below) is the real classification logic; it was previously reachable only from
+     * MonthlySnapshotScheduler, never from this on-demand admin action.
+     * Note: overdueThresholdDays is still not applied -- flagOverdueAllocations classifies risk via
+     * fixed 30/60/90-day tiers (see classifyRisk), not a single caller-supplied cutoff. Wiring a
+     * custom threshold through would mean changing what the tiers *mean*, which is a product
+     * decision, not a bug fix -- left as-is rather than guessed at.
+     */
     @Override
     @Transactional
     public NpaReportResponse flagNpaRecords(NpaFlagRequest request) {
-        log.info("Flagging NPA records for orgId={}, threshold={}d",
-                request.getOrganizationId(), request.getOverdueThresholdDays());
+        requireOwnOrg(request.getOrganizationId());
+        UUID orgId = request.getOrganizationId();
+        int flagged = flagOverdueAllocations(orgId);
+        log.info("NPA sweep for orgId={}: {} allocations flagged/updated (requested threshold={}d, not yet applied)",
+                orgId, flagged, request.getOverdueThresholdDays());
         List<NpaRecord> active = npaRecordRepository
-                .findByOrganizationIdAndFlaggedDateAndIsResolvedFalse(
-                        request.getOrganizationId(), LocalDate.now());
-        log.info("Found {} active NPA records for org {}", active.size(), request.getOrganizationId());
-        return buildNpaReport(request.getOrganizationId(), LocalDate.now(), active);
+                .findByOrganizationIdAndFlaggedDateLessThanEqualAndIsResolvedFalse(orgId, LocalDate.now());
+        return buildNpaReport(orgId, LocalDate.now(), active);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<NpaReportResponse.NpaRecordResponse> getNpaRecords(UUID orgId, NpaRiskLevel riskLevel,
                                                                     Pageable pageable) {
+        requireOwnOrg(orgId);
         return npaRecordRepository.findActiveWithFilters(orgId, riskLevel, pageable)
                 .map(reportMapper::toNpaRecordResponse);
+    }
+
+    /**
+     * flagNpa/getNpaReport/getNpaRecords all take a caller-supplied orgId directly (unlike
+     * resolveNpaRecord, which derives it from the fetched record) -- RLS backstops this fail-closed
+     * either way, but without this check an org-scoped ORG_ADMIN/MANAGER/TL could ask for another
+     * tenant's NPA report by orgId alone with zero app-layer defense.
+     */
+    private void requireOwnOrg(UUID orgId) {
+        if (!orgIsolationGuard.belongsToOrg(orgId)) {
+            throw new ResourceNotFoundException("Organization not found: " + orgId);
+        }
     }
 
     @Override
@@ -163,11 +190,19 @@ public class NpaServiceImpl implements NpaService {
                 .map(reportMapper::toNpaRecordResponse)
                 .collect(Collectors.toList());
 
+        long activeBookCount = allocationRepository.countByOrgId(orgId);
+        BigDecimal npaRatioPct = activeBookCount > 0
+                ? BigDecimal.valueOf(records.size())
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(activeBookCount), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
         return NpaReportResponse.builder()
                 .organizationId(orgId)
                 .reportDate(date)
                 .totalNpaCount(records.size())
                 .totalNpaAmount(totalAmount)
+                .npaRatioPct(npaRatioPct)
                 .countByRiskLevel(countByRisk)
                 .amountByRiskLevel(amountByRisk)
                 .records(recordResponses)

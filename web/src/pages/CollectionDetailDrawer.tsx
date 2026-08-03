@@ -63,6 +63,7 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
 
   const [docs, setDocs] = useState<CollectionDocumentResponse[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
+  const [openingDocId, setOpeningDocId] = useState<string | null>(null);
   const [, setAction] = useState<ApprovalAction | null>(null);
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState<ApprovalAction | null>(null);
@@ -77,6 +78,15 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
       .catch(() => setDocs([]))
       .finally(() => setDocsLoading(false));
   }, [collection.id]);
+
+  const openDoc = async (docId: string) => {
+    setOpeningDocId(docId); setError(null);
+    try {
+      await documentsApi.openDocument(collection.id, docId);
+    } catch {
+      setError('Failed to open document.');
+    } finally { setOpeningDocId(null); }
+  };
 
   const handleApproval = async (a: ApprovalAction) => {
     if (a === 'REJECT' && !remarks.trim()) { setError('Rejection reason is required.'); return; }
@@ -183,17 +193,20 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
             ) : (
               <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {docs.map((doc) => (
-                  <a
+                  <button
                     key={doc.id}
-                    href={doc.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
+                    onClick={() => openDoc(doc.id)}
+                    disabled={openingDocId === doc.id}
                     className="db-customize-btn"
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start', textDecoration: 'none' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start', textDecoration: 'none', width: '100%', border: 'none', cursor: 'pointer' }}
                   >
-                    <FileText size={14} style={{ color: 'var(--ink-tertiary)' }} />
+                    {openingDocId === doc.id
+                      ? <Loader2 size={14} className="ds-spin" style={{ color: 'var(--ink-tertiary)' }} />
+                      : <FileText size={14} style={{ color: 'var(--ink-tertiary)' }} />
+                    }
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{doc.fileName}</span>
-                  </a>
+                  </button>
                 ))}
               </div>
             )}

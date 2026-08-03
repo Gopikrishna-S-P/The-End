@@ -32,7 +32,7 @@ public class AppProperties {
         private int forgotPasswordWindowMinutes = 30;
         private int otpMaxAttempts = 5;
         private int otpWindowMinutes = 10;
-        private int maxRegistrationAttempts = 10;
-        private int registrationWindowMinutes = 60;
+        private int contactFormMaxAttempts = 5;
+        private int contactFormWindowMinutes = 60;
     }
 }

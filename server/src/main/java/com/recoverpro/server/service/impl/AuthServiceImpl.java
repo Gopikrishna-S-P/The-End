@@ -9,12 +9,10 @@ import com.recoverpro.server.dto.response.AuthResponse;
 import com.recoverpro.server.dto.response.MfaEnableResponse;
 import com.recoverpro.server.dto.response.MfaSetupResponse;
 import com.recoverpro.server.dto.response.UserResponse;
-import com.recoverpro.server.entity.Role;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.exception.*;
 import com.recoverpro.server.mapper.UserMapper;
 import com.recoverpro.server.repository.RefreshTokenRepository;
-import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.AuthService;
 import com.recoverpro.server.service.EmailService;
@@ -31,8 +29,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -53,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final RateLimiter rateLimiter;
@@ -68,7 +63,6 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRotationService refreshTokenRotationService;
 
     private static final String USER_PROFILE_CACHE_PREFIX = "user:profile:";
-    private static final String REGISTER_RATE_PREFIX      = "rate:register:";
 
     private String dummyPasswordHash;
 
@@ -104,67 +98,6 @@ public class AuthServiceImpl implements AuthService {
 
     private void evictUserProfileCache(UUID userId) {
         redisTemplate.delete(USER_PROFILE_CACHE_PREFIX + userId);
-    }
-
-    @Override
-    public AuthResponse register(RegisterRequest request, HttpServletRequest httpRequest) {
-        AppProperties.Security sec = appProperties.getSecurity();
-        String ip = extractClientIp(httpRequest);
-
-        String regRateKey = REGISTER_RATE_PREFIX + ip;
-        Long regCount = redisTemplate.opsForValue().increment(regRateKey);
-        if (regCount != null && regCount == 1) {
-            redisTemplate.expire(regRateKey, sec.getRegistrationWindowMinutes(), TimeUnit.MINUTES);
-        }
-        if (regCount != null && regCount > sec.getMaxRegistrationAttempts()) {
-            Long ttl = redisTemplate.getExpire(regRateKey, TimeUnit.SECONDS);
-            long retryAfter = (ttl != null && ttl > 0) ? ttl : (long) sec.getRegistrationWindowMinutes() * 60;
-            throw new RateLimitExceededException("Too many registration attempts. Please try again later.", retryAfter);
-        }
-
-        String email = request.getEmail().toLowerCase().trim();
-        String emailRegRateKey = REGISTER_RATE_PREFIX + "email:" + email;
-        if (!rateLimiter.tryAcquire(emailRegRateKey, sec.getMaxRegistrationAttempts(),
-                Duration.ofMinutes(sec.getRegistrationWindowMinutes()))) {
-            Long ttl = redisTemplate.getExpire(emailRegRateKey, TimeUnit.SECONDS);
-            long retryAfter = (ttl != null && ttl > 0) ? ttl : (long) sec.getRegistrationWindowMinutes() * 60;
-            throw new RateLimitExceededException("Too many registration attempts. Please try again later.", retryAfter);
-        }
-
-        if (userRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
-            throw new EmailAlreadyExistsException("An account with this email already exists");
-        }
-
-        Role userRole = roleRepository.findByName("ROLE_USER")
-                .orElseThrow(() -> new ResourceNotFoundException("Default role ROLE_USER not found"));
-
-        User user = User.builder()
-                .email(request.getEmail().toLowerCase().trim())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .enabled(true)
-                .build();
-        user.addRole(userRole);
-
-        try {
-            userRepository.save(user);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            throw new EmailAlreadyExistsException("An account with this email already exists");
-        }
-
-        // logUserAction runs in REQUIRES_NEW (its own connection/transaction), which cannot see
-        // this still-uncommitted user row yet -- calling it inline here would violate the audit
-        // log's FK to users. Defer it until this transaction actually commits.
-        UUID newUserId = user.getId();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                auditLogService.logUserAction(newUserId, "REGISTER", "New user self-registered");
-            }
-        });
-        log.info("New user registered, id={}", user.getId());
-        return refreshTokenRotationService.buildFullAuthResponse(user, httpRequest);
     }
 
     @Override

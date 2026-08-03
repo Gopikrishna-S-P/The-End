@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, UserCheck, Send, CheckCircle2, Undo2, Check, ArrowUpRight, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
-import type { UserResponse, AllocationResponse } from '../types';
+import { Loader2, UserCheck, Send, CheckCircle2, Undo2, Check, ArrowUpRight, ChevronLeft, ChevronRight, CalendarDays, Wand2 } from 'lucide-react';
+import type { UserResponse, AllocationResponse, OptimizedAssignmentOrderResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
 import { Modal, ModalFooter } from './PlatformSetupShared';
 import '../styles/PlatformSetupPage.css';
@@ -33,6 +33,11 @@ interface Props {
   dispatchDayLabel: string;
   setDate: (d: string) => void;
   shiftDate: (delta: number) => void;
+  optimizing: boolean;
+  onOptimize: () => void;
+  optimizedOrder: string[] | null;
+  optimizeMeta: Map<string, OptimizedAssignmentOrderResponse['ordered'][number]> | null;
+  canOptimize: boolean;
 }
 
 // ── Count-up animation ────────────────────────────────────────────────────────
@@ -265,14 +270,20 @@ export default function DispatchCasePanel(p: Props) {
                     const dpd       = resolveDPD(c);
                     const product   = resolveProduct(c);
                     const loanRef   = c.loanAccountNo || c.loanNumber || '—';
+                    const rank      = isPicked && p.optimizedOrder ? p.optimizedOrder.indexOf(c.id) : -1;
+                    const meta      = rank >= 0 ? p.optimizeMeta?.get(c.id) : undefined;
                     return (
                       <div key={c.id}
                         className={`dd-case-row${isPicked ? ' is-picked' : ''}${isDone ? ' is-done' : ''}`}
                         onClick={isDone ? undefined : (e) => { ripple(e as any); p.toggle(c.id); }}
                         style={{ boxShadow: isPicked ? 'none' : undefined }}
+                        title={meta?.rationale}
                       >
                         <div className={`dd-case-check${isPicked ? ' is-checked' : ''}${isDone ? ' is-done' : ''}`}>
-                          {(isPicked || isDone) && <Check size={12} strokeWidth={3} />}
+                          {rank >= 0
+                            ? <span style={{ fontSize: 10, fontWeight: 700 }}>{rank + 1}</span>
+                            : (isPicked || isDone) && <Check size={12} strokeWidth={3} />
+                          }
                         </div>
 
                         <div className="dd-case-info">
@@ -386,6 +397,19 @@ export default function DispatchCasePanel(p: Props) {
                 disabled={p.submitting}>
                 Cancel
               </button>
+              {p.canOptimize && p.picked.size >= 2 && (
+                <button type="button" className="ds-btn is-secondary is-sm"
+                  onClick={p.onOptimize}
+                  disabled={p.submitting || p.optimizing}
+                  title="Order the selected cases by suggested visit priority"
+                  aria-label="Optimize visit order">
+                  {p.optimizing
+                    ? <Loader2 size={13} className="ds-spin" />
+                    : <Wand2 size={13} />
+                  }
+                  {p.optimizedOrder ? 'Re-optimize' : 'Optimize order'}
+                </button>
+              )}
               <button type="button" className="dd-bar-btn-confirm"
                 onClick={() => setShowConfirm(true)}
                 disabled={p.submitting}>

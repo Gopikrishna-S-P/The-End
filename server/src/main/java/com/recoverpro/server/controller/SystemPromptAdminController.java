@@ -5,6 +5,7 @@ import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.dto.response.SystemPromptResponse;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.SystemPromptService;
+import com.recoverpro.server.service.UserActionAuditService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class SystemPromptAdminController {
 
     private final SystemPromptService systemPromptService;
+    private final UserActionAuditService userActionAuditService;
 
     @GetMapping("/{promptKey}")
     public ResponseEntity<ApiResponse<SystemPromptResponse>> getPrompt(
@@ -39,6 +41,9 @@ public class SystemPromptAdminController {
 
         log.info("PUT /api/v1/friday/admin/prompts/{} - updatedBy={}", promptKey, principal.getId());
         SystemPromptResponse response = systemPromptService.updatePrompt(promptKey, request, principal.getId());
+        userActionAuditService.logUserAction(principal.getId(), "SYSTEM_PROMPT_UPDATED",
+                "Updated system prompt \"" + promptKey + "\" to version " + response.getVersion()
+                        + " (platform-wide, affects Lucien for every org)");
         return ResponseEntity.ok(ApiResponse.success(response, "System prompt updated. New version: " + response.getVersion()));
     }
 
@@ -49,6 +54,8 @@ public class SystemPromptAdminController {
 
         log.info("DELETE /api/v1/friday/admin/prompts/{} - by={}", promptKey, principal.getId());
         systemPromptService.deletePrompt(promptKey);
+        userActionAuditService.logUserAction(principal.getId(), "SYSTEM_PROMPT_DELETED",
+                "Deleted system prompt \"" + promptKey + "\" (platform-wide, Lucien now falls back to the hardcoded default for this key)");
         return ResponseEntity.ok(ApiResponse.success(null, "System prompt deleted."));
     }
 }

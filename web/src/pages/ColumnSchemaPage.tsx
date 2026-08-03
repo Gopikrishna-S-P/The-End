@@ -3,7 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { columnSchemasApi, type ColumnSchemaResponse } from '../api/columnSchemasApi';
-import { Plus, SquarePen, X, AlertCircle, Columns, Check } from 'lucide-react';
+import { Plus, SquarePen, X, AlertCircle, Columns, Check, Trash2, Loader2 } from 'lucide-react';
 import { RowForm, type RowFormState, EMPTY_FORM, TYPE_VARIANT } from './ColumnSchemaRowForm';
 import '../styles/AppPage.css';
 import './Dashboard.css';
@@ -40,6 +40,8 @@ export default function ColumnSchemaPage() {
   const [error, setError]           = useState<string | null>(null);
   const [adding, setAdding]         = useState(false);
   const [editingId, setEditingId]   = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!orgId || !canView) { setLoading(false); return; }
@@ -63,6 +65,16 @@ export default function ColumnSchemaPage() {
       return [...prev, saved].sort((a, b) => a.sortOrder - b.sortOrder);
     });
     setAdding(false); setEditingId(null);
+  };
+
+  const handleDeactivate = async (id: string) => {
+    setDeletingId(id); setError(null);
+    try {
+      await columnSchemasApi.delete(id);
+      setColumns((prev) => prev.filter((c) => c.id !== id));
+      setConfirmingId(null);
+    } catch { setError('Failed to deactivate column schema.'); }
+    finally { setDeletingId(null); }
   };
 
   const editInitial = (col: ColumnSchemaResponse): RowFormState & { id: string } => ({
@@ -191,11 +203,31 @@ export default function ColumnSchemaPage() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="dd-case-right">
-                                <button type="button" onClick={() => { setEditingId(col.id); setAdding(false); }}
-                                  className="ds-btn is-secondary is-sm" title="Edit" aria-label="Edit">
-                                  <SquarePen size={12} />
-                                </button>
+                              <div className="dd-case-right" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                {confirmingId === col.id ? (
+                                  <>
+                                    <span style={{ fontSize: 11.5, color: 'var(--danger)' }}>Deactivate?</span>
+                                    <button type="button" onClick={() => handleDeactivate(col.id)} disabled={deletingId === col.id}
+                                      className="ds-btn is-danger is-sm" title="Confirm deactivate" aria-label="Confirm deactivate">
+                                      {deletingId === col.id ? <Loader2 size={12} className="ds-spin" /> : <Check size={12} />}
+                                    </button>
+                                    <button type="button" onClick={() => setConfirmingId(null)} disabled={deletingId === col.id}
+                                      className="ds-btn is-secondary is-sm" title="Cancel" aria-label="Cancel">
+                                      <X size={12} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button type="button" onClick={() => { setEditingId(col.id); setAdding(false); }}
+                                      className="ds-btn is-secondary is-sm" title="Edit" aria-label="Edit">
+                                      <SquarePen size={12} />
+                                    </button>
+                                    <button type="button" onClick={() => setConfirmingId(col.id)}
+                                      className="ds-btn is-secondary is-sm" title="Deactivate" aria-label="Deactivate">
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </motion.div>
                           )}

@@ -12,6 +12,7 @@ import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,13 +37,20 @@ import java.util.*;
 public class DataSeeder implements CommandLineRunner {
 
     private static final String PLATFORM_ORG_NAME      = "RecoverPro";
-    private static final String PLATFORM_ADMIN_PASSWORD = "Admin@123";
 
     private final OrganizationRepository orgRepo;
     private final PermissionRepository permRepo;
     private final RoleRepository roleRepo;
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+
+    // No hardcoded default -- an auto-generated/known bootstrap password would give
+    // every reader of this source (git history included) platform-admin access to
+    // whatever database this seeder ever runs against. Must be set explicitly per
+    // environment (gitignored .env locally, the real deploy's own secret store in
+    // production); startup refuses to create the account without it.
+    @Value("${app.platform-admin.bootstrap-password:}")
+    private String bootstrapPassword;
 
     @Override
     @Transactional
@@ -246,9 +254,15 @@ public class DataSeeder implements CommandLineRunner {
                     }
                 },
                 () -> {
+                    if (bootstrapPassword == null || bootstrapPassword.isBlank()) {
+                        throw new IllegalStateException(
+                                "No platform admin user exists yet and app.platform-admin.bootstrap-password "
+                                        + "(env PLATFORM_ADMIN_BOOTSTRAP_PASSWORD) is empty. Refusing to start: "
+                                        + "set that variable to create the initial platform admin account.");
+                    }
                     User u = User.builder()
                             .email(PlatformConstants.PLATFORM_ADMIN_EMAIL)
-                            .passwordHash(passwordEncoder.encode(PLATFORM_ADMIN_PASSWORD))
+                            .passwordHash(passwordEncoder.encode(bootstrapPassword))
                             .firstName("Platform")
                             .lastName("Admin")
                             .enabled(true)

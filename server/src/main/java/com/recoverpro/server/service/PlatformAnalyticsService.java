@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Builds real platform-admin analytics from org_subscriptions, organizations,
@@ -142,10 +143,17 @@ public class PlatformAnalyticsService {
         }
 
         // ── Top orgs by user headcount ───────────────────────────────────────
+        // One grouped query instead of one countByOrganizationId call per tenant org -- this
+        // scales with the platform's org count, and a platform-admin dashboard is exactly the
+        // place that count grows without bound over the product's life.
+        Map<UUID, Long> userCountByOrg = new HashMap<>();
+        for (Object[] row : userRepo.countGroupedByOrganizationIdIn(tenantOrgs.stream().map(Organization::getId).toList())) {
+            userCountByOrg.put((UUID) row[0], (Long) row[1]);
+        }
         List<NameValue> topOrgsByUsers = tenantOrgs.stream()
                 .map(o -> NameValue.builder()
                         .name(o.getName())
-                        .value(userRepo.countByOrganizationId(o.getId()))
+                        .value(userCountByOrg.getOrDefault(o.getId(), 0L))
                         .build())
                 .filter(nv -> nv.getValue() > 0)
                 .sorted(Comparator.comparingLong(NameValue::getValue).reversed())

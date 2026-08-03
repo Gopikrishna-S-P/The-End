@@ -37,16 +37,6 @@ public class AuthController {
     private static final int      MFA_MAX_ATTEMPTS = 5;
     private static final Duration MFA_WINDOW        = Duration.ofMinutes(10);
 
-    @PreAuthorize("permitAll()")
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(
-            @Valid @RequestBody RegisterRequest request,
-            HttpServletRequest httpRequest) {
-        AuthResponse response = authService.register(request, httpRequest);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.of("Registration successful", response));
-    }
-
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> me(

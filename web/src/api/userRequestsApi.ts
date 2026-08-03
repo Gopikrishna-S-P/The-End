@@ -1,6 +1,7 @@
 import { apiClient } from '../client';
 
 export type RequestedRole = 'ORG_ADMIN' | 'ORG_USER';
+export type StaffRole = 'FO' | 'CALLER' | 'TL' | 'MANAGER';
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface UserCreationRequest {
@@ -9,6 +10,7 @@ export interface UserCreationRequest {
   requestedFirstName: string;
   requestedLastName: string;
   requestedRole: RequestedRole;
+  requestedStaffRole?: StaffRole;
   requestedById: string;
   requestedByName: string;
   status: RequestStatus;
@@ -25,6 +27,7 @@ export interface SubmitRequestPayload {
   firstName: string;
   lastName: string;
   role: RequestedRole;
+  staffRole?: StaffRole;
   notes?: string;
 }
 

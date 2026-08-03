@@ -28,6 +28,9 @@ public class ChatSession {
     @Column(name = "agent_id", nullable = false)
     private UUID agentId;
 
+    @Column(name = "organization_id")
+    private UUID organizationId;
+
     @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "agent_first_name", nullable = false)
     private String agentFirstName;

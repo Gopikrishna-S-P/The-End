@@ -64,4 +64,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             + "ORDER BY FUNCTION('TO_CHAR', u.createdAt, 'YYYY-MM')")
     List<Object[]> findMonthlyUserGrowth(@Param("from") Instant from,
                                          @Param("excludeRole") String excludeRole);
+
+    @Query("SELECT u.organizationId, COUNT(u) FROM User u WHERE u.organizationId IN :orgIds GROUP BY u.organizationId")
+    List<Object[]> countGroupedByOrganizationIdIn(@Param("orgIds") List<UUID> orgIds);
 }

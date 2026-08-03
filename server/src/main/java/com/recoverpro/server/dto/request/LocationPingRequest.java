@@ -4,13 +4,13 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Data
 public class LocationPingRequest {
 
-    @NotNull
-    private UUID agentId;
+    // agentId is deliberately NOT a client-supplied field -- it's always the authenticated
+    // principal's own id (see AgentFieldController.recordPing). A client-supplied agent
+    // identity here would let any authenticated user submit location pings as someone else.
 
     @NotNull
     @DecimalMin("8.4")

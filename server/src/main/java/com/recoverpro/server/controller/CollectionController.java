@@ -293,6 +293,13 @@ public class CollectionController {
     private static String csvEscape(Object value) {
         if (value == null) return "";
         String s = value.toString();
+        // Neutralize CSV formula injection (OWASP): a leading =, +, -, @, tab, or CR lets a
+        // free-text field (notes, rejectionReason) execute as a formula/DDE command when the
+        // export is later opened in Excel/Sheets by staff. Prefixing with an apostrophe forces
+        // text interpretation without changing the visible value.
+        if (!s.isEmpty() && "=+-@\t\r".indexOf(s.charAt(0)) >= 0) {
+            s = "'" + s;
+        }
         if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
             return "\"" + s.replace("\"", "\"\"") + "\"";
         }

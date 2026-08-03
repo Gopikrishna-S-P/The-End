@@ -8,6 +8,7 @@ import com.recoverpro.server.dto.request.RestructureBorrowerAcceptRequest;
 import com.recoverpro.server.dto.request.RestructureRejectRequest;
 import com.recoverpro.server.dto.response.RestructureProposalResponse;
 import com.recoverpro.server.enums.RestructureStatus;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.RestructureProposalService;
 import jakarta.validation.Valid;
@@ -38,6 +39,7 @@ public class RestructureProposalController {
             "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
 
     private final RestructureProposalService restructureProposalService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @PostMapping
     @PreAuthorize(LEADS)
@@ -55,6 +57,7 @@ public class RestructureProposalController {
     public ResponseEntity<ApiResponse<RestructureProposalResponse>> proposeToLender(
             @PathVariable UUID id, @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "restructureProposals:proposeToLender:" + id);
         assertSameTenant(id, principal);
         return ResponseEntity.ok(ApiResponse.of("Sent to lender",
                 restructureProposalService.proposeToLender(id, principal.getId())));
@@ -65,6 +68,7 @@ public class RestructureProposalController {
     public ResponseEntity<ApiResponse<RestructureProposalResponse>> lenderApprove(
             @PathVariable UUID id, @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "restructureProposals:lenderApprove:" + id);
         assertSameTenant(id, principal);
         return ResponseEntity.ok(ApiResponse.of("Approved by lender",
                 restructureProposalService.lenderApprove(id, principal.getId())));
@@ -77,6 +81,7 @@ public class RestructureProposalController {
             @Valid @RequestBody RestructureRejectRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "restructureProposals:lenderReject:" + id);
         assertSameTenant(id, principal);
         return ResponseEntity.ok(ApiResponse.of("Rejected by lender",
                 restructureProposalService.lenderReject(id, request, principal.getId())));
@@ -89,6 +94,7 @@ public class RestructureProposalController {
             @RequestBody(required = false) RestructureBorrowerAcceptRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "restructureProposals:borrowerAccept:" + id);
         assertSameTenant(id, principal);
         RestructureBorrowerAcceptRequest body =
                 request != null ? request : new RestructureBorrowerAcceptRequest();
@@ -101,6 +107,7 @@ public class RestructureProposalController {
     public ResponseEntity<ApiResponse<RestructureProposalResponse>> getById(
             @PathVariable UUID id, @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "restructureProposals:getById:" + id);
         RestructureProposalResponse response = restructureProposalService.getById(id);
         assertSameTenantOrg(response.getOrganizationId(), principal);
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -109,7 +116,9 @@ public class RestructureProposalController {
     @GetMapping("/allocation/{allocationId}")
     @PreAuthorize(READERS)
     public ResponseEntity<ApiResponse<List<RestructureProposalResponse>>> getByAllocation(
-            @PathVariable UUID allocationId) {
+            @PathVariable UUID allocationId, @AuthenticationPrincipal UserPrincipal principal) {
+
+        elevateIfPlatformAdmin(principal, "restructureProposals:byAllocation:" + allocationId);
         return ResponseEntity.ok(ApiResponse.success(
                 restructureProposalService.getByAllocationId(allocationId)));
     }
@@ -118,12 +127,15 @@ public class RestructureProposalController {
     @PreAuthorize(READERS)
     public ResponseEntity<ApiResponse<PagedResponse<RestructureProposalResponse>>> list(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID orgId,
+            @RequestParam(required = false) String reason,
             @RequestParam(required = false) RestructureStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
+        UUID targetOrgId = resolveListOrgId(principal, orgId, reason);
         Page<RestructureProposalResponse> result = restructureProposalService.getByOrganization(
-                principal.getOrganizationId(), status, PageRequest.of(page, size));
+                targetOrgId, status, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(result)));
     }
 
@@ -133,12 +145,46 @@ public class RestructureProposalController {
     }
 
     private void assertSameTenantOrg(UUID resourceOrg, UserPrincipal principal) {
-        boolean isPlatformAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
-        if (isPlatformAdmin) return;
+        if (isPlatformAdmin(principal)) return;
 
         if (resourceOrg == null || !resourceOrg.equals(principal.getOrganizationId())) {
             throw new ResourceNotFoundException("Restructure proposal not found");
         }
+    }
+
+    private static boolean isPlatformAdmin(UserPrincipal principal) {
+        return principal.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
+    }
+
+    /**
+     * restructure_proposals' RLS policy went fail-closed in V057 with no platform-admin bypass, so
+     * every by-id fetch (target org unknown until after the fetch, hence the unattended escape hatch
+     * rather than a reason prompt -- same as PtpController's getById/getPtpHistory precedent) returned
+     * empty for a platform admin regardless of this controller's own "if platform admin, skip the org
+     * check" logic in assertSameTenantOrg.
+     */
+    private void elevateIfPlatformAdmin(UserPrincipal principal, String resource) {
+        if (isPlatformAdmin(principal)) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), resource);
+        }
+    }
+
+    /**
+     * list() previously had no way for a platform admin to target any org at all -- it always queried
+     * principal.getOrganizationId(), which is NULL for a platform admin, so the endpoint was silently
+     * broken for them regardless of RLS. The target org is known up front here (an explicit orgId), so
+     * this uses the reason-requiring beginCrossOrgAccess rather than the unattended escape hatch.
+     */
+    private UUID resolveListOrgId(UserPrincipal principal, UUID requestedOrgId, String reason) {
+        if (isPlatformAdmin(principal)) {
+            UUID target = requestedOrgId != null ? requestedOrgId : principal.getOrganizationId();
+            if (target != null) {
+                platformAdminAccessGuard.beginCrossOrgAccess(
+                        principal.getId(), target, reason, "restructureProposals:list");
+            }
+            return target;
+        }
+        return principal.getOrganizationId();
     }
 }

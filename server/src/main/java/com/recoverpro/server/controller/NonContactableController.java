@@ -35,10 +35,10 @@ import java.util.UUID;
 public class NonContactableController {
 
     private static final String SUBMITTERS =
-            "hasAnyRole('FO','FO')";
+            "hasAnyRole('FO')";
 
     private static final String READERS =
-            "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER','ORG_ADMIN')";
+            "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER')";
 
     private static final String ADMINS =
             "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
@@ -204,16 +204,13 @@ public class NonContactableController {
 
     private boolean isOnlyFieldOfficer(UserPrincipal p) {
         boolean hasFo = p.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_FO".equals(a.getAuthority())
-                        || "ROLE_FO".equals(a.getAuthority()));
+                .anyMatch(a -> "ROLE_FO".equals(a.getAuthority()));
 
         boolean hasLead = p.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_TL".equals(a.getAuthority())
                         || "ROLE_MANAGER".equals(a.getAuthority())
                         || "ROLE_ORG_ADMIN".equals(a.getAuthority())
-                        || "ROLE_PLATFORM_ADMIN".equals(a.getAuthority())
-                        || "ROLE_ORG_ADMIN".equals(a.getAuthority())
-                        || "ROLE_ORG_ADMIN".equals(a.getAuthority()));
+                        || "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
 
         return hasFo && !hasLead;
     }

@@ -22,4 +22,8 @@ public class SetFeatureFlagRequest {
 
     @Size(max = 500)
     private String description;
+
+    /** Required when a PLATFORM_ADMIN targets another org's flag -- see PlatformAdminAccessGuard. */
+    @Size(max = 500)
+    private String reason;
 }

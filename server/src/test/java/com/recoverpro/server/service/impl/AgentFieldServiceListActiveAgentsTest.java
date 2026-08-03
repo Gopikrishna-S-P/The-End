@@ -82,6 +82,7 @@ class AgentFieldServiceListActiveAgentsTest extends AbstractIntegrationTest {
                 .agentId(agentB.getId()).shiftId(shiftB.getId())
                 .lat(9.0).lng(9.0).recordedAt(now.minusSeconds(10)).build());
 
+        actAsUser(agentA);
         List<AgentLiveStatusResponse> result = agentFieldService.listActiveAgents(org.getId());
 
         assertThat(result).hasSize(2);
@@ -101,6 +102,9 @@ class AgentFieldServiceListActiveAgentsTest extends AbstractIntegrationTest {
     @Test
     void noActiveShifts_returnsEmptyListWithoutQueryingPings() {
         Organization org = createOrg("sp15-empty");
+        RlsOrgIdHolder.set(org.getId());
+        User admin = createUser(org, "ROLE_ORG_ADMIN");
+        actAsUser(admin);
 
         List<AgentLiveStatusResponse> result = agentFieldService.listActiveAgents(org.getId());
 

@@ -19,6 +19,7 @@ import com.recoverpro.server.service.FeatureFlagService;
 import com.recoverpro.server.service.PlatformAnalyticsService;
 import com.recoverpro.server.service.StripeService;
 import com.recoverpro.server.service.StripeWebhookService;
+import com.recoverpro.server.service.UserActionAuditService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Invoice;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +65,7 @@ public class PlatformSubscriptionController {
     private final PlatformInvoiceRepository invoiceRepo;
     private final StripeWebhookService stripeWebhookService;
     private final FeatureFlagService featureFlagService;
+    private final UserActionAuditService auditLogService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlatformSubscriptionResponse>>> list() {
@@ -218,6 +220,9 @@ public class PlatformSubscriptionController {
 
         featureFlagService.provisionFlagsFor(sub);
 
+        auditLogService.logUserAction(caller.getId(), "ORG_SUBSCRIPTION_COMPED",
+                "orgId=" + orgId + "; plan=" + plan + "; until=" + (until == null ? "open-ended" : until)
+                        + "; reason=" + reason);
         log.info("Platform admin {} comped org {} to {} until {} ({})",
                 caller.getId(), orgId, plan, until == null ? "open-ended" : until, reason);
 
@@ -256,6 +261,8 @@ public class PlatformSubscriptionController {
 
         featureFlagService.provisionFlagsFor(sub);
 
+        auditLogService.logUserAction(caller.getId(), "ORG_SUBSCRIPTION_COMP_REVOKED",
+                "orgId=" + orgId + "; previousPlan=" + previous);
         log.info("Platform admin {} removed {} comp from org {}", caller.getId(), previous, orgId);
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -289,6 +296,8 @@ public class PlatformSubscriptionController {
                         sub.getOrgId(), sub.getStripeCustomerId(), e.getMessage());
             }
         }
+        auditLogService.logUserAction(caller.getId(), "PLATFORM_INVOICE_BACKFILL",
+                "invoicesImported=" + imported);
         log.info("Platform admin {} ran invoice backfill: {} invoices mirrored", caller.getId(), imported);
         return ResponseEntity.ok(ApiResponse.success(Map.of("imported", imported)));
     }
@@ -338,6 +347,8 @@ public class PlatformSubscriptionController {
         // column. Every webhook path re-provisioned; this one silently did not.
         featureFlagService.provisionFlagsFor(sub);
 
+        auditLogService.logUserAction(caller.getId(), "ORG_SUBSCRIPTION_PLAN_FORCED",
+                "orgId=" + orgId + "; previousPlan=" + previousPlan + "; newPlan=" + plan);
         log.info("Platform admin {} force-changed org {} plan {} -> {}",
                 caller.getId(), orgId, previousPlan, plan);
 

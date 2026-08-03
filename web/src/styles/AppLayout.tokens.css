@@ -150,6 +150,7 @@
 }
 .app-layout.high-contrast ~ .app-noise,
 .high-contrast .app-noise { display: none; }
+.app-layout.high-contrast .app-main { background-image: none; }
 .app-layout.high-contrast .app-topbar,
 .app-layout.high-contrast .asb-root { border-color: var(--border); }
 .app-layout.high-contrast .app-topbar { border-bottom-width: 2px; }

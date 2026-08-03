@@ -10,7 +10,7 @@ import { allocationsApi } from '../api/allocationsApi';
 import { usePermissions } from '../hooks/usePermissions';
 import type {
   BorrowerResponse, ConsentArtifactResponse, ConsentPurpose, ConsentScope,
-  DataErasureRequestResponse, NomineeResponse, BorrowerRiskScoreResponse, AllocationResponse,
+  DataErasureRequestResponse, ErasureRequestStatus, NomineeResponse, BorrowerRiskScoreResponse, AllocationResponse,
 } from '../types';
 import { fmtDate, fmtDT } from './LoanDetailHelpers';
 import {
@@ -350,12 +350,16 @@ function NomineeTab({ borrowerId }: { borrowerId: string }) {
 
 // ── Erasure (DPDP right-to-erasure requests; org-admin visible) ─────────────
 
+const ERASURE_TERMINAL: ErasureRequestStatus[] = ['EXECUTED', 'PARTIALLY_EXECUTED', 'REJECTED'];
+
 function ErasureTab({ borrower, onChanged }: { borrower: BorrowerResponse; onChanged: () => void }) {
   const [requests, setRequests] = useState<DataErasureRequestResponse[]>([]);
   const [loading, setLoading]   = useState(true);
   const [reason, setReason]     = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]       = useState<string | null>(null);
+  const [executingId, setExecutingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -374,6 +378,16 @@ function ErasureTab({ borrower, onChanged }: { borrower: BorrowerResponse; onCha
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to file erasure request.');
     } finally { setSubmitting(false); }
+  };
+
+  const execute = async (requestId: string) => {
+    setExecutingId(requestId); setError(null);
+    try {
+      await borrowersApi.executeErasure(borrower.id, requestId);
+      setConfirmingId(null); load(); onChanged();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Failed to execute erasure request.');
+    } finally { setExecutingId(null); }
   };
 
   return (
@@ -403,6 +417,21 @@ function ErasureTab({ borrower, onChanged }: { borrower: BorrowerResponse; onCha
               </div>
               {r.reason && <p style={{ fontSize: 12.5, color: 'var(--ink-secondary)', marginTop: 6 }}>{r.reason}</p>}
               {r.complianceNotes && <p style={{ fontSize: 12, color: 'var(--ink-tertiary)', marginTop: 4 }}>Compliance note: {r.complianceNotes}</p>}
+              {!ERASURE_TERMINAL.includes(r.status) && (
+                confirmingId === r.id ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                    <span style={{ fontSize: 12, color: 'var(--danger)' }}>Permanently erase this borrower's PII?</span>
+                    <button type="button" className="ds-btn is-danger is-sm" disabled={executingId === r.id} onClick={() => execute(r.id)}>
+                      {executingId === r.id ? <Loader2 size={12} className="ds-spin" /> : <FileWarning size={12} />} Yes, execute
+                    </button>
+                    <button type="button" className="ds-btn is-secondary is-sm" disabled={executingId === r.id} onClick={() => setConfirmingId(null)}>Cancel</button>
+                  </div>
+                ) : (
+                  <button type="button" className="ds-btn is-secondary is-sm" style={{ marginTop: 8 }} onClick={() => setConfirmingId(r.id)}>
+                    <FileWarning size={12} /> Execute
+                  </button>
+                )
+              )}
             </div>
           ))}
         </div>

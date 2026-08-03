@@ -8,6 +8,7 @@ import com.recoverpro.server.dto.response.UploadDataResponse;
 import com.recoverpro.server.dto.response.UploadRowResponse;
 import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.repository.FileUploadRepository;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.UploadDataService;
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ public class UploadDataController {
 
     private final UploadDataService uploadDataService;
     private final FileUploadRepository fileUploadRepository;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @GetMapping("/rows")
     public ResponseEntity<ApiResponse<UploadDataResponse>> getRows(
@@ -94,8 +96,19 @@ public class UploadDataController {
         return p.getAuthorities().stream().anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
     }
 
+    /**
+     * file_uploads' RLS policy (V050) and allocations' (V063, backing UploadDataServiceImpl's row
+     * data) both already support a platform-admin bypass -- but the bypass only activates once
+     * app.is_platform_admin is actually set for the request, which nothing in this controller ever
+     * did. The early-return below looked correct but was dead: uploadDataService's underlying
+     * fileUploadRepo/allocationRepo queries stayed RLS-scoped to the caller's own (null) org
+     * regardless, same bug class as ptp_records/reconciliation_runs found earlier this pass.
+     */
     private void assertOwnership(UserPrincipal principal, UUID uploadId) {
-        if (isPlatformAdmin(principal)) return;
+        if (isPlatformAdmin(principal)) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), "uploadData:" + uploadId);
+            return;
+        }
         FileUpload up = fileUploadRepository.findByIdAndIsDeletedFalse(uploadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Upload not found: " + uploadId));
         UUID resourceOrg = up.getOrganization() != null ? up.getOrganization().getId() : null;

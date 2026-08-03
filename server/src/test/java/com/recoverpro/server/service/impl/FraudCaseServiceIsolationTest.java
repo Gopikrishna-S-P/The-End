@@ -2,6 +2,7 @@ package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.AbstractIntegrationTest;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
+import com.recoverpro.server.dto.request.CreateFraudCaseRequest;
 import com.recoverpro.server.entity.FraudCase;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.entity.User;
@@ -64,6 +65,27 @@ class FraudCaseServiceIsolationTest extends AbstractIntegrationTest {
         RlsOrgIdHolder.set(orgA.getId());
 
         assertThatThrownBy(() -> fraudCaseService.getById(caseInOrgA.getId()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void create_forgedOrganizationId_throwsNotFound() {
+        orgA = createOrg("sp12c-a");
+        Organization orgB = createOrg("sp12c-b");
+
+        User adminInOrgB = createUser(orgB, "ROLE_ORG_ADMIN");
+        actAsUser(adminInOrgB);
+        // Same technique as getById above: force the RLS session context to org A so this proves
+        // the SERVICE-LAYER OrgIsolationGuard check in create() specifically, independent of the
+        // RLS backstop that would otherwise mask a missing app-layer check.
+        RlsOrgIdHolder.set(orgA.getId());
+
+        CreateFraudCaseRequest request = new CreateFraudCaseRequest();
+        request.setOrganizationId(orgA.getId());
+        request.setCategory(FraudCategory.CYBER_FRAUD);
+        request.setDescription("Forged-org creation attempt");
+
+        assertThatThrownBy(() -> fraudCaseService.create(request, adminInOrgB.getId()))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }

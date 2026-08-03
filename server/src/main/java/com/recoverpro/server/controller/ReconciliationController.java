@@ -2,10 +2,12 @@ package com.recoverpro.server.controller;
 
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.dto.response.PagedResponse;
+import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.request.IngestStatementRequest;
 import com.recoverpro.server.dto.response.BankStatementRowResponse;
 import com.recoverpro.server.dto.response.ReconciliationRunResponse;
 import com.recoverpro.server.enums.ReconciliationOutcome;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.ReconciliationService;
 import jakarta.validation.Valid;
@@ -37,14 +39,17 @@ import java.util.UUID;
 public class ReconciliationController {
 
     private final ReconciliationService reconciliationService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @PostMapping("/runs")
     @PreAuthorize("hasAnyRole('ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<ReconciliationRunResponse>> ingest(
             @Valid @RequestBody IngestStatementRequest request,
+            @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserPrincipal principal) {
         log.info("POST /api/v1/reconciliation/runs - source={}, asOf={}, rows={}",
                 request.getSource(), request.getAsOfDate(), request.getRows().size());
+        authorizeOrgAccess(principal, request.getOrganizationId(), reason, "reconciliation:ingest");
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(
                 "Reconciliation run completed",
                 reconciliationService.ingestAndMatch(request, principal.getId())));
@@ -54,13 +59,11 @@ public class ReconciliationController {
     @PreAuthorize("hasAnyRole('ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<PagedResponse<ReconciliationRunResponse>>> listRuns(
             @RequestParam UUID orgId,
+            @RequestParam(required = false) String reason,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
-        boolean isPlatformAdmin = isPlatformAdmin(principal);
-        if (!isPlatformAdmin && !principal.getOrganizationId().equals(orgId)) {
-            throw new com.recoverpro.server.common.exception.ResourceNotFoundException("Organization not found: " + orgId);
-        }
+        authorizeOrgAccess(principal, orgId, reason, "reconciliation:listRuns");
         Page<ReconciliationRunResponse> result = reconciliationService.listRuns(
                 orgId, PageRequest.of(page, Math.min(size, 50), Sort.by("createdAt").descending()));
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(result)));
@@ -71,9 +74,10 @@ public class ReconciliationController {
     public ResponseEntity<ApiResponse<ReconciliationRunResponse>> getRun(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
+        elevateIfPlatformAdmin(principal, "reconciliation:getRun:" + id);
         ReconciliationRunResponse run = reconciliationService.getRun(id);
         if (!isPlatformAdmin(principal) && !principal.getOrganizationId().equals(run.getOrganizationId())) {
-            throw new com.recoverpro.server.common.exception.ResourceNotFoundException("Reconciliation run not found: " + id);
+            throw new ResourceNotFoundException("Reconciliation run not found: " + id);
         }
         return ResponseEntity.ok(ApiResponse.success(run));
     }
@@ -86,9 +90,10 @@ public class ReconciliationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
+        elevateIfPlatformAdmin(principal, "reconciliation:listRows:" + id);
         ReconciliationRunResponse run = reconciliationService.getRun(id);
         if (!isPlatformAdmin(principal) && !principal.getOrganizationId().equals(run.getOrganizationId())) {
-            throw new com.recoverpro.server.common.exception.ResourceNotFoundException("Reconciliation run not found: " + id);
+            throw new ResourceNotFoundException("Reconciliation run not found: " + id);
         }
         int cappedSize = Math.min(size, 100);
         Page<BankStatementRowResponse> result = reconciliationService.listRows(
@@ -99,5 +104,28 @@ public class ReconciliationController {
     private static boolean isPlatformAdmin(UserPrincipal principal) {
         return principal.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
+    }
+
+    /**
+     * ORG_ADMIN callers can only ever act on their own org; a platform admin's current_org_id()
+     * is always NULL (never a real tenant), so reconciliation_runs' RLS policy (V062) would reject
+     * both reads and writes without this elevation -- this is the "target org known up front" case
+     * (explicit orgId in the request), unlike getRun/listRows below where it's only known after the
+     * fetch.
+     */
+    private void authorizeOrgAccess(UserPrincipal principal, UUID targetOrgId, String reason, String resource) {
+        if (isPlatformAdmin(principal)) {
+            platformAdminAccessGuard.beginCrossOrgAccess(principal.getId(), targetOrgId, reason, resource);
+            return;
+        }
+        if (!targetOrgId.equals(principal.getOrganizationId())) {
+            throw new ResourceNotFoundException("Organization not found: " + targetOrgId);
+        }
+    }
+
+    private void elevateIfPlatformAdmin(UserPrincipal principal, String resource) {
+        if (isPlatformAdmin(principal)) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), resource);
+        }
     }
 }

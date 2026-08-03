@@ -5,6 +5,7 @@ import com.recoverpro.server.dto.request.CreatePaymentIntentRequest;
 import com.recoverpro.server.dto.request.CreatePaymentLinkRequest;
 import com.recoverpro.server.dto.response.PaymentIntentResponse;
 import com.recoverpro.server.dto.response.PaymentLinkResponse;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.PaymentLinkService;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentLinkService paymentLinkService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @PostMapping("/api/v1/payments/intents")
     @PreAuthorize("hasAnyRole('ORG_ADMIN','PLATFORM_ADMIN','FO')")
@@ -51,13 +53,20 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<PaymentIntentResponse>> getIntent(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        PaymentIntentResponse intent = paymentLinkService.getIntent(id);
-        // Tenant assertion: PLATFORM_ADMIN can see any; everyone else scoped to their org.
+        // Tenant scoping is RLS's job here, not a post-fetch app-layer comparison: for a
+        // non-platform-admin caller, findById is already filtered to their own org (V040), so a
+        // foreign-org id comes back empty -> clean 404 -- no need to fetch it and compare after.
+        // PLATFORM_ADMIN needs an explicit elevation first (V060 added the bypass clause, but it
+        // only takes effect once app.is_platform_admin is set for this request); the target org
+        // isn't knowable before the fetch for a bare-id lookup like this one, so this uses the
+        // same unattended-elevation escape hatch as SosAudioWebSocketHandler rather than the
+        // reason-collecting beginCrossOrgAccess, which needs the org known up front.
         boolean isPlatformAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
-        if (!isPlatformAdmin && !principal.getOrganizationId().equals(intent.getOrganizationId())) {
-            throw new com.recoverpro.server.common.exception.ResourceNotFoundException("Intent not found: " + id);
+        if (isPlatformAdmin) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), "payment_intent:" + id);
         }
+        PaymentIntentResponse intent = paymentLinkService.getIntent(id);
         return ResponseEntity.ok(ApiResponse.success(intent));
     }
 

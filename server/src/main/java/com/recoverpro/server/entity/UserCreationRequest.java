@@ -44,6 +44,15 @@ public class UserCreationRequest {
     @Column(name = "requested_role", nullable = false, length = 50)
     private RequestedRole requestedRole;
 
+    /**
+     * The specific staff role to assign on approval when requestedRole is ORG_USER (FO, CALLER, TL,
+     * or MANAGER -- without the "ROLE_" prefix). Null for ORG_ADMIN requests, which assign
+     * ROLE_ORG_ADMIN directly. requestedRole alone was never enough to approve a request: it's a
+     * coarse category (who approves it), not an assignable role name.
+     */
+    @Column(name = "requested_staff_role", length = 50)
+    private String requestedStaffRole;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
     private Organization organization;

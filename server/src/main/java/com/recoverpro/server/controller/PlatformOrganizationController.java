@@ -121,7 +121,8 @@ public class PlatformOrganizationController {
                 .passwordChangedAt(Instant.now())
                 .build();
         admin.getRoles().add(orgAdminRole);
-        userRepo.save(admin);
+        admin = userRepo.save(admin);
+        sendWelcomeOtp(admin);
 
         auditLogService.logUserAction(caller.getId(), "ORG_CREATED",
                 "Created org: " + org.getName() + " [" + org.getCode() + "] id=" + org.getId());
@@ -169,8 +170,8 @@ public class PlatformOrganizationController {
             @AuthenticationPrincipal UserPrincipal caller) {
 
         if (!orgRepo.existsById(id)) throw new ResourceNotFoundException("Organization not found: " + id);
-        User admin = userRepo.findByOrganizationId(id).stream()
-                .filter(u -> u.getRoles().stream().anyMatch(r -> PlatformConstants.ROLE_ORG_ADMIN.equals(r.getName())))
+        User admin = userRepo.findByOrganizationIdAndRoleName(id, PlatformConstants.ROLE_ORG_ADMIN)
+                .stream()
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Org Admin not found for organization: " + id));
 
@@ -233,7 +234,7 @@ public class PlatformOrganizationController {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void sendWelcomeOtp(User user) {
-        int expiryMinutes = appProperties.getSecurity().getOtpExpiryMinutes();
+        int expiryMinutes = appProperties.getSecurity().getWelcomeOtpExpiryMinutes();
         String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         PasswordResetToken token = PasswordResetToken.builder()
                 .user(user)
@@ -246,8 +247,9 @@ public class PlatformOrganizationController {
 
     private OrganizationSummaryResponse toSummary(Organization org) {
         long count = userRepo.countByOrganizationId(org.getId());
-        String orgAdminEmail = userRepo.findByOrganizationId(org.getId()).stream()
-                .filter(u -> u.getRoles().stream().anyMatch(r -> PlatformConstants.ROLE_ORG_ADMIN.equals(r.getName())))
+        String orgAdminEmail = userRepo
+                .findByOrganizationIdAndRoleName(org.getId(), PlatformConstants.ROLE_ORG_ADMIN)
+                .stream()
                 .map(User::getEmail)
                 .findFirst()
                 .orElse(null);

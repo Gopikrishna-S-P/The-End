@@ -137,7 +137,7 @@ export default function UserRequestsPage() {
                                     {req.requestedFirstName} {req.requestedLastName}
                                   </span>
                                   <StatusPill status={req.status} />
-                                  <RoleBadge role={req.requestedRole} />
+                                  <RoleBadge role={req.requestedRole} staffRole={req.requestedStaffRole} />
                                 </div>
                                 <div className="dd-case-meta">
                                   <span>{req.requestedEmail}</span>

@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -140,6 +143,19 @@ public class FeatureFlagService {
 
     public List<FeatureFlag> listGlobal() {
         return repository.findByOrganizationIdIsNull();
+    }
+
+    /**
+     * The self-service view for an org: global flags with any org-specific override applied on
+     * top, matching {@link #isEnabled}'s own resolution order (tenant row wins, global is the
+     * fallback). {@link #listForOrg} alone omits every global flag, which previously left the
+     * self-service endpoint unable to reflect a platform-wide flag at all.
+     */
+    public List<FeatureFlag> listResolvedForOrg(UUID organizationId) {
+        Map<String, FeatureFlag> byKey = new LinkedHashMap<>();
+        for (FeatureFlag f : listGlobal()) byKey.put(f.getFlagKey(), f);
+        for (FeatureFlag f : listForOrg(organizationId)) byKey.put(f.getFlagKey(), f);
+        return new ArrayList<>(byKey.values());
     }
 
     private OrgSubscription.Plan effectivePlan(OrgSubscription.Status status, OrgSubscription.Plan plan) {

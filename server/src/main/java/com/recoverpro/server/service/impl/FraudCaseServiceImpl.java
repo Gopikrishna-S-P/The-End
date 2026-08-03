@@ -52,6 +52,9 @@ public class FraudCaseServiceImpl implements FraudCaseService {
 
     @Override
     public FraudCaseResponse create(CreateFraudCaseRequest request, UUID actingUserId) {
+        if (!orgIsolationGuard.belongsToOrg(request.getOrganizationId())) {
+            throw new ResourceNotFoundException("Organization", request.getOrganizationId());
+        }
         FraudCase c = FraudCase.builder()
                 .caseNumber(generateUniqueCaseNumber())
                 .organizationId(request.getOrganizationId())

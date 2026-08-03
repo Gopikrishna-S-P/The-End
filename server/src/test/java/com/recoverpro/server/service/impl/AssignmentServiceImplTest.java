@@ -9,6 +9,7 @@ import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.AssignmentRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitLogRepository;
+import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.AuditLogService;
 import com.recoverpro.server.service.CalendarService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,13 +42,14 @@ class AssignmentServiceImplTest {
     @Mock private AllocationRepository allocationRepository;
     @Mock private UserRepository userRepository;
     @Mock private VisitLogRepository visitLogRepository;
+    @Mock private OrgIsolationGuard orgIsolationGuard;
 
     private AssignmentServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AssignmentServiceImpl(assignmentRepository, calendarService, auditLogService,
-                assignmentMapper, allocationRepository, userRepository, visitLogRepository);
+                assignmentMapper, allocationRepository, userRepository, visitLogRepository, orgIsolationGuard);
     }
 
     @Test

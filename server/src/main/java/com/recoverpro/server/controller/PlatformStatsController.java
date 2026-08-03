@@ -3,6 +3,7 @@ package com.recoverpro.server.controller;
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.dto.response.PlatformStatsResponse;
+import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.entity.UserCreationRequest.RequestStatus;
 import com.recoverpro.server.entity.UserCreationRequest.RequestedRole;
 import com.recoverpro.server.repository.*;
@@ -17,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/platform/stats")
@@ -52,8 +56,13 @@ public class PlatformStatsController {
 
         long totalUsers = userRepo.count() - userRepo.countByRoleName(PlatformConstants.ROLE_PLATFORM_ADMIN);
 
+        // One grouped query instead of one countByOrganizationId call per tenant org.
+        Map<UUID, Long> userCountByOrg = new HashMap<>();
+        for (Object[] row : userRepo.countGroupedByOrganizationIdIn(tenantOrgs.stream().map(Organization::getId).toList())) {
+            userCountByOrg.put((UUID) row[0], (Long) row[1]);
+        }
         long staleOrgs = tenantOrgs.stream()
-                .filter(o -> userRepo.countByOrganizationId(o.getId()) == 0)
+                .filter(o -> userCountByOrg.getOrDefault(o.getId(), 0L) == 0)
                 .count();
 
         PlatformStatsResponse.RoleBreakdown roleBreakdown = PlatformStatsResponse.RoleBreakdown.builder()

@@ -44,7 +44,7 @@ export function UserRequestsReviewModal({ request, onClose, onDone }: Props) {
             </div>
             <div className="alloc-def-row">
               <span className="alloc-def-label">Role</span>
-              <span className="alloc-def-value"><RoleBadge role={request.requestedRole} /></span>
+              <span className="alloc-def-value"><RoleBadge role={request.requestedRole} staffRole={request.requestedStaffRole} /></span>
             </div>
             <div className="alloc-def-row">
               <span className="alloc-def-label">Requested by</span>

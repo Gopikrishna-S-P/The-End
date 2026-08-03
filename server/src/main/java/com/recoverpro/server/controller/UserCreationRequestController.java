@@ -5,6 +5,7 @@ import com.recoverpro.server.common.dto.response.PagedResponse;
 import com.recoverpro.server.dto.request.CreateUserRequestDto;
 import com.recoverpro.server.dto.request.ReviewRequestDto;
 import com.recoverpro.server.dto.response.UserCreationRequestResponse;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.UserCreationRequestService;
 import jakarta.validation.Valid;
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class UserCreationRequestController {
 
     private final UserCreationRequestService service;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ORG_ADMIN','PLATFORM_ADMIN')")
@@ -43,6 +45,7 @@ public class UserCreationRequestController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "userRequests:pending");
         Page<UserCreationRequestResponse> result = service.listPendingForApprover(
                 principal, PageRequest.of(page, size, Sort.by("createdAt").descending()));
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(result)));
@@ -63,6 +66,7 @@ public class UserCreationRequestController {
     @GetMapping("/pending-count")
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')")
     public ResponseEntity<ApiResponse<Long>> pendingCount(@AuthenticationPrincipal UserPrincipal principal) {
+        elevateIfPlatformAdmin(principal, "userRequests:pendingCount");
         return ResponseEntity.ok(ApiResponse.success(service.countPendingForApprover(principal)));
     }
 
@@ -72,6 +76,23 @@ public class UserCreationRequestController {
             @PathVariable UUID id,
             @Valid @RequestBody ReviewRequestDto dto,
             @AuthenticationPrincipal UserPrincipal principal) {
+        elevateIfPlatformAdmin(principal, "userRequests:review:" + id);
         return ResponseEntity.ok(ApiResponse.success(service.review(id, dto, principal)));
+    }
+
+    /**
+     * user_creation_requests' RLS policy (V058) is fail-closed with no platform-admin bypass -- the
+     * whole point of listPending/pendingCount/review's platform-admin branch is to surface and let
+     * them approve ORG_ADMIN-role requests (the tier above what an ORG_ADMIN can approve), but that
+     * branch's requestRepo query was silently RLS-filtered to nothing before this fix, meaning
+     * platform admins could never actually see or approve a single new-org-admin request through this
+     * flow -- the entire top tier of the approval chain was unreachable.
+     */
+    private void elevateIfPlatformAdmin(UserPrincipal principal, String resource) {
+        boolean isPlatformAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
+        if (isPlatformAdmin) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), resource);
+        }
     }
 }

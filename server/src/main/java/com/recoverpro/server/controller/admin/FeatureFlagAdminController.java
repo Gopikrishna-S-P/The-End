@@ -4,6 +4,7 @@ import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.dto.request.SetFeatureFlagRequest;
 import com.recoverpro.server.dto.response.FeatureFlagAdminResponse;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FeatureFlagService;
 import jakarta.validation.Valid;
@@ -32,11 +33,13 @@ import java.util.UUID;
 public class FeatureFlagAdminController {
 
     private final FeatureFlagService featureFlagService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')")
     public ResponseEntity<ApiResponse<List<FeatureFlagAdminResponse>>> list(
             @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserPrincipal caller) {
 
         List<com.recoverpro.server.entity.FeatureFlag> flags;
@@ -44,7 +47,7 @@ public class FeatureFlagAdminController {
             requirePlatformAdmin(caller, "list global feature flags");
             flags = featureFlagService.listGlobal();
         } else {
-            requireScopeAccess(caller, organizationId);
+            requireScopeAccess(caller, organizationId, reason, "admin-feature-flags:list");
             flags = featureFlagService.listForOrg(organizationId);
         }
 
@@ -61,7 +64,7 @@ public class FeatureFlagAdminController {
         if (request.getOrganizationId() == null) {
             requirePlatformAdmin(caller, "set a global feature flag");
         } else {
-            requireScopeAccess(caller, request.getOrganizationId());
+            requireScopeAccess(caller, request.getOrganizationId(), request.getReason(), "admin-feature-flags:set");
         }
 
         featureFlagService.set(
@@ -75,12 +78,13 @@ public class FeatureFlagAdminController {
     public ResponseEntity<ApiResponse<String>> deleteOverride(
             @PathVariable String flagKey,
             @RequestParam(required = false) UUID organizationId,
+            @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserPrincipal caller) {
 
         if (organizationId == null) {
             requirePlatformAdmin(caller, "delete a global feature flag");
         } else {
-            requireScopeAccess(caller, organizationId);
+            requireScopeAccess(caller, organizationId, reason, "admin-feature-flags:delete");
         }
         featureFlagService.deleteManualOverride(organizationId, flagKey);
         return ResponseEntity.ok(ApiResponse.success(organizationId == null
@@ -99,8 +103,21 @@ public class FeatureFlagAdminController {
         }
     }
 
-    private void requireScopeAccess(UserPrincipal caller, UUID organizationId) {
-        if (isPlatformAdmin(caller)) return;
+    /**
+     * ORG_ADMIN acting on their own org: allowed as-is, RLS already permits it. PLATFORM_ADMIN
+     * acting on any org (including their own): allowed, but if it's someone else's org this must
+     * go through {@link PlatformAdminAccessGuard} first -- V059's RLS policy only lets the write
+     * through once that guard has recorded who/whose/why and set the session's platform-admin GUC
+     * (confirmed live: without this, the write passed this method's old check but then failed as
+     * an unhandled RLS violation at the database, surfaced to the caller as a bare 500).
+     */
+    private void requireScopeAccess(UserPrincipal caller, UUID organizationId, String reason, String resource) {
+        if (isPlatformAdmin(caller)) {
+            if (!organizationId.equals(caller.getOrganizationId())) {
+                platformAdminAccessGuard.beginCrossOrgAccess(caller.getId(), organizationId, reason, resource);
+            }
+            return;
+        }
         if (!organizationId.equals(caller.getOrganizationId())) {
             throw new BusinessException("Cannot manage feature flags for another organization");
         }

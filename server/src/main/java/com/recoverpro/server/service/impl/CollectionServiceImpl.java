@@ -9,6 +9,7 @@ import com.recoverpro.server.dto.response.CollectionResponse;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.Collection;
 import com.recoverpro.server.entity.CollectionAuditLog;
+import com.recoverpro.server.entity.User;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.enums.ApprovalAction;
 import com.recoverpro.server.enums.CollectionStatus;
@@ -263,13 +264,23 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     @Transactional(readOnly = true)
     public AgentCollectionReport getDailyReport(UUID agentId, LocalDate date) {
+        assertAgentInCallerOrg(agentId);
         return buildReport(agentId, collectionRepository.findByAgentAndDate(agentId, date), date, true);
     }
 
     @Override
     @Transactional(readOnly = true)
     public AgentCollectionReport getAllTimeReport(UUID agentId) {
+        assertAgentInCallerOrg(agentId);
         return buildReport(agentId, collectionRepository.findAllByAgent(agentId), null, false);
+    }
+
+    private void assertAgentInCallerOrg(UUID agentId) {
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
+        if (!orgIsolationGuard.belongsToOrg(agent.getOrganizationId())) {
+            throw new ResourceNotFoundException("Report not found");
+        }
     }
 
     @Override

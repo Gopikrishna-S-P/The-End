@@ -12,6 +12,7 @@ import com.recoverpro.server.enums.PaymentIntentStatus;
 import com.recoverpro.server.enums.PaymentRail;
 import com.recoverpro.server.repository.PaymentIntentRepository;
 import com.recoverpro.server.repository.PaymentLinkRepository;
+import com.recoverpro.server.security.OrgIsolationGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +39,7 @@ public class PaymentLinkService {
 
     private final PaymentIntentRepository intentRepository;
     private final PaymentLinkRepository linkRepository;
+    private final OrgIsolationGuard orgIsolationGuard;
 
     @Value("${app.payment.upi.payee-vpa:}")
     private String upiPayeeVpa;
@@ -50,6 +52,15 @@ public class PaymentLinkService {
 
     public PaymentIntentResponse createIntent(
             CreatePaymentIntentRequest request, UUID actingUserId, String idempotencyKey) {
+
+        // RLS's WITH CHECK (V040, USING doubles as WITH CHECK since none is separately given)
+        // already rejects an INSERT whose organization_id doesn't match the caller's session --
+        // but as a raw DataIntegrityViolationException/500, not a clean 4xx. This check exists so
+        // a cross-org attempt fails the same clean way every other isolation check in this
+        // codebase does, not to provide isolation RLS doesn't already guarantee.
+        if (!orgIsolationGuard.belongsToOrg(request.getOrganizationId())) {
+            throw new ResourceNotFoundException("Organization not found: " + request.getOrganizationId());
+        }
 
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             var existing = intentRepository.findByIdempotencyKey(idempotencyKey);
@@ -93,6 +104,12 @@ public class PaymentLinkService {
         PaymentIntent intent = intentRepository.findById(request.getIntentId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Intent not found: " + request.getIntentId()));
+        // RLS already scopes this SELECT to the caller's own org (a foreign-org id comes back
+        // empty above, not found here), but this explicit check keeps the isolation guarantee for
+        // this write path from depending entirely on the read that happened to precede it.
+        if (!orgIsolationGuard.belongsToOrg(intent.getOrganizationId())) {
+            throw new ResourceNotFoundException("Intent not found: " + request.getIntentId());
+        }
         if (intent.getStatus() != PaymentIntentStatus.CREATED
                 && intent.getStatus() != PaymentIntentStatus.AUTHORIZED) {
             throw new BusinessException("Cannot issue link for intent in status " + intent.getStatus());

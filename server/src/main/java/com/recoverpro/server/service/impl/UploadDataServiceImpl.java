@@ -79,7 +79,10 @@ public class UploadDataServiceImpl implements UploadDataService {
                 .dynamicData(new HashMap<>(data))
                 .build();
 
-        return toRowResponse(allocationRepo.save(allocation));
+        UploadRowResponse response = toRowResponse(allocationRepo.save(allocation));
+        upload.setTotalRows((upload.getTotalRows() != null ? upload.getTotalRows() : 0) + 1);
+        fileUploadRepo.save(upload);
+        return response;
     }
 
     @Override
@@ -105,7 +108,7 @@ public class UploadDataServiceImpl implements UploadDataService {
 
     @Override
     public void deleteRow(UUID uploadId, UUID rowId, UUID userId) {
-        requireUpload(uploadId);
+        FileUpload upload = requireUpload(uploadId);
         Allocation allocation = allocationRepo.findByIdAndIsDeletedFalse(rowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Row not found: " + rowId));
 
@@ -113,6 +116,10 @@ public class UploadDataServiceImpl implements UploadDataService {
             throw new BusinessException("Row does not belong to this upload");
         }
         allocationRepo.softDelete(rowId, userId);
+        if (upload.getTotalRows() != null && upload.getTotalRows() > 0) {
+            upload.setTotalRows(upload.getTotalRows() - 1);
+            fileUploadRepo.save(upload);
+        }
     }
 
     @Override

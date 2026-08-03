@@ -5,6 +5,7 @@ import com.recoverpro.server.dto.request.UpdateRagDocumentRequest;
 import com.recoverpro.server.dto.response.RagDocumentResponse;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.RagDocumentService;
+import com.recoverpro.server.service.UserActionAuditService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import java.util.UUID;
 public class RagDocumentAdminController {
 
     private final RagDocumentService ragDocumentService;
+    private final UserActionAuditService userActionAuditService;
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<RagDocumentResponse>> upload(
@@ -37,6 +39,8 @@ public class RagDocumentAdminController {
 
         log.info("POST /api/v1/admin/rag-documents - title={}", title);
         RagDocumentResponse response = ragDocumentService.upload(file, title, description, principal.getId());
+        userActionAuditService.logUserAction(principal.getId(), "RAG_DOCUMENT_UPLOADED",
+                "Uploaded compliance document \"" + title + "\" (id=" + response.getId() + ")");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.of("Document uploaded, processing started", response));
     }
@@ -49,16 +53,24 @@ public class RagDocumentAdminController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RagDocumentResponse>> updateMetadata(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateRagDocumentRequest request) {
+            @Valid @RequestBody UpdateRagDocumentRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
 
         log.info("PUT /api/v1/admin/rag-documents/{}", id);
         RagDocumentResponse response = ragDocumentService.updateMetadata(id, request.getTitle(), request.getDescription());
+        userActionAuditService.logUserAction(principal.getId(), "RAG_DOCUMENT_UPDATED",
+                "Updated metadata for compliance document \"" + request.getTitle() + "\" (id=" + id + ")");
         return ResponseEntity.ok(ApiResponse.success(response, "Document updated"));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> supersede(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<String>> supersede(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
         ragDocumentService.supersede(id);
+        userActionAuditService.logUserAction(principal.getId(), "RAG_DOCUMENT_SUPERSEDED",
+                "Deactivated compliance document (id=" + id + ")");
         return ResponseEntity.ok(ApiResponse.success("Document deactivated"));
     }
 }

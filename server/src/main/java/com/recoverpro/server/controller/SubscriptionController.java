@@ -1,6 +1,7 @@
 package com.recoverpro.server.controller;
 
 import com.recoverpro.server.common.dto.response.ApiResponse;
+import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.dto.response.SubscriptionResponse;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.OrgSubscription.Plan;
@@ -72,7 +73,7 @@ public class SubscriptionController {
     public ResponseEntity<ApiResponse<String>> selectFree(
             @AuthenticationPrincipal UserPrincipal caller) {
 
-        UUID orgId = caller.getOrganizationId();
+        UUID orgId = requireOrgContext(caller);
         OrgSubscription sub = subRepo.findByOrgId(orgId).orElseGet(() ->
                 OrgSubscription.builder().orgId(orgId).build());
         sub.setPlan(Plan.STARTER);
@@ -93,7 +94,7 @@ public class SubscriptionController {
             @AuthenticationPrincipal UserPrincipal caller) {
 
         String plan = body.getOrDefault("plan", "STARTER");
-        UUID orgId = caller.getOrganizationId();
+        UUID orgId = requireOrgContext(caller);
         try {
             String url = stripeService.createCheckoutUrl(orgId, plan);
             return ResponseEntity.ok(ApiResponse.success(Map.of("url", url)));
@@ -110,7 +111,7 @@ public class SubscriptionController {
     public ResponseEntity<ApiResponse<Map<String, String>>> portal(
             @AuthenticationPrincipal UserPrincipal caller) {
 
-        UUID orgId = caller.getOrganizationId();
+        UUID orgId = requireOrgContext(caller);
         try {
             String url = stripeService.createPortalUrl(orgId);
             return ResponseEntity.ok(ApiResponse.success(Map.of("url", url)));
@@ -120,5 +121,25 @@ public class SubscriptionController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
         }
+    }
+
+    /**
+     * Every write endpoint here assumes a real tenant (org_subscriptions.org_id is NOT NULL, and
+     * StripeService.ensureCustomer calls orgId.toString() unconditionally) -- but a platform admin's
+     * organizationId is always null, since they don't belong to a tenant. Before this check,
+     * selectFree() threw a raw DataIntegrityViolationException (NOT NULL constraint), checkout()
+     * threw an unhandled NullPointerException, and portal() threw a caught-but-ugly
+     * IllegalStateException("No subscription found for org: null") -- none of them a clean, readable
+     * error. Platform admins manage a tenant's billing through PlatformSubscriptionController's
+     * explicit-orgId endpoints instead; this controller is self-service for a real org's own staff.
+     */
+    private static UUID requireOrgContext(UserPrincipal caller) {
+        UUID orgId = caller.getOrganizationId();
+        if (orgId == null) {
+            throw new BusinessException(
+                    "Platform admins have no organization context for self-service billing. "
+                            + "Manage a tenant's subscription via the platform billing console instead.");
+        }
+        return orgId;
     }
 }

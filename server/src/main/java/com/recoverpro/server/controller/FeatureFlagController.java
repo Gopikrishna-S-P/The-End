@@ -26,7 +26,7 @@ public class FeatureFlagController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<FeatureFlagResponse>>> getForOrg(
             @AuthenticationPrincipal UserPrincipal caller) {
-        List<FeatureFlagResponse> flags = featureFlagService.listForOrg(caller.getOrganizationId())
+        List<FeatureFlagResponse> flags = featureFlagService.listResolvedForOrg(caller.getOrganizationId())
                 .stream()
                 .map(f -> new FeatureFlagResponse(f.getFlagKey(), Boolean.TRUE.equals(f.getEnabled())))
                 .toList();

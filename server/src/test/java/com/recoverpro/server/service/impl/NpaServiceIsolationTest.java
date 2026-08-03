@@ -2,6 +2,7 @@ package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.AbstractIntegrationTest;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
+import com.recoverpro.server.dto.request.NpaFlagRequest;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.entity.NpaRecord;
@@ -18,11 +19,13 @@ import com.recoverpro.server.service.NpaService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NpaServiceIsolationTest extends AbstractIntegrationTest {
@@ -88,5 +91,50 @@ class NpaServiceIsolationTest extends AbstractIntegrationTest {
 
         assertThatThrownBy(() -> npaService.resolveNpaRecord(recordInOrgA.getId(), UUID.randomUUID()))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getNpaReport_foreignOrgId_throwsNotFound() {
+        Organization target = createOrg("sp14-report-target");
+        Organization strangerOrg = createOrg("sp14-report-stranger");
+        actAsUser(createUser(strangerOrg, "ROLE_MANAGER"));
+
+        assertThatThrownBy(() -> npaService.getNpaReport(target.getId(), LocalDate.now()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getNpaRecords_foreignOrgId_throwsNotFound() {
+        Organization target = createOrg("sp14-records-target");
+        Organization strangerOrg = createOrg("sp14-records-stranger");
+        actAsUser(createUser(strangerOrg, "ROLE_MANAGER"));
+
+        assertThatThrownBy(() -> npaService.getNpaRecords(target.getId(), null, PageRequest.of(0, 20)))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void flagNpaRecords_foreignOrgId_throwsNotFound() {
+        Organization target = createOrg("sp14-flag-target");
+        Organization strangerOrg = createOrg("sp14-flag-stranger");
+        actAsUser(createUser(strangerOrg, "ROLE_MANAGER"));
+
+        NpaFlagRequest request = NpaFlagRequest.builder()
+                .organizationId(target.getId())
+                .overdueThresholdDays(30)
+                .build();
+
+        assertThatThrownBy(() -> npaService.flagNpaRecords(request))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getNpaReport_ownOrg_succeeds() {
+        Organization own = createOrg("sp14-report-own");
+        actAsUser(createUser(own, "ROLE_MANAGER"));
+
+        var report = npaService.getNpaReport(own.getId(), LocalDate.now());
+
+        assertThat(report.getOrganizationId()).isEqualTo(own.getId());
     }
 }

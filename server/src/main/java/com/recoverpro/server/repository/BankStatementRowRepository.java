@@ -9,7 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,12 +36,12 @@ public interface BankStatementRowRepository extends JpaRepository<BankStatementR
            WHERE b.outcome = com.recoverpro.server.enums.ReconciliationOutcome.UNMATCHED
              AND b.createdAt >= :cutoff
            """)
-    List<BankStatementRow> findUnmatchedSince(@Param("cutoff") LocalDateTime cutoff);
+    List<BankStatementRow> findUnmatchedSince(@Param("cutoff") Instant cutoff);
 
     /**
      * Convenience overload -- last 7 days, the reconciliation sweep window.
      */
     default List<BankStatementRow> findRecentlyUnmatched() {
-        return findUnmatchedSince(LocalDateTime.now().minusDays(7));
+        return findUnmatchedSince(Instant.now().minus(7, ChronoUnit.DAYS));
     }
 }

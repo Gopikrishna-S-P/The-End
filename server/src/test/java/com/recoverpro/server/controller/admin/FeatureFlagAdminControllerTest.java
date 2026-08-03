@@ -3,6 +3,7 @@ package com.recoverpro.server.controller.admin;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.dto.request.SetFeatureFlagRequest;
 import com.recoverpro.server.entity.FeatureFlag;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FeatureFlagService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.*;
 class FeatureFlagAdminControllerTest {
 
     @Mock private FeatureFlagService featureFlagService;
+    @Mock private PlatformAdminAccessGuard platformAdminAccessGuard;
     @Mock private UserPrincipal orgAdmin;
     @Mock private UserPrincipal platformAdmin;
 
@@ -35,7 +37,7 @@ class FeatureFlagAdminControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new FeatureFlagAdminController(featureFlagService);
+        controller = new FeatureFlagAdminController(featureFlagService, platformAdminAccessGuard);
         ownOrgId = UUID.randomUUID();
         otherOrgId = UUID.randomUUID();
     }
@@ -112,10 +114,27 @@ class FeatureFlagAdminControllerTest {
         request.setOrganizationId(otherOrgId);
         request.setFlagKey("ADVANCED_REPORTS");
         request.setEnabled(true);
+        request.setReason("support ticket #123");
 
         controller.set(request, platformAdmin);
 
         verify(featureFlagService).set(eq(otherOrgId), eq("ADVANCED_REPORTS"), eq(true), any(), any());
+        verify(platformAdminAccessGuard).beginCrossOrgAccess(
+                any(), eq(otherOrgId), eq("support ticket #123"), eq("admin-feature-flags:set"));
+    }
+
+    @Test
+    void set_platformAdminSettingOwnOrgFlag_doesNotElevate() {
+        asPlatformAdmin();
+        lenient().when(platformAdmin.getOrganizationId()).thenReturn(ownOrgId);
+        SetFeatureFlagRequest request = new SetFeatureFlagRequest();
+        request.setOrganizationId(ownOrgId);
+        request.setFlagKey("ADVANCED_REPORTS");
+        request.setEnabled(true);
+
+        controller.set(request, platformAdmin);
+
+        verifyNoInteractions(platformAdminAccessGuard);
     }
 
     @Test
@@ -130,7 +149,7 @@ class FeatureFlagAdminControllerTest {
                 .build();
         when(featureFlagService.listForOrg(ownOrgId)).thenReturn(List.of(flag));
 
-        var response = controller.list(ownOrgId, orgAdmin);
+        var response = controller.list(ownOrgId, null, orgAdmin);
 
         assertThat(response.getBody().getData()).hasSize(1);
         assertThat(response.getBody().getData().get(0).getFlagKey()).isEqualTo("LUCIEN_AI");
@@ -139,14 +158,14 @@ class FeatureFlagAdminControllerTest {
     @Test
     void list_orgAdminListingAnotherOrg_throws() {
         asOrgAdmin();
-        assertThatThrownBy(() -> controller.list(otherOrgId, orgAdmin))
+        assertThatThrownBy(() -> controller.list(otherOrgId, null, orgAdmin))
                 .isInstanceOf(BusinessException.class);
     }
 
     @Test
     void list_orgAdminListingGlobal_throws() {
         asOrgAdmin();
-        assertThatThrownBy(() -> controller.list(null, orgAdmin))
+        assertThatThrownBy(() -> controller.list(null, null, orgAdmin))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -155,23 +174,34 @@ class FeatureFlagAdminControllerTest {
         asPlatformAdmin();
         when(featureFlagService.listGlobal()).thenReturn(List.of());
 
-        var response = controller.list(null, platformAdmin);
+        var response = controller.list(null, null, platformAdmin);
 
         assertThat(response.getBody().getData()).isEmpty();
         verify(featureFlagService).listGlobal();
     }
 
     @Test
+    void list_platformAdminListingAnotherOrg_elevatesFirst() {
+        asPlatformAdmin();
+        when(featureFlagService.listForOrg(otherOrgId)).thenReturn(List.of());
+
+        controller.list(otherOrgId, "support ticket #123", platformAdmin);
+
+        verify(platformAdminAccessGuard).beginCrossOrgAccess(
+                any(), eq(otherOrgId), eq("support ticket #123"), eq("admin-feature-flags:list"));
+    }
+
+    @Test
     void deleteOverride_orgAdminOwnOrg_succeeds() {
         asOrgAdmin();
-        controller.deleteOverride("LUCIEN_AI", ownOrgId, orgAdmin);
+        controller.deleteOverride("LUCIEN_AI", ownOrgId, null, orgAdmin);
         verify(featureFlagService).deleteManualOverride(ownOrgId, "LUCIEN_AI");
     }
 
     @Test
     void deleteOverride_orgAdminAnotherOrg_throws() {
         asOrgAdmin();
-        assertThatThrownBy(() -> controller.deleteOverride("LUCIEN_AI", otherOrgId, orgAdmin))
+        assertThatThrownBy(() -> controller.deleteOverride("LUCIEN_AI", otherOrgId, null, orgAdmin))
                 .isInstanceOf(BusinessException.class);
         verifyNoInteractions(featureFlagService);
     }
@@ -179,7 +209,7 @@ class FeatureFlagAdminControllerTest {
     @Test
     void deleteOverride_orgAdminGlobal_throws() {
         asOrgAdmin();
-        assertThatThrownBy(() -> controller.deleteOverride("LUCIEN_AI", null, orgAdmin))
+        assertThatThrownBy(() -> controller.deleteOverride("LUCIEN_AI", null, null, orgAdmin))
                 .isInstanceOf(BusinessException.class);
         verifyNoInteractions(featureFlagService);
     }
@@ -187,7 +217,15 @@ class FeatureFlagAdminControllerTest {
     @Test
     void deleteOverride_platformAdminGlobal_succeeds() {
         asPlatformAdmin();
-        controller.deleteOverride("LUCIEN_AI", null, platformAdmin);
+        controller.deleteOverride("LUCIEN_AI", null, null, platformAdmin);
         verify(featureFlagService).deleteManualOverride(null, "LUCIEN_AI");
+    }
+
+    @Test
+    void deleteOverride_platformAdminAnotherOrg_elevatesFirst() {
+        asPlatformAdmin();
+        controller.deleteOverride("LUCIEN_AI", otherOrgId, "support ticket #123", platformAdmin);
+        verify(platformAdminAccessGuard).beginCrossOrgAccess(
+                any(), eq(otherOrgId), eq("support ticket #123"), eq("admin-feature-flags:delete"));
     }
 }

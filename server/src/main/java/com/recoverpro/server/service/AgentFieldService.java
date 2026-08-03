@@ -19,11 +19,13 @@ public interface AgentFieldService {
 
     AgentShiftResponse endShift(UUID agentId);
 
-    AgentShiftResponse currentShift(UUID agentId);
+    // callerId is the authenticated caller's own id -- allows self, or a supervisor viewing an
+    // agent within their own org; throws (not-found, to avoid confirming existence) otherwise.
+    AgentShiftResponse currentShift(UUID agentId, UUID callerId);
 
-    void recordPing(LocationPingRequest request);
+    void recordPing(LocationPingRequest request, UUID agentId);
 
-    IncidentReportResponse triggerSos(SosRequest request);
+    IncidentReportResponse triggerSos(SosRequest request, UUID agentId);
 
     IncidentReportResponse resolveIncident(UUID id, UUID actingUserId, String notes);
 

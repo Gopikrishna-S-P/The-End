@@ -13,8 +13,6 @@ public interface AuthService {
 
     UserResponse getCurrentUser(UUID userId);
 
-    AuthResponse register(RegisterRequest request, HttpServletRequest httpRequest);
-
     AuthResponse login(LoginRequest request, HttpServletRequest httpRequest);
 
     AuthResponse refreshToken(RefreshTokenRequest request, HttpServletRequest httpRequest);

@@ -7,14 +7,11 @@ export const loginSchema = z.object({
 export type LoginForm = z.infer<typeof loginSchema>;
 
 export const ROLE_REDIRECT: Record<string, string> = {
-  PLATFORM_ADMIN: '/platform/dashboard',
-  ORG_ADMIN:      '/app/dashboard',
-  MANAGER:        '/app/dashboard',
-  TL:             '/app/dashboard',
-  FO:             '/app/today',
-  CALLER:         '/app/today',
-  TRACER:         '/app/today',
-  AGENCY_ADMIN:   '/app/dashboard',
-  BANK_ADMIN:     '/app/dashboard',
-  FIELD_AGENT:    '/app/today',
+  ROLE_PLATFORM_ADMIN: '/platform/dashboard',
+  ROLE_ORG_ADMIN:      '/app/dashboard',
+  ROLE_MANAGER:        '/app/dashboard',
+  ROLE_TL:             '/app/dashboard',
+  ROLE_FO:             '/app/today',
+  ROLE_CALLER:         '/app/today',
+  ROLE_TRACER:         '/app/today',
 };

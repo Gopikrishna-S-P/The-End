@@ -6,6 +6,7 @@ import com.recoverpro.server.dto.request.ReassignRequest;
 import com.recoverpro.server.dto.response.*;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.Assignment;
+import com.recoverpro.server.entity.User;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.enums.AssignmentStatus;
 import com.recoverpro.server.enums.Priority;
@@ -18,6 +19,7 @@ import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.AssignmentRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitLogRepository;
+import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.AssignmentService;
 import com.recoverpro.server.service.AuditLogService;
 import com.recoverpro.server.service.CalendarService;
@@ -46,6 +48,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final AllocationRepository allocationRepository;
     private final UserRepository userRepository;
     private final VisitLogRepository visitLogRepository;
+    private final OrgIsolationGuard orgIsolationGuard;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -53,6 +56,16 @@ public class AssignmentServiceImpl implements AssignmentService {
         log.info("BulkAssign: agentId={}, date={}, count={}, strictMode={}",
                 request.getAgentId(), request.getAssignmentDate(),
                 request.getAllocationIds().size(), request.getStrictMode());
+
+        if (!orgIsolationGuard.belongsToOrg(request.getOrganizationId())) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
+
+        User agent = userRepository.findById(request.getAgentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found: " + request.getAgentId()));
+        if (!request.getOrganizationId().equals(agent.getOrganizationId())) {
+            throw new ResourceNotFoundException("Agent not found: " + request.getAgentId());
+        }
 
         validateAssignmentDate(request.getAssignmentDate(), request.getOrganizationId());
 
@@ -94,6 +107,15 @@ public class AssignmentServiceImpl implements AssignmentService {
                 failures.add(BulkAssignResponse.AssignmentFailureDetail.builder()
                         .allocationId(allocationId)
                         .reason("Allocation already has an active assignment")
+                        .build());
+                continue;
+            }
+
+            Allocation allocation = allocationRepository.findById(allocationId).orElse(null);
+            if (allocation == null || !request.getOrganizationId().equals(allocation.getOrganization().getId())) {
+                failures.add(BulkAssignResponse.AssignmentFailureDetail.builder()
+                        .allocationId(allocationId)
+                        .reason("Allocation not found")
                         .build());
                 continue;
             }
@@ -161,6 +183,12 @@ public class AssignmentServiceImpl implements AssignmentService {
         if (assignment.getStatus() == AssignmentStatus.COMPLETED ||
                 assignment.getStatus() == AssignmentStatus.CANCELLED) {
             throw new BusinessException("Cannot reassign a " + assignment.getStatus() + " assignment");
+        }
+
+        User newAgent = userRepository.findById(request.getNewAgentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found: " + request.getNewAgentId()));
+        if (!assignment.getOrganizationId().equals(newAgent.getOrganizationId())) {
+            throw new ResourceNotFoundException("Agent not found: " + request.getNewAgentId());
         }
 
         LocalDate targetDate = request.getAssignmentDate() != null

@@ -46,8 +46,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   
-  color: var(--text-primary);
-  background: linear-gradient(135deg, #111, #444);
+  color: var(--ink-primary);
+  background: linear-gradient(135deg, var(--ink-primary), var(--ink-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -141,8 +141,8 @@
   letter-spacing: 0;
   min-width: 0;
   
-  color: var(--text-primary);
-  background: linear-gradient(135deg, #111, #444);
+  color: var(--ink-primary);
+  background: linear-gradient(135deg, var(--ink-primary), var(--ink-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

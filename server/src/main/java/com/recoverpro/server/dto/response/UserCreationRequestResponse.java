@@ -20,6 +20,7 @@ public class UserCreationRequestResponse {
     private String requestedFirstName;
     private String requestedLastName;
     private RequestedRole requestedRole;
+    private String requestedStaffRole;
     private UUID organizationId;
     private String organizationName;
     private UUID requestedById;

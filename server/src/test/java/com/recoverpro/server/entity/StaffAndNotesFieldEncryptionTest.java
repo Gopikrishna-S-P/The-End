@@ -100,6 +100,7 @@ class StaffAndNotesFieldEncryptionTest extends AbstractIntegrationTest {
     void userCreationRequestNameFields_areStoredEncrypted() {
         User requestedBy = createUser(org, "ROLE_ORG_ADMIN");
         UserCreationRequest request = userCreationRequestRepository.save(UserCreationRequest.builder()
+                .organization(org)
                 .requestedEmail("new-" + UUID.randomUUID() + "@test.local")
                 .requestedFirstName("Jane")
                 .requestedLastName("Doe")
@@ -199,6 +200,7 @@ class StaffAndNotesFieldEncryptionTest extends AbstractIntegrationTest {
         User agent = createUser(org, "ROLE_FO");
         ChatSession session = chatSessionRepository.save(ChatSession.builder()
                 .agentId(agent.getId())
+                .organizationId(org.getId())
                 .agentFirstName("Priya")
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())

@@ -24,6 +24,7 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
   const [error,       setError]       = useState<string | null>(null);
   const [docs,        setDocs]        = useState<CollectionDocumentResponse[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
+  const [openingDocId, setOpeningDocId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,6 +37,15 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
   }, [isOpen, collection.id, initialAction]);
 
   const canSubmit = action !== null && !(action === 'REJECT' && !remarks.trim());
+
+  const openDoc = async (docId: string) => {
+    setOpeningDocId(docId); setError(null);
+    try {
+      await documentsApi.openDocument(collection.id, docId);
+    } catch {
+      setError('Failed to open document.');
+    } finally { setOpeningDocId(null); }
+  };
 
   const handleSubmit = async () => {
     if (!action) { setError('Please select Approve or Reject.'); return; }
@@ -102,11 +112,11 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {docs.map((doc) => (
-                      <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-solid)', textDecoration: 'none' }}>
-                        <FileText size={13} />
+                      <button key={doc.id} type="button" onClick={() => openDoc(doc.id)} disabled={openingDocId === doc.id}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-solid)', textDecoration: 'none', background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: 'fit-content' }}>
+                        {openingDocId === doc.id ? <Loader2 size={13} className="ds-spin" /> : <FileText size={13} />}
                         {doc.fileName}
-                      </a>
+                      </button>
                     ))}
                   </div>
                 )}

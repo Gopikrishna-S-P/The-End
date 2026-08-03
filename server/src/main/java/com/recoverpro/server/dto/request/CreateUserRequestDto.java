@@ -22,5 +22,9 @@ public class CreateUserRequestDto {
     @NotNull
     private RequestedRole role;
 
+    /** Required when role == ORG_USER: which staff role (FO/CALLER/TL/MANAGER) to assign on
+     * approval. Ignored for ORG_ADMIN requests. */
+    private String staffRole;
+
     private String notes;
 }

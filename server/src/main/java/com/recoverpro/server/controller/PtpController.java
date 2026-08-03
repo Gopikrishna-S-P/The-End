@@ -13,6 +13,7 @@ import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.PtpStatus;
 import com.recoverpro.server.exception.IdempotencyKeyConflictException;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.*;
 import com.recoverpro.server.service.IdempotencyKeyService.IdempotencyResult;
@@ -63,6 +64,23 @@ public class PtpController {
     private final AllocationService allocationService;
     private final com.recoverpro.server.repository.AllocationRepository allocationRepository;
     private final UserRepository userRepository;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
+
+    /**
+     * ptp_records' RLS policy (V061) only grants cross-org visibility once
+     * app.is_platform_admin is set for the request -- several methods below have always had
+     * "if platform admin, show cross-org data" logic, but it was dead until this elevation existed:
+     * ptpService's underlying queries came back empty for a platform admin before that logic could
+     * ever matter. Uses the unattended escape hatch (no reason prompt) rather than
+     * beginCrossOrgAccess because none of these callers have a single target org known up front --
+     * getAll/exportCsv span every org by design, and the by-id lookups don't know which org they'll
+     * land on until after the elevated fetch succeeds.
+     */
+    private void elevateIfPlatformAdmin(UserPrincipal principal, String resource) {
+        if (isPlatformAdmin(principal)) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), resource);
+        }
+    }
 
     private boolean shouldProceed(String key, String scope, UUID id) {
         if (key == null || key.isBlank()) return true;
@@ -127,6 +145,7 @@ public class PtpController {
                                 alloc.getOrganizationId(), alloc.getLoanNumber())
                         : java.util.List.of(allocationId);
 
+        elevateIfPlatformAdmin(principal, "ptp:byAllocation:" + allocationId);
         List<PtpResponse> ptps = ptpService.getPtpsByAllocationIds(allocationIds);
 
         if (isOnlyFieldOfficer(principal)) {
@@ -143,6 +162,7 @@ public class PtpController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
 
+        elevateIfPlatformAdmin(principal, "ptp:byId:" + id);
         PtpResponse resp = ptpService.getPtpById(id);
         assertViaAllocation(resp.getAllocationId(), principal);
 
@@ -160,6 +180,7 @@ public class PtpController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
 
+        elevateIfPlatformAdmin(principal, "ptp:history:" + id);
         PtpResponse resp = ptpService.getPtpById(id);
         assertViaAllocation(resp.getAllocationId(), principal);
 
@@ -178,6 +199,7 @@ public class PtpController {
             @PathVariable UUID allocationId) {
 
         assertViaAllocation(allocationId, principal);
+        elevateIfPlatformAdmin(principal, "ptp:fullAllocationHistory:" + allocationId);
         return ResponseEntity.ok(ApiResponse.success(ptpService.getFullAllocationHistory(allocationId)));
     }
 
@@ -212,6 +234,7 @@ public class PtpController {
 
         Sort sort = SafeSort.from(sortBy, dir, SORTABLE_FIELDS, "createdAt");
 
+        elevateIfPlatformAdmin(principal, "ptp:list");
         Page<PtpResponse> result =
                 ptpService.getAllPtps(filter, PageRequest.of(page, size, sort));
 
@@ -244,6 +267,7 @@ public class PtpController {
         if (fromDate != null) filter.setPromisedDateFrom(fromDate);
         if (toDate != null) filter.setPromisedDateTo(toDate);
 
+        elevateIfPlatformAdmin(principal, "ptp:export");
         Page<PtpResponse> result = ptpService.getAllPtps(filter, Pageable.unpaged());
         List<PtpResponse> rows = isPlatformAdmin(principal)
                 ? result.getContent()
@@ -338,8 +362,7 @@ public class PtpController {
 
     private boolean isOnlyFieldOfficer(UserPrincipal p) {
         boolean fo = p.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_FO")
-                        || a.getAuthority().equals("ROLE_FO"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_FO"));
 
         boolean lead = p.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().contains("ADMIN")

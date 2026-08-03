@@ -1,9 +1,9 @@
 // Matches server entity.MessageTemplate and enums.Channel / enums.MessageTemplateStatus
 // exactly. See server/src/main/java/com/recoverpro/server/controller/MessageTemplateController.java
 //
-// NOTE: the backend exposes ONLY three maker-checker action endpoints
-// (submit-for-dlt, activate, retire) — there is no list/get/create endpoint.
-// See BCR-3 in BACKEND-REQUESTS.md.
+// Templates themselves are still seeded directly into the message_templates table by a
+// "maker" (design-doc §4.6) — there is no create endpoint — but list/getById exist for the
+// checker's review queue (BCR-3, resolved).
 
 export type MessageTemplateChannel =
   | 'SMS' | 'WHATSAPP' | 'RCS' | 'EMAIL' | 'VOICE_IVR' | 'VOICE_AGENT';

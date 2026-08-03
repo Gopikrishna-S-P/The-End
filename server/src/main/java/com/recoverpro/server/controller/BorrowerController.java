@@ -2,8 +2,10 @@ package com.recoverpro.server.controller;
 
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.dto.response.PagedResponse;
+import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.request.CreateBorrowerRequest;
 import com.recoverpro.server.dto.request.CreateErasureRequestRequest;
+import com.recoverpro.server.dto.request.ExecuteErasureRequest;
 import com.recoverpro.server.dto.request.GrantConsentRequest;
 import com.recoverpro.server.dto.request.UpsertNomineeRequest;
 import com.recoverpro.server.dto.response.BorrowerResponse;
@@ -109,6 +111,21 @@ public class BorrowerController {
     public ResponseEntity<ApiResponse<List<DataErasureRequestResponse>>> listErasureRequests(
             @PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(borrowerService.listErasureRequests(id)));
+    }
+
+    @PatchMapping("/{id}/erasure-requests/{requestId}/execute")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN','PLATFORM_ADMIN')")
+    public ResponseEntity<ApiResponse<DataErasureRequestResponse>> executeErasure(
+            @PathVariable UUID id,
+            @PathVariable UUID requestId,
+            @RequestBody(required = false) ExecuteErasureRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        DataErasureRequestResponse result = borrowerService.executeErasure(
+                requestId, principal.getId(), request != null ? request.getComplianceNotes() : null);
+        if (!id.equals(result.getBorrowerId())) {
+            throw new ResourceNotFoundException("Erasure request not found: " + requestId);
+        }
+        return ResponseEntity.ok(ApiResponse.of("Erasure executed", result));
     }
 
     @PostMapping("/{id}/nominee")

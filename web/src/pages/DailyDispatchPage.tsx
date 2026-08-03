@@ -6,7 +6,8 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { usersApi } from '../api/usersApi';
 import { dailyDispatchApi } from '../api/dailyDispatchApi';
 import { allocationsApi } from '../api/allocationsApi';
-import type { UserResponse, AllocationResponse } from '../types';
+import { assignmentsApi } from '../api/assignmentsApi';
+import type { UserResponse, AllocationResponse, OptimizedAssignmentOrderResponse } from '../types';
 import {
   CheckCircle2, AlertCircle, X,
   RefreshCw, Send, ChevronDown, ChevronUp, CalendarRange,
@@ -48,9 +49,12 @@ const initials = (a: UserResponse) =>
   `${a.firstName?.[0] ?? ''}${a.lastName?.[0] ?? ''}`.toUpperCase() || '?';
 
 export default function DailyDispatchPage() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyRole } = usePermissions();
   const { user } = useAuth();
   const canDispatch = hasPermission('DAILY_DISPATCH_CREATE');
+  // Matches AllocationOptimizerController's own @PreAuthorize exactly — narrower than
+  // DAILY_DISPATCH_CREATE (which MANAGER/TL also hold), so gate separately.
+  const canOptimize = hasAnyRole('ORG_ADMIN', 'PLATFORM_ADMIN');
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -86,6 +90,12 @@ export default function DailyDispatchPage() {
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [orgDispatched, setOrgDispatched] = useState<number | null>(null);
   const [showOfficerPanel, setShowOfficerPanel] = useState(false);
+  const [optimizing,    setOptimizing]    = useState(false);
+  const [optimizedOrder, setOptimizedOrder] = useState<string[] | null>(null);
+  const [optimizeMeta,  setOptimizeMeta]  = useState<Map<string, OptimizedAssignmentOrderResponse['ordered'][number]> | null>(null);
+
+  // Any change to the picked set invalidates a previously computed optimized order.
+  useEffect(() => { setOptimizedOrder(null); setOptimizeMeta(null); }, [picked]);
 
   // Officer panel auto-closes 30s after being opened.
   useEffect(() => {
@@ -161,11 +171,31 @@ export default function DailyDispatchPage() {
     } finally { setUndoingId(null); }
   };
 
+  const runOptimize = async () => {
+    if (!user?.organizationId || !selectedAgent || picked.size < 2) return;
+    setOptimizing(true); setFeedback(null);
+    try {
+      const result = await assignmentsApi.optimizeOrder({
+        organizationId: user.organizationId,
+        agentId: selectedAgent,
+        allocationIds: Array.from(picked),
+      });
+      const ordered = [...result.ordered].sort((a, b) => a.sequenceOrder - b.sequenceOrder);
+      setOptimizedOrder(ordered.map(o => o.allocationId));
+      setOptimizeMeta(new Map(ordered.map(o => [o.allocationId, o])));
+    } catch (e: any) {
+      setFeedback({ kind: 'err', msg: 'Could not compute visit order.', sub: e?.response?.data?.message || 'Please try again.' });
+    } finally { setOptimizing(false); }
+  };
+
   const doSend = async () => {
     if (!selectedAgent || picked.size === 0) return;
     setSubmitting(true); setFeedback(null);
     try {
-      const mergedIds = [...dispatched.map(d => d.id), ...Array.from(picked)];
+      const pickedOrdered = optimizedOrder && optimizedOrder.length === picked.size && optimizedOrder.every(id => picked.has(id))
+        ? optimizedOrder
+        : Array.from(picked);
+      const mergedIds = [...dispatched.map(d => d.id), ...pickedOrdered];
       const result = await dailyDispatchApi.create({ agentId: selectedAgent, date: dispatchDate, caseIds: mergedIds });
       const newCount = result.length - dispatched.length;
       setFeedback({ kind: 'ok', msg: `Dispatched ${newCount > 0 ? newCount : picked.size} case(s) to ${agentFullName}.` });
@@ -255,6 +285,7 @@ export default function DailyDispatchPage() {
               undoOne={undoOne} undoingId={undoingId} casesLoading={casesLoading}
               initials={initials} canDispatch={canDispatch} submitting={submitting} doSend={doSend} agentObj={agentObj}
               dispatchDate={dispatchDate} dispatchDayLabel={dispatchDayLabel} setDate={setDate} shiftDate={shiftDate}
+              optimizing={optimizing} onOptimize={runOptimize} optimizedOrder={optimizedOrder} optimizeMeta={optimizeMeta} canOptimize={canOptimize}
             />
           </div>
           <AnimatePresence>

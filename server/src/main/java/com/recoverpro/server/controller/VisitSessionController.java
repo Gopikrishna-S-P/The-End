@@ -1,6 +1,7 @@
 package com.recoverpro.server.controller;
 
 import com.recoverpro.server.common.dto.response.ApiResponse;
+import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.dto.request.CloseSessionRequest;
 import com.recoverpro.server.dto.request.PingRequest;
 import com.recoverpro.server.dto.request.StartVisitRequest;
@@ -8,6 +9,7 @@ import com.recoverpro.server.dto.request.VisitTransitionRequest;
 import com.recoverpro.server.dto.response.DistanceSummaryEntry;
 import com.recoverpro.server.dto.response.TeamStatusEntry;
 import com.recoverpro.server.dto.response.VisitSessionResponse;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.VisitSessionService;
 import jakarta.validation.Valid;
@@ -33,6 +35,7 @@ import java.util.UUID;
 public class VisitSessionController {
 
     private final VisitSessionService visitSessionService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @PostMapping
     public ResponseEntity<ApiResponse<VisitSessionResponse>> start(
@@ -115,19 +118,51 @@ public class VisitSessionController {
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')")
     public ResponseEntity<ApiResponse<List<TeamStatusEntry>>> teamStatus(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID orgId,
+            @RequestParam(required = false) String reason,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         LocalDate queryDate = date != null ? date : LocalDate.now();
+        UUID targetOrgId = resolveOrgId(principal, orgId, reason, "visitSessions:teamStatus");
         return ResponseEntity.ok(ApiResponse.success(
-                visitSessionService.getTeamStatus(principal.getOrganizationId(), queryDate)));
+                visitSessionService.getTeamStatus(targetOrgId, queryDate)));
     }
 
     @GetMapping("/distance-summary")
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')")
     public ResponseEntity<ApiResponse<List<DistanceSummaryEntry>>> distanceSummary(
             @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID orgId,
+            @RequestParam(required = false) String reason,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         LocalDate queryDate = date != null ? date : LocalDate.now();
+        UUID targetOrgId = resolveOrgId(principal, orgId, reason, "visitSessions:distanceSummary");
         return ResponseEntity.ok(ApiResponse.success(
-                visitSessionService.getDistanceSummary(principal.getOrganizationId(), queryDate)));
+                visitSessionService.getDistanceSummary(targetOrgId, queryDate)));
+    }
+
+    private static boolean isPlatformAdmin(UserPrincipal principal) {
+        return principal.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_PLATFORM_ADMIN".equals(a.getAuthority()));
+    }
+
+    /**
+     * Both endpoints always queried principal.getOrganizationId() directly, which is NULL for a
+     * platform admin and never NULL for anyone else -- there was no orgId parameter at all, so a
+     * platform admin had no way to target any org. visit_sessions already has the platform-admin RLS
+     * bypass (V063, fixed for ReportingController), but sessionRepo.findByOrgIdAndStartedAtBetween(null,
+     * ...) would still return nothing (no real row has org_id IS NULL) even with the bypass active,
+     * since orgId itself was never a real target -- this needed a parameter to supply one, not just
+     * an RLS fix. Target org is known up front here, so this uses the reason-requiring
+     * beginCrossOrgAccess, matching ReportingController's identical fix.
+     */
+    private UUID resolveOrgId(UserPrincipal principal, UUID requestedOrgId, String reason, String resource) {
+        if (isPlatformAdmin(principal)) {
+            if (requestedOrgId == null) {
+                throw new BusinessException("Platform admins must specify ?orgId= to view a tenant's team status.");
+            }
+            platformAdminAccessGuard.beginCrossOrgAccess(principal.getId(), requestedOrgId, reason, resource);
+            return requestedOrgId;
+        }
+        return principal.getOrganizationId();
     }
 }

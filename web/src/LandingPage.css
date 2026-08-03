@@ -879,7 +879,7 @@
 .landing-contact-field textarea:focus {
   border-color: var(--ink-solid);
   background: var(--bg-canvas);
-  box-shadow: 0 0 0 3px rgba(10, 165, 80, 0.14);
+  outline: none;
 }
 .landing-contact-submit { width: 100%; justify-content: center; margin-top: 6px; }
 

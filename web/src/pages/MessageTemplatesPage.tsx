@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
-  FileText, Send, CheckCircle2, Archive, AlertCircle, X, Loader2, Info,
-  MessageSquareText, Clock,
+  FileText, Send, CheckCircle2, Archive, AlertCircle, X, Loader2,
+  MessageSquareText, Clock, RefreshCw,
 } from 'lucide-react';
 import { messageTemplatesApi } from '../api/messageTemplatesApi';
 import { extractApiError } from '../utils/extractApiError';
-import type { MessageTemplate } from '../types';
+import type { MessageTemplate, MessageTemplateChannel, MessageTemplateStatus } from '../types';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
@@ -19,13 +19,14 @@ const fadeUp: Variants = {
   show:   { opacity: 1, y: 0, transition: { duration: 0.40, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 type ActionKey = 'submit-for-dlt' | 'activate' | 'retire';
 
 const STATUS_TONE: Record<string, string> = {
   ACTIVE: 'is-success', DRAFT: 'is-neutral', PENDING_DLT: 'is-warn', RETIRED: 'is-danger', INACTIVE: 'is-neutral',
 };
+
+const STATUSES: MessageTemplateStatus[] = ['DRAFT', 'PENDING_DLT', 'ACTIVE', 'RETIRED', 'INACTIVE'];
+const CHANNELS: MessageTemplateChannel[] = ['SMS', 'WHATSAPP', 'RCS', 'EMAIL', 'VOICE_IVR', 'VOICE_AGENT'];
 
 interface HistoryEntry {
   action: ActionKey;
@@ -34,24 +35,42 @@ interface HistoryEntry {
 }
 
 export default function MessageTemplatesPage() {
-  const [templateId, setTemplateId] = useState('');
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError]     = useState<string | null>(null);
+  const [statusFilter, setStatusFilter]   = useState<MessageTemplateStatus | ''>('');
+  const [channelFilter, setChannelFilter] = useState<MessageTemplateChannel | ''>('');
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [pending, setPending]       = useState<ActionKey | null>(null);
-  const [result, setResult]         = useState<MessageTemplate | null>(null);
   const [history, setHistory]       = useState<HistoryEntry[]>([]);
 
-  const validId = UUID_RE.test(templateId.trim());
+  const selected = templates.find(t => t.id === selectedId) ?? null;
+
+  const loadTemplates = useCallback(() => {
+    setListLoading(true); setListError(null);
+    messageTemplatesApi.list({
+      status: statusFilter || undefined,
+      channel: channelFilter || undefined,
+      size: 50,
+    })
+      .then(r => setTemplates(r.content))
+      .catch(e => setListError(extractApiError(e, 'Failed to load templates.')))
+      .finally(() => setListLoading(false));
+  }, [statusFilter, channelFilter]);
+
+  useEffect(() => { loadTemplates(); }, [loadTemplates]);
 
   const runAction = async (action: ActionKey) => {
-    if (!validId) return;
+    if (!selectedId) return;
     setPending(action); setError(null);
     try {
-      const id = templateId.trim();
-      const tpl = action === 'submit-for-dlt' ? await messageTemplatesApi.submitForDlt(id)
-        : action === 'activate' ? await messageTemplatesApi.activate(id)
-        : await messageTemplatesApi.retire(id);
-      setResult(tpl);
+      const tpl = action === 'submit-for-dlt' ? await messageTemplatesApi.submitForDlt(selectedId)
+        : action === 'activate' ? await messageTemplatesApi.activate(selectedId)
+        : await messageTemplatesApi.retire(selectedId);
       setHistory(h => [{ action, at: new Date().toISOString(), template: tpl }, ...h].slice(0, 20));
+      setTemplates(prev => prev.map(t => t.id === tpl.id ? tpl : t));
     } catch (e) {
       setError(extractApiError(e, 'Action failed.'));
     } finally { setPending(null); }
@@ -72,92 +91,116 @@ export default function MessageTemplatesPage() {
       </AnimatePresence>
 
       <div className="db-content">
-        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ maxWidth: 860, margin: '0 auto' }}>
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ maxWidth: 1100, margin: '0 auto' }}>
 
-          <motion.div variants={fadeUp} className="db-error-banner" style={{ marginBottom: 16, background: 'var(--info-subtle, var(--bg-subtle))', borderColor: 'var(--border-subtle)' }}>
-            <Info size={16} aria-hidden="true" className="db-error-icon" style={{ color: 'var(--info)' }} />
-            <div className="db-error-body">
-              <span className="db-error-title">Template lookup isn't available from the API yet</span>
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-secondary)' }}>
-                The backend only exposes maker-checker action endpoints (submit for DLT / activate / retire) —
-                there is no endpoint to list or fetch templates by key. Paste a template ID you already have
-                (from the DB, a log line, or the approver's Slack message) to act on it. See BCR-3 in
-                BACKEND-REQUESTS.md for the requested list/get endpoints.
-              </p>
+          <div className="dd-page-header" style={{ marginBottom: 16 }}>
+            <div className="dd-page-titles">
+              <h1 className="dd-page-title">Message Templates</h1>
+              <span className="dd-page-context">Maker-checker review queue</span>
             </div>
-          </motion.div>
-
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, marginBottom: 16 }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <FileText size={15} style={{ color: 'var(--ink-tertiary)' }} />
-              <h2 className="db-card-title">Message Template Review</h2>
-            </header>
-            <div className="db-card-body" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="ds-field">
-                <label className="ds-label" htmlFor="mt-id">Template ID (UUID)</label>
-                <input
-                  id="mt-id" type="text" value={templateId}
-                  onChange={(e) => { setTemplateId(e.target.value); setResult(null); }}
-                  placeholder="e.g. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                  className="ds-input" style={{ fontFamily: 'var(--font-mono)' }}
-                  autoComplete="off" spellCheck={false}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <button type="button" className="ds-btn is-secondary" disabled={!validId || pending !== null}
-                  onClick={() => runAction('submit-for-dlt')} style={{ height: 36 }}>
-                  {pending === 'submit-for-dlt' ? <Loader2 size={14} className="ds-spin" /> : <Send size={14} />}
-                  Submit for DLT
-                </button>
-                <button type="button" className="ds-btn is-primary" disabled={!validId || pending !== null}
-                  onClick={() => runAction('activate')} style={{ height: 36 }}>
-                  {pending === 'activate' ? <Loader2 size={14} className="ds-spin" /> : <CheckCircle2 size={14} />}
-                  Activate
-                </button>
-                <button type="button" className="ds-btn is-secondary" disabled={!validId || pending !== null}
-                  onClick={() => runAction('retire')} style={{ height: 36, color: 'var(--danger)' }}>
-                  {pending === 'retire' ? <Loader2 size={14} className="ds-spin" /> : <Archive size={14} />}
-                  Retire
-                </button>
-              </div>
-              <p style={{ margin: 0, fontSize: 11.5, color: 'var(--ink-tertiary)' }}>
-                Submit for DLT: DRAFT → PENDING_DLT. Activate: DRAFT/PENDING_DLT → ACTIVE (requires a different
-                user than the template's creator, and channel-specific fields — DLT id for SMS, WhatsApp
-                namespace, or subject for EMAIL — plus a no-harassment content lint). Retire: any status →
-                RETIRED, idempotent.
-              </p>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select className="ds-input" value={statusFilter} onChange={e => setStatusFilter(e.target.value as MessageTemplateStatus | '')} style={{ height: 32 }}>
+                <option value="">All statuses</option>
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select className="ds-input" value={channelFilter} onChange={e => setChannelFilter(e.target.value as MessageTemplateChannel | '')} style={{ height: 32 }}>
+                <option value="">All channels</option>
+                {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button type="button" className="ds-btn is-secondary is-sm" onClick={loadTemplates} disabled={listLoading} aria-label="Refresh">
+                {listLoading ? <Loader2 size={13} className="ds-spin" /> : <RefreshCw size={13} />}
+              </button>
             </div>
-          </motion.section>
+          </div>
 
-          <AnimatePresence>
-            {result && (
-              <motion.section variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0, y: -10 }}
-                className="ds-card db-card" style={{ marginBottom: 16 }}>
-                <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <MessageSquareText size={15} style={{ color: 'var(--ink-tertiary)' }} />
-                  <h2 className="db-card-title">Result</h2>
-                  <span className={`ds-pill ${STATUS_TONE[result.status] ?? 'is-neutral'}`} style={{ marginLeft: 'auto' }}>{result.status}</span>
-                </header>
-                <div className="db-card-body" style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, fontSize: 13 }}>
-                  <Field label="Template key" value={result.templateKey} mono />
-                  <Field label="Version" value={result.version} mono />
-                  <Field label="Channel" value={result.channel} />
-                  <Field label="Language" value={result.language} />
-                  {result.category && <Field label="Category" value={result.category} />}
-                  {result.dltTemplateId && <Field label="DLT template ID" value={result.dltTemplateId} mono />}
-                  {result.whatsappNamespace && <Field label="WhatsApp namespace" value={result.whatsappNamespace} mono />}
-                  {result.approvedByUserId && <Field label="Approved by" value={result.approvedByUserId} mono />}
-                  {result.approvedAt && <Field label="Approved at" value={new Date(result.approvedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} />}
-                  {result.subject && <Field label="Subject" value={result.subject} span2 />}
-                  <Field label="Body" value={result.body} span2 />
-                </div>
-              </motion.section>
-            )}
-          </AnimatePresence>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) 2fr', gap: 16, alignItems: 'start' }}>
+            <motion.section variants={fadeUp} className="ds-card db-card">
+              <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FileText size={15} style={{ color: 'var(--ink-tertiary)' }} />
+                <h2 className="db-card-title">Templates</h2>
+              </header>
+              <div style={{ maxHeight: 520, overflowY: 'auto' }}>
+                {listLoading ? (
+                  <div style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-tertiary)', fontSize: 13 }}>
+                    <Loader2 size={13} className="ds-spin" /> Loading…
+                  </div>
+                ) : listError ? (
+                  <div style={{ padding: 20, fontSize: 13, color: 'var(--danger)' }}>{listError}</div>
+                ) : templates.length === 0 ? (
+                  <div style={{ padding: 20, fontSize: 13, color: 'var(--ink-tertiary)', fontStyle: 'italic' }}>No templates match this filter.</div>
+                ) : (
+                  templates.map(t => (
+                    <button key={t.id} type="button" onClick={() => setSelectedId(t.id)}
+                      style={{
+                        display: 'flex', flexDirection: 'column', gap: 4, width: '100%', textAlign: 'left',
+                        padding: '12px 20px', border: 'none', borderBottom: '1px solid var(--border-subtle)',
+                        background: t.id === selectedId ? 'var(--bg-subtle)' : 'transparent', cursor: 'pointer',
+                      }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--ink-primary)' }}>{t.templateKey}</span>
+                        <span className={`ds-pill ${STATUS_TONE[t.status] ?? 'is-neutral'}`} style={{ fontSize: 10 }}>{t.status}</span>
+                      </div>
+                      <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)' }}>{t.channel} · v{t.version} · {t.language}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </motion.section>
+
+            <AnimatePresence mode="wait">
+              {selected ? (
+                <motion.section key={selected.id} variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0 }} className="ds-card db-card">
+                  <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <MessageSquareText size={15} style={{ color: 'var(--ink-tertiary)' }} />
+                    <h2 className="db-card-title">{selected.templateKey}</h2>
+                    <span className={`ds-pill ${STATUS_TONE[selected.status] ?? 'is-neutral'}`} style={{ marginLeft: 'auto' }}>{selected.status}</span>
+                  </header>
+                  <div className="db-card-body" style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, fontSize: 13 }}>
+                    <Field label="Version" value={selected.version} mono />
+                    <Field label="Channel" value={selected.channel} />
+                    <Field label="Language" value={selected.language} />
+                    {selected.category && <Field label="Category" value={selected.category} />}
+                    {selected.dltTemplateId && <Field label="DLT template ID" value={selected.dltTemplateId} mono />}
+                    {selected.whatsappNamespace && <Field label="WhatsApp namespace" value={selected.whatsappNamespace} mono />}
+                    {selected.approvedByUserId && <Field label="Approved by" value={selected.approvedByUserId} mono />}
+                    {selected.approvedAt && <Field label="Approved at" value={new Date(selected.approvedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} />}
+                    {selected.subject && <Field label="Subject" value={selected.subject} span2 />}
+                    <Field label="Body" value={selected.body} span2 />
+                  </div>
+                  <div style={{ padding: '0 20px 20px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <button type="button" className="ds-btn is-secondary" disabled={pending !== null}
+                      onClick={() => runAction('submit-for-dlt')} style={{ height: 36 }}>
+                      {pending === 'submit-for-dlt' ? <Loader2 size={14} className="ds-spin" /> : <Send size={14} />}
+                      Submit for DLT
+                    </button>
+                    <button type="button" className="ds-btn is-primary" disabled={pending !== null}
+                      onClick={() => runAction('activate')} style={{ height: 36 }}>
+                      {pending === 'activate' ? <Loader2 size={14} className="ds-spin" /> : <CheckCircle2 size={14} />}
+                      Activate
+                    </button>
+                    <button type="button" className="ds-btn is-secondary" disabled={pending !== null}
+                      onClick={() => runAction('retire')} style={{ height: 36, color: 'var(--danger)' }}>
+                      {pending === 'retire' ? <Loader2 size={14} className="ds-spin" /> : <Archive size={14} />}
+                      Retire
+                    </button>
+                  </div>
+                  <p style={{ margin: '0 20px 20px', fontSize: 11.5, color: 'var(--ink-tertiary)' }}>
+                    Submit for DLT: DRAFT → PENDING_DLT. Activate: DRAFT/PENDING_DLT → ACTIVE (requires a different
+                    user than the template's creator, and channel-specific fields — DLT id for SMS, WhatsApp
+                    namespace, or subject for EMAIL — plus a no-harassment content lint). Retire: any status →
+                    RETIRED, idempotent.
+                  </p>
+                </motion.section>
+              ) : (
+                <motion.section variants={fadeUp} className="ds-card db-card" style={{ padding: 40, textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: 13 }}>
+                  Select a template from the list to review it.
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </div>
 
           {history.length > 0 && (
-            <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0 }}>
+            <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 16 }}>
               <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Clock size={15} style={{ color: 'var(--ink-tertiary)' }} />
                 <h2 className="db-card-title">This session's actions</h2>

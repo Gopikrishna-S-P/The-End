@@ -10,6 +10,7 @@ import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.dto.response.VisitLogResponse;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.dto.response.VisitImportResult;
+import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.service.AllocationService;
 import com.recoverpro.server.service.IdempotencyKeyService;
 import com.recoverpro.server.service.VisitImportService;
@@ -53,6 +54,7 @@ public class VisitLogController {
     private final com.recoverpro.server.repository.VisitLogRepository visitLogRepository;
     private final com.recoverpro.server.mapper.VisitLogMapper visitLogMapper;
     private final VisitImportService visitImportService;
+    private final PlatformAdminAccessGuard platformAdminAccessGuard;
 
     @GetMapping
     @PreAuthorize(READERS)
@@ -129,19 +131,41 @@ public class VisitLogController {
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')")
     public ResponseEntity<ApiResponse<VisitImportResult>> importVisits(
             @RequestPart("file") MultipartFile file,
+            @RequestParam(required = false) UUID orgId,
+            @RequestParam(required = false) String reason,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        UUID orgId = principal.getOrganizationId();
-        if (orgId == null && !isPlatformAdmin(principal)) {
-            throw new BusinessException("Caller has no organization context");
-        }
+        UUID targetOrgId = resolveImportOrgId(principal, orgId, reason);
 
         log.info("POST /visit-logs/import file={} org={} by={}",
-                file.getOriginalFilename(), orgId, principal.getId());
+                file.getOriginalFilename(), targetOrgId, principal.getId());
 
-        VisitImportResult result = visitImportService.importFromExcel(file, orgId, principal.getId());
+        VisitImportResult result = visitImportService.importFromExcel(file, targetOrgId, principal.getId());
         String message = result.getImported() + " visits imported, " + result.getFailed() + " failed";
         return ResponseEntity.ok(ApiResponse.of(message, result));
+    }
+
+    /**
+     * importFromExcel assumes a real, non-null organizationId throughout (it dereferences it
+     * unconditionally, including a bare .equals() call that would NPE) -- but this endpoint took no
+     * orgId parameter at all, so a platform admin (whose own organizationId is always null) had no
+     * way to supply one. Every platform-admin import attempt crashed with a NullPointerException
+     * partway through processing. Target org is known up front for this endpoint (unlike the by-id
+     * reads below), so this uses the reason-requiring beginCrossOrgAccess.
+     */
+    private UUID resolveImportOrgId(UserPrincipal principal, UUID requestedOrgId, String reason) {
+        if (isPlatformAdmin(principal)) {
+            if (requestedOrgId == null) {
+                throw new BusinessException("Platform admins must specify ?orgId= to import visits into a tenant.");
+            }
+            platformAdminAccessGuard.beginCrossOrgAccess(principal.getId(), requestedOrgId, reason, "visitLogs:import");
+            return requestedOrgId;
+        }
+        UUID orgId = principal.getOrganizationId();
+        if (orgId == null) {
+            throw new BusinessException("Caller has no organization context");
+        }
+        return orgId;
     }
 
     @GetMapping("/{id}")
@@ -150,6 +174,7 @@ public class VisitLogController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:getById:" + id);
         VisitLogResponse resp = visitLogService.getById(id);
         assertSameTenant(resp.getOrganizationId(), principal);
 
@@ -179,6 +204,7 @@ public class VisitLogController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID allocationId) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:byAllocation:" + allocationId);
         AllocationResponse alloc = allocationService.getAllocationById(allocationId);
         assertSameTenant(alloc.getOrganizationId(), principal);
 
@@ -213,6 +239,7 @@ public class VisitLogController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID allocationId) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:lastLocation:" + allocationId);
         AllocationResponse alloc = allocationService.getAllocationById(allocationId);
         assertSameTenant(alloc.getOrganizationId(), principal);
 
@@ -229,6 +256,7 @@ public class VisitLogController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID allocationId) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:lastAddress:" + allocationId);
         AllocationResponse alloc =
                 allocationService.getAllocationById(allocationId);
 
@@ -253,9 +281,11 @@ public class VisitLogController {
     @GetMapping("/agent/{agentId}")
     @PreAuthorize(LEADS)
     public ResponseEntity<ApiResponse<PagedResponse<VisitLogResponse>>> getByAgent(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID agentId,
             @PageableDefault(size = 20, sort = "visitDate") Pageable pageable) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:byAgent:" + agentId);
         Page<VisitLogResponse> page =
                 visitLogService.getByAgentIdPaged(agentId, pageable);
 
@@ -271,6 +301,7 @@ public class VisitLogController {
             @RequestBody @Valid VisitApprovalRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:approve:" + id);
         VisitLogResponse current = visitLogService.getById(id);
         assertSameTenant(current.getOrganizationId(), principal);
 
@@ -294,6 +325,7 @@ public class VisitLogController {
                     .body(ApiResponse.of("Image sequence must be 1, 2 or 3", null));
         }
 
+        elevateIfPlatformAdmin(principal, "visitLogs:imageUrl:" + id);
         VisitLogResponse current = visitLogService.getById(id);
         assertSameTenant(current.getOrganizationId(), principal);
 
@@ -315,6 +347,7 @@ public class VisitLogController {
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
+        elevateIfPlatformAdmin(principal, "visitLogs:softDelete:" + id);
         VisitLogResponse current = visitLogService.getById(id);
         assertSameTenant(current.getOrganizationId(), principal);
 
@@ -351,6 +384,18 @@ public class VisitLogController {
         if (resourceOrg == null ||
                 !resourceOrg.equals(principal.getOrganizationId())) {
             throw new ResourceNotFoundException("Visit log not found");
+        }
+    }
+
+    /**
+     * visit_logs and allocations both already have a platform-admin RLS bypass (V063, fixed for
+     * ReportingController earlier this pass) -- but nothing here ever called PlatformAdminAccessGuard
+     * to activate it, so assertSameTenant's "if platform admin, skip" branch was dead: the fetch
+     * before it already came back empty under RLS.
+     */
+    private void elevateIfPlatformAdmin(UserPrincipal principal, String resource) {
+        if (isPlatformAdmin(principal)) {
+            platformAdminAccessGuard.beginUnattendedCrossOrgAccess(principal.getId(), resource);
         }
     }
 }

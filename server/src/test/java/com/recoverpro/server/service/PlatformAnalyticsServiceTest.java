@@ -4,6 +4,7 @@ import com.recoverpro.server.dto.response.PlatformAnalyticsResponse;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.OrgSubscription.Plan;
 import com.recoverpro.server.entity.OrgSubscription.Status;
+import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.repository.UserRepository;
@@ -70,5 +71,25 @@ class PlatformAnalyticsServiceTest {
         PlatformAnalyticsResponse response = service.build(1);
 
         assertThat(response.getMrr()).isEqualTo(2999L);
+    }
+
+    @Test
+    void build_topOrgsByUsers_usesGroupedCountNotPerOrgQuery() {
+        UUID orgAId = UUID.randomUUID();
+        UUID orgBId = UUID.randomUUID();
+        Organization orgA = Organization.builder().id(orgAId).name("Org A").build();
+        Organization orgB = Organization.builder().id(orgBId).name("Org B").build();
+        when(subRepo.findAll()).thenReturn(List.of());
+        when(orgRepo.findTenantOrgs()).thenReturn(List.of(orgA, orgB));
+        when(userRepo.countGroupedByOrganizationIdIn(List.of(orgAId, orgBId)))
+                .thenReturn(List.of(new Object[]{orgAId, 5L}, new Object[]{orgBId, 2L}));
+
+        PlatformAnalyticsResponse response = service.build(1);
+
+        assertThat(response.getTopOrgsByUsers()).hasSize(2);
+        assertThat(response.getTopOrgsByUsers().get(0).getName()).isEqualTo("Org A");
+        assertThat(response.getTopOrgsByUsers().get(0).getValue()).isEqualTo(5L);
+        assertThat(response.getTopOrgsByUsers().get(1).getName()).isEqualTo("Org B");
+        assertThat(response.getTopOrgsByUsers().get(1).getValue()).isEqualTo(2L);
     }
 }

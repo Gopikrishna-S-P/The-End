@@ -7,9 +7,11 @@ import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.DailyVisitList;
 import com.recoverpro.server.entity.Organization;
+import com.recoverpro.server.entity.User;
 import com.recoverpro.server.mapper.AllocationMapper;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.DailyVisitListRepository;
+import com.recoverpro.server.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +39,7 @@ class DailyDispatchServiceImplTest {
     @Mock private DailyVisitListRepository dispatchRepo;
     @Mock private AllocationRepository allocationRepo;
     @Mock private AllocationMapper allocationMapper;
+    @Mock private UserRepository userRepository;
 
     private DailyDispatchServiceImpl service;
     private UUID orgId;
@@ -45,12 +49,14 @@ class DailyDispatchServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new DailyDispatchServiceImpl(dispatchRepo, allocationRepo, allocationMapper);
+        service = new DailyDispatchServiceImpl(dispatchRepo, allocationRepo, allocationMapper, userRepository);
         orgId = UUID.randomUUID();
         agentId = UUID.randomUUID();
         actorId = UUID.randomUUID();
         date = LocalDate.of(2026, 7, 6);
         lenient().when(allocationMapper.toResponse(any())).thenReturn(AllocationResponse.builder().build());
+        User agentUser = User.builder().id(agentId).organizationId(orgId).build();
+        lenient().when(userRepository.findById(agentId)).thenReturn(Optional.of(agentUser));
     }
 
     private Allocation allocationInOrg(UUID id, UUID assignedTo) {
@@ -125,6 +131,33 @@ class DailyDispatchServiceImplTest {
 
         assertThatThrownBy(() -> service.createDispatch(orgId, actorId, request))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void createDispatch_agentFromDifferentOrg_throwsResourceNotFound() {
+        UUID foreignAgentId = UUID.randomUUID();
+        when(userRepository.findById(foreignAgentId))
+                .thenReturn(Optional.of(User.builder().id(foreignAgentId).organizationId(UUID.randomUUID()).build()));
+        CreateDailyDispatchRequest request = new CreateDailyDispatchRequest();
+        request.setAgentId(foreignAgentId);
+        request.setDate(date);
+        request.setCaseIds(List.of());
+
+        assertThatThrownBy(() -> service.createDispatch(orgId, actorId, request))
+                .isInstanceOf(ResourceNotFoundException.class);
+        verify(dispatchRepo, never()).deleteByOrgAndAgentAndDate(any(), any(), any());
+    }
+
+    @Test
+    void getListForAgent_agentFromDifferentOrg_throwsResourceNotFound() {
+        UUID foreignAgentId = UUID.randomUUID();
+        when(userRepository.findById(foreignAgentId))
+                .thenReturn(Optional.of(User.builder().id(foreignAgentId).organizationId(UUID.randomUUID()).build()));
+
+        assertThatThrownBy(() -> service.getListForAgent(orgId, foreignAgentId, date))
+                .isInstanceOf(ResourceNotFoundException.class);
+        verify(dispatchRepo, never())
+                .findByOrganizationIdAndAgentUserIdAndDispatchDateOrderBySequenceOrderAsc(any(), any(), any());
     }
 
     @Test

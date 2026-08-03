@@ -16,6 +16,7 @@ import com.recoverpro.server.enums.Disp;
 import com.recoverpro.server.mapper.AllocationMapper;
 import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
+import com.recoverpro.server.repository.BorrowerRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.ActiveDatasetResolver;
@@ -44,6 +45,7 @@ public class AllocationServiceImpl implements AllocationService {
     private final AllocationAuditLogRepository allocationAuditLogRepository;
     private final AllocationMapper allocationMapper;
     private final UserRepository userRepository;
+    private final BorrowerRepository borrowerRepository;
     private final OrgIsolationGuard orgIsolationGuard;
     private final ActiveDatasetResolver activeDatasetResolver;
 
@@ -216,6 +218,16 @@ public class AllocationServiceImpl implements AllocationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Allocation not found: " + allocationId));
         if (!orgIsolationGuard.belongsToOrg(a.getOrganization().getId())) {
             throw new ResourceNotFoundException("Allocation not found: " + allocationId);
+        }
+        // Neither RLS nor a plain FK constraint catches this: RLS scopes by the CALLER's own org
+        // context regardless of which resource is being touched, and FK checks in Postgres verify
+        // referential integrity table-wide, not per-tenant -- so without this explicit check, a
+        // lead could link this org's allocation to another organization's borrower record.
+        var borrowerOrgId = borrowerRepository.findById(borrowerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Borrower not found: " + borrowerId))
+                .getOrganizationId();
+        if (!borrowerOrgId.equals(a.getOrganization().getId())) {
+            throw new ResourceNotFoundException("Borrower not found: " + borrowerId);
         }
         a.setBorrowerId(borrowerId);
         return allocationMapper.toResponse(allocationRepository.save(a));

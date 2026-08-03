@@ -8,6 +8,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.repository.AgentCapacityConfigRepository;
 import com.recoverpro.server.repository.HolidayCalendarRepository;
+import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.CalendarService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +28,14 @@ public class CalendarServiceImpl implements CalendarService {
 
     private final HolidayCalendarRepository holidayCalendarRepository;
     private final AgentCapacityConfigRepository agentCapacityConfigRepository;
+    private final OrgIsolationGuard orgIsolationGuard;
 
     @Override
     @Transactional(readOnly = true)
     public boolean isAssignableDate(LocalDate date, UUID organizationId) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         AgentCapacityConfig config = agentCapacityConfigRepository
                 .findByOrganizationId(organizationId)
                 .orElseGet(() -> AgentCapacityConfig.builder().organizationId(organizationId).build());
@@ -58,6 +63,9 @@ public class CalendarServiceImpl implements CalendarService {
     @Override
     @Transactional
     public HolidayCalendar addHoliday(HolidayRequest request) {
+        if (!orgIsolationGuard.belongsToOrg(request.getOrganizationId())) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         if (holidayCalendarRepository.existsByOrganizationIdAndHolidayDateAndIsActiveTrue(
                 request.getOrganizationId(), request.getHolidayDate())) {
             throw new BusinessException("Holiday already exists for date: " + request.getHolidayDate());
@@ -78,6 +86,9 @@ public class CalendarServiceImpl implements CalendarService {
     public void removeHoliday(UUID holidayId) {
         HolidayCalendar holiday = holidayCalendarRepository.findById(holidayId)
                 .orElseThrow(() -> new ResourceNotFoundException("Holiday not found: " + holidayId));
+        if (!orgIsolationGuard.belongsToOrg(holiday.getOrganizationId())) {
+            throw new ResourceNotFoundException("Holiday not found: " + holidayId);
+        }
         holiday.setIsActive(false);
         holidayCalendarRepository.save(holiday);
         log.info("Holiday deactivated: id={}", holidayId);
@@ -86,6 +97,9 @@ public class CalendarServiceImpl implements CalendarService {
     @Override
     @Transactional(readOnly = true)
     public Page<HolidayCalendar> getHolidays(UUID organizationId, Pageable pageable) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         return holidayCalendarRepository
                 .findByOrganizationIdAndIsActiveTrueOrderByHolidayDateAsc(organizationId, pageable);
     }
@@ -93,6 +107,9 @@ public class CalendarServiceImpl implements CalendarService {
     @Override
     @Transactional
     public AgentCapacityConfig upsertCapacityConfig(CapacityConfigRequest request) {
+        if (!orgIsolationGuard.belongsToOrg(request.getOrganizationId())) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         AgentCapacityConfig config = agentCapacityConfigRepository
                 .findByOrganizationId(request.getOrganizationId())
                 .orElseGet(() -> AgentCapacityConfig.builder()
@@ -109,6 +126,9 @@ public class CalendarServiceImpl implements CalendarService {
     @Override
     @Transactional(readOnly = true)
     public AgentCapacityConfig getCapacityConfig(UUID organizationId) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         return agentCapacityConfigRepository.findByOrganizationId(organizationId)
                 .orElseGet(() -> AgentCapacityConfig.builder()
                         .organizationId(organizationId)
@@ -121,6 +141,9 @@ public class CalendarServiceImpl implements CalendarService {
     @Override
     @Transactional(readOnly = true)
     public int getMaxCasesPerAgentPerDay(UUID organizationId) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         return agentCapacityConfigRepository.findByOrganizationId(organizationId)
                 .map(AgentCapacityConfig::getMaxCasesPerAgentPerDay)
                 .orElse(50);

@@ -29,6 +29,20 @@ export const documentsApi = {
     return response.data;
   },
 
+  /**
+   * Opens a document in a new tab via the authenticated download endpoint. Deliberately does
+   * NOT use CollectionDocumentResponse.fileUrl — that field is only populated when S3 storage
+   * is enabled (aws.s3.enabled=false is the default; local storage is a documented supported
+   * mode, not just a dev fallback), and even when populated a plain <a href> wouldn't carry the
+   * JWT this endpoint requires.
+   */
+  openDocument: async (collectionId: string, documentId: string): Promise<void> => {
+    const blob = await documentsApi.downloadDocument(collectionId, documentId);
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  },
+
   deleteDocument: async (collectionId: string, documentId: string): Promise<void> => {
     await axiosInstance.delete(`/api/v1/collections/${collectionId}/documents/${documentId}`);
   },

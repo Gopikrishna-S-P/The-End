@@ -25,7 +25,13 @@ public interface NpaRecordRepository extends JpaRepository<NpaRecord, UUID> {
     Page<NpaRecord> findByOrganizationIdAndIsResolvedFalseOrderByOverdueDaysDesc(
             UUID orgId, Pageable pageable);
 
-    List<NpaRecord> findByOrganizationIdAndFlaggedDateAndIsResolvedFalse(
+    /**
+     * "Active as of this date": flagged on or before the date and still unresolved. Not exact-match
+     * on flaggedDate -- flagOverdueAllocations only stamps flaggedDate when a record is first
+     * created, so an exact match would drop every already-flagged record on every subsequent day's
+     * report, showing only whatever happened to be newly flagged that specific day.
+     */
+    List<NpaRecord> findByOrganizationIdAndFlaggedDateLessThanEqualAndIsResolvedFalse(
             UUID orgId, LocalDate flaggedDate);
 
     @Query("SELECT n FROM NpaRecord n WHERE n.organizationId = :orgId " +

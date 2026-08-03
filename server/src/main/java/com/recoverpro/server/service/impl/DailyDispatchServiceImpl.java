@@ -6,9 +6,11 @@ import com.recoverpro.server.dto.request.CreateDailyDispatchRequest;
 import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.DailyVisitList;
+import com.recoverpro.server.entity.User;
 import com.recoverpro.server.mapper.AllocationMapper;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.DailyVisitListRepository;
+import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.DailyDispatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +32,13 @@ public class DailyDispatchServiceImpl implements DailyDispatchService {
     private final DailyVisitListRepository dispatchRepo;
     private final AllocationRepository allocationRepo;
     private final AllocationMapper allocationMapper;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public List<AllocationResponse> createDispatch(UUID orgId, UUID actorId, CreateDailyDispatchRequest request) {
+        assertAgentInOrg(orgId, request.getAgentId());
+
         // Empty list = clear the dispatch for that (org, agent, date)
         dispatchRepo.deleteByOrgAndAgentAndDate(orgId, request.getAgentId(), request.getDate());
 
@@ -86,6 +91,7 @@ public class DailyDispatchServiceImpl implements DailyDispatchService {
     @Override
     @Transactional(readOnly = true)
     public List<AllocationResponse> getListForAgent(UUID orgId, UUID agentId, LocalDate date) {
+        assertAgentInOrg(orgId, agentId);
         List<DailyVisitList> rows = dispatchRepo
                 .findByOrganizationIdAndAgentUserIdAndDispatchDateOrderBySequenceOrderAsc(orgId, agentId, date);
         return loadAllocations(rows, orgId);
@@ -94,6 +100,7 @@ public class DailyDispatchServiceImpl implements DailyDispatchService {
     @Override
     @Transactional
     public void removeCase(UUID orgId, UUID agentId, LocalDate date, UUID allocationId) {
+        assertAgentInOrg(orgId, agentId);
         dispatchRepo.deleteByOrgAndAgentAndDateAndAllocation(orgId, agentId, date, allocationId);
     }
 
@@ -101,6 +108,14 @@ public class DailyDispatchServiceImpl implements DailyDispatchService {
     @Transactional(readOnly = true)
     public long countDispatchedForOrg(UUID orgId, LocalDate date) {
         return dispatchRepo.countByOrganizationIdAndDispatchDate(orgId, date);
+    }
+
+    private void assertAgentInOrg(UUID orgId, UUID agentId) {
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found: " + agentId));
+        if (!orgId.equals(agent.getOrganizationId())) {
+            throw new ResourceNotFoundException("Agent not found: " + agentId);
+        }
     }
 
     private List<AllocationResponse> loadAllocations(List<DailyVisitList> rows, UUID orgId) {

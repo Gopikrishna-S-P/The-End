@@ -1,6 +1,7 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.config.AppProperties;
+import com.recoverpro.server.dto.request.UpdateUserRequest;
 import com.recoverpro.server.dto.response.PageResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import com.recoverpro.server.entity.User;
@@ -24,10 +25,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -81,5 +85,47 @@ class UserServiceImplTest {
         PageResponse<UserResponse> result = service.listUsers(null, pageable);
 
         assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    void updateUser_writesAuditLogEntry() {
+        UUID orgId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+        User user = User.builder().id(targetId).organizationId(orgId).build();
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userMapper.toResponse(any())).thenReturn(UserResponse.builder().build());
+        UpdateUserRequest request = new UpdateUserRequest();
+        request.setFirstName("Updated");
+
+        service.updateUser(orgId, targetId, request);
+
+        verify(auditLogService).logUserAction(any(), eq("USER_UPDATED"), contains(targetId.toString()));
+    }
+
+    @Test
+    void enableUser_writesAuditLogEntry() {
+        UUID orgId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+        User user = User.builder().id(targetId).organizationId(orgId).build();
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.enableUser(orgId, targetId);
+
+        verify(auditLogService).logUserAction(any(), eq("USER_ENABLED"), contains(targetId.toString()));
+    }
+
+    @Test
+    void disableUser_writesAuditLogEntry() {
+        UUID orgId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+        User user = User.builder().id(targetId).organizationId(orgId).build();
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.disableUser(orgId, targetId);
+
+        verify(auditLogService).logUserAction(any(), eq("USER_DISABLED"), contains(targetId.toString()));
     }
 }

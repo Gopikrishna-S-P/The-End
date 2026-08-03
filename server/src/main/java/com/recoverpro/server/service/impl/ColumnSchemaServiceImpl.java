@@ -81,6 +81,9 @@ public class ColumnSchemaServiceImpl implements ColumnSchemaService {
     @Override
     @Transactional(readOnly = true)
     public List<ColumnSchemaResponse> getColumnSchemasByOrganization(UUID organizationId) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         return columnSchemaRepository.findAllActiveByOrganizationId(organizationId)
                 .stream().map(columnSchemaMapper::toResponse).toList();
     }

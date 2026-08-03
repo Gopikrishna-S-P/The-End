@@ -1,5 +1,5 @@
 import type { FormEventHandler } from 'react';
-import { Loader2, AlertCircle, CheckCircle2, MoveRight } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2, MoveRight, Eye, EyeOff } from 'lucide-react';
 import type { UseFormRegister, FieldErrors } from 'react-hook-form';
 import type { LoginForm } from './LoginTypes';
 
@@ -94,14 +94,9 @@ export function LoginCredentialsForm(p: Props) {
                 aria-label={p.showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={p.showPassword}>
                 {p.showPassword ? (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M2 2l12 12M6.5 5.5A4.5 4.5 0 0114.5 8s-.7 1.7-2.7 3.3M1.5 8S4 3.5 8 3.5c.8 0 1.5.2 2.2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
+                  <EyeOff size={16} aria-hidden="true" />
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.2" />
-                    <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.2" />
-                  </svg>
+                  <Eye size={16} aria-hidden="true" />
                 )}
               </button>
             </div>

@@ -6,6 +6,7 @@ import com.recoverpro.server.entity.MessageTemplate;
 import com.recoverpro.server.enums.Channel;
 import com.recoverpro.server.enums.MessageTemplateStatus;
 import com.recoverpro.server.repository.MessageTemplateRepository;
+import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.compliance.TemplateAbuseLinter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class MessageTemplateService {
 
     private final MessageTemplateRepository repository;
     private final TemplateAbuseLinter abuseLinter;
+    private final OrgIsolationGuard orgIsolationGuard;
 
     @Transactional(readOnly = true)
     public Page<MessageTemplate> findAll(UUID organizationId, MessageTemplateStatus status,
@@ -57,6 +59,9 @@ public class MessageTemplateService {
         MessageTemplate t = repository.findById(templateId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Template not found: " + templateId));
+        if (!orgIsolationGuard.belongsToOrg(t.getOrganizationId())) {
+            throw new ResourceNotFoundException("Template not found: " + templateId);
+        }
 
         // 1. Separation of duties.
         if (approverUserId == null) {
@@ -93,6 +98,9 @@ public class MessageTemplateService {
         MessageTemplate t = repository.findById(templateId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Template not found: " + templateId));
+        if (!orgIsolationGuard.belongsToOrg(t.getOrganizationId())) {
+            throw new ResourceNotFoundException("Template not found: " + templateId);
+        }
         if (t.getStatus() != MessageTemplateStatus.DRAFT) {
             throw new BusinessException(
                     "Only DRAFT templates can be submitted for DLT review (current=" + t.getStatus() + ")");
@@ -106,6 +114,9 @@ public class MessageTemplateService {
         MessageTemplate t = repository.findById(templateId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Template not found: " + templateId));
+        if (!orgIsolationGuard.belongsToOrg(t.getOrganizationId())) {
+            throw new ResourceNotFoundException("Template not found: " + templateId);
+        }
         if (t.getStatus() == MessageTemplateStatus.RETIRED) {
             return t; // idempotent
         }

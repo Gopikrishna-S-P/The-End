@@ -107,15 +107,19 @@ public class AgentFieldServiceImpl implements AgentFieldService {
 
     @Override
     @Transactional(readOnly = true)
-    public AgentShiftResponse currentShift(UUID agentId) {
+    public AgentShiftResponse currentShift(UUID agentId, UUID callerId) {
         AgentShift active = shiftRepository
                 .findTopByAgentIdAndStatusOrderByStartedAtDesc(agentId, ShiftStatus.ACTIVE)
                 .orElse(null);
-        return active == null ? null : toResponse(active);
+        if (active == null) return null;
+        if (!agentId.equals(callerId) && !(isSupervisor() && orgIsolationGuard.belongsToOrg(active.getOrganizationId()))) {
+            throw new ResourceNotFoundException("Shift not found for agent " + agentId);
+        }
+        return toResponse(active);
     }
 
     @Override
-    public void recordPing(LocationPingRequest request) {
+    public void recordPing(LocationPingRequest request, UUID agentId) {
         if (request.getRecordedAt() != null) {
             long ageSecs = Instant.now().getEpochSecond() - request.getRecordedAt().getEpochSecond();
             if (ageSecs > STALE_PING_THRESHOLD_SECONDS || ageSecs < -10) {
@@ -127,22 +131,22 @@ public class AgentFieldServiceImpl implements AgentFieldService {
 
         Instant oneMinuteAgo = Instant.now().minusSeconds(60);
         long recentCount = pingRepository.countByAgentIdAndRecordedAtAfter(
-                request.getAgentId(), oneMinuteAgo);
+                agentId, oneMinuteAgo);
         if (recentCount >= PING_RATE_CAP_PER_MINUTE) {
-            log.warn("Ping rate-cap exceeded: agent={} count={}", request.getAgentId(), recentCount);
+            log.warn("Ping rate-cap exceeded: agent={} count={}", agentId, recentCount);
             throw new BusinessException(
                     "Location ping rate limit exceeded: max " + PING_RATE_CAP_PER_MINUTE + " pings/min.");
         }
 
         AgentShift active = shiftRepository
-                .findTopByAgentIdAndStatusOrderByStartedAtDesc(request.getAgentId(), ShiftStatus.ACTIVE)
+                .findTopByAgentIdAndStatusOrderByStartedAtDesc(agentId, ShiftStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(
-                        "Cannot ping: no active shift for agent " + request.getAgentId()));
+                        "Cannot ping: no active shift for agent " + agentId));
 
         Instant pingTime = request.getRecordedAt() != null ? request.getRecordedAt() : Instant.now();
 
         AgentLocationPing ping = AgentLocationPing.builder()
-                .agentId(request.getAgentId())
+                .agentId(agentId)
                 .shiftId(active.getId())
                 .lat(request.getLat())
                 .lng(request.getLng())
@@ -154,11 +158,11 @@ public class AgentFieldServiceImpl implements AgentFieldService {
         pingRepository.save(ping);
 
         try {
-            userRepository.findById(request.getAgentId()).ifPresent(u -> {
+            userRepository.findById(agentId).ifPresent(u -> {
                 String agentName = (u.getFirstName() + " "
                         + (u.getLastName() != null ? u.getLastName() : "")).trim();
                 liveTrackWebSocketHandler.relayAgentLocation(
-                        request.getAgentId(), u.getOrganizationId(),
+                        agentId, u.getOrganizationId(),
                         request.getLat(), request.getLng(),
                         request.getAccuracy() != null ? request.getAccuracy() : 0.0,
                         agentName);
@@ -167,23 +171,23 @@ public class AgentFieldServiceImpl implements AgentFieldService {
     }
 
     @Override
-    public IncidentReportResponse triggerSos(SosRequest request) {
+    public IncidentReportResponse triggerSos(SosRequest request, UUID agentId) {
         AgentShift active = shiftRepository
-                .findTopByAgentIdAndStatusOrderByStartedAtDesc(request.getAgentId(), ShiftStatus.ACTIVE)
+                .findTopByAgentIdAndStatusOrderByStartedAtDesc(agentId, ShiftStatus.ACTIVE)
                 .orElse(null);
 
         UUID orgId = active != null ? active.getOrganizationId() : null;
         if (orgId == null) {
-            orgId = shiftRepository.findByAgentIdOrderByStartedAtDesc(request.getAgentId())
+            orgId = shiftRepository.findByAgentIdOrderByStartedAtDesc(agentId)
                     .stream().findFirst().map(AgentShift::getOrganizationId).orElse(null);
         }
         if (orgId == null) {
             throw new ResourceNotFoundException(
-                    "No shift history found for agent " + request.getAgentId() + " -- cannot route SOS");
+                    "No shift history found for agent " + agentId + " -- cannot route SOS");
         }
 
         List<AgentLocationPing> recent =
-                pingRepository.findTop20ByAgentIdOrderByRecordedAtDesc(request.getAgentId());
+                pingRepository.findTop20ByAgentIdOrderByRecordedAtDesc(agentId);
         List<Map<String, Object>> snapshot = recent.stream()
                 .map(p -> {
                     Map<String, Object> m = new HashMap<>();
@@ -207,7 +211,7 @@ public class AgentFieldServiceImpl implements AgentFieldService {
                 : recent.stream().findFirst().map(AgentLocationPing::getAccuracy).orElse(null);
 
         IncidentReport incident = IncidentReport.builder()
-                .agentId(request.getAgentId())
+                .agentId(agentId)
                 .organizationId(orgId)
                 .shiftId(active == null ? null : active.getId())
                 .triggeredAt(Instant.now())
@@ -220,7 +224,7 @@ public class AgentFieldServiceImpl implements AgentFieldService {
 
         IncidentReport saved = incidentRepository.save(incident);
         log.warn("SOS triggered: agent={}, incident={}, lastKnown=({},{})",
-                request.getAgentId(), saved.getId(), lat, lng);
+                agentId, saved.getId(), lat, lng);
         return toIncidentResponse(saved);
     }
 
@@ -243,6 +247,9 @@ public class AgentFieldServiceImpl implements AgentFieldService {
     @Override
     @Transactional(readOnly = true)
     public List<AgentLiveStatusResponse> listActiveAgents(UUID organizationId) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         List<AgentShift> activeShifts = shiftRepository
                 .findByOrganizationIdAndStatus(organizationId, ShiftStatus.ACTIVE);
         if (activeShifts.isEmpty()) return List.of();
@@ -272,6 +279,9 @@ public class AgentFieldServiceImpl implements AgentFieldService {
     @Transactional(readOnly = true)
     public Page<IncidentReportResponse> listIncidents(UUID organizationId, boolean unresolvedOnly,
                                                        Pageable pageable) {
+        if (!orgIsolationGuard.belongsToOrg(organizationId)) {
+            throw new BusinessException("Access denied: organization mismatch");
+        }
         var page = unresolvedOnly
                 ? incidentRepository.findByOrganizationIdAndResolvedAtIsNullOrderByTriggeredAtDesc(
                         organizationId, pageable)
@@ -283,7 +293,11 @@ public class AgentFieldServiceImpl implements AgentFieldService {
     public void cancelSos(UUID incidentId, UUID agentId) {
         IncidentReport incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + incidentId));
-        if (!orgIsolationGuard.belongsToOrg(incident.getOrganizationId())) {
+        // Deliberately narrower than resolveIncident: only the agent who triggered this SOS may
+        // cancel it themselves. Anyone else -- including other field officers in the same org --
+        // must go through resolveIncident (supervisor-only, audited with resolution notes), not
+        // this looser path. Otherwise any FO could silence a colleague's real emergency alert.
+        if (!incident.getAgentId().equals(agentId)) {
             throw new ResourceNotFoundException("Incident not found: " + incidentId);
         }
         if (incident.getResolvedAt() != null) return;
@@ -314,6 +328,11 @@ public class AgentFieldServiceImpl implements AgentFieldService {
         } catch (IOException e) {
             throw new BusinessException("Could not save SOS audio recording: " + e.getMessage());
         }
+    }
+
+    private boolean isSupervisor() {
+        return orgIsolationGuard.hasRole("ROLE_PLATFORM_ADMIN") || orgIsolationGuard.hasRole("ROLE_ORG_ADMIN")
+                || orgIsolationGuard.hasRole("ROLE_MANAGER") || orgIsolationGuard.hasRole("ROLE_TL");
     }
 
     private String getExtension(String filename) {

@@ -47,6 +47,13 @@ export const borrowersApi = {
     return response.data.data;
   },
 
+  executeErasure: async (id: string, requestId: string, complianceNotes?: string): Promise<DataErasureRequestResponse> => {
+    const response = await axiosInstance.patch<ApiResponse<DataErasureRequestResponse>>(
+      `/api/v1/borrowers/${id}/erasure-requests/${requestId}/execute`,
+      complianceNotes ? { complianceNotes } : {});
+    return response.data.data;
+  },
+
   upsertNominee: async (id: string, data: UpsertNomineeRequest): Promise<NomineeResponse> => {
     const response = await axiosInstance.post<ApiResponse<NomineeResponse>>(`/api/v1/borrowers/${id}/nominee`, data);
     return response.data.data;

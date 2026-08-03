@@ -1,7 +1,6 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.common.exception.RateLimitExceededException;
-import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.config.AppProperties;
 import com.recoverpro.server.dto.request.ForgotPasswordRequest;
 import com.recoverpro.server.dto.request.ResetPasswordRequest;
@@ -56,8 +55,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             return; // silent — do not reveal rate-limit
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("No account found with this email address."));
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return; // silent — do not reveal whether this email has an account
+        }
 
         passwordResetTokenRepository.invalidateAllByUserId(user.getId());
 

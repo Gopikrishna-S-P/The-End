@@ -143,7 +143,7 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
     public void logout(String accessToken, UUID userId, String refreshToken) {
         blacklistToken(accessToken);
         if (refreshToken != null && refreshToken.length() >= 8) {
-            revokeSingleRefreshToken(refreshToken);
+            revokeSingleRefreshToken(refreshToken, userId);
         } else {
             refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
         }
@@ -174,10 +174,17 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
         } catch (Exception ignored) {}
     }
 
-    private void revokeSingleRefreshToken(String rawToken) {
-        String prefix = rawToken.substring(0, Math.min(8, rawToken.length()));
+    // userId is the caller's own id (from their JWT) -- cross-checked here so logout can only
+    // ever revoke the caller's own refresh tokens, never someone else's, even if a raw token
+    // value were somehow supplied that belongs to another account.
+    private void revokeSingleRefreshToken(String rawToken, UUID userId) {
+        // Must match the 16-char prefix length used at token creation (line ~58) and in
+        // rotate() (line ~90) -- this was previously 8, a silent mismatch that made the lookup
+        // find zero rows and no-op, leaving the "revoked" refresh token fully usable forever.
+        String prefix = rawToken.substring(0, Math.min(16, rawToken.length()));
         refreshTokenRepository.findByTokenPrefixAndRevokedFalse(prefix)
                 .stream()
+                .filter(rt -> rt.getUser().getId().equals(userId))
                 .filter(rt -> passwordEncoder.matches(rawToken, rt.getTokenHash()))
                 .findFirst()
                 .ifPresent(rt -> refreshTokenRepository.revokeByTokenHash(rt.getTokenHash(), Instant.now()));

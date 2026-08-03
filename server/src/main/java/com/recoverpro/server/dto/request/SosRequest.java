@@ -1,15 +1,13 @@
 package com.recoverpro.server.dto.request;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import java.util.UUID;
 
 @Data
 public class SosRequest {
 
-    @NotNull
-    private UUID agentId;
+    // agentId is deliberately NOT a client-supplied field -- it's always the authenticated
+    // principal's own id (see AgentFieldController.sos). A client-supplied agent identity here
+    // would let any authenticated user trigger a false SOS as someone else.
 
     private Double lat;
     private Double lng;

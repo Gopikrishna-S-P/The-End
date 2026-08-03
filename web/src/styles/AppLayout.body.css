@@ -27,7 +27,9 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--bg-canvas);
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(circle, var(--border-strong) 1px, transparent 1px);
+  background-size: 28px 28px;
   scroll-behavior: smooth;
   min-width: 0;
   position: relative;

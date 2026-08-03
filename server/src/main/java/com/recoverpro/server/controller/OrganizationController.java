@@ -104,9 +104,9 @@ public class OrganizationController {
 
         long userCount = userRepo.countByOrganizationId(org.getId());
 
-        String orgAdminEmail = userRepo.findByOrganizationId(org.getId()).stream()
-                .filter(u -> u.getRoles().stream()
-                        .anyMatch(r -> PlatformConstants.ROLE_ORG_ADMIN.equals(r.getName())))
+        String orgAdminEmail = userRepo
+                .findByOrganizationIdAndRoleName(org.getId(), PlatformConstants.ROLE_ORG_ADMIN)
+                .stream()
                 .map(User::getEmail)
                 .findFirst()
                 .orElse(null);

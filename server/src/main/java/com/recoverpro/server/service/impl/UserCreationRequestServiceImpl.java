@@ -54,6 +54,11 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
         if (!submitter.isOrgAdmin() && !submitter.isPlatformAdmin()) {
             throw new AccessDeniedException("Only Org Admin or Platform Admin can submit user creation requests");
         }
+        if (submitter.isPlatformAdmin()) {
+            throw new BusinessException(
+                    "Platform admins have no organization context to submit a user creation request into. "
+                            + "Create organizations and their initial Org Admin directly instead.");
+        }
 
         String normalizedEmail = dto.getEmail().toLowerCase().trim();
         if (userRepo.existsByEmail(normalizedEmail)) {
@@ -63,6 +68,8 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
             throw new DuplicateResourceException("A pending request already exists for: " + normalizedEmail);
         }
 
+        String staffRole = resolveStaffRole(dto);
+
         Organization org = resolveOrg(principal);
 
         UserCreationRequest request = UserCreationRequest.builder()
@@ -70,6 +77,7 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
                 .requestedFirstName(dto.getFirstName().trim())
                 .requestedLastName(dto.getLastName().trim())
                 .requestedRole(dto.getRole())
+                .requestedStaffRole(staffRole)
                 .organization(org)
                 .requestedBy(submitter)
                 .build();
@@ -140,7 +148,9 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
             throw new EmailAlreadyExistsException("That email is already registered");
         }
 
-        String roleName = "ROLE_" + request.getRequestedRole().name();
+        String roleName = request.getRequestedRole() == RequestedRole.ORG_ADMIN
+                ? "ROLE_ORG_ADMIN"
+                : "ROLE_" + request.getRequestedStaffRole();
         Role role = roleRepo.findByName(roleName)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + roleName));
 
@@ -181,6 +191,22 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
                     principal.getOrganizationId(), RequestedRole.ORG_USER, RequestStatus.PENDING);
         }
         return 0;
+    }
+
+    private static final java.util.Set<String> ASSIGNABLE_STAFF_ROLES =
+            java.util.Set.of("FO", "CALLER", "TL", "MANAGER");
+
+    private String resolveStaffRole(CreateUserRequestDto dto) {
+        if (dto.getRole() == RequestedRole.ORG_ADMIN) {
+            return null;
+        }
+        String staffRole = dto.getStaffRole() != null ? dto.getStaffRole().trim().toUpperCase() : "";
+        if (!ASSIGNABLE_STAFF_ROLES.contains(staffRole)) {
+            throw new BusinessException(
+                    "staffRole is required for an Org User request and must be one of "
+                            + ASSIGNABLE_STAFF_ROLES + " (got: " + dto.getStaffRole() + ")");
+        }
+        return staffRole;
     }
 
     private Organization resolveOrg(UserPrincipal principal) {
@@ -230,6 +256,7 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
                 .requestedFirstName(r.getRequestedFirstName())
                 .requestedLastName(r.getRequestedLastName())
                 .requestedRole(r.getRequestedRole())
+                .requestedStaffRole(r.getRequestedStaffRole())
                 .organizationId(r.getOrganization() != null ? r.getOrganization().getId() : null)
                 .organizationName(r.getOrganization() != null ? r.getOrganization().getName() : null)
                 .requestedById(r.getRequestedBy().getId())

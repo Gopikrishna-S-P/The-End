@@ -160,7 +160,9 @@ public class UserServiceImpl implements UserService {
                     .ifPresent(__ -> { throw new BusinessException("Email is already in use"); });
             user.setEmail(newEmail);
         }
-        return userMapper.toResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        auditLogService.logUserAction(callerId(), "USER_UPDATED", "Updated user id=" + targetUserId);
+        return userMapper.toResponse(saved);
     }
 
     @Override
@@ -223,6 +225,7 @@ public class UserServiceImpl implements UserService {
         user.setLockoutUntil(null);
         user.setFailedLoginAttempts(0);
         userRepository.save(user);
+        auditLogService.logUserAction(callerId(), "USER_ENABLED", "Enabled user id=" + targetUserId);
     }
 
     @Override
@@ -230,6 +233,7 @@ public class UserServiceImpl implements UserService {
         User user = requireSameOrg(callerOrgId, targetUserId);
         user.setEnabled(false);
         userRepository.save(user);
+        auditLogService.logUserAction(callerId(), "USER_DISABLED", "Disabled user id=" + targetUserId);
     }
 
     @Override

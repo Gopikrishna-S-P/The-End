@@ -86,6 +86,7 @@ public class LucienServiceImpl implements LucienService {
         String safeFirstName = dataSanitizer.sanitizeAgentName(request.getAgentFirstName());
         ChatSession session = ChatSession.builder()
                 .agentId(agentId)
+                .organizationId(principal.getOrganizationId())
                 .agentFirstName(safeFirstName)
                 .isActive(true)
                 .totalMessages(0)
@@ -368,6 +369,7 @@ public class LucienServiceImpl implements LucienService {
         ChatMessage msg = ChatMessage.builder()
                 .session(session)
                 .agentId(session.getAgentId())
+                .organizationId(session.getOrganizationId())
                 .role(role)
                 .content(content)
                 .inputSafetyDecision(inputDecision)

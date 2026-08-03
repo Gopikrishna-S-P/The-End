@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { userRequestsApi, type RequestedRole } from '../api/userRequestsApi';
-import { submitSchema, type SubmitForm } from './UserRequestsHelpers';
+import { submitSchema, STAFF_ROLE_OPTIONS, type SubmitForm } from './UserRequestsHelpers';
 import { X, AlertCircle, UserPlus, Loader2 } from 'lucide-react';
 
 interface Props {
@@ -18,7 +18,14 @@ export function UserRequestsSubmitModal({ role, onClose, onDone }: Props) {
 
   const onSubmit = async (form: SubmitForm) => {
     setLoading(true); setSubmitError(null);
-    try { await userRequestsApi.submit({ email: form.email, firstName: form.firstName, lastName: form.lastName, role, notes: form.notes || undefined }); onDone(); }
+    try {
+      await userRequestsApi.submit({
+        email: form.email, firstName: form.firstName, lastName: form.lastName,
+        role, staffRole: role === 'ORG_USER' ? form.staffRole : undefined,
+        notes: form.notes || undefined,
+      });
+      onDone();
+    }
     catch (e: any) { setSubmitError(e?.response?.data?.message || 'Something went wrong.'); }
     finally { setLoading(false); }
   };
@@ -54,6 +61,18 @@ export function UserRequestsSubmitModal({ role, onClose, onDone }: Props) {
               <input {...register('email')} type="email" className="ds-input" />
               {errors.email && <p style={{ color: 'var(--error)', fontSize: 11, marginTop: 4 }}>{errors.email.message}</p>}
             </div>
+            {role === 'ORG_USER' && (
+              <div className="ds-field">
+                <label className="ds-label">Role</label>
+                <select {...register('staffRole')} className="ds-input" defaultValue="">
+                  <option value="" disabled>Select a role…</option>
+                  {STAFF_ROLE_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                {errors.staffRole && <p style={{ color: 'var(--error)', fontSize: 11, marginTop: 4 }}>{errors.staffRole.message}</p>}
+              </div>
+            )}
             <div className="ds-field">
               <label className="ds-label">Notes <span style={{ color: 'var(--ink-tertiary)', textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
               <textarea {...register('notes')} rows={2} className="ds-textarea" />

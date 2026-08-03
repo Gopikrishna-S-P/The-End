@@ -77,7 +77,8 @@ public class DocumentServiceImpl implements DocumentService {
         String filePath;
         try {
             filePath = storagePort.store(s3Key, localPath, file.getInputStream(), file.getContentType(), file.getSize());
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.error("Failed to store document for collection {}: {}", collection.getId(), e.getMessage(), e);
             throw new BusinessException("Failed to store document: " + e.getMessage());
         }
 

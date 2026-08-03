@@ -77,33 +77,35 @@ public class AgentFieldController {
     @PostMapping("/shifts/end")
     @PreAuthorize("hasAnyRole('FO','ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<AgentShiftResponse>> endShift(
-            @RequestBody Map<String, String> body) {
-        UUID agentId = UUID.fromString(body.get("agentId"));
-        return ResponseEntity.ok(ApiResponse.success(agentFieldService.endShift(agentId)));
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(agentFieldService.endShift(principal.getId())));
     }
 
     @GetMapping("/shifts/current")
     @PreAuthorize("hasAnyRole('FO','ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<AgentShiftResponse>> currentShift(
-            @RequestParam UUID agentId) {
-        return ResponseEntity.ok(ApiResponse.success(agentFieldService.currentShift(agentId)));
+            @RequestParam UUID agentId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(ApiResponse.success(agentFieldService.currentShift(agentId, principal.getId())));
     }
 
     @PostMapping("/location")
     @PreAuthorize("hasAnyRole('FO','ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> recordPing(
-            @Valid @RequestBody LocationPingRequest request) {
-        agentFieldService.recordPing(request);
+            @Valid @RequestBody LocationPingRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        agentFieldService.recordPing(request, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/sos")
     @PreAuthorize("hasAnyRole('FO','ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<IncidentReportResponse>> sos(
-            @Valid @RequestBody SosRequest request) {
-        log.warn("SOS endpoint hit for agent {}", request.getAgentId());
+            @Valid @RequestBody SosRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        log.warn("SOS endpoint hit for agent {}", principal.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(agentFieldService.triggerSos(request)));
+                .body(ApiResponse.success(agentFieldService.triggerSos(request, principal.getId())));
     }
 
     @PostMapping("/incidents/{id}/cancel")
@@ -118,10 +120,10 @@ public class AgentFieldController {
     @PostMapping(value = "/sos/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('FO','ORG_ADMIN','PLATFORM_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> uploadSosAudio(
-            @RequestParam UUID agentId,
-            @RequestPart("audio") MultipartFile audio) {
-        agentFieldService.storeSosAudio(agentId, audio);
-        log.info("POST /api/v1/agent/sos/audio -- agent={} size={}", agentId, audio.getSize());
+            @RequestPart("audio") MultipartFile audio,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        agentFieldService.storeSosAudio(principal.getId(), audio);
+        log.info("POST /api/v1/agent/sos/audio -- agent={} size={}", principal.getId(), audio.getSize());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
