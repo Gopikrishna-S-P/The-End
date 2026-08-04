@@ -165,7 +165,7 @@ export default function HomeScreen() {
 
         <View style={{ gap: spacing.s3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text variant="headline">Today's visits</Text>
+            <Text variant="headline">Today&apos;s visits</Text>
             <Text variant="caption" color="accent" onPress={() => router.push('/(tabs)/cases')}>View all cases</Text>
           </View>
 

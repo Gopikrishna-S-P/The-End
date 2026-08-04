@@ -182,7 +182,7 @@ export default function VisitFormScreen() {
           ) : null}
 
           {disp === 'PTP' ? (
-            <Text variant="caption" color="secondary">You'll set the promised amount and date on the next screen.</Text>
+            <Text variant="caption" color="secondary">You&apos;ll set the promised amount and date on the next screen.</Text>
           ) : null}
         </Card>
 

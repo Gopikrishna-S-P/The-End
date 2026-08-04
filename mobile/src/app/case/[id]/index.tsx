@@ -90,7 +90,7 @@ export default function CaseDetailScreen() {
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
             <CloudOff size={18} color={colors.warnBorder} />
             <Text variant="caption" color="secondary" style={{ flex: 1 }}>
-              Saved on your device — it'll sync automatically once you're back online.
+              Saved on your device — it&apos;ll sync automatically once you&apos;re back online.
             </Text>
           </Card>
         ) : null}

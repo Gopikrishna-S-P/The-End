@@ -187,7 +187,9 @@ export type CaseEventType =
   | 'RESTRUCTURE_REJECTED'
   | 'SETTLEMENT_OFFERED'
   | 'SETTLEMENT_ACCEPTED'
-  | 'SETTLEMENT_DECLINED';
+  | 'SETTLEMENT_DECLINED'
+  | 'GRIEVANCE_RAISED'
+  | 'GRIEVANCE_RESOLVED';
 
 export interface CaseEvent {
   timestamp: string;

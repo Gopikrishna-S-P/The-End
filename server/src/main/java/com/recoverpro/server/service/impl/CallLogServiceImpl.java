@@ -17,6 +17,7 @@ import com.recoverpro.server.service.CallLogService;
 import com.recoverpro.server.service.storage.StoragePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,6 +45,9 @@ public class CallLogServiceImpl implements CallLogService {
     private final BorrowerRepository borrowerRepository;
     private final StoragePort storagePort;
     private final CallLogFailureRecorder callLogFailureRecorder;
+
+    @Value("${app.storage.call-recordings-path:./uploads/call-recordings}")
+    private String storagePath;
 
     @Override
     @Transactional
@@ -82,7 +86,7 @@ public class CallLogServiceImpl implements CallLogService {
 
         String filename = callLogId + ".m4a";
         String s3Key = "call-recordings/" + organizationId + "/" + callLog.getAllocationId() + "/" + filename;
-        Path localPath = Paths.get("./uploads/call-recordings", organizationId.toString(),
+        Path localPath = Paths.get(storagePath, organizationId.toString(),
                 callLog.getAllocationId().toString()).resolve(filename);
 
         String storedPath;

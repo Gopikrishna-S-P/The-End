@@ -6,4 +6,7 @@ public interface EmailService {
     void sendWelcomeEmail(String email, String firstName, String otp, int expiryMinutes);
 
     void sendContactEnquiry(String name, String company, String email, String message);
+
+    /** Ops-facing alert (e.g. a background job failure) -- see OpsAlertService. */
+    void sendOpsAlert(String subject, String body);
 }

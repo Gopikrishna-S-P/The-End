@@ -1,5 +1,6 @@
 package com.recoverpro.server.scheduler;
 
+import com.recoverpro.server.service.OpsAlertService;
 import com.recoverpro.server.service.ReconciliationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 public class ReconciliationScheduler {
 
     private final ReconciliationService reconciliationService;
+    private final OpsAlertService opsAlertService;
 
     @Scheduled(cron = "${app.scheduler.reconciliation-cron:0 5 * * * *}", zone = "Asia/Kolkata")
     @SchedulerLock(
@@ -45,6 +47,7 @@ public class ReconciliationScheduler {
             }
         } catch (Exception e) {
             log.error("ReconciliationScheduler: sweep failed", e);
+            opsAlertService.alertJobFailure("ReconciliationScheduler.sweep", "hourly unmatched-retry sweep", e);
         }
     }
 }

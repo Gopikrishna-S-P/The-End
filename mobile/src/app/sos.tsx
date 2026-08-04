@@ -153,7 +153,7 @@ export default function SosScreen() {
           <Text variant="title">Emergency SOS</Text>
           <Text variant="body" color="secondary" style={{ textAlign: 'center', maxWidth: 300 }}>
             This immediately alerts your supervisor with your live location and starts sharing short audio
-            clips, so they can respond quickly if you're in danger.
+            clips, so they can respond quickly if you&apos;re in danger.
           </Text>
         </View>
 

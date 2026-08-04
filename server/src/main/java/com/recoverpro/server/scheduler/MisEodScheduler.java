@@ -1,6 +1,7 @@
 package com.recoverpro.server.scheduler;
 
 import com.recoverpro.server.service.MisEodReportService;
+import com.recoverpro.server.service.OpsAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -16,6 +17,7 @@ import java.time.ZoneId;
 public class MisEodScheduler {
 
     private final MisEodReportService misEodReportService;
+    private final OpsAlertService opsAlertService;
 
     @Scheduled(cron = "${app.scheduler.mis-eod-cron:0 0 20 * * *}", zone = "Asia/Kolkata")
     @SchedulerLock(
@@ -30,6 +32,7 @@ public class MisEodScheduler {
             log.info("MisEodScheduler: completed for date={}", today);
         } catch (Exception e) {
             log.error("MisEodScheduler: failed for date={}", today, e);
+            opsAlertService.alertJobFailure("MisEodScheduler.run", "MIS generation for date=" + today, e);
         }
     }
 }

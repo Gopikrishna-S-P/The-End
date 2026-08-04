@@ -1,6 +1,7 @@
 package com.recoverpro.server.scheduler;
 
 import com.recoverpro.server.service.CallingHoursGuard;
+import com.recoverpro.server.service.OpsAlertService;
 import com.recoverpro.server.service.PtpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ public class PtpScheduler {
 
     private final PtpService ptpService;
     private final CallingHoursGuard callingHoursGuard;
+    private final OpsAlertService opsAlertService;
 
     /**
      * Nightly job - runs at 00:30 every day. Internal status mutation only,
@@ -39,6 +41,7 @@ public class PtpScheduler {
         } catch (Exception e) {
             log.error("PtpScheduler: Nightly expired-PTP job failed after {}ms",
                     System.currentTimeMillis() - t0, e);
+            opsAlertService.alertJobFailure("PtpScheduler.markExpiredPtpsAsBroken", "nightly expired-PTP sweep", e);
         }
     }
 
@@ -71,6 +74,7 @@ public class PtpScheduler {
         } catch (Exception e) {
             log.error("PtpScheduler: Morning reminder job failed after {}ms",
                     System.currentTimeMillis() - t0, e);
+            opsAlertService.alertJobFailure("PtpScheduler.sendDueDateReminders", "morning due-date reminder dispatch", e);
         }
     }
 }

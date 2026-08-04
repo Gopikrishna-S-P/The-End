@@ -21,6 +21,9 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.mail.contact-recipient:}")
     private String contactRecipient;
 
+    @Value("${app.alerts.ops-recipient:}")
+    private String opsAlertRecipient;
+
     @Override
     public void sendPasswordResetOtp(String email, String otp, int expiryMinutes) {
         send(email, "Your password reset code",
@@ -63,6 +66,18 @@ public class EmailServiceImpl implements EmailService {
             mail.setReplyTo(email);
         }
         send(contactRecipient, mail);
+    }
+
+    @Override
+    public void sendOpsAlert(String subject, String body) {
+        String recipient = (opsAlertRecipient != null && !opsAlertRecipient.isBlank())
+                ? opsAlertRecipient : contactRecipient;
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("Ops alert not delivered (subject='{}'): neither app.alerts.ops-recipient nor "
+                    + "app.mail.contact-recipient is configured.", subject);
+            return;
+        }
+        send(recipient, "[RecoverPro ops] " + subject, body);
     }
 
     private void send(String to, String subject, String body) {

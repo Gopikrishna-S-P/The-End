@@ -3,6 +3,7 @@ package com.recoverpro.server.scheduler;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.service.NpaService;
+import com.recoverpro.server.service.OpsAlertService;
 import com.recoverpro.server.service.SnapshotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,12 +25,13 @@ class MonthlySnapshotSchedulerTest {
     @Mock private SnapshotService snapshotService;
     @Mock private NpaService npaService;
     @Mock private OrganizationRepository organizationRepository;
+    @Mock private OpsAlertService opsAlertService;
 
     private MonthlySnapshotScheduler scheduler;
 
     @BeforeEach
     void setUp() {
-        scheduler = new MonthlySnapshotScheduler(snapshotService, npaService, organizationRepository);
+        scheduler = new MonthlySnapshotScheduler(snapshotService, npaService, organizationRepository, opsAlertService);
     }
 
     @Test
@@ -62,5 +64,20 @@ class MonthlySnapshotSchedulerTest {
 
         verify(npaService, times(1)).flagOverdueAllocations(active.getId());
         verify(npaService, never()).flagOverdueAllocations(inactive.getId());
+    }
+
+    @Test
+    void captureDailyAgentSnapshots_orgFailure_alertsOps() {
+        Organization org = new Organization();
+        org.setId(UUID.randomUUID());
+        org.setActive(true);
+        when(organizationRepository.findAll()).thenReturn(List.of(org));
+        doThrow(new RuntimeException("db down")).when(snapshotService)
+                .captureAgentPerformanceSnapshot(eq(org.getId()), any(LocalDate.class));
+
+        scheduler.captureDailyAgentSnapshots();
+
+        verify(opsAlertService).alertJobFailure(
+                eq("MonthlySnapshotScheduler.captureDailyAgentSnapshots"), any(), any());
     }
 }

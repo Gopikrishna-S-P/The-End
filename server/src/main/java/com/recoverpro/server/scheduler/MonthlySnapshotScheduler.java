@@ -3,6 +3,7 @@ package com.recoverpro.server.scheduler;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.service.NpaService;
+import com.recoverpro.server.service.OpsAlertService;
 import com.recoverpro.server.service.SnapshotService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class MonthlySnapshotScheduler {
     private final SnapshotService snapshotService;
     private final NpaService npaService;
     private final OrganizationRepository organizationRepository;
+    private final OpsAlertService opsAlertService;
 
     /**
      * Runs at 02:00 on the 1st of every month.
@@ -40,6 +42,8 @@ public class MonthlySnapshotScheduler {
         } catch (Exception e) {
             log.error("Scheduled monthly snapshot failed for month={}/{} after {}ms",
                     month, year, System.currentTimeMillis() - t0, e);
+            opsAlertService.alertJobFailure("MonthlySnapshotScheduler.captureMonthlySnapshot",
+                    "month=" + month + "/" + year, e);
         }
     }
 
@@ -64,6 +68,8 @@ public class MonthlySnapshotScheduler {
             } catch (Exception e) {
                 log.error("Failed to capture daily agent snapshot for orgId={}: {}", org.getId(), e.getMessage());
                 failureCount++;
+                opsAlertService.alertJobFailure("MonthlySnapshotScheduler.captureDailyAgentSnapshots",
+                        "orgId=" + org.getId() + " date=" + today, e);
             }
         }
         log.info("Scheduled daily agent performance snapshot complete for date={} — success={} failed={} elapsedMs={}",
@@ -88,6 +94,8 @@ public class MonthlySnapshotScheduler {
                 totalFlagged += npaService.flagOverdueAllocations(org.getId());
             } catch (Exception e) {
                 log.error("NPA flagging failed for orgId={}: {}", org.getId(), e.getMessage());
+                opsAlertService.alertJobFailure("MonthlySnapshotScheduler.flagOverdueNpaRecords",
+                        "orgId=" + org.getId(), e);
             }
         }
         log.info("Scheduled NPA flagging complete: {} orgs processed, {} allocations flagged/updated, elapsedMs={}",

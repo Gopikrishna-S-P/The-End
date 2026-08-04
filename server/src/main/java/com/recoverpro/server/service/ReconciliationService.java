@@ -126,7 +126,7 @@ public class ReconciliationService {
 
     /**
      * End-of-day summary file -- materialises today's reconciliation runs
-     * into a CSV under {@code app.report.storage-path/reconciliation/}
+     * into a CSV under {@code app.storage.reports-path/reconciliation/}
      * (design-doc §5.5). Returns the absolute path written, or null when
      * no runs happened today (no file emitted).
      *

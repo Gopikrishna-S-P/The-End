@@ -44,7 +44,7 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     private final ClamAvScannerClient clamAvScannerClient;
     private final StoragePort storagePort;
 
-    @Value("${app.storage.base-path:./uploads/rag-documents}")
+    @Value("${app.storage.rag-documents-path:./uploads/rag-documents}")
     private String storagePath;
 
     @Override

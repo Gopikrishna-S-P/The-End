@@ -144,7 +144,7 @@ export default function CallScreen() {
     return (
       <Screen>
         <View style={{ gap: spacing.s4, alignItems: 'center', marginTop: spacing.s8 }}>
-          <Text variant="title" style={{ textAlign: 'center' }}>Couldn't start the call</Text>
+          <Text variant="title" style={{ textAlign: 'center' }}>Couldn&apos;t start the call</Text>
           <Text variant="body" color="secondary" style={{ textAlign: 'center' }}>{error}</Text>
           <Button label="Go back" variant="secondary" onPress={() => router.back()} />
         </View>

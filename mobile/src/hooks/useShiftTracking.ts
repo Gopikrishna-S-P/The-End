@@ -22,7 +22,7 @@ export function useShiftTracking() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    if (!user) return;
     agentFieldApi.currentShift(user.id)
       .then((s) => setShift(s && s.status === 'ACTIVE' ? s : null))
       .catch(() => setShift(null))
@@ -111,5 +111,5 @@ export function useShiftTracking() {
     }
   };
 
-  return { shift, loading, starting, ending, error, startShift, endShift };
+  return { shift, loading: user ? loading : false, starting, ending, error, startShift, endShift };
 }

@@ -1,5 +1,6 @@
 package com.recoverpro.server.scheduler;
 
+import com.recoverpro.server.service.OpsAlertService;
 import com.recoverpro.server.service.ReconciliationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import java.time.Instant;
 /**
  * End-of-day reconciliation file emitter (design-doc §5.5). Once per
  * business day, materialises today's reconciliation runs into a CSV
- * under {@code app.report.storage-path/reconciliation/}.
+ * under {@code app.storage.reports-path/reconciliation/}.
  *
  * Default cron: 23:50 IST -- comfortably after the daily snapshot at
  * 23:30 and before midnight.
@@ -24,8 +25,9 @@ import java.time.Instant;
 public class ReconciliationEodScheduler {
 
     private final ReconciliationService reconciliationService;
+    private final OpsAlertService opsAlertService;
 
-    @Value("${app.report.storage-path:./reports}")
+    @Value("${app.storage.reports-path:./reports}")
     private String reportRoot;
 
     @Scheduled(cron = "${app.scheduler.reconciliation-eod-cron:0 50 23 * * *}",
@@ -45,6 +47,7 @@ public class ReconciliationEodScheduler {
             }
         } catch (Exception e) {
             log.error("ReconciliationEodScheduler: emission failed", e);
+            opsAlertService.alertJobFailure("ReconciliationEodScheduler.run", "EOD reconciliation report emission", e);
         }
     }
 }

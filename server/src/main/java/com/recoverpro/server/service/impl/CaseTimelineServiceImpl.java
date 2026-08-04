@@ -7,14 +7,18 @@ import com.recoverpro.server.dto.response.RestructureProposalResponse;
 import com.recoverpro.server.entity.AllocationAuditLog;
 import com.recoverpro.server.entity.AssignmentAuditLog;
 import com.recoverpro.server.entity.CollectionAuditLog;
+import com.recoverpro.server.entity.Grievance;
 import com.recoverpro.server.entity.PtpAuditLog;
+import com.recoverpro.server.entity.SettlementAuditLog;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.CaseEventType;
 import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AssignmentAuditLogRepository;
 import com.recoverpro.server.repository.CollectionAuditLogRepository;
 import com.recoverpro.server.repository.CollectionRepository;
+import com.recoverpro.server.repository.GrievanceRepository;
 import com.recoverpro.server.repository.PtpAuditLogRepository;
+import com.recoverpro.server.repository.SettlementAuditLogRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.AllocationService;
 import com.recoverpro.server.service.CaseTimelineService;
@@ -41,10 +45,15 @@ import java.util.stream.Collectors;
  * visits/ptps endpoints it calls directly, so including them here would
  * duplicate entries in the UI.
  *
- * Several CaseEventType values (NPA/cooling-off changes, communications,
- * settlements, PTP reschedule, assignment "completed") have no audit trail
- * anywhere in this codebase and are never produced -- see CaseEventType's
- * javadoc.
+ * Several CaseEventType values (NPA/cooling-off changes, communications, PTP reschedule,
+ * assignment "completed") still have no audit trail anywhere in this codebase and are never
+ * produced -- see CaseEventType's javadoc. SETTLEMENT_OFFERED/ACCEPTED/DECLINED, previously in
+ * that same "never produced" list, are now sourced from settlement_audit_logs (added alongside
+ * the settlement_offers feature, 2026-08-04) -- SETTLEMENT_DRAFTED/APPROVED/EXPIRED/PAID have no
+ * corresponding CaseEventType values to map onto and are intentionally not emitted here.
+ * GRIEVANCE_RAISED/RESOLVED are sourced directly from grievances rows (no separate audit table --
+ * see GrievanceServiceImpl), added alongside the grievances feature (2026-08-04); only grievances
+ * with a non-null allocation_id are relevant to a given case's timeline.
  */
 @Service
 @RequiredArgsConstructor
@@ -57,6 +66,8 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
     private final CollectionAuditLogRepository collectionAuditLogRepository;
     private final CollectionRepository collectionRepository;
     private final RestructureProposalService restructureProposalService;
+    private final SettlementAuditLogRepository settlementAuditLogRepository;
+    private final GrievanceRepository grievanceRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -80,7 +91,13 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
 
         List<RestructureProposalResponse> restructures = restructureProposalService.getByAllocationId(allocationId);
 
-        Map<UUID, User> usersById = resolveUsers(assignmentLogs, ptpLogs, collectionLogs, allocationAuditLogs, restructures);
+        List<SettlementAuditLog> settlementLogs =
+                settlementAuditLogRepository.findByAllocationIdOrderByCreatedAtDesc(allocationId);
+
+        List<Grievance> grievances = grievanceRepository.findByAllocationIdOrderByCreatedAtDesc(allocationId);
+
+        Map<UUID, User> usersById = resolveUsers(assignmentLogs, ptpLogs, collectionLogs, allocationAuditLogs,
+                restructures, settlementLogs, grievances);
 
         List<CaseEventResponse> events = new ArrayList<>();
 
@@ -232,6 +249,61 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
             }
         }
 
+        for (SettlementAuditLog log : settlementLogs) {
+            CaseEventType type = switch (log.getAction()) {
+                case "PROPOSED" -> CaseEventType.SETTLEMENT_OFFERED;
+                case "BORROWER_ACCEPTED" -> CaseEventType.SETTLEMENT_ACCEPTED;
+                case "REJECTED" -> CaseEventType.SETTLEMENT_DECLINED;
+                default -> null;
+            };
+            if (type == null) continue;
+
+            String summary = switch (type) {
+                case SETTLEMENT_OFFERED -> "Settlement offer presented to borrower";
+                case SETTLEMENT_ACCEPTED -> "Settlement offer accepted by borrower";
+                default -> "Settlement offer declined";
+            };
+
+            events.add(CaseEventResponse.builder()
+                    .timestamp(log.getCreatedAt())
+                    .eventType(type)
+                    .summary(summary)
+                    .actorId(log.getPerformedBy())
+                    .actorName(displayName(usersById.get(log.getPerformedBy())))
+                    .actorRole(roleOf(usersById.get(log.getPerformedBy())))
+                    .sourceTable("SETTLEMENT_AUDIT_LOG")
+                    .sourceId(log.getId())
+                    .narrative(log.getRemarks())
+                    .build());
+        }
+
+        for (Grievance g : grievances) {
+            events.add(CaseEventResponse.builder()
+                    .timestamp(g.getCreatedAt())
+                    .eventType(CaseEventType.GRIEVANCE_RAISED)
+                    .summary("Grievance raised (" + g.getTicketNumber() + "): " + g.getSubject())
+                    .actorId(g.getRaisedByUserId())
+                    .actorName(displayName(usersById.get(g.getRaisedByUserId())))
+                    .actorRole(roleOf(usersById.get(g.getRaisedByUserId())))
+                    .sourceTable("GRIEVANCE")
+                    .sourceId(g.getId())
+                    .build());
+
+            if (g.getResolvedAt() != null) {
+                events.add(CaseEventResponse.builder()
+                        .timestamp(g.getResolvedAt())
+                        .eventType(CaseEventType.GRIEVANCE_RESOLVED)
+                        .summary("Grievance resolved (" + g.getTicketNumber() + ")")
+                        .actorId(g.getAssignedToUserId())
+                        .actorName(displayName(usersById.get(g.getAssignedToUserId())))
+                        .actorRole(roleOf(usersById.get(g.getAssignedToUserId())))
+                        .sourceTable("GRIEVANCE")
+                        .sourceId(g.getId())
+                        .narrative(g.getResolutionNotes())
+                        .build());
+            }
+        }
+
         events.sort(Comparator.comparing(CaseEventResponse::getTimestamp).reversed());
 
         return CaseTimelineResponse.builder()
@@ -249,7 +321,8 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
 
     private Map<UUID, User> resolveUsers(List<AssignmentAuditLog> assignmentLogs, List<PtpAuditLog> ptpLogs,
                                           List<CollectionAuditLog> collectionLogs, List<AllocationAuditLog> allocationAuditLogs,
-                                          List<RestructureProposalResponse> restructures) {
+                                          List<RestructureProposalResponse> restructures,
+                                          List<SettlementAuditLog> settlementLogs, List<Grievance> grievances) {
         Set<UUID> ids = new HashSet<>();
         for (AssignmentAuditLog a : assignmentLogs) {
             ids.add(a.getPerformedBy());
@@ -263,6 +336,11 @@ public class CaseTimelineServiceImpl implements CaseTimelineService {
             ids.add(r.getDraftedByUserId());
             ids.add(r.getLenderApprovalUserId());
             ids.add(r.getRejectedByUserId());
+        }
+        for (SettlementAuditLog s : settlementLogs) ids.add(s.getPerformedBy());
+        for (Grievance g : grievances) {
+            ids.add(g.getRaisedByUserId());
+            ids.add(g.getAssignedToUserId());
         }
         ids.remove(null);
         if (ids.isEmpty()) return Map.of();

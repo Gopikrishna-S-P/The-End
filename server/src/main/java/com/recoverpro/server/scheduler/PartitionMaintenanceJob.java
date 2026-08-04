@@ -1,5 +1,6 @@
 package com.recoverpro.server.scheduler;
 
+import com.recoverpro.server.service.OpsAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -23,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 public class PartitionMaintenanceJob {
 
     private final JdbcTemplate jdbcTemplate;
+    private final OpsAlertService opsAlertService;
 
     private static final DateTimeFormatter MONTH_FMT = DateTimeFormatter.ofPattern("yyyy_MM");
     private static final DateTimeFormatter DATE_FMT   = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -46,6 +48,9 @@ public class PartitionMaintenanceJob {
             log.info("PartitionMaintenance: created partition {} ({} → {})", partitionName, fromDate, toDate);
         } catch (Exception e) {
             log.error("PartitionMaintenance: failed to create partition {}: {}", partitionName, e.getMessage());
+            opsAlertService.alertJobFailure("PartitionMaintenanceJob.createNextMonthPartition",
+                    "partition=" + partitionName + " (audit-log inserts will start failing once "
+                            + fromDate + " arrives without this partition)", e);
             throw e;
         }
     }

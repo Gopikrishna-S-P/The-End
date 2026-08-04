@@ -11,10 +11,7 @@ export function useNotificationsBadge(): number {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!user) {
-      setCount(0);
-      return;
-    }
+    if (!user) return;
 
     let cancelled = false;
     const fetchCount = async () => {
@@ -39,5 +36,5 @@ export function useNotificationsBadge(): number {
     };
   }, [user]);
 
-  return count;
+  return user ? count : 0;
 }

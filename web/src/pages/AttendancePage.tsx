@@ -107,7 +107,7 @@ export default function AttendancePage() {
       <div className="dd-page-header">
         <div className="dd-page-titles">
           <h1 className="dd-page-title">Attendance</h1>
-          <span className="dd-page-context">Log of field officer check-ins</span>
+          <span className="dd-page-context">Daily staff check-in log</span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="dd-date-nav">
@@ -175,7 +175,7 @@ export default function AttendancePage() {
                       No attendance records
                     </div>
                     <div className="ds-empty-sub">
-                      No field officers have checked in for {formatDate(date + 'T00:00:00')}.
+                      No one has checked in for {formatDate(date + 'T00:00:00')}.
                     </div>
                   </motion.div>
                 ) : (
