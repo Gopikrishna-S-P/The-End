@@ -30,6 +30,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -405,7 +407,12 @@ public class ReportingServiceImpl implements ReportingService {
                 .build();
         ReportJob saved = reportJobRepository.save(job);
         log.info("Report job enqueued: id={} type={} format={}", saved.getId(), saved.getReportType(), saved.getExportFormat());
-        reportJobExecutor.processJobAsync(saved.getId(), this::buildReportData);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                reportJobExecutor.processJobAsync(saved.getId(), ReportingServiceImpl.this::buildReportData);
+            }
+        });
         return reportMapper.toJobResponse(saved);
     }
 

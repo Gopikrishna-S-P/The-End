@@ -362,6 +362,38 @@ export interface PaymentLinkResponse {
   createdAt: string;
 }
 
+// ── Calls ────────────────────────────────────────────────────────────────────
+
+export type CallOutcome =
+  | 'ANSWERED' | 'NO_ANSWER' | 'BUSY' | 'WRONG_NUMBER'
+  | 'CALLBACK_REQUESTED' | 'REFUSED' | 'SWITCHED_OFF';
+
+export type RecordingStatus = 'PENDING' | 'UPLOADED' | 'FAILED' | 'NOT_RECORDED';
+
+export interface CallStartResponse {
+  callLogId: string;
+  phoneNumber: string;
+}
+
+export interface CompleteCallRequest {
+  outcome: CallOutcome;
+  notes?: string;
+  durationSeconds?: number;
+}
+
+export interface CallLogResponse {
+  id: string;
+  allocationId: string;
+  agentId: string;
+  initiatedAt: string;
+  endedAt?: string;
+  durationSeconds?: number;
+  outcome?: CallOutcome;
+  phoneMasked?: string;
+  notes?: string;
+  recordingStatus?: RecordingStatus;
+}
+
 // ── Attendance ───────────────────────────────────────────────────────────────
 
 export interface AttendanceCheckInRequest {

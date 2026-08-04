@@ -15,7 +15,7 @@ export const submitSchema = z.object({
   email:     z.string().email('Enter a valid email'),
   firstName: z.string().min(1, 'Required'),
   lastName:  z.string().min(1, 'Required'),
-  staffRole: z.enum(['FO', 'CALLER', 'TL', 'MANAGER'], { errorMap: () => ({ message: 'Select a role' }) }),
+  staffRole: z.enum(['FO', 'CALLER', 'TL', 'MANAGER'], { message: 'Select a role' }),
   notes:     z.string().optional(),
 });
 export type SubmitForm = z.infer<typeof submitSchema>;

@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react';
 import { View, Modal, Image, Pressable } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
-  MapPin, Handshake, Link2, Receipt, AlertTriangle, CloudOff, X, ImageIcon,
+  MapPin, Handshake, Link2, Receipt, AlertTriangle, CloudOff, X, ImageIcon, Phone,
 } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, Card, Badge, Button, Divider, LoadingView, EmptyState } from '@/components/ui';
 import { allocationsApi } from '@/api/allocationsApi';
@@ -33,6 +34,8 @@ function formatDynamicValue(value: unknown): string {
 export default function CaseDetailScreen() {
   const { id, savedOffline } = useLocalSearchParams<{ id: string; savedOffline?: string }>();
   const { colors, spacing } = useTheme();
+  const { role } = useAuth();
+  const canCall = role === 'FO' || role === 'CALLER';
 
   const [loading, setLoading] = useState(true);
   const [allocation, setAllocation] = useState<AllocationResponse | null>(null);
@@ -124,11 +127,20 @@ export default function CaseDetailScreen() {
         </Card>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s3 }}>
+          {canCall ? (
+            <Button
+              label="Call"
+              fullWidth={false}
+              onPress={() => router.push({ pathname: '/case/[id]/call', params: { id } })}
+              icon={<Phone size={16} color="#fff" />}
+            />
+          ) : null}
           <Button
             label="Log a visit"
             fullWidth={false}
+            variant={canCall ? 'secondary' : 'primary'}
             onPress={() => router.push({ pathname: '/case/[id]/visit', params: { id } })}
-            icon={<MapPin size={16} color="#fff" />}
+            icon={<MapPin size={16} color={canCall ? colors.ink1 : '#fff'} />}
           />
           <Button
             label="Create PTP"

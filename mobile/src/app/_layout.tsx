@@ -61,6 +61,10 @@ function RootNavigator() {
             options={{ headerShown: true, title: 'Send payment link', presentation: 'modal' }}
           />
           <Stack.Screen
+            name="case/[id]/call"
+            options={{ headerShown: true, title: 'Call borrower', presentation: 'modal' }}
+          />
+          <Stack.Screen
             name="sos"
             options={{ headerShown: true, title: '', presentation: 'fullScreenModal' }}
           />
