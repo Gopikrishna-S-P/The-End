@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermissions } from './usePermissions';
 import { useBookmarks, bookmarks } from '../utils/bookmarks';
 import { useNavCounts, refreshNavCounts } from '../utils/navCounts';
-import { NAV_SECTIONS, ROUTE_LABELS, Bookmark, type NavItem, type NavSection } from '../utils/navConfig';
+import { NAV_SECTIONS, resolveRouteLabel, Bookmark, type NavItem, type NavSection } from '../utils/navConfig';
 import { useFeatureFlags } from './useFeatureFlags';
 import type { Role } from '../types';
 
@@ -78,13 +78,14 @@ export function useAppNavState({ role, historyStack, currentIndex }: Params) {
   );
 
   const breadcrumbs = useMemo(() => {
-    const label = ROUTE_LABELS[location.pathname];
+    const label = resolveRouteLabel(location.pathname);
     if (!label) return null;
     // exact match first, then parent-path match (e.g. /app/collections/trend → /app/collections)
     const section = NAV_SECTIONS.find(s => s.items.some(i => i.to === location.pathname))
       ?? NAV_SECTIONS.find(s => s.items.some(i => location.pathname.startsWith(i.to + '/')));
+    const parentItem = section?.items.find(i => i.to === location.pathname || location.pathname.startsWith(i.to + '/'));
     return section
-      ? [{ label: section.label, to: null as string | null }, { label, to: location.pathname as string | null }]
+      ? [{ label: section.label, to: null as string | null }, { label, to: (parentItem?.to ?? location.pathname) as string | null }]
       : [{ label, to: location.pathname as string | null }];
   }, [location.pathname]);
 
@@ -128,7 +129,7 @@ export function useAppNavState({ role, historyStack, currentIndex }: Params) {
 
   const previousPathLabel = useMemo(() => {
     if (!canGoBack) return null;
-    return ROUTE_LABELS[historyStack[currentIndex - 1]] ?? null;
+    return resolveRouteLabel(historyStack[currentIndex - 1]) ?? null;
   }, [historyStack, currentIndex, canGoBack]);
 
   const bookmarkActions = useMemo(() => ({

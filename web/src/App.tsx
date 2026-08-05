@@ -43,6 +43,9 @@ import BorrowersPage from './pages/BorrowersPage';
 import FraudCasesPage from './pages/FraudCasesPage';
 import ReconciliationPage from './pages/ReconciliationPage';
 import RestructureProposalsPage from './pages/RestructureProposalsPage';
+import SettlementOffersPage from './pages/SettlementOffersPage';
+import GrievancesPage from './pages/GrievancesPage';
+import GrievanceOfficerSettingsPage from './pages/GrievanceOfficerSettingsPage';
 import NonContactablesPage from './pages/NonContactablesPage';
 import PortfolioRiskPage from './pages/PortfolioRiskPage';
 import LandingPage from './LandingPage';
@@ -183,6 +186,8 @@ function App() {
                   <Route path="/app/collections/trend" element={<CollectionMomPage />} />
                   <Route path="/app/non-contactables" element={<NonContactablesPage />} />
                   <Route path="/app/restructure-proposals" element={<RestructureProposalsPage />} />
+                  <Route path="/app/settlement-offers" element={<SettlementOffersPage />} />
+                  <Route path="/app/grievances" element={<GrievancesPage />} />
                   <Route path="/app/visits" element={<VisitsPage />} />
                   <Route path="/app/ptps" element={<PtpsPage />} />
                   <Route path="/app/today" element={<TodayVisitsPage />} />
@@ -217,6 +222,7 @@ function App() {
                   <Route path="/app/attendance" element={<AttendancePage />} />
                   <Route path="/app/calendar" element={<CalendarPage />} />
                   <Route path="/app/portfolio-risk" element={<PortfolioRiskPage />} />
+                  <Route path="/app/settings/grievance-officer" element={<GrievanceOfficerSettingsPage />} />
                 </Route>
 
                 {/* ── /app/* org-admin routes (PLATFORM_ADMIN / ORG_ADMIN only) ── */}

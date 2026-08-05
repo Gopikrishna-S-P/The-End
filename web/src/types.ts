@@ -15,3 +15,6 @@ export * from './types/restructure';
 export * from './types/risk';
 export * from './types/calendar';
 export * from './types/messageTemplate';
+export * from './types/settlementOffers';
+export * from './types/kfs';
+export * from './types/grievances';

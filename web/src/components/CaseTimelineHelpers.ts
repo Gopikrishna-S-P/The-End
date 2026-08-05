@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import {
   AlertCircle, AlertTriangle, CheckCircle2, ClipboardCheck, Clock, Coins,
   FileDown, FileText, HandCoins, Handshake, History, Landmark,
-  MailWarning, MapPin, MessageSquare, Pencil, RefreshCw, Repeat, ShieldAlert, ShieldOff,
+  MailWarning, MapPin, MessageSquare, MessageSquareWarning, Pencil, RefreshCw, Repeat, ShieldAlert, ShieldOff,
   Table as TableIcon, UserCheck, UserPlus, UserX, XCircle,
 } from 'lucide-react';
 import type { CaseEventType } from '../types';
@@ -53,6 +53,9 @@ export const STYLES: Record<CaseEventType, EventStyle> = {
   SETTLEMENT_OFFERED:        { icon: Handshake,         accent: '#a16207',                 label: 'Settlement' },
   SETTLEMENT_ACCEPTED:       { icon: CheckCircle2,      accent: '#a16207',                 label: 'Settled' },
   SETTLEMENT_DECLINED:       { icon: XCircle,           accent: 'var(--ink-tertiary)',     label: 'Declined' },
+
+  GRIEVANCE_RAISED:          { icon: MessageSquareWarning, accent: '#be185d',              label: 'Grievance' },
+  GRIEVANCE_RESOLVED:        { icon: CheckCircle2,      accent: '#be185d',                 label: 'Grievance resolved' },
 };
 
 export const FALLBACK_STYLE: EventStyle = { icon: History, accent: 'var(--ink-tertiary)', label: 'Event' };

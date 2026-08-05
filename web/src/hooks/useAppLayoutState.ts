@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation, useNavigationType, NavigationType } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import type { Role } from '../types';
-import { ROLE_LABEL, LUCIEN_ROLES, ROUTE_LABELS, NAV_SECTIONS, hashColor } from '../utils/navConfig';
+import { ROLE_LABEL, LUCIEN_ROLES, resolveRouteLabel, NAV_SECTIONS, hashColor } from '../utils/navConfig';
 import { sounds, type SoundName } from '../utils/sounds';
 import { useDisplayPrefs } from '../utils/displayPrefs';
 import { useTopbarPrefs } from '../utils/topbarPrefs';
@@ -125,7 +125,7 @@ export function useAppLayoutState() {
   }, [location.pathname, navType, historyStack, currentIndex]);
 
   useEffect(() => {
-    const label = ROUTE_LABELS[location.pathname];
+    const label = resolveRouteLabel(location.pathname);
     setRouteAnnounce(label ? `${label} page loaded` : '');
   }, [location.pathname]);
 
@@ -144,7 +144,7 @@ export function useAppLayoutState() {
 
   useEffect(() => {
     const path = location.pathname;
-    const label = ROUTE_LABELS[path];
+    const label = resolveRouteLabel(path);
     if (label) activityLog.log({ kind: 'visit', label, path });
   }, [location.pathname]);
 
@@ -198,7 +198,7 @@ export function useAppLayoutState() {
   useEffect(() => { setFaviconUnreadBadge(unreadCount); }, [unreadCount]);
 
   useEffect(() => {
-    const label = ROUTE_LABELS[location.pathname];
+    const label = resolveRouteLabel(location.pathname);
     const prefix = unreadCount > 0 ? `(${unreadCount}) ` : '';
     document.title = label ? `${prefix}${label} — Recoverpro` : 'Recoverpro';
   }, [location.pathname, unreadCount]);

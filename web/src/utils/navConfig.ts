@@ -115,9 +115,31 @@ export const ROUTE_LABELS: Record<string, string> = {
   '/app/fraud-cases': 'Fraud Cases',
   '/app/reconciliation': 'Reconciliation',
   '/app/restructure-proposals': 'Restructure Proposals',
+  '/app/settlement-offers': 'Settlement Offers',
+  '/app/grievances': 'Grievances',
+  '/app/settings/grievance-officer': 'Grievance Officer',
   '/app/lucien/admin': 'Lucien',
   '/platform/revenue-trend': 'Revenue Trend',
 };
+
+// Detail/child routes (e.g. /app/allocations/:id) have no exact ROUTE_LABELS
+// entry, since that map is keyed by literal paths. Without a fallback, every
+// such page loses its topbar breadcrumb and document title entirely (nav
+// renders nothing rather than a wrong label). This resolves to the nearest
+// matched ancestor's label instead, so a loan detail page still reads "Loans"
+// in the breadcrumb/title, same as every other page having a real label.
+export function resolveRouteLabel(pathname: string): string | undefined {
+  if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname];
+  let best: string | undefined;
+  let bestLen = 0;
+  for (const route of Object.keys(ROUTE_LABELS)) {
+    if (pathname.startsWith(route + '/') && route.length > bestLen) {
+      best = ROUTE_LABELS[route];
+      bestLen = route.length;
+    }
+  }
+  return best;
+}
 
 export const SHORTCUTS = [
   { desc: 'Open command palette',               keys: ['⌘', 'K'] },

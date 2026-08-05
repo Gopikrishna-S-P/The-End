@@ -6,7 +6,7 @@ import { rolesApi } from '../api/rolesApi';
 import type { UserResponse, PagedResponse, RoleResponse } from '../types';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
-import { Plus, RefreshCw, AlertCircle, X, Search, Building2, FileClock, MessageSquareText, UserPlus } from 'lucide-react';
+import { Plus, RefreshCw, AlertCircle, X, Search, Building2, FileClock, MessageSquareText, UserPlus, MessageSquareWarning } from 'lucide-react';
 import { UsersTable } from './UsersTable';
 import { UsersEditModal } from './UsersEditModal';
 import { UsersCreateModal } from './UsersCreateModal';
@@ -175,6 +175,12 @@ export default function UsersPage() {
             className="ds-btn is-ghost"
           >
             <MessageSquareText size={14} /> Message templates
+          </button>
+          <button
+            type="button" onClick={() => navigate('/app/settings/grievance-officer')}
+            className="ds-btn is-ghost"
+          >
+            <MessageSquareWarning size={14} /> Grievance officer
           </button>
           <button
             type="button" onClick={() => navigate('/app/users/requests')}

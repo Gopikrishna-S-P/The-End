@@ -77,15 +77,11 @@ export default function LoanDetailContent(p: Props) {
       <aside style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="ds-card db-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--ink-tertiary)' }}>
-            Everything on file for this case.
-          </span>
-
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-              <h1 style={{ fontSize: 19, fontWeight: 700, color: 'var(--ink-primary)', margin: 0, lineHeight: 1.25, wordBreak: 'break-word' }}>
+              <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--ink-primary)', margin: 0, lineHeight: 1.25, wordBreak: 'break-word' }}>
                 {a.borrowerName || '—'}
-              </h1>
+              </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--ink-secondary)', fontWeight: 500 }}>
                 {a.loanNumber || '—'}
               </span>
@@ -219,9 +215,14 @@ export default function LoanDetailContent(p: Props) {
       <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <span style={{ fontSize: 13, color: 'var(--ink-tertiary)' }}>
-            {activeTab === 'activity' && 'Every visit, collection, PTP, and reassignment on this case, newest first.'}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <h1 className="db-page-title" style={{ fontSize: 18, lineHeight: 1.3 }}>{a.borrowerName || 'Loan case'}</h1>
+            <span style={{ fontSize: 13, color: 'var(--ink-tertiary)' }}>
+              {activeTab === 'activity'
+                ? 'Every visit, collection, PTP, and reassignment on this case, newest first.'
+                : (a.loanNumber || a.loanAccountNo || '—')}
+            </span>
+          </div>
           <div className="db-kpi-toggle" style={{ display: 'inline-flex' }}>
             {[
               { id: 'details', label: 'Details' },

@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { X, Loader2, AlertCircle, Send, ThumbsUp, ThumbsDown, Signature } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Loader2, AlertCircle, Send, ThumbsUp, ThumbsDown, Signature, FileText, Download } from 'lucide-react';
 import { restructureProposalsApi } from '../api/restructureProposalsApi';
+import { kfsApi } from '../api/kfsApi';
 import type { RestructureProposalResponse } from '../types';
+import type { KeyFactStatementResponse } from '../types/kfs';
 import { usePermissions } from '../hooks/usePermissions';
 import { fmtDate, fmtDT } from './LoanDetailHelpers';
 import { RESTRUCTURE_PILL } from './BorrowersHelpers';
@@ -47,6 +49,43 @@ export default function RestructureProposalDetailDrawer({ proposal: p, onClose, 
   const borrowerAccept   = () => run('accept', () => restructureProposalsApi.borrowerAccept(p.id));
 
   const emiDelta = p.newEmiAmount - p.originalEmiAmount;
+
+  // Key Fact Statement: 1:1 with this proposal, only reachable once lender-approved.
+  // undefined = not checked yet, null = checked and none exists, object = exists.
+  const kfsVisible = p.status === 'APPROVED' || p.status === 'ACCEPTED' || p.status === 'ACTIVE';
+  const [kfs, setKfs]           = useState<KeyFactStatementResponse | null | undefined>(undefined);
+  const [kfsLoading, setKfsLoading] = useState(false);
+  const [kfsBusy, setKfsBusy]   = useState<string | null>(null);
+  const [kfsError, setKfsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!kfsVisible) { setKfs(undefined); return; }
+    let cancelled = false;
+    setKfs(undefined);
+    setKfsError(null);
+    setKfsLoading(true);
+    kfsApi.getByRestructureProposal(p.id)
+      .then((result) => { if (!cancelled) setKfs(result); })
+      .catch((e: any) => { if (!cancelled) setKfsError(e?.response?.data?.message || 'Failed to load Key Fact Statement.'); })
+      .finally(() => { if (!cancelled) setKfsLoading(false); });
+    return () => { cancelled = true; };
+  }, [p.id, kfsVisible]);
+
+  const generateKfs = () => {
+    setKfsBusy('generate'); setKfsError(null);
+    kfsApi.generate(p.id)
+      .then((result) => setKfs(result))
+      .catch((e: any) => setKfsError(e?.response?.data?.message || 'Failed to generate Key Fact Statement.'))
+      .finally(() => setKfsBusy(null));
+  };
+
+  const downloadKfsPdf = () => {
+    if (!kfs) return;
+    setKfsBusy('download'); setKfsError(null);
+    kfsApi.downloadPdf(kfs.id)
+      .catch((e: any) => setKfsError(e?.response?.data?.message || 'Failed to download the KFS PDF.'))
+      .finally(() => setKfsBusy(null));
+  };
 
   return (
     <>
@@ -129,6 +168,59 @@ export default function RestructureProposalDetailDrawer({ proposal: p, onClose, 
             {p.borrowerAcceptedAt && <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)' }}>Borrower accepted {fmtDT(p.borrowerAcceptedAt)}</span>}
             {p.rejectedAt && <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)' }}>Rejected {fmtDT(p.rejectedAt)}</span>}
           </div>
+
+          {kfsVisible && (
+            <div className="ds-card" style={{ marginTop: 16, padding: 14 }}>
+              <span className="db-att-label" style={{ color: 'var(--ink-tertiary)', fontSize: 11 }}>Key Fact Statement</span>
+
+              {kfsLoading && (
+                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-tertiary)' }}>
+                  <Loader2 size={13} className="ds-spin" /> Checking for an existing KFS…
+                </div>
+              )}
+
+              {!kfsLoading && kfsError && (
+                <div className="ptp-modal-error" role="alert" style={{ marginTop: 10 }}><AlertCircle size={14} /><span>{kfsError}</span></div>
+              )}
+
+              {!kfsLoading && !kfs && (
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ fontSize: 12, color: 'var(--ink-tertiary)', marginBottom: 10 }}>
+                    No Key Fact Statement has been generated for this proposal yet.
+                  </p>
+                  <button type="button" className="ds-btn is-primary is-sm" disabled={kfsBusy !== null} onClick={generateKfs}>
+                    {kfsBusy === 'generate' ? <Loader2 size={13} className="ds-spin" /> : <FileText size={13} />} Generate KFS
+                  </button>
+                </div>
+              )}
+
+              {!kfsLoading && kfs && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>Sanctioned</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{fmtMoney(kfs.sanctionedAmount)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>APR</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{fmtApr(kfs.aprPercent)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>EMI</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{fmtMoney(kfs.emiAmount)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>Tenure</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{kfs.tenureMonths} EMIs</span>
+                    </div>
+                  </div>
+                  <button type="button" className="ds-btn is-secondary is-sm" disabled={kfsBusy !== null} onClick={downloadKfsPdf}>
+                    {kfsBusy === 'download' ? <Loader2 size={13} className="ds-spin" /> : <Download size={13} />} Download PDF
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {error && <div className="ptp-modal-error" role="alert" style={{ marginTop: 12 }}><AlertCircle size={14} /><span>{error}</span></div>}
 

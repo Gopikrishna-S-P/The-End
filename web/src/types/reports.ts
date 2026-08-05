@@ -159,72 +159,8 @@ export interface CreateErasureRequestRequest {
   reason: string;
 }
 
-export type GrievanceCategory =
-  | 'HARASSMENT' | 'INCORRECT_INFORMATION' | 'RECOVERY_PRACTICE'
-  | 'DATA_PRIVACY' | 'PAYMENT_DISPUTE' | 'OTHER';
-
-export type GrievanceStatus =
-  | 'RECEIVED' | 'ACKNOWLEDGED' | 'INVESTIGATING' | 'RESOLVED' | 'CLOSED' | 'ESCALATED';
-
-export interface GrievanceResponse {
-  id: string;
-  ticketNumber: string;
-  organizationId: string;
-  allocationId?: string;
-  borrowerName?: string;
-  borrowerEmail?: string;
-  borrowerPhone?: string;
-  category: GrievanceCategory;
-  subject: string;
-  description: string;
-  evidenceUrl?: string;
-  status: GrievanceStatus;
-  assignedToUserId?: string;
-  resolutionNotes?: string;
-  acknowledgementDueAt: string;
-  acknowledgedAt?: string;
-  resolutionDueAt: string;
-  resolvedAt?: string;
-  closedAt?: string;
-  createdAt: string;
-  updatedAt?: string;
-  overdue: boolean;
-}
-
-export interface CreateGrievanceRequest {
-  organizationId: string;
-  allocationId?: string;
-  borrowerName?: string;
-  borrowerEmail?: string;
-  borrowerPhone?: string;
-  category: GrievanceCategory;
-  subject: string;
-  description: string;
-  evidenceUrl?: string;
-}
-
-export interface UpdateGrievanceStatusRequest {
-  newStatus: GrievanceStatus;
-  assignToUserId?: string;
-  resolutionNotes?: string;
-}
-
-export interface GrievanceOfficerResponse {
-  organizationId: string;
-  name: string;
-  designation: string;
-  email: string;
-  phone: string;
-  address?: string;
-  updatedAt?: string;
-}
-
-export interface UpsertGrievanceOfficerRequest {
-  organizationId: string;
-  name: string;
-  designation: string;
-  email: string;
-  phone: string;
-  address?: string;
-}
+// Grievance types moved to ./grievances.ts — this file previously had a speculative,
+// never-implemented duplicate set (different shape: single generic UpdateGrievanceStatusRequest,
+// organizationId in request bodies) written before the real grievances backend existed. Removed
+// to resolve the export collision now that types/grievances.ts matches the live API.
 

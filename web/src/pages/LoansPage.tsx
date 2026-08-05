@@ -4,7 +4,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   X, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
   SlidersHorizontal, ChevronDown, ShieldAlert, TrendingDown, Users,
-  UserCheck, MapPin, Handshake, Receipt,
+  UserCheck, MapPin, Handshake, Receipt, BadgeIndianRupee, MessageSquareWarning,
 } from 'lucide-react';
 import { allocationsApi } from '../api/allocationsApi';
 import { usersApi } from '../api/usersApi';
@@ -12,6 +12,7 @@ import type { AllocationResponse, UserResponse } from '../types';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import { Pagination } from '../components/Pagination';
 import { useAuth } from '../AuthContext';
+import { StatusPill } from './LoansHelpers';
 
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
@@ -96,6 +97,11 @@ export default function LoansPage() {
   const canSeeBorrowers = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN');
   const canSeeFraudCases = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN');
   const canSeePortfolioRisk = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL');
+  // Settlement offers / grievances are new, fully built features — deliberately not gated
+  // behind SHOW_LOANS_QUICK_LINKS (that flag hides an unrelated, still-being-revisited set
+  // of links), so these are visible to leads as soon as they ship.
+  const canSeeSettlementOffers = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL';
+  const canSeeGrievances = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL';
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm   = searchParams.get('q')         ?? '';
@@ -256,10 +262,22 @@ export default function LoansPage() {
               type="button"
               onClick={openFilterDialog}
               className={`ds-btn ${filterOpen || hasFilters ? 'is-primary' : 'is-secondary'}`}
+              title="Filter" aria-label="Filter"
             >
               <SlidersHorizontal size={14} />
-              Filter
             </button>
+            {canSeeSettlementOffers && (
+              <button type="button" onClick={() => navigate('/app/settlement-offers')}
+                className="ds-btn is-secondary" title="Settlement offers" aria-label="Settlement offers">
+                <BadgeIndianRupee size={14} />
+              </button>
+            )}
+            {canSeeGrievances && (
+              <button type="button" onClick={() => navigate('/app/grievances')}
+                className="ds-btn is-secondary" title="Grievances" aria-label="Grievances">
+                <MessageSquareWarning size={14} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -354,20 +372,21 @@ export default function LoansPage() {
                               {dpd != null && (
                                 <span className={`dd-case-dpd is-${tone}`}>DPD {dpd}</span>
                               )}
-                              {c.status && (
-                                <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
-                                  {c.status}
-                                </span>
-                              )}
-                              {amt != null && (
-                                <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                                  / {fmtINR(amt)} POS
-                                </span>
-                              )}
+                              {c.status && <StatusPill status={c.status} />}
                             </div>
                           </div>
 
                           <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
+                            {amt != null && (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                                  {fmtINR(amt)}
+                                </span>
+                                <span style={{ fontSize: 10, color: 'var(--ink-tertiary)', letterSpacing: '0.02em' }}>
+                                  OUTSTANDING
+                                </span>
+                              </div>
+                            )}
                             <ChevronRightIcon size={16} style={{ color: 'var(--ink-tertiary)' }} />
                           </div>
                         </motion.button>
