@@ -79,7 +79,6 @@
 /* ── Bottom bar ── */
 .rp-footer-bottom {
   padding-top: 20px;
-  border-top: 1px solid var(--border, #C4D4C9);
   display: flex;
   align-items: center;
   justify-content: space-between;

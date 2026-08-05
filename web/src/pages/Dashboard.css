@@ -74,13 +74,21 @@
   min-height: 100%;
   width: 100%;
   background: transparent;
-  /* Ordinal green ramp for ranked donut/pie slices (plan mix, role mix) —
-     ordered light→dark, validated against the categorical-adjacency floor
-     (see docs/superpowers/specs/2026-07-21-dashboard-chart-redesign.md).
-     Single brand hue, no secondary hues, per this app's own color rule. */
-  --db-ramp-1: var(--ink-solid);
-  --db-ramp-2: #077438;
-  --db-ramp-3: #054A24;
+  /* Two-family palette for identity donut/pie slices (plan mix, role mix,
+     multi-state breakdowns) — restrained on purpose: a rainbow of hues reads
+     unprofessional on an ops dashboard. Green ramp for the lead/leadership
+     tier, slate-gray ramp for the secondary tier — each ramp's 3 steps are
+     real lightness jumps (not near-duplicates like the old border-hairline
+     grays), so slices stay distinguishable without adding new hues. Assign
+     in this fixed order; never reuse a status color (warning/danger) for a
+     plain category. Single-series magnitude/rank bars stay on the green
+     ramp too — that's a different job (see BarChart). */
+  --db-green-1: var(--ink-solid); /* brand green #0AA550 */
+  --db-green-2: #077438;
+  --db-green-3: #054A24;
+  --db-gray-1:  #94A3B8; /* slate, medium */
+  --db-gray-2:  #64748B; /* slate, darker */
+  --db-gray-3:  #475569; /* slate, darkest */
 }
 
 .db-root .ds-card,
@@ -1385,22 +1393,15 @@
   display: flex;
   align-items: flex-end;
   background: var(--bg-subtle);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-radius: 8px 8px 0 0;
 }
-/* Any month with a value reads green. The old 32% mix against --bg-subtle
-   desaturated so far it looked grey, so a month with real collections was
-   indistinguishable from an empty track. The peak still leads with full
-   --ink-solid; the rest sit a step back but stay unambiguously green. */
 .db-bar-fill {
   width: 100%;
-  border-radius: var(--radius-md) var(--radius-md) 2px 2px;
-  /* Literal fallback inside the mix: if the token ever fails to resolve again,
-     the bar degrades to green rather than to no background at all. */
-  background: color-mix(in srgb, var(--ink-solid, #0AA550) 68%, #ffffff);
+  border-radius: 8px 8px 2px 2px;
+  background: var(--ink-solid, #0AA550);
   min-height: 2px;
   transition: filter .18s ease, background-color .18s ease;
 }
-.db-bar-fill.is-peak { background: var(--ink-solid, #0AA550); }
 .db-bar-col:hover .db-bar-fill { filter: brightness(1.08); }
 .db-bar-label {
   font-family: var(--font-mono);

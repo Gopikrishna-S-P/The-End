@@ -535,7 +535,7 @@ export function TrendChart({ labels, primary, extra = [], heroTrend, heroTrendLa
 // sized per call site since they sit in different card layouts.
 
 export function ProgressRing({ pct, valueLabel, subLabel, size = 116, radius = 42, strokeWidth = 16,
-  color = 'var(--ink-solid)', trackColor = 'var(--brand-subtle)', valueFontSize = 16, subFontSize = 10,
+  color = 'var(--ink-solid)', trackColor = 'var(--db-gray-1, #94A3B8)', valueFontSize = 16, subFontSize = 10,
 }: {
   pct: number; valueLabel?: string; subLabel: string;
   size?: number; radius?: number; strokeWidth?: number;

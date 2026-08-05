@@ -40,6 +40,7 @@ export default function ForgotPasswordPage() {
   const [emailError,     setEmailError]     = useState<string | null>(null);
   const [isLoading,      setIsLoading]      = useState(false);
   const [resendMsg,      setResendMsg]      = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [showNew,        setShowNew]        = useState(false);
   const [showConfirmPw,  setShowConfirmPw]  = useState(false);
   const [showConfirmDlg, setShowConfirmDlg] = useState(false);
@@ -47,6 +48,12 @@ export default function ForgotPasswordPage() {
   const [rateLimitMsg,   setRateLimitMsg]   = useState<string | null>(null);
 
   useEffect(() => { requestAnimationFrame(() => setIsVisible(true)); }, []);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendCooldown]);
 
   const emailForm = useForm<EmailForm>({ resolver: zodResolver(emailSchema) });
   const pwForm    = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
@@ -61,6 +68,7 @@ export default function ForgotPasswordPage() {
       await authApi.forgotPassword({ email: data.email });
       setEmail(data.email);
       setStep('otp');
+      setResendCooldown(30);
     } catch (err: any) {
       const status = err?.response?.status;
       const retryAfter: number | undefined = err?.response?.data?.retryAfterSeconds;
@@ -107,10 +115,12 @@ export default function ForgotPasswordPage() {
 
   // ── Resend OTP ────────────────────────────────────────────────────────────
   const onResend = async () => {
+    if (resendCooldown > 0) return;
     setResendMsg(null);
     try {
       await authApi.forgotPassword({ email });
       setResendMsg('New code sent. Check your inbox.');
+      setResendCooldown(30);
     } catch {
       setResendMsg('Could not resend. Please try again.');
     }
@@ -233,8 +243,14 @@ export default function ForgotPasswordPage() {
                 <div className="field-group">
                   <div className="field-label-row">
                     <label className="field-label">Reset code</label>
-                    <button type="button" className="forgot-link" style={{ fontSize: 12 }} onClick={onResend}>
-                      Resend code
+                    <button
+                      type="button"
+                      className="forgot-link"
+                      style={{ fontSize: 12 }}
+                      onClick={onResend}
+                      disabled={resendCooldown > 0}
+                    >
+                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
                     </button>
                   </div>
                   <OtpBoxes value={otp} onChange={v => { setOtp(v); setOtpError(null); }} />
@@ -261,7 +277,7 @@ export default function ForgotPasswordPage() {
                 </button>
 
                 <button type="button" className="link-back"
-                  onClick={() => { setStep('email'); setOtp(''); setOtpError(null); setResendMsg(null); }}>
+                  onClick={() => { setStep('email'); setOtp(''); setOtpError(null); setResendMsg(null); setResendCooldown(0); }}>
                   <ChevronLeft size={14} /> Use a different email
                 </button>
 

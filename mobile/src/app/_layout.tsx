@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -49,6 +50,10 @@ function RootNavigator() {
             options={{ headerShown: true, title: 'Log a visit', presentation: 'modal' }}
           />
           <Stack.Screen
+            name="case/[id]/lucien-visit"
+            options={{ headerShown: false, presentation: 'fullScreenModal' }}
+          />
+          <Stack.Screen
             name="case/[id]/ptp"
             options={{ headerShown: true, title: 'Promise to pay', presentation: 'modal' }}
           />
@@ -68,10 +73,15 @@ function RootNavigator() {
             name="sos"
             options={{ headerShown: true, title: '', presentation: 'fullScreenModal' }}
           />
+          <Stack.Screen
+            name="visit-detail/[id]"
+            options={{ headerShown: false, presentation: 'card' }}
+          />
         </Stack.Protected>
 
         <Stack.Protected guard={!isAuthenticated}>
           <Stack.Screen name="(auth)/login" />
+          <Stack.Screen name="(auth)/forgot-password" />
         </Stack.Protected>
       </Stack>
       {isAuthenticated ? <SosFloatingButton /> : null}
@@ -92,10 +102,12 @@ function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <RootNavigator />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <RootNavigator />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

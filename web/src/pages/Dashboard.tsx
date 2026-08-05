@@ -228,9 +228,9 @@ export default function Dashboard() {
 
   // ── Field-agent donut ──────────────────────────────────────────────────────────
   const slices: ChartSlice[] = isFoView && agentStats ? [
-    { label: 'Completed',   value: agentStats.todayCompletedCases,   color: 'var(--brand)' },
-    { label: 'Pending',     value: agentStats.todayPendingCases,     color: 'var(--brand-subtle)' },
-    { label: 'Rescheduled', value: agentStats.todayRescheduledCases, color: 'var(--success-border)' },
+    { label: 'Completed',   value: agentStats.todayCompletedCases,   color: 'var(--db-green-1)' },
+    { label: 'Pending',     value: agentStats.todayPendingCases,     color: 'var(--db-gray-1)' },
+    { label: 'Rescheduled', value: agentStats.todayRescheduledCases, color: 'var(--db-gray-2)' },
   ] : [];
   const hasChart = slices.some(s => s.value > 0);
 
@@ -422,7 +422,7 @@ export default function Dashboard() {
                 {/* PTP fulfillment ring */}
                 <Card className="db-span-4" title="PTP fulfillment">
                   <div className="db-ptp-ring-inner">
-                    <ProgressRing pct={ptpRate} subLabel="RATE" color="var(--brand)" trackColor="var(--brand-subtle)" />
+                    <ProgressRing pct={ptpRate} subLabel="RATE" color="var(--brand)" trackColor="var(--db-gray-1)" />
                     <div className="db-ptp-ring-stats">
                       <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: 'var(--brand)' }} /><span className="db-ptp-stat-label">Fulfilled</span><span className="db-ptp-stat-val">{ptpFulfilled}</span></div>
                       <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: 'var(--danger)' }} /><span className="db-ptp-stat-label">Broken</span><span className="db-ptp-stat-val">{ptpBroken}</span></div>

@@ -24,10 +24,7 @@
   max-width: 680px;
   margin: 24px auto;
   
-  /* The TopbarCustomizeDialog Glass Recipe */
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow:

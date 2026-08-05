@@ -231,7 +231,7 @@
 
 .signin-page .otp-row {
   display: flex;
-  gap: 8px;
+  gap: 22px;
   margin-bottom: 24px;
 }
 .signin-page .otp-box {

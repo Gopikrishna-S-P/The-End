@@ -13,14 +13,12 @@ export function LogoutConfirmDialog({ open, isLoggingOut, onCancel, onConfirm }:
     <AnimatePresence>
       {open && (
         <motion.div className="ds-modal-overlay" onClick={onCancel}
-          style={{ background: 'rgba(12, 10, 9, 0.2)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+          style={{ background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
           <motion.div className="ds-modal" onClick={e => e.stopPropagation()} 
             style={{ 
               maxWidth: 360,
-              background: 'rgba(255, 255, 255, 0.85)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              background: 'var(--bg-surface)',
               border: '1px solid rgba(0, 0, 0, 0.1)',
               boxShadow: '0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
             }}

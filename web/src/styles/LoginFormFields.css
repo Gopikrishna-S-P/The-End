@@ -192,4 +192,5 @@
 }
 .signin-page .forgot-link:hover { opacity: 0.7; }
 .signin-page .forgot-link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 2px; }
+.signin-page .forgot-link:disabled { opacity: 0.5; cursor: default; }
 

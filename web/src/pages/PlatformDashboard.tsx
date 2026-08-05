@@ -16,16 +16,18 @@ import {
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
-// ── Chart palette — brand green for the lead category, the validated ordinal
-// ramp (--db-ramp-2/3, see Dashboard.css) for the next tiers, true (non-blue)
-// neutral grays to break it up further, and org's own warn/danger semantics
-// for genuinely bad states. No blue/purple/cyan; not all-green either — grays
-// give the eye a resting point instead of a wall of one hue.
-const C_ACCENT  = 'var(--ink-solid)';    // brand green, #0AA550
-const C_GREEN_2 = 'var(--db-ramp-2)';    // #077438 — ordinal step 2
-const C_GREEN_3 = 'var(--db-ramp-3)';    // #054A24 — ordinal step 3
-const C_GRAY    = 'var(--border-strong)'; // #D0D5DD — the app's own hairline/border gray, light
-const C_GRAY_LIGHT = 'var(--border)';     // #E4E7EC — even lighter, same family
+// ── Chart palette — two restrained families (--db-green-*/--db-gray-*, see
+// Dashboard.css), not a rainbow of hues: green ramp for the lead/leadership
+// tier, slate-gray ramp for the secondary tier. Assign in this fixed order,
+// never cycled/reassigned per filter. Org's own warn/danger semantics stay
+// reserved for genuinely bad states — a plain category never borrows one.
+const C_ACCENT   = 'var(--db-green-1)'; // brand green, #0AA550
+const C_GREEN_2  = 'var(--db-green-2)';
+const C_GREEN_3  = 'var(--db-green-3)';
+const C_GRAY_1   = 'var(--db-gray-1)';
+const C_GRAY_2   = 'var(--db-gray-2)';
+const C_GRAY_3   = 'var(--db-gray-3)';
+const C_GRAY     = C_GRAY_2; // "none/other" buckets
 const C_WARNING = 'var(--warning)';   // org's tone="warn"
 const C_DANGER  = 'var(--danger)';    // org's tone="urgent"/error
 
@@ -124,8 +126,8 @@ export default function PlatformDashboard() {
       { label: 'Active',    value: s?.active ?? 0,    display: fmtNum(s?.active),    color: C_ACCENT },
       { label: 'Trial',     value: s?.trial ?? 0,     display: fmtNum(s?.trial),     color: C_WARNING },
       { label: 'Past due',  value: s?.pastDue ?? 0,   display: fmtNum(s?.pastDue),   color: C_DANGER },
-      { label: 'Cancelled', value: s?.cancelled ?? 0, display: fmtNum(s?.cancelled), color: C_GRAY },
-      { label: 'Inactive',  value: s?.inactive ?? 0,  display: fmtNum(s?.inactive),  color: C_GRAY_LIGHT },
+      { label: 'Cancelled', value: s?.cancelled ?? 0, display: fmtNum(s?.cancelled), color: C_GRAY_2 },
+      { label: 'Inactive',  value: s?.inactive ?? 0,  display: fmtNum(s?.inactive),  color: C_GRAY_1 },
     ].filter(r => r.value > 0);
   }, [an]);
 
@@ -143,10 +145,10 @@ export default function PlatformDashboard() {
   const roleSlices: Slice[] = useMemo(() => [
     { label: 'Org admins',     value: rb?.orgAdmin ?? 0, color: C_ACCENT },
     { label: 'Managers',       value: rb?.manager ?? 0,  color: C_GREEN_2 },
-    { label: 'Team leads',     value: rb?.tl ?? 0,       color: C_GRAY },
-    { label: 'Field officers', value: rb?.fo ?? 0,       color: C_GREEN_3 },
-    { label: 'Callers',        value: rb?.caller ?? 0,   color: C_GRAY_LIGHT },
-    { label: 'Tracers',        value: rb?.tracer ?? 0,   color: C_GRAY_LIGHT },
+    { label: 'Team leads',     value: rb?.tl ?? 0,       color: C_GREEN_3 },
+    { label: 'Field officers', value: rb?.fo ?? 0,       color: C_GRAY_1 },
+    { label: 'Callers',        value: rb?.caller ?? 0,   color: C_GRAY_2 },
+    { label: 'Tracers',        value: rb?.tracer ?? 0,   color: C_GRAY_3 },
   ], [rb]);
 
   const orgTrend  = an?.orgGrowthTrend ?? [];
@@ -286,7 +288,7 @@ export default function PlatformDashboard() {
                   action={<span className="db-card-sub">+{fmtNum(newOrgsRange)} new · {months} mo</span>}>
                   {orgTrend.length < 1 ? (
                     <div className="db-trend-empty"><span className="db-trend-empty-msg">No organizations yet</span></div>
-                  ) : <BarChart data={orgTrend} valueKey="totalCount" fmt={fmtNum} color={C_GRAY} />}
+                  ) : <BarChart data={orgTrend} valueKey="totalCount" fmt={fmtNum} />}
                 </Card>
 
                 <div className="db-span-4 db-rail">
@@ -322,7 +324,7 @@ export default function PlatformDashboard() {
                   action={<span className="db-card-sub">+{fmtNum(newUsersRange)} new · {months} mo</span>}>
                   {userTrend.length < 1 ? (
                     <div className="db-trend-empty"><span className="db-trend-empty-msg">No users yet</span></div>
-                  ) : <BarChart data={userTrend} valueKey="totalCount" fmt={fmtNum} color={C_GRAY} />}
+                  ) : <BarChart data={userTrend} valueKey="totalCount" fmt={fmtNum} />}
                 </Card>
 
                 <Card className="db-span-4" title="Roles">

@@ -1,19 +1,25 @@
 import { useState } from 'react';
-import { View } from 'react-native';
-import { ShieldCheck } from 'lucide-react-native';
+import { View, Pressable, ScrollView, Alert, Image } from 'react-native';
+import { router } from 'expo-router';
+import { ShieldCheck, Eye, EyeOff, AlertCircle } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
-import { Screen, Text, Button, TextField, Card } from '@/components/ui';
+import { Screen, Text, Button, TextField, Card, Divider } from '@/components/ui';
 import { extractApiError } from '@/utils/extractApiError';
 
 export default function LoginScreen() {
   const { login } = useAuth();
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, radius } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
+  const [stage, setStage] = useState<'credentials' | 'mfa'>('credentials');
   const [totpCode, setTotpCode] = useState('');
-  const [mfaRequired, setMfaRequired] = useState(false);
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
+  
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,17 +29,32 @@ export default function LoginScreen() {
       setError('Enter your email and password.');
       return;
     }
-    if (mfaRequired && totpCode.trim().length < 6) {
-      setError('Enter the 6-digit code from your authenticator app.');
-      return;
-    }
 
     setSubmitting(true);
     try {
-      const result = await login(email.trim(), password, mfaRequired ? totpCode.trim() : undefined);
-      if (result.mfaRequired) {
-        setMfaRequired(true);
-        setError(null);
+      if (stage === 'credentials') {
+        const result = await login(email.trim(), password);
+        if (result.mfaRequired) {
+          setStage('mfa');
+          setError(null);
+        }
+      } else {
+        // MFA stage
+        const codeParam = useRecoveryCode ? undefined : totpCode.trim();
+        const recoveryParam = useRecoveryCode ? recoveryCode.trim() : undefined;
+        
+        if (!useRecoveryCode && totpCode.trim().length < 6) {
+          setError('Enter the complete 6-digit verification code.');
+          setSubmitting(false);
+          return;
+        }
+        if (useRecoveryCode && recoveryCode.trim().length === 0) {
+          setError('Enter your recovery code.');
+          setSubmitting(false);
+          return;
+        }
+
+        await login(email.trim(), password, codeParam, recoveryParam);
       }
     } catch (e) {
       setError(extractApiError(e, 'Could not sign in. Check your details and try again.'));
@@ -42,69 +63,201 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = () => {
+    router.push('/(auth)/forgot-password');
+  };
+
+  const handleRequestAccess = () => {
+    Alert.alert(
+      'Need an Account?',
+      'If you do not have credentials, please contact your operations manager or email admin@recoverpro.com to request access to the workspace.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <Screen edges={['top', 'bottom']}>
-      <View style={{ flex: 1, justifyContent: 'center', gap: spacing.s6 }}>
-        <View style={{ alignItems: 'center', gap: spacing.s3 }}>
-          <View style={{
-            width: 64, height: 64, borderRadius: 20, backgroundColor: colors.accentSubtle,
-            alignItems: 'center', justifyContent: 'center',
-          }}
-          >
-            <ShieldCheck size={30} color={colors.accent} />
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: spacing.s6 }}>
+        <View style={{ gap: spacing.s6 }}>
+          
+          {/* Header/Branding section like web brand panel */}
+          <View style={{ alignItems: 'center', marginBottom: -spacing.s3 }}>
+            <Image 
+              source={require('../../../assets/images/logo.png')} 
+              style={{ width: 120, height: 120, resizeMode: 'contain' }} 
+            />
           </View>
-          <Text variant="title">RecoverPro Field</Text>
-          <Text variant="body" color="secondary">Sign in to view your assigned cases</Text>
+
+          {stage === 'credentials' ? (
+            <View style={{ gap: spacing.s4 }}>
+              {/* Header outside the card */}
+              <View style={{ gap: spacing.s1, paddingHorizontal: spacing.s2 }}>
+                <Text variant="headline" style={{ fontSize: 20, fontWeight: '700', color: colors.ink1 }}>Welcome back</Text>
+                <Text variant="body" color="secondary" style={{ fontSize: 14 }}>
+                  Sign in to access your organisation&apos;s recovery workspace.
+                </Text>
+              </View>
+
+              <Card style={{ gap: spacing.s4, shadowOpacity: 0, elevation: 0 }}>
+                <TextField
+                  label="Email"
+                  required
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@company.com"
+                />
+
+                <View style={{ position: 'relative' }}>
+                  <TextField
+                    label="Password"
+                    required
+                    secureTextEntry={!showPassword}
+                    autoComplete="password"
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="••••••••"
+                  />
+                  <Pressable
+                    onPress={() => setShowPassword(p => !p)}
+                    style={{
+                      position: 'absolute',
+                      right: spacing.s3,
+                      top: 36,
+                      padding: spacing.s1,
+                    }}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} color={colors.ink3} />
+                    ) : (
+                      <Eye size={18} color={colors.ink3} />
+                    )}
+                  </Pressable>
+                </View>
+
+                {error ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2, marginTop: spacing.s1 }}>
+                    <AlertCircle size={14} color={colors.error} />
+                    <Text variant="caption" color="error" style={{ flex: 1 }}>{error}</Text>
+                  </View>
+                ) : null}
+
+                <Button 
+                  label="Sign in" 
+                  onPress={onSubmit} 
+                  loading={submitting} 
+                />
+
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing.s1 }}>
+                  <Pressable onPress={handleForgotPassword}>
+                    <Text variant="caption" style={{ color: colors.accent, fontWeight: '500' }}>
+                      Forgot password?
+                    </Text>
+                  </Pressable>
+                </View>
+              </Card>
+            </View>
+          ) : (
+            /* MFA Stage */
+            <View style={{ gap: spacing.s4 }}>
+              {/* Header outside the card */}
+              <View style={{ gap: spacing.s1, paddingHorizontal: spacing.s2 }}>
+                <Text variant="headline" style={{ fontSize: 20, fontWeight: '700', color: colors.ink1 }}>Two-factor authentication</Text>
+                <Text variant="body" color="secondary" style={{ fontSize: 14 }}>
+                  {useRecoveryCode 
+                    ? 'Enter an emergency recovery code to bypass authenticator verification.' 
+                    : 'Enter the 6-digit code from your authenticator app.'
+                  }
+                </Text>
+              </View>
+
+              <Card style={{ gap: spacing.s4, shadowOpacity: 0, elevation: 0 }}>
+                {useRecoveryCode ? (
+                  <TextField
+                    label="Emergency recovery code"
+                    required
+                    autoCapitalize="none"
+                    value={recoveryCode}
+                    onChangeText={setRecoveryCode}
+                    placeholder="Enter recovery code"
+                    autoFocus
+                  />
+                ) : (
+                  <TextField
+                    label="Authentication code"
+                    required
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    value={totpCode}
+                    onChangeText={setTotpCode}
+                    placeholder="123456"
+                    autoFocus
+                  />
+                )}
+
+                {error ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2, marginTop: spacing.s1 }}>
+                    <AlertCircle size={14} color={colors.error} />
+                    <Text variant="caption" color="error" style={{ flex: 1 }}>{error}</Text>
+                  </View>
+                ) : null}
+
+                <Button 
+                  label="Verify & sign in" 
+                  onPress={onSubmit} 
+                  loading={submitting} 
+                />
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.s1 }}>
+                  <Pressable onPress={() => {
+                    setUseRecoveryCode(prev => !prev);
+                    setError(null);
+                    setTotpCode('');
+                    setRecoveryCode('');
+                  }}>
+                    <Text variant="caption" style={{ color: colors.accent, fontWeight: '500' }}>
+                      {useRecoveryCode ? 'Use authenticator code' : 'Use emergency recovery code'}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable onPress={() => {
+                    setStage('credentials');
+                    setError(null);
+                    setTotpCode('');
+                    setRecoveryCode('');
+                    setUseRecoveryCode(false);
+                  }}>
+                    <Text variant="caption" style={{ color: colors.ink3, fontWeight: '500' }}>
+                      Back to sign in
+                    </Text>
+                  </Pressable>
+                </View>
+              </Card>
+            </View>
+          )}
+
+          {/* Footer Area with Access request and legal info like web form footer */}
+          <View style={{ gap: spacing.s4, paddingHorizontal: spacing.s4, marginTop: spacing.s2 }}>
+            <Divider />
+            
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.s1 }}>
+              <Text variant="caption" color="secondary">Don&apos;t have an account?</Text>
+              <Pressable onPress={handleRequestAccess}>
+                <Text variant="caption" style={{ color: colors.accent, fontWeight: '500' }}>
+                  Request access
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text variant="caption" color="secondary" style={{ textAlign: 'center', fontSize: 11 }}>
+              © {new Date().getFullYear()} Recoverpro · Secure Workspace
+            </Text>
+          </View>
+
         </View>
-
-        <Card style={{ gap: spacing.s4 }}>
-          <TextField
-            label="Email"
-            required
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@organization.com"
-            editable={!mfaRequired}
-          />
-          <TextField
-            label="Password"
-            required
-            secureTextEntry
-            autoComplete="password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            editable={!mfaRequired}
-          />
-          {mfaRequired ? (
-            <TextField
-              label="Authentication code"
-              required
-              keyboardType="number-pad"
-              maxLength={6}
-              value={totpCode}
-              onChangeText={setTotpCode}
-              placeholder="123456"
-              autoFocus
-            />
-          ) : null}
-
-          {error ? <Text variant="caption" color="error">{error}</Text> : null}
-
-          <Button label={mfaRequired ? 'Verify & sign in' : 'Sign in'} onPress={onSubmit} loading={submitting} />
-
-          {mfaRequired ? (
-            <Button
-              label="Use a different account"
-              variant="ghost"
-              onPress={() => { setMfaRequired(false); setTotpCode(''); setPassword(''); setError(null); }}
-            />
-          ) : null}
-        </Card>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }

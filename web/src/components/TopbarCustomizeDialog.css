@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(12, 10, 9, 0.2);
+  background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   animation: app-topbar-custom-fade var(--dur-base) var(--ease-out) both;
@@ -30,9 +30,7 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.85); /* Sleek light glass */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow:

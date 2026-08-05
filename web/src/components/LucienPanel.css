@@ -17,10 +17,8 @@
   transform: translateX(calc(100% + 32px));
   transition: transform 240ms var(--ease);
 
-  /* Floating Glassmorphic Container */
-  background: rgba(255, 255, 255, 0.85); /* Sleek light glass */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* Floating solid container */
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -936,14 +934,16 @@
   bottom: 76px;
   transform: translateX(-50%);
   z-index: 4;
+  max-width: calc(100% - 32px);
   padding: 6px 12px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-lg, 10px);
   background: var(--ink-primary);
   color: var(--text-on-solid);
   font-family: var(--font-sans);
   font-size: 11.5px;
   font-weight: 500;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
   box-shadow: var(--shadow-md);
   animation: lucien-msg-in 160ms var(--ease) both;
   pointer-events: none;

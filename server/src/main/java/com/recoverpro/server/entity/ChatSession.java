@@ -31,6 +31,12 @@ public class ChatSession {
     @Column(name = "organization_id")
     private UUID organizationId;
 
+    /** When set, this session is a visit-interview bound to a single case (Lucien stands in for
+     * the manager, coaching the FO through a doorstep negotiation) rather than the general
+     * FO-wide assistant. Drives which system prompt/context LucienServiceImpl resolves. */
+    @Column(name = "allocation_id")
+    private UUID allocationId;
+
     @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "agent_first_name", nullable = false)
     private String agentFirstName;

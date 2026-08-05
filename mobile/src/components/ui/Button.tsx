@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/useTheme';
 import { Text } from './Text';
 
@@ -15,10 +15,11 @@ interface ButtonProps {
   disabled?: boolean;
   icon?: ReactNode;
   fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Button({
-  label, onPress, variant = 'primary', size = 'lg', loading, disabled, icon, fullWidth = true,
+  label, onPress, variant = 'primary', size = 'lg', loading, disabled, icon, fullWidth = true, style,
 }: ButtonProps) {
   const { colors, spacing, radius } = useTheme();
   const isDisabled = disabled || loading;
@@ -47,6 +48,7 @@ export function Button({
           opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
+        style,
       ]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.s2 }}>

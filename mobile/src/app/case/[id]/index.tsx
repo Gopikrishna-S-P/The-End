@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Modal, Image, Pressable } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
-  MapPin, Handshake, Link2, Receipt, AlertTriangle, CloudOff, X, ImageIcon, Phone,
+  Handshake, Link2, Receipt, AlertTriangle, CloudOff, X, ImageIcon, Phone, MessageSquare,
 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
@@ -136,11 +136,11 @@ export default function CaseDetailScreen() {
             />
           ) : null}
           <Button
-            label="Log a visit"
+            label="Visit log"
             fullWidth={false}
             variant={canCall ? 'secondary' : 'primary'}
-            onPress={() => router.push({ pathname: '/case/[id]/visit', params: { id } })}
-            icon={<MapPin size={16} color={canCall ? colors.ink1 : '#fff'} />}
+            onPress={() => router.push({ pathname: '/case/[id]/lucien-visit', params: { id } })}
+            icon={<MessageSquare size={16} color={canCall ? colors.ink1 : '#fff'} />}
           />
           <Button
             label="Create PTP"

@@ -15,7 +15,7 @@ interface AuthContextValue {
   user: UserResponse | null;
   isLoading: boolean;
   role: Role | null;
-  login: (email: string, password: string, totpCode?: string) => Promise<LoginResult>;
+  login: (email: string, password: string, totpCode?: string, recoveryCode?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
 }
 
@@ -60,8 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setOnSessionExpired(null);
   }, []);
 
-  const login = async (email: string, password: string, totpCode?: string): Promise<LoginResult> => {
-    const auth = await authApi.login({ email, password, totpCode });
+  const login = async (email: string, password: string, totpCode?: string, recoveryCode?: string): Promise<LoginResult> => {
+    const auth = await authApi.login({ email, password, totpCode, recoveryCode });
 
     if (auth.mfaRequired) {
       return { mfaRequired: true };
@@ -70,7 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(auth.accessToken);
     await saveRefreshToken(auth.refreshToken);
     await saveUserCache(auth.user);
+    
+    // Show splash loading transition
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     setUser(auth.user);
+    setIsLoading(false);
     return { mfaRequired: false };
   };
 
