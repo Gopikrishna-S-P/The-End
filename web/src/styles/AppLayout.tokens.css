@@ -1,0 +1,197 @@
+/* ── AppLayout tokens ────────────────────────────────────────────────────────
+   Bridges the new :root foundation tokens (ds.tokens.css) into the
+   .app-layout scope. No raw hex values here — all values are var(--…).
+   No dark mode — light only as per the remake spec.
+   ─────────────────────────────────────────────────────────────────────────── */
+@import './design-tokens.css';
+
+/* ── .app-layout scope ──────────────────────────────────────────────────────── */
+.app-layout {
+  /* Text */
+  --ink-primary:   var(--text-primary);
+  --ink-secondary: var(--text-secondary);
+  --ink-tertiary:  var(--text-tertiary);
+  --icon-color:    var(--text-secondary);
+
+  /* Motion */
+  --ease:       var(--ease-out);
+  --transition: var(--dur-fast) var(--ease-out);
+
+  /* Radius — Modern SaaS: matches the :root ds.tokens.css scale directly
+     (this block used to shadow those globals with old small numbers) */
+  --radius:    14px;
+  --radius-sm: 9px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  /* Gaps */
+  --gap-sm: var(--space-2);
+  --gap-md: var(--space-4);
+  --gap-lg: var(--space-6);
+
+  /* Elevation — soft layered shadows, matches :root ds.tokens.css directly
+     (this block used to shadow those globals with old flatter numbers)
+     elevation-1: barely-there (hover state on cards)
+     elevation-2: dropdown / popover
+     elevation-3: dropdown / popover (alias kept for back-compat)
+     elevation-4: modal / dialog                                      */
+  --shadow-none: none;
+  --shadow-sm:   0 2px 6px -1px rgba(16,24,40,0.07), 0 1px 2px rgba(16,24,40,0.05);
+  --shadow-md:   0 10px 24px -6px rgba(16,24,40,0.12), 0 4px 8px -4px rgba(16,24,40,0.06);
+  --elevation-2: var(--shadow-md);
+  --elevation-3: var(--shadow-md);
+  --elevation-4: 0 24px 48px -12px rgba(16,24,40,0.18), 0 8px 16px -6px rgba(16,24,40,0.08);
+
+  /* Topbar chrome — matches the content-area canvas, not the raised card surface */
+  --tb-bg:     var(--bg-canvas);
+  --tb-border: var(--border);
+
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Border-box only. Do NOT zero margin/padding here: this selector is
+   specificity (0,1,0) and unlayered, so it beat every single-class page rule
+   (.db-content, .db-kpi-card, …) and every Tailwind spacing utility, which
+   live in @layer utilities. Tailwind Preflight already zeroes UA defaults in
+   @layer base, where page CSS can override it. */
+.app-layout *,
+.app-layout *::before,
+.app-layout *::after { box-sizing: border-box; }
+
+/* ── Focus ring — global for everything inside app shell ──────────────────── */
+.app-layout :focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-layout :focus-visible { transition: none; }
+}
+
+/* ── Skip-to-content ──────────────────────────────────────────────────────── */
+.app-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: var(--z-skip);
+  padding: 8px 14px;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(calc(-100% - 12px));
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.app-skip-link:focus-visible,
+.app-skip-link:focus {
+  transform: none;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-skip-link { transition: none; }
+}
+
+/* ── Text scale ───────────────────────────────────────────────────────────── */
+.app-layout.text-scale-sm .app-main { font-size: 95%; }
+.app-layout.text-scale-md .app-main { font-size: 100%; }
+.app-layout.text-scale-lg .app-main { font-size: 110%; }
+.app-layout.text-scale-xl .app-main { font-size: 122%; }
+
+/* ── Density ──────────────────────────────────────────────────────────────── */
+.app-layout.density-compact {
+  --gap-sm:  6px;
+  --gap-md: 12px;
+  --gap-lg: 18px;
+  --rp-tb-h: 48px;
+}
+.app-layout.density-comfortable {
+  --gap-sm: 10px;
+  --gap-md: 20px;
+  --gap-lg: 30px;
+  --rp-tb-h: 62px;
+}
+
+.app-layout.density-compact  .asb-nav-item { height: 38px; }
+.app-layout.density-comfortable .asb-nav-item { height: 48px; }
+.app-layout.density-compact  .app-notif-item { padding: 7px 8px 7px 10px; }
+.app-layout.density-comfortable .app-notif-item { padding: 12px 12px 12px 14px; }
+
+/* ── High-contrast ────────────────────────────────────────────────────────── */
+.app-layout.high-contrast {
+  --ink-primary:   #000000;
+  --ink-secondary: #1f2937;
+  --ink-tertiary:  #4b5563;
+  --border:        rgba(0,0,0,0.45);
+  --border-strong: rgba(0,0,0,0.70);
+  --bg-canvas:     #ffffff;
+  --bg-surface:    #ffffff;
+  --bg-subtle:     #f3f4f6;
+  --tb-bg:         #ffffff;
+  --tb-border:     rgba(0,0,0,0.45);
+}
+.app-layout.high-contrast :focus-visible {
+  outline: 3px solid #000000;
+  outline-offset: 3px;
+}
+.app-layout.high-contrast ~ .app-noise,
+.high-contrast .app-noise { display: none; }
+.app-layout.high-contrast .app-main { background-image: none; }
+.app-layout.high-contrast .app-topbar,
+.app-layout.high-contrast .asb-root { border-color: var(--border); }
+.app-layout.high-contrast .app-topbar { border-bottom-width: 2px; }
+
+/* ── Icons ────────────────────────────────────────────────────────────────── */
+.app-layout svg { color: var(--icon-color); }
+
+/* ── Tabular numerals ─────────────────────────────────────────────────────── */
+.app-notif-badge,
+.asb-nav-count,
+.asb-badge,
+.app-bg-sync-pct,
+.app-bg-sync-extra,
+.app-session-label,
+.app-help-kbd {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Utilities ────────────────────────────────────────────────────────────── */
+.app-layout h1, .app-layout h2 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+.app-layout p { font-size: clamp(0.875rem,2vw,0.9375rem); line-height: 1.6; }
+
+.app-layout .sr-only,
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+.app-layout .u-flex   { display: flex; }
+.app-layout .u-gap-sm { gap: var(--gap-sm); }
+.app-layout .u-gap-md { gap: var(--gap-md); }
+.app-layout .u-gap-lg { gap: var(--gap-lg); }
+.app-layout .grid-2   { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(280px,100%),1fr)); gap: var(--gap-lg); }
+.app-layout .grid-3   { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(220px,100%),1fr)); gap: var(--gap-lg); }
+.app-layout .grid-4   { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(180px,100%),1fr)); gap: var(--gap-md); }
+.app-layout .stack    { display: flex; flex-direction: column; gap: var(--gap-md); }

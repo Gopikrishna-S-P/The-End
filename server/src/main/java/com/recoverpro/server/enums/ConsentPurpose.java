@@ -1,0 +1,11 @@
+package com.recoverpro.server.enums;
+
+public enum ConsentPurpose {
+    LOAN_RECOVERY_CONTACT,
+    FIELD_VISIT,
+    CALL_RECORDING,
+    DATA_SHARING_WITH_AGENCY,
+    CREDIT_BUREAU_REPORTING,
+    AUTOMATED_DECISIONING,
+    MARKETING_COMMUNICATIONS
+}

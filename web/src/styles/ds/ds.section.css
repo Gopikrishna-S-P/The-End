@@ -1,0 +1,48 @@
+/* ── Section primitive ────────────────────────────────────────────────────── */
+
+.ds-section {
+  display: flex;
+  flex-direction: column;
+}
+.ds-section + .ds-section { margin-top: var(--ds-gap-section); }
+
+.ds-section-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  line-height: 1;
+  margin: 0;
+  padding: 4px 0 8px;
+}
+
+.ds-section-grid { display: grid; gap: var(--ds-gap-row); }
+.ds-section-grid.is-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.ds-section-grid.is-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.ds-section-grid.is-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 1100px) {
+  .ds-section-grid.is-cols-3,
+  .ds-section-grid.is-cols-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+  .ds-section-grid.is-cols-2,
+  .ds-section-grid.is-cols-3,
+  .ds-section-grid.is-cols-4 { grid-template-columns: 1fr; }
+}
+
+.ds-section-split {
+  display: flex;
+  gap: var(--ds-gap-row);
+  align-items: flex-start;
+}
+.ds-section-split-main { flex: 0 0 60%; min-width: 0; display: flex; flex-direction: column; }
+.ds-section-split-side { flex: 1;       min-width: 0; display: flex; flex-direction: column; }
+
+@media (max-width: 1100px) {
+  .ds-section-split { flex-direction: column; }
+  .ds-section-split-main,
+  .ds-section-split-side { flex: none; width: 100%; }
+}

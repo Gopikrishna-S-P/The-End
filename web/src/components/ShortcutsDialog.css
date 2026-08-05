@@ -1,0 +1,238 @@
+/* ── ShortcutsDialog — rebindable keyboard shortcuts ──────────────────────── */
+
+.app-shortcuts-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--shadow-overlay-scrim);
+  animation: app-shortcuts-fade var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-shortcuts-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.app-shortcuts-dialog {
+  width: 100%;
+  max-width: 540px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: app-shortcuts-rise var(--dur-slow) var(--ease-out) both;
+}
+@keyframes app-shortcuts-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.app-shortcuts-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.app-shortcuts-title svg { color: var(--text-secondary); }
+.app-shortcuts-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.app-shortcuts-close:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.app-shortcuts-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+.app-shortcuts-intro {
+  padding: 10px 16px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+.app-shortcuts-intro kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.app-shortcuts-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+.app-shortcuts-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.app-shortcuts-row:last-child { border-bottom: none; }
+
+.app-shortcuts-row-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.app-shortcuts-row-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-shortcuts-row-desc {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.app-shortcuts-row-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.app-shortcuts-binding {
+  min-width: 88px;
+  padding: 5px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+  text-align: center;
+}
+.app-shortcuts-binding:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+.app-shortcuts-binding.is-readonly,
+.app-shortcuts-binding:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.app-shortcuts-binding.is-capturing {
+  background: var(--bg-active);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  animation: app-shortcuts-capture-pulse 1.2s ease-in-out infinite;
+}
+@keyframes app-shortcuts-capture-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--border-strong); }
+  50%      { box-shadow: 0 0 0 6px transparent; }
+}
+.app-shortcuts-binding-prompt {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.app-shortcuts-row-btn {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.app-shortcuts-row-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.app-shortcuts-row-btn.is-danger:hover {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+.app-shortcuts-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
+  flex-shrink: 0;
+  gap: 8px;
+}
+.app-shortcuts-reset-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.app-shortcuts-reset-all:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.app-shortcuts-meta {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shortcuts-backdrop,
+  .app-shortcuts-dialog,
+  .app-shortcuts-binding.is-capturing { animation: none; }
+}

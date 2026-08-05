@@ -1,0 +1,153 @@
+/* ── Form primitives ──────────────────────────────────────────────────────── */
+
+.ds-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ds-field + .ds-field { margin-top: 14px; }
+
+.ds-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+.ds-label.is-required::after {
+  content: '*';
+  color: var(--danger);
+  margin-left: 3px;
+}
+
+/* Shared control surface */
+.ds-input,
+.ds-select,
+.ds-textarea {
+  width: 100%;
+  height: var(--ds-ctl-h);
+  padding: 0 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1;
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard);
+}
+.ds-select {
+  /* line-height:1 (shared above) is fine for <input>, which the UA centers
+     natively — but a <select> with appearance:none follows normal line-box
+     rules for its own display text, and line-height:1 clips descenders
+     (e.g. the "g" in "Agent"). Give it room without affecting inputs. */
+  line-height: normal;
+  display: flex;
+  align-items: center;
+}
+.ds-textarea {
+  height: auto;
+  min-height: calc(var(--ds-ctl-h) * 2);
+  padding: 10px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.ds-input::placeholder,
+.ds-textarea::placeholder { color: var(--text-placeholder); }
+
+.ds-input:hover,
+.ds-select:hover,
+.ds-textarea:hover { border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
+
+.ds-input:focus-visible,
+.ds-select:focus-visible,
+.ds-textarea:focus-visible {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 18%, transparent);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 0;
+}
+
+.ds-input:disabled,
+.ds-select:disabled,
+.ds-textarea:disabled {
+  opacity: 0.55;
+  background: var(--bg-subtle);
+  cursor: not-allowed;
+}
+
+.ds-input.is-invalid,
+.ds-select.is-invalid,
+.ds-textarea.is-invalid { border-color: var(--danger); }
+.ds-input.is-invalid:focus-visible,
+.ds-select.is-invalid:focus-visible,
+.ds-textarea.is-invalid:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.ds-help  { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.4; }
+.ds-error { font-size: 11.5px; color: var(--danger);        line-height: 1.4; }
+
+/* Form shell */
+.ds-form-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.ds-form-header { margin-bottom: 20px; }
+.ds-form-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.ds-form-header-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ds-form-section {
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+}
+.ds-form-section:first-of-type { border-top: none; padding-top: 0; }
+
+.ds-form-section-title {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 14px;
+}
+
+.ds-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-surface);
+}
+
+/* Checkbox + radio */
+.ds-checkbox,
+.ds-radio {
+  accent-color: var(--brand);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

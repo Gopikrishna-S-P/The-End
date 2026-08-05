@@ -1,0 +1,1814 @@
+/* ── Dashboard ───────────────────────────────────────────────────────────────── */
+
+/* Tokens and ds-* primitives come from AppPage.css, which Dashboard.tsx and
+   PlatformDashboard.tsx now import directly (see the note there). Not imported
+   here on purpose: AppPreviewFrame pulls this file into the public landing
+   page and carries its own scoped token set, so a global :root import would
+   leak app tokens onto the marketing routes. */
+
+/* ── Error banner ── */
+.db-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 12px 0;
+  padding: 12px 14px;
+  background: var(--danger-subtle);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: 12px;
+  color: var(--danger);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.db-error-icon { flex-shrink: 0; margin-top: 1px; }
+.db-error-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.db-error-title { font-weight: 600; font-size: 12px; }
+.db-error-sub   { font-size: 11px; opacity: 0.8; }
+.db-error-retry {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+}
+.db-error-retry:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+.db-card-body { padding: 8px 20px 20px; }
+
+/* Row-action variants — like db-error-retry, but for non-error inline actions */
+.db-action-success { background: var(--success-subtle); color: var(--success); }
+.db-action-success:hover { background: color-mix(in srgb, var(--success) 20%, var(--success-subtle)); }
+.db-action-danger { background: var(--danger-subtle); color: var(--danger); }
+.db-action-danger:hover { background: color-mix(in srgb, var(--danger) 20%, var(--danger-subtle)); }
+.db-action-info { background: var(--info-subtle); color: var(--info); }
+.db-action-info:hover { background: color-mix(in srgb, var(--info) 20%, var(--info-subtle)); }
+
+.db-page-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 0;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.db-root .app-page-title {
+  font-weight: 400;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.08em;
+}
+
+.db-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+  background: transparent;
+
+  /* ══ Chart palette ══════════════════════════════════════════════════════
+     Every colour below was produced by snapping OKLCH steps to this app's
+     real chart surfaces (#FFFFFF light / #15171C dark) and then run through
+     the data-viz validator, not hand-picked. Do not eyeball replacements —
+     re-run the validator if any value changes.
+
+     Colour does exactly one of four jobs here, and each job has its own
+     family. Never borrow across them:
+
+       identity  (which series)   → --dbc-1..6, fixed order, never cycled
+       magnitude (how much / tier)→ --dbq-1..4, one hue, light→dark
+       "none"    (other/inactive) → --dbn-1..3, neutral slate
+       state     (good→critical)  → --success / --warning / --danger
+
+     Slot ORDER is the colourblind-safety mechanism, not decoration: the
+     sequence green→blue→magenta→amber→aqua→violet was chosen because it
+     clears every adjacent gate in BOTH modes. Reordering it silently breaks
+     that. Assign slots in sequence from slot 1; a 7th category folds into
+     "Other" (--dbn-1), it never gets a generated hue.
+
+     Measured, both modes: worst adjacent CVD ΔE 13.6 (protan/deutan, target
+     ≥8), worst adjacent normal-vision ΔE 19.5 (floor ≥15), and all six slots
+     clear 3:1 against their surface — so no slot depends on a relief
+     channel to be readable. ═══════════════════════════════════════════════ */
+
+  /* Identity — categorical, fixed order */
+  --dbc-1: #0AA550;  /* green — brand; always the lead/primary series */
+  --dbc-2: #2A80E2;  /* blue */
+  --dbc-3: #C74C8E;  /* magenta */
+  --dbc-4: #B17000;  /* amber */
+  --dbc-5: #0B9BA8;  /* aqua */
+  --dbc-6: #7F51C1;  /* violet */
+
+  /* Magnitude — ordinal/sequential green ramp, dark = most.
+     Validated as an ordinal ramp: monotone lightness, every adjacent gap
+     ΔL ≥ 0.06, light end 2.40:1 on white (floor 2:1). Use for ordered
+     buckets — plan tiers, age bands, funnel stages — where the reader
+     should see the order in the colour itself. */
+  --dbq-1: #006428;  /* most  */
+  --dbq-2: #058237;
+  --dbq-3: #13A147;
+  --dbq-4: #40BE63;  /* least */
+
+  /* "None" family — neutral slate. Reserved for the absence of a category:
+     free/none plans, unassigned, inactive, the "Other" bucket. Deliberately
+     chroma-free so it never competes with a real series. */
+  --dbn-1: #50667C;
+  --dbn-2: #6C839B;
+  --dbn-3: #8AA1BA;
+
+  /* Chart chrome — recessive by design. Gridlines are hairline and SOLID
+     (never dashed: dashing reads as "projection" when it is just a grid). */
+  --db-grid:      #EEF0F3;  /* gridline, 1px solid */
+  --db-axis:      #D6DAE1;  /* baseline / axis rule */
+  --db-track:     #F2F4F7;  /* unfilled bar + ring track */
+  --db-surface:   var(--bg-surface); /* the 2px gap/ring colour between marks */
+
+  /* Legacy aliases — the old two-family names, kept so any chart still
+     referencing them renders in the new palette instead of breaking. */
+  --db-green-1: var(--dbc-1);
+  --db-green-2: var(--dbq-2);
+  --db-green-3: var(--dbq-1);
+  --db-gray-1:  var(--dbn-3);
+  --db-gray-2:  var(--dbn-2);
+  --db-gray-3:  var(--dbn-1);
+}
+
+/* Dark mode — SELECTED steps, not an automatic flip. Same six hues, re-stepped
+   for the dark surface (#15171C) and re-validated as a set against it: worst
+   adjacent CVD ΔE 13.6, normal-vision ΔE 19.5, all six ≥3:1. The magnitude
+   ramp also inverts its anchor, so "most" stays the most emphatic step
+   against a dark plane rather than the one that disappears into it. */
+.app-layout.dark .db-root {
+  --dbc-1: #13A147;
+  --dbc-2: #2279DC;
+  --dbc-3: #B53C7F;
+  --dbc-4: #A86B06;
+  --dbc-5: #0195A1;
+  --dbc-6: #7A4ABA;
+
+  --dbq-1: #44C166;  /* most  */
+  --dbq-2: #1AA44A;
+  --dbq-3: #018538;
+  --dbq-4: #02672A;  /* least */
+
+  --dbn-1: #8AA1BA;
+  --dbn-2: #6C839B;
+  --dbn-3: #50667C;
+
+  --db-grid:  #23262E;
+  --db-axis:  #31353F;
+  --db-track: #1C1F26;
+}
+
+.db-root .ds-card,
+.db-root .db-kpi2-card,
+.db-root .db-stat-card,
+.db-root .db-card,
+.db-root .ds-table-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+
+.db-root .ds-table thead {
+  background: var(--bg-surface);
+  box-shadow: none;
+  border-bottom: none;
+}
+
+.db-root .ds-table tbody tr:has(.ds-table-empty):hover {
+  background: transparent;
+}
+
+.db-root .ds-table.is-no-row-hover tbody tr:hover {
+  background: transparent;
+}
+
+.db-root .ds-empty-icon {
+  background: var(--bg-hover);
+  border: none;
+  color: var(--text-secondary);
+}
+
+/* ── Content area ── */
+
+.db-content {
+  flex: 1;
+  background: transparent;
+  padding: 20px 24px 64px;
+}
+
+.db-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Fill-viewport table card ──────────────────────────────────────────────
+   Reused by list pages whose last card should fill exactly the remaining
+   viewport height (Loans' behaviour), instead of a guessed vh-minus-px
+   offset that can under/overshoot per page's own header height. */
+.db-fill-root {
+  height: 100%;
+  overflow: hidden;
+}
+.db-fill-root .db-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 36px;
+}
+.db-fill-root .db-inner {
+  flex: 1;
+  min-height: 0;
+}
+.db-fill-chain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Page header ── */
+
+.db-card-action-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.db-trend-range-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.db-trend-card {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.db-trend-card:hover {
+  background: var(--bg-subtle);
+  border-color: var(--ink-solid);
+}
+
+.db-trend-card.is-active {
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+  color: var(--text-on-solid);
+  box-shadow: var(--shadow-sm);
+}
+.db-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.db-page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.db-root .db-page-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--ink-tertiary);
+  font-family: var(--font-mono);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.db-page-title svg {
+  flex-shrink: 0;
+}
+.db-date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.db-date-range-btn {
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease;
+}
+.db-date-range-btn:hover { color: var(--ink-primary); }
+.db-date-range-btn.is-active {
+  color: var(--ink-primary);
+  font-weight: 600;
+}
+.db-customize-btn {
+  border: none;
+  background: none;
+  color: var(--ink-solid);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+.db-customize-btn:hover { text-decoration: underline; }
+
+/* ── Section label ── */
+
+.db-root .db-section-label {
+  margin: 16px 0 0 0;
+  padding: 16px 0;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.1em;
+}
+
+/* ── 60/40 split row ── */
+
+.db-split-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 0;
+}
+
+.db-split-60 { flex: 0 0 60%; min-width: 0; display: flex; flex-direction: column; }
+.db-split-40 { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+@media (max-width: 768px) {
+  .db-split-row { flex-direction: column; }
+  .db-split-60, .db-split-40 { flex: none; width: 100%; }
+}
+
+/* ── KPI grid ── */
+
+.db-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 0 0 4px;
+}
+
+.db-kpi-grid > :first-child { transform-origin: top left; }
+.db-kpi-grid > :nth-child(4) { transform-origin: top right; }
+.db-kpi-grid > :last-child   { transform-origin: bottom right; }
+
+@media (max-width: 1100px) { .db-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .db-kpi-grid { grid-template-columns: 1fr; } }
+
+.db-kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.db-kpi-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.db-kpi-label {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.db-kpi-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+.db-kpi-card:hover .db-kpi-icon-box {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
+.db-kpi-value {
+  font-size: 27px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum', 'zero';
+}
+
+.db-kpi-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 16px;
+}
+
+.db-kpi-subtitle { font-size: 11px; color: var(--ink-tertiary); font-family: var(--font-mono); }
+
+.db-kpi-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.db-kpi-trend.is-up      { color: var(--ink-solid); }
+.db-kpi-trend.is-down    { color: var(--danger); }
+.db-kpi-trend.is-neutral { color: var(--ink-tertiary); }
+
+.db-spark { display: block; margin-top: 4px; }
+
+/* ── Ripple ── */
+
+.db-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink-primary) 8%, transparent);
+  transform: scale(0);
+  pointer-events: none;
+  animation: db-ripple-anim 480ms cubic-bezier(0,0,0.2,1) forwards;
+}
+
+@keyframes db-ripple-anim {
+  to { transform: scale(1); opacity: 0; }
+}
+
+/* ── Stat grid (field agent) ── */
+
+.db-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 900px) { .db-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.db-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px;
+  text-align: left;
+  overflow: hidden;
+}
+
+.db-stat-label {
+  font-size: var(--text-2xs);
+  color: var(--ink-tertiary);
+  letter-spacing: 0.07em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.db-stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--ink-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-feature-settings: 'tnum', 'zero';
+}
+
+.db-stat-sub {
+  font-size: 11.5px;
+  font-family: var(--font-sans);
+  color: var(--ink-tertiary);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* ── Attention card ── */
+
+.db-att-card { overflow: hidden; }
+
+.db-att-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .18s ease;
+  min-height: 48px;
+}
+.db-att-row.has-border     { border-bottom: 1px solid var(--border); }
+.db-att-row.is-all-clear   { cursor: default; }
+.db-att-row:not(.is-all-clear) { cursor: pointer; }
+.db-att-row:not(.is-all-clear):hover { background: var(--bg-hover); }
+.db-att-row:focus-visible  { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+.db-att-chip {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.db-att-chip.is-urgent { background: var(--danger-subtle); border-color: var(--danger-border); color: var(--danger); }
+.db-att-chip.is-warn   { background: var(--warning-subtle); border-color: var(--warning-border); color: var(--warning); }
+.db-att-chip.is-clear  { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }
+
+.db-att-label {
+  flex: 1;
+  font-size: 13px; font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--ink-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.db-att-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+
+.db-att-zero  { font-size: 12.5px; font-family: var(--font-mono); color: var(--ink-tertiary); }
+.db-att-meta  { font-size: var(--text-2xs); font-family: var(--font-mono); color: var(--ink-tertiary); }
+.db-att-arrow { color: var(--ink-tertiary); flex-shrink: 0; }
+
+/* ── Collection ring ── */
+
+.db-ring-card { overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+
+.db-ring-main {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; padding: 20px; flex: 1;
+}
+
+/* ── Donut chart card ── */
+
+.db-chart-card { display: flex; align-items: center; gap: 28px; padding: 20px; }
+.db-donut      { flex-shrink: 0; }
+.db-donut-centre-val { font-family: var(--font-sans); transition: font-size .16s ease; }
+
+/* The legend is the dependable identity channel — always present for two or
+   more slices, so nothing rests on colour-matching alone. Rows double as the
+   hover/focus target that highlights their slice; they render as <button> in
+   DonutCard and as plain <div> in the hand-rolled legends, so the reset below
+   has to cover both. */
+.db-legend     { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.db-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 6px;
+  margin: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background-color .16s ease, opacity .16s ease;
+}
+button.db-legend-row { cursor: pointer; }
+.db-legend-row.is-active { background: var(--bg-hover); }
+.db-legend-row.is-dim    { opacity: 0.45; }
+.db-legend-row:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.db-legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.db-legend-label {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; color: var(--ink-secondary); font-family: var(--font-sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.db-legend-val {
+  font-size: 13px; font-weight: 700;
+  font-family: var(--font-mono); color: var(--ink-primary);
+  font-feature-settings: 'tnum', 'zero';
+}
+.db-legend-pct {
+  flex-shrink: 0;
+  width: 40px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Collection trend chart ── */
+
+.db-trend-card { padding: 16px 20px 12px; }
+
+.db-trend-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.db-trend-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+}
+.db-trend-sub {
+  font-size: var(--text-2xs);
+  color: var(--ink-tertiary);
+  font-family: var(--font-mono);
+}
+
+.db-trend-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+}
+
+.db-trend-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.db-trend-bar-val {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: 12px;
+  line-height: 12px;
+}
+
+.db-trend-bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg-subtle);
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+}
+
+.db-trend-bar-fill {
+  width: 100%;
+  background: var(--ink-solid);
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+  opacity: 0.75;
+  transition: opacity 120ms;
+}
+.db-trend-bar-col:hover .db-trend-bar-fill { opacity: 1; }
+
+.db-trend-bar-lbl {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ── Trend line chart (inline dashboard variant) ── */
+
+.db-trend-line-card {
+  padding: 20px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* MOM row */
+.db-trend-mom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.db-trend-mom-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.db-trend-mom-col--right { align-items: flex-end; text-align: right; }
+.db-trend-mom-label {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-tertiary);
+}
+.db-trend-mom-val {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--ink-primary);
+  letter-spacing: -0.03em;
+  font-feature-settings: 'tnum';
+  line-height: 1.05;
+}
+.db-trend-mom-val.is-up   { color: var(--ink-solid); }
+.db-trend-mom-val.is-down { color: var(--danger); }
+
+/* Change badge */
+.db-trend-chg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 11px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  min-width: 56px;
+}
+.db-trend-chg.is-up   { background: var(--success-subtle); color: var(--success); }
+.db-trend-chg.is-down { background: var(--danger-subtle); color: var(--danger); }
+.db-trend-chg.is-flat { background: var(--bg-subtle); color: var(--ink-tertiary); }
+.db-trend-chg-icon { display: flex; align-items: center; }
+.db-trend-chg-pct {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.db-trend-chg-abs {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* Divider + range toggle */
+.db-trend-divider-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 16px 0 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.db-trend-range-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+}
+.db-trend-range-btn {
+  border: none;
+  background: transparent;
+  color: var(--ink-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 140ms, color 140ms;
+}
+.db-trend-range-btn:hover { color: var(--ink-secondary); }
+.db-trend-range-btn.is-active {
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Chart area */
+/* ── Stat-forward hero (trend chart lead-in) ── */
+.tc-hero { display: flex; flex-direction: column; }
+.tc-hero-row { display: flex; align-items: flex-end; gap: 28px; margin-bottom: 14px; }
+.tc-hero-main { display: flex; flex-direction: column; gap: 4px; }
+.tc-hero-label {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-tertiary);
+}
+.tc-hero-val {
+  font-family: var(--font-mono); font-size: 30px; font-weight: 800;
+  color: var(--ink-primary); letter-spacing: -0.02em; font-feature-settings: 'tnum';
+}
+.tc-hero-trend {
+  display: flex; align-items: center; gap: 3px;
+  font-family: var(--font-mono); font-size: 12.5px; font-weight: 700;
+  color: var(--ink-tertiary);
+}
+.tc-hero-trend.is-up { color: var(--ink-solid); }
+.tc-hero-trend.is-down { color: var(--danger); }
+.tc-hero-secondary { display: flex; flex-direction: column; gap: 3px; padding-bottom: 3px; }
+.tc-hero-secondary .tc-hero-label { font-size: 9.5px; }
+.tc-hero-secondary-val {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+  color: var(--ink-secondary); font-feature-settings: 'tnum';
+}
+
+.db-trend-chart-wrap {
+  position: relative;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+/* Holds the SVG plus its overlays, offset by the y-tick gutter so every
+   percentage inside it is measured against the same box the SVG draws into. */
+.db-trend-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-left: 46px;
+  /* sits above the gridlines it is plotted against */
+  z-index: 1;
+}
+.db-trend-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  cursor: crosshair;
+}
+.db-trend-svg:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; border-radius: 6px; }
+
+/* The peak is the single point worth a standing label; every other value
+   comes from the y-ticks or the crosshair tooltip. */
+.db-trend-peak-tag {
+  position: absolute;
+  transform: translate(-50%, 8px);
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tooltip */
+.db-trend-tooltip {
+  position: absolute;
+  top: -4px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 5px 9px;
+  background: var(--ink-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: 5;
+  white-space: nowrap;
+}
+.db-trend-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px; height: 8px;
+  background: var(--ink-primary);
+}
+.db-trend-tooltip-label {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--text-on-solid) 60%, transparent);
+}
+.db-trend-tooltip-val {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-on-solid);
+  letter-spacing: -0.02em;
+}
+
+/* X-axis labels */
+.db-trend-x-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  /* matches .db-chart-plot's y-tick gutter so the labels sit under their points */
+  margin-left: 46px;
+}
+.db-trend-x-label {
+  flex: 1;
+  text-align: center;
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: color 120ms;
+}
+.db-trend-x-label:hover { color: var(--ink-secondary); }
+.db-trend-x-label.is-current { color: var(--ink-solid); font-weight: 700; }
+.db-trend-x-label.is-hovered { color: var(--ink-primary); }
+
+/* Stats row */
+.db-trend-stats-row {
+  display: flex;
+  align-items: stretch;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.db-trend-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.db-trend-stat-label {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-tertiary);
+}
+.db-trend-stat-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--ink-primary);
+  letter-spacing: -0.02em;
+  font-feature-settings: 'tnum';
+}
+.db-trend-stat-val.is-up   { color: var(--ink-solid); }
+.db-trend-stat-val.is-down { color: var(--danger); }
+.db-trend-stat-divider {
+  width: 1px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+/* Empty state */
+.db-trend-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 0;
+}
+.db-trend-empty-msg {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--ink-tertiary);
+}
+
+/* Footer link */
+.db-trend-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+.db-trend-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ink-solid);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 120ms;
+}
+.db-trend-link:hover { opacity: 0.75; }
+
+/* ── Multi-line chart header ─────────────────────────────────────────────── */
+.db-ml-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.db-ml-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.db-ml-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+.db-ml-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Multi-line tooltip ──────────────────────────────────────────────────── */
+.db-ml-tooltip {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: 10;
+  min-width: 160px;
+}
+.db-ml-tooltip-date {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  margin-bottom: 7px;
+  letter-spacing: 0.02em;
+}
+.db-ml-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+}
+.db-ml-tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.db-ml-tooltip-key {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--ink-secondary);
+}
+.db-ml-tooltip-val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .db-trend-line-card { padding: 14px 14px 12px; }
+  .db-trend-mom-val { font-size: 18px; }
+  .db-trend-stat-val { font-size: 12px; }
+}
+
+/* ── Insight cards grid ── */
+
+.db-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.db-insight-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  min-height: 200px;
+}
+
+.db-insight-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin: 0;
+}
+
+/* PTP Fulfillment */
+.db-ptp-ring-wrap { display: flex; align-items: center; justify-content: center; flex: 1; }
+.db-ptp-ring-inner { display: flex; align-items: center; gap: 20px; }
+.db-ptp-ring-stats { display: flex; flex-direction: column; gap: 8px; }
+.db-ptp-stat { display: flex; align-items: center; gap: 7px; }
+.db-ptp-stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.db-ptp-stat-label { font-size: 12px; color: var(--ink-secondary); flex: 1; }
+.db-ptp-stat-val { font-size: 13px; font-weight: 600; color: var(--ink-primary); font-family: var(--font-mono); }
+
+/* Team stat list */
+.db-team-list { display: flex; flex-direction: column; gap: 0; }
+.db-team-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.db-team-row:last-child { border-bottom: none; }
+.db-team-role { font-size: 12px; color: var(--ink-secondary); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; }
+.db-team-count { font-size: 15px; font-weight: 700; color: var(--ink-primary); font-family: var(--font-mono); }
+.db-team-footer { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 11.5px; color: var(--ink-tertiary); }
+
+/* Top Agents */
+.db-agents-list { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+.db-agent-row { display: flex; align-items: center; gap: 8px; }
+.db-agent-rank { font-size: 11px; font-weight: 700; color: var(--ink-tertiary); font-family: var(--font-mono); width: 14px; flex-shrink: 0; }
+.db-agent-bar-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.db-agent-name { font-size: 12px; color: var(--ink-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.db-agent-bar-track { height: 14px; background: var(--db-track); border-radius: 4px; overflow: hidden; }
+.db-agent-bar-fill { height: 100%; background: var(--dbc-1); border-radius: 0 4px 4px 0; }
+.db-agent-amt { font-size: 12px; font-weight: 600; color: var(--ink-primary); font-family: var(--font-mono); white-space: nowrap; flex-shrink: 0; }
+
+/* Case Age */
+.db-age-bars { display: flex; flex-direction: column; gap: 12px; flex: 1; justify-content: center; }
+.db-age-row { display: flex; align-items: center; gap: 10px; }
+.db-age-label { font-size: 11px; color: var(--ink-secondary); font-family: var(--font-mono); width: 44px; flex-shrink: 0; }
+.db-age-track { flex: 1; height: 16px; background: var(--db-track); border-radius: 4px; overflow: hidden; }
+.db-age-fill { height: 100%; border-radius: 0 4px 4px 0; }
+.db-age-count { font-size: 12px; font-weight: 600; color: var(--ink-primary); font-family: var(--font-mono); width: 30px; text-align: right; flex-shrink: 0; }
+
+/* ── 3-column body layout ── */
+.db-body-3col {
+  display: grid;
+  grid-template-columns: 1fr 320px 300px;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.db-col-left,
+.db-col-center,
+.db-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* center + right cards stretch to fill their column */
+.db-col-center .ds-card,
+.db-col-right .ds-card {
+  flex: 1;
+}
+
+@media (max-width: 1200px) {
+  .db-body-3col {
+    grid-template-columns: 1fr 280px;
+    grid-template-rows: auto auto;
+  }
+  .db-col-right {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .db-body-3col {
+    grid-template-columns: 1fr;
+  }
+  .db-col-right {
+    grid-column: unset;
+    display: flex;
+  }
+}
+
+/* ── KPI v2 cards (Modern SaaS: soft shadow, lifts on hover) ── */
+.db-kpi2-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  width: 100%;
+}
+.db-kpi2-card:disabled { cursor: default; }
+.db-kpi2-card.is-hoverable:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.db-kpi2-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+
+.db-kpi2-value {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ── KPI value + compact inline trend, same line ── */
+.db-kpi2-value-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.db-kpi2-value-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+}
+.db-kpi2-value-trend.is-up   { color: var(--success); }
+.db-kpi2-value-trend.is-down { color: var(--danger); }
+
+/* ── KPI card sub-line ── */
+.db-kpi2-sub {
+  margin-top: 2px;
+}
+
+.db-kpi2-sub-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+  line-height: 1.4;
+}
+.db-kpi2-sub-meta.is-up   { color: var(--success); }
+.db-kpi2-sub-meta.is-down { color: var(--danger); }
+
+.db-kpi2-sub-vdiv {
+  display: inline-block;
+  width: 1px;
+  height: 10px;
+  background: var(--border-strong);
+  border-radius: 1px;
+  margin: 0 4px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.db-kpi2-sub-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+/* Horizontal progress bars, same geometry as .db-hbar-track: thicker, square
+   at the baseline, 4px at the data end. */
+.db-kpi2-split-bar {
+  height: 10px;
+  margin: 0;
+  background: var(--db-track);
+  border-radius: 4px;
+  border: none;
+  overflow: hidden;
+}
+
+.db-kpi2-split-fill {
+  height: 100%;
+  background: var(--dbc-1);
+  border-radius: 0 4px 4px 0;
+  transition: width 600ms var(--ease);
+}
+
+
+/* ── Skeleton ── */
+
+.db-skeleton { display: flex; flex-direction: column; gap: 8px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Dashboard v2 — KPI band + 12-col analytics grid (all real data)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page header titles ── */
+.db-page-titles { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.db-page-org {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+/* ── KPI header + toggle ── */
+.db-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.db-kpi-title {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.db-kpi-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  flex-shrink: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.db-kpi-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  height: auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 5px;
+  transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
+  white-space: nowrap;
+}
+
+.db-kpi-toggle-btn:hover { color: var(--text-primary); }
+
+.db-kpi-toggle-btn.is-active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── KPI band ── */
+.db-kpi-band {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.db-kpi2-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.db-kpi2-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.db-kpi2-card.is-accent {
+  background: var(--bg-surface);
+  border-color: color-mix(in srgb, var(--ink-solid) 28%, transparent);
+}
+.db-kpi2-card.is-accent .db-kpi2-icon { background: color-mix(in srgb, var(--ink-solid) 16%, transparent); color: var(--ink-solid); }
+.db-kpi2-card.is-accent .db-kpi2-value { color: var(--ink-solid); }
+
+/* ── 12-column analytics grid ── */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.db-span-12 { grid-column: span 12; }
+.db-span-8 { grid-column: span 8; }
+.db-span-6 { grid-column: span 6; }
+.db-span-4 { grid-column: span 4; }
+.db-rail { display: flex; flex-direction: column; gap: 16px; }
+.db-rail .db-card { flex: 1; }
+
+/* ── Card shell ── */
+.db-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 12px;
+  min-width: 0;
+}
+.db-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 20px;
+}
+.db-card-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-primary);
+  display: flex;
+  align-items: center;
+}
+.db-card-sub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ══ Shared chart chrome ═══════════════════════════════════════════════════
+   Gridlines, y-ticks, the average rule and the x-axis band. Every chart form
+   on both dashboards renders through these, which is why the bar chart and
+   the trend chart line up visually instead of each having its own idea of
+   what an axis looks like.
+
+   The container height INCLUDES the x-axis band (.db-chart-xaxis is a sibling
+   of the plot, not an overlay on it), so labels can never be pushed out of the
+   card into a nested scrollbar. ═══════════════════════════════════════════ */
+.db-chart {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-top: 12px;
+}
+.db-chart-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  /* gutter for the y-tick labels */
+  margin-left: 46px;
+}
+
+/* Hairline, SOLID, one step off the surface — recessive on purpose. */
+.db-chart-gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--db-grid);
+  pointer-events: none;
+}
+.db-chart-gridline.is-inset { left: 46px; }
+.db-chart-gridline:first-child { background: var(--db-axis); }
+.db-chart-ytick {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Range average — a reference line, so it is allowed to be slightly more
+   present than a gridline, but it still never competes with the bars. */
+.db-chart-avg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--db-axis);
+  pointer-events: none;
+  z-index: 1;
+}
+.db-chart-avg-tag {
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+
+.db-chart-xaxis {
+  display: flex;
+  /* must match .db-bars' gap exactly, or each label's centre drifts from the
+     column it names — the drift is widest at the two ends */
+  gap: 8px;
+  margin-left: 46px;
+  padding-top: 7px;
+  flex-shrink: 0;
+}
+
+/* ── Vertical bar chart ── */
+.db-bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.db-bar-col {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.db-bar-col:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+
+/* Selective direct labels only (peak + current). Absolutely positioned off
+   the bar's own height so the plot area stays exactly the axis range — a cap
+   row inside the column would silently shrink the scale. */
+.db-bar-cap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+.db-bar-cap.is-peak { color: var(--dbc-1); }
+
+.db-bar-fill {
+  display: block;
+  width: 100%;
+  /* ≤22px so the band always keeps some air; 4px rounded cap, square baseline */
+  max-width: 22px;
+  border-radius: 4px 4px 0 0;
+  background: var(--dbc-1);
+  min-height: 2px;
+  transition: filter .18s ease, opacity .18s ease;
+}
+.db-bars:hover .db-bar-col:not(.is-hover) .db-bar-fill { opacity: 0.55; }
+.db-bar-col.is-hover .db-bar-fill { filter: brightness(1.08) saturate(1.05); }
+
+.db-bar-label {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 14px;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: color .14s ease;
+}
+.db-bar-label.is-current { color: var(--ink-secondary); font-weight: 700; }
+.db-bar-label.is-hover   { color: var(--ink-primary); font-weight: 700; }
+
+/* ── Chart tooltip (shared by every form) ──────────────────────────────────
+   Enhances, never gates: the axis ticks and the selective direct labels
+   already carry the values, and bar columns / trend points are keyboard
+   focusable, so nothing here is reachable by hover alone. */
+.db-chart-tip {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  z-index: 10;
+  min-width: 132px;
+  padding: 9px 11px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.db-chart-tip.is-left  { transform: translateX(-10%); }
+.db-chart-tip.is-right { transform: translateX(-90%); }
+.db-chart-tip-title {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.db-chart-tip-row { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+.db-chart-tip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.db-chart-tip-key { flex: 1; font-family: var(--font-sans); font-size: 11.5px; color: var(--ink-secondary); }
+.db-chart-tip-val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Horizontal bars (top collectors / case age / status breakdowns) ──
+   "Weighted leaderboard" treatment: thick bars carry the visual weight;
+   ranked lists (emphasizeTop) get a large ghost rank numeral instead of a
+   badge, and the #1 row's value sits inside its own fill once the bar is
+   measured wide enough to hold it legibly (see HBarList — it is measured,
+   never assumed, so a label is never clipped).
+
+   Geometry: 20px tall with a 4px rounded DATA-END and a SQUARE baseline.
+   The square left edge is the point — every bar visibly starts from the
+   same zero, which a fully-pill bar hides by rounding the origin away. ── */
+.db-hbars { display: flex; flex-direction: column; gap: 18px; padding-top: 2px; }
+.db-hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity .16s ease;
+}
+.db-hbars:hover .db-hbar-row:not(.is-hover) { opacity: 0.62; }
+.db-hbar-rank {
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--border-strong);
+  font-variant-numeric: tabular-nums;
+  transition: color .16s ease;
+}
+.db-hbar-row.is-lead .db-hbar-rank { color: var(--dbc-1); }
+.db-hbar-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.db-hbar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.db-hbar-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.db-hbar-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+/* Quarter gridlines are painted INTO the track rather than drawn as extra
+   elements, so they can never fall out of step with the bar they measure.
+   Solid hairlines, one step off the surface — never dashed. */
+.db-hbar-track {
+  position: relative;
+  height: 20px;
+  border-radius: 4px;
+  background-color: var(--db-track);
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--db-grid) 0 1px,
+    transparent 1px 25%
+  );
+  overflow: hidden;
+}
+.db-hbar-fill {
+  height: 100%;
+  /* square at the baseline, 4px at the data end */
+  border-radius: 0 4px 4px 0;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 9px;
+  transition: filter .16s ease;
+}
+.db-hbar-row.is-hover .db-hbar-fill { filter: brightness(1.06) saturate(1.04); }
+.db-hbar-val-inline {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-on-solid);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Names what a full-width bar means, so length reads as a value and not
+   merely as "longer than the next one". */
+.db-hbar-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--db-grid);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
+}
+
+/* ── Donut card ── */
+.db-donut-card { display: flex; align-items: center; gap: 14px; }
+.db-donut-card .db-donut { flex-shrink: 0; }
+.db-legend-empty { font-family: var(--font-mono); font-size: 11px; color: var(--ink-tertiary); }
+
+/* ── Responsive ── */
+@media (max-width: 1180px) {
+  .db-kpi-band { grid-template-columns: repeat(2, 1fr); }
+  .db-span-8, .db-span-6, .db-span-4 { grid-column: span 12; }
+  .db-rail { flex-direction: row; }
+  .db-rail .db-card { flex: 1; }
+}
+@media (max-width: 760px) {
+  .db-kpi-band { grid-template-columns: 1fr; }
+  .db-rail { flex-direction: column; }
+  .db-bar-cap { display: none; }
+  /* Narrow cards can't spare the y-tick gutter; the tooltip and the direct
+     labels still carry every value, so dropping the ticks loses nothing. */
+  .db-chart-plot, .db-chart-xaxis, .db-trend-x-labels { margin-left: 0; }
+  .db-trend-svg { padding-left: 0; }
+  .db-chart-ytick { display: none; }
+  .db-chart-gridline.is-inset { left: 0; }
+  .db-donut-card { flex-direction: column; align-items: stretch; gap: 16px; }
+  .db-donut-card .db-donut { align-self: center; }
+}

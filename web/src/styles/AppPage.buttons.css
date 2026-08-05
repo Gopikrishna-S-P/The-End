@@ -1,0 +1,235 @@
+/* ── Buttons ─────────────────────────────────────────── */
+.app-page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+  white-space: nowrap;
+}
+.app-page-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.app-page-btn-primary {
+  background: var(--ink-solid);
+  color: #fff;
+  border: 1px solid var(--ink-solid);
+  box-shadow: 0 1px 3px rgba(10,165,80,.20), 0 4px 8px rgba(10,165,80,.12);
+}
+.app-page-btn-primary:hover:not(:disabled) {
+  background: var(--ink-solid-hover);
+  border-color: var(--ink-solid-hover);
+  box-shadow: 0 2px 6px rgba(10,165,80,.25), 0 6px 16px rgba(10,165,80,.15);
+  transform: translateY(-1px);
+}
+.app-page-btn-primary:active:not(:disabled) { transform: translateY(0); }
+
+.app-page-btn-secondary {
+  background: var(--bg-surface);
+  color: var(--ink-secondary);
+  border: 1px solid var(--border);
+}
+.app-page-btn-secondary:hover:not(:disabled) {
+  border-color: var(--ink-solid);
+  color: var(--ink-solid);
+}
+
+.app-page-btn-ghost {
+  background: none;
+  color: var(--ink-secondary);
+  border: 1px solid transparent;
+}
+.app-page-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+  border-color: var(--border);
+}
+
+.app-page-icon-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease;
+}
+.app-page-icon-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--ink-primary);
+}
+
+/* ── Toolbar (search + filters) ─────────────────────── */
+.app-page-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
+.app-page-search {
+  flex: 1;
+  position: relative;
+}
+.app-page-search svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-tertiary);
+  pointer-events: none;
+  transition: color .18s ease, transform .18s ease;
+}
+.app-page-search:focus-within svg {
+  color: var(--ink-solid);
+  transform: translateY(-50%) scale(1.06);
+}
+.app-page-search input {
+  width: 100%;
+  height: 42px;
+  padding: 0 16px 0 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  font-size: 14px;
+  font-family: var(--sans);
+  font-weight: 450;
+  letter-spacing: 0.005em;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition:
+    border-color .18s ease,
+    background-color .18s ease,
+    box-shadow .18s ease;
+}
+/* Strip the browser's built-in search-field chrome (extra inner border in
+   Chrome/Safari, and the native X button that we replace with our own). */
+.app-page-search input::-webkit-search-decoration,
+.app-page-search input::-webkit-search-cancel-button,
+.app-page-search input::-webkit-search-results-button,
+.app-page-search input::-webkit-search-results-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.app-page-search input::placeholder { color: var(--ink-tertiary); font-weight: 400; }
+.app-page-search input:hover:not(:focus) {
+  border-color: var(--border-strong);
+}
+.app-page-search input:focus,
+.app-page-search input:focus-visible {
+  border-color: var(--ink-solid);
+  background: var(--bg-surface);
+  box-shadow: none;
+  outline: none;
+}
+.app-page-search input:not(:placeholder-shown) { padding-right: 40px; }
+.app-page-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--ink-tertiary);
+  border-radius: 999px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition:
+    color .18s ease,
+    background-color .18s ease,
+    opacity .18s ease,
+    transform .18s ease;
+}
+.app-page-search-clear:hover {
+  color: var(--ink-primary);
+  background: var(--bg-subtle);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.08);
+}
+.app-page-search-clear:active { transform: translateY(-50%) scale(0.94); }
+
+/* Optional keyboard-shortcut hint chip on the right when input is empty. */
+.app-page-search-kbd {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-subtle);
+  color: var(--ink-tertiary);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity .18s ease;
+}
+.app-page-search:focus-within .app-page-search-kbd { opacity: 0; }
+
+/* ── Banner (error / success / warn) ────────────────── */
+.app-page-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.app-page-banner svg { flex-shrink: 0; margin-top: 2px; }
+.app-page-banner-content { flex: 1; }
+.app-page-banner-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity .18s ease;
+  flex-shrink: 0;
+}
+.app-page-banner-dismiss:hover { opacity: 1; }
+.app-page-banner.is-error {
+  background: var(--error-subtle);
+  border-color: rgba(185, 28, 28, 0.22);
+  color: var(--error);
+}
+.app-page-banner.is-success {
+  background: var(--success-subtle);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+.app-page-banner.is-warn {
+  background: var(--warning-subtle);
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+

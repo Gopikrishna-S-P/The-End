@@ -1,0 +1,133 @@
+/* ── SessionExpiryChip — surfaces in the last 5 min of a session ──────────── */
+
+.app-session-wrap { position: relative; flex-shrink: 0; }
+
+.app-session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  background: var(--warning-subtle);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  font-feature-settings: 'tnum';
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  animation: app-session-in var(--dur-base) var(--ease-out) both;
+}
+.app-session-chip:hover {
+  background: var(--warning-border);
+}
+
+.app-session-chip.is-danger {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  animation:
+    app-session-in var(--dur-base) var(--ease-out) both,
+    app-session-pulse 1.2s ease-in-out infinite calc(var(--dur-base));
+}
+
+.app-session-chip.is-expired {
+  background: var(--danger-solid);
+  color: var(--text-on-solid);
+  border-color: var(--danger-solid);
+}
+
+@keyframes app-session-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes app-session-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--danger-border); }
+  50%      { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* ── Popover dialog ───────────────────────────────────────────────────────── */
+.app-session-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 12px 14px;
+  z-index: var(--z-dropdown, 240);
+  animation: app-session-pop-in var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-session-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.app-session-pop-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.app-session-pop-header svg { color: var(--warning); }
+
+.app-session-pop-text {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.app-session-pop-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.app-session-pop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.app-session-pop-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.app-session-pop-btn.is-primary {
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  border-color: var(--ink-solid);
+}
+.app-session-pop-btn.is-primary:hover {
+  background: var(--ink-solid-hover);
+  border-color: var(--ink-solid-hover);
+}
+
+@media (max-width: 640px) {
+  .app-session-label { display: none; }
+  .app-session-chip { padding: 0 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-session-chip,
+  .app-session-pop { animation: none; }
+}

@@ -1,0 +1,39 @@
+/* ── Skeleton primitive ───────────────────────────────────────────────────── */
+
+.ds-skel {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 0%,
+    var(--border) 50%,
+    var(--bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: ds-skel 1200ms linear infinite;
+}
+
+@keyframes ds-skel {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Convenience line heights — use with ds-skel + inline width */
+.ds-skel-line    { height: 14px; }
+.ds-skel-line-sm { height: 10px; }
+.ds-skel-line-lg { height: 18px; }
+.ds-skel-circle  { border-radius: 50%; }
+
+.ds-skel-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+.ds-skel-row:last-child { border-bottom: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-skel { animation: none; background: var(--bg-subtle); }
+}

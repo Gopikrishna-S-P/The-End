@@ -1,0 +1,10 @@
+package com.recoverpro.server.enums;
+
+public enum ReasonForDefault {
+    BUSINESS_CLOSED,
+    CUSTOMER_ABSCONDING,
+    BUSINESS_SLOW_DOWN,
+    TEMPORARY_FINANCIAL_PROBLEM,
+    CUSTOMER_ABSCONDING_NC_SKIP,
+    INTENTIONAL_DEFAULTER
+}

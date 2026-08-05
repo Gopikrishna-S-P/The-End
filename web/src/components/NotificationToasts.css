@@ -1,0 +1,162 @@
+/* ── NotificationToasts — bottom-right stack ───────────────────────────────── */
+
+.rp-toast-stack {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: var(--z-toast-global);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 360px;
+  width: calc(100vw - 36px);
+}
+
+.rp-toast {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 36px 12px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: rp-toast-in var(--dur-slow) var(--ease-out) both;
+  transform-origin: bottom right;
+}
+@keyframes rp-toast-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+.rp-toast.is-leaving {
+  animation: rp-toast-out var(--dur-base) var(--ease-in) forwards;
+}
+@keyframes rp-toast-out {
+  to { opacity: 0; transform: translateY(8px) scale(0.96); }
+}
+
+.rp-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  margin-top: 1px;
+}
+
+/* Semantic tone variants */
+.rp-toast.tone-mention    .rp-toast-icon { background: var(--info-subtle);    color: var(--info); }
+.rp-toast.tone-assignment .rp-toast-icon { background: var(--success-subtle); color: var(--success); }
+.rp-toast.tone-deadline   .rp-toast-icon { background: var(--warning-subtle); color: var(--warning); }
+
+.rp-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rp-toast-title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+.rp-toast-text {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.rp-toast-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 3px 9px 3px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  width: fit-content;
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
+}
+.rp-toast-open:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.rp-toast-open:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rp-toast-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.rp-toast-close:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+.rp-toast-close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* Progress bar — animates over toast TTL */
+.rp-toast-progress {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--border-strong);
+  transform-origin: left center;
+  animation: rp-toast-progress 5200ms linear forwards;
+}
+.rp-toast.is-leaving .rp-toast-progress,
+.rp-toast:hover      .rp-toast-progress { animation-play-state: paused; }
+@keyframes rp-toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+@media (max-width: 480px) {
+  .rp-toast-stack { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rp-toast,
+  .rp-toast.is-leaving,
+  .rp-toast-progress { animation: none; }
+}

@@ -1,0 +1,186 @@
+/* ── Dropdown menu (for status update, etc.) ─────────── */
+.app-page-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+.app-page-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 180px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: var(--z-dropdown);
+  animation: app-dropdown-in .18s ease both;
+  transform-origin: top right;
+}
+.app-page-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  font-family: var(--sans);
+  color: var(--ink-primary);
+  transition: background-color .18s ease;
+}
+.app-page-dropdown-item:hover { background: var(--bg-subtle); }
+.app-page-dropdown-item.is-active { background: var(--bg-active); color: var(--ink-solid); }
+
+/* ── Photo lightbox (image preview overlay) ──────────── */
+.app-page-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 500);
+  background: var(--shadow-overlay-scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  animation: app-page-fadein .18s ease;
+}
+.app-page-lightbox-img {
+  max-height: 90vh;
+  max-width: 90vw;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: var(--elevation-4);
+  object-fit: contain;
+}
+.app-page-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.16);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.app-page-lightbox-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ── Photo thumbnail grid ────────────────────────────── */
+.app-page-photo-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.app-page-photo {
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+  transition: border-color .18s ease;
+}
+.app-page-photo:hover { border-color: var(--border-strong); }
+.app-page-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Sub-card (smaller card, used inline) ────────────── */
+.app-page-sub-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.app-page-sub-card:last-child { margin-bottom: 0; }
+.app-page-sub-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.app-page-sub-card-body { padding: 14px; }
+
+/* ── Inline confirm row (delete-with-confirm pattern) ── */
+.app-page-confirm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--error-subtle);
+  border-top: 1px solid rgba(185, 28, 28, 0.20);
+  font-size: 12.5px;
+  color: var(--error);
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+.app-page-confirm-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Note callout (small annotation under content) ───── */
+.app-page-note {
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.5;
+}
+.app-page-note.is-warn {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+.app-page-note.is-error {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+.app-page-note svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ── Kind label (mono uppercase tag for event type) ──── */
+.app-page-kind {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg-subtle);
+  color: var(--ink-tertiary);
+}
+
+/* ── Detail page shell (narrower content column) ─────── */
+.app-page-detail-shell {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 32px 56px;
+}
+

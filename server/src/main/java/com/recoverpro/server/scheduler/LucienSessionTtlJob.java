@@ -1,0 +1,35 @@
+package com.recoverpro.server.scheduler;
+
+import com.recoverpro.server.repository.ChatSessionRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+
+/**
+ * Closes Lucien chat sessions that have been idle for more than 1 hour.
+ * Runs every 5 minutes; ShedLock prevents duplicate execution on multi-pod deployments.
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class LucienSessionTtlJob {
+
+    private final ChatSessionRepository sessionRepository;
+
+    @Scheduled(fixedDelay = 300_000)
+    @SchedulerLock(name = "lucien_session_ttl", lockAtMostFor = "PT4M", lockAtLeastFor = "PT1M")
+    @Transactional
+    public void closeIdleSessions() {
+        Instant now = Instant.now();
+        Instant cutoff = now.minusSeconds(3600);
+        int closed = sessionRepository.closeIdleSessions(cutoff, now);
+        if (closed > 0) {
+            log.info("LucienSessionTtl: closed {} idle session(s) (idle > 1h)", closed);
+        }
+    }
+}

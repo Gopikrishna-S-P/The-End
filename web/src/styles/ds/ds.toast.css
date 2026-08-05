@@ -1,0 +1,44 @@
+/* ── Toast primitive ──────────────────────────────────────────────────────── */
+
+.ds-toast {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: var(--z-toast, 800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-on-solid);
+  cursor: pointer;
+  max-width: 360px;
+  box-shadow: var(--shadow-md);
+  animation: ds-toast-in var(--dur-base) var(--ease-out) both;
+}
+
+/* Ink toast (default) — neutral dark fill, no accent */
+.ds-toast.is-ok   { background: var(--success); }
+.ds-toast.is-err  { background: var(--danger-solid); }
+.ds-toast.is-info { background: var(--info); }
+.ds-toast.is-warn { background: var(--warning); }
+.ds-toast         { background: var(--ink-solid); }
+
+.ds-toast-x {
+  margin-left: auto;
+  opacity: 0.7;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+@keyframes ds-toast-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-toast { animation: none; }
+}

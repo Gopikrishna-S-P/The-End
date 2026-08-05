@@ -1,0 +1,175 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   RecoverPro Design System Tokens
+   Import this file once (via AppLayout.css) — :root variables are global.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Light-mode surfaces (overridden in .app-layout.dark) ───────────────── */
+  /* Cool-neutral gray ramp — SaaS standard */
+  --rp-bg-glass:   rgba(255,255,255,.9);
+  --rp-bg-surface: #FFFFFF;
+  --rp-bg-subtle:  #F9FAFB;
+  --rp-border:     #E5E7EB;
+  --rp-border-hi:  #D1D5DB;
+
+  /* ── Ink ─────────────────────────────────────────────────────────────────── */
+  --rp-ink-1:  #111827;
+  --rp-ink-2:  #4B5563;
+  --rp-ink-3:  #9CA3AF;
+
+  /* ── Typography ──────────────────────────────────────────────────────────── */
+  --rp-font:        'Inter', system-ui, -apple-system, sans-serif;
+  --rp-font-w:      500;
+  --rp-font-serif:  'Fraunces', Georgia, serif;
+  --rp-font-mono:   'JetBrains Mono', 'Fira Mono', monospace;
+
+  /* Short aliases — kept in sync with the --rp-font-* set above. Many
+     legacy stylesheets reference `var(--sans / --serif / --mono)` and were
+     previously scoped inside `.app-layout`, which broke for pre-login
+     surfaces (login, splash). Promoting them here makes the same identifiers
+     resolve everywhere so the cascade matches whether or not an element is
+     mounted inside the app shell. */
+  --sans:           var(--rp-font);
+  --serif:          var(--rp-font-serif);
+  --mono:           var(--rp-font-mono);
+
+  /* ── Spacing (8-px grid) ─────────────────────────────────────────────────── */
+  --rp-s1: 4px;
+  --rp-s2: 8px;
+  --rp-s3: 12px;
+  --rp-s4: 16px;
+  --rp-s5: 24px;
+  --rp-s6: 32px;
+
+  /* ── Radius — Modern SaaS: bigger, softer corners ───────────────────────── */
+  --rp-r-sm: 6px;
+  --rp-r-md: 12px;
+  --rp-r-lg: 18px;
+  --rp-r-xl: 24px;
+
+  /* ── Motion ──────────────────────────────────────────────────────────────── */
+  --rp-ease: cubic-bezier(0.16,1,0.3,1);
+  --rp-t:    150ms var(--rp-ease);
+  --rp-t-lg: 300ms var(--rp-ease);
+
+  /* ── Elevation — soft layered shadows, everything floats a little ──────── */
+  --rp-e1: 0 1px  2px rgba(16,24,40,.04), 0 1px  1px rgba(16,24,40,.03);
+  --rp-e2: 0 4px  10px -2px rgba(16,24,40,.08), 0 2px  4px rgba(16,24,40,.05);
+  --rp-e3: 0 10px 24px -4px rgba(16,24,40,.12), 0 4px  8px -2px rgba(16,24,40,.06);
+  --rp-e4: 0 22px 44px -10px rgba(16,24,40,.18), 0 8px 16px -4px rgba(16,24,40,.08);
+
+  /* ── Layout dimensions ───────────────────────────────────────────────────────
+     --rp-tb-h is density-overridden in AppLayout.css; --rp-lucien-w is
+     bumped on wide screens. The sidebar's full width is user-resizable
+     (--asb-w); --rp-sb-on is the default, --rp-sb-off the collapsed rail. */
+  --rp-tb-h:      56px;   /* topbar + sidebar-header height */
+  --rp-sb-off:    64px;   /* sidebar — collapsed icon rail */
+  --rp-sb-on:     clamp(240px, 18vw, 384px);  /* sidebar — fluid 15-20% of viewport; see ds.tokens.css */
+  --rp-lucien-w:  340px;  /* Lucien panel width */
+
+  /* ── Warm stone surface ramp — landing page, pre-login, marketing ─────────
+     Distinct from the cool-slate app shell. The .landing {} scope maps these
+     into its local semantic aliases (--bg-canvas etc.) so all LandingPage
+     styles remain token-only — no raw hex values anywhere.               */
+  --rp-warm-canvas:        #FAFAF9;
+  --rp-warm-surface:       #FFFFFF;
+  --rp-warm-subtle:        #F5F5F4;
+  --rp-warm-border:        #E7E5E4;
+  --rp-warm-border-strong: #D6D3D1;
+  --rp-warm-ink-1:         #0C0A09;
+  --rp-warm-ink-2:         #57534E;
+  --rp-warm-ink-3:         #A8A29E;
+  --rp-warm-accent:        #0AA550;
+  --rp-warm-accent-hover:  #088a42;
+  --rp-warm-accent-subtle: rgba(10,165,80,.10);
+
+  /* ── Semantic state colors — form validation, banners, alerts ───────────── */
+  --rp-success:       #15803D;
+  --rp-success-subtle: rgba(21,128,61,.08);
+  --rp-error:         #B91C1C;
+  --rp-error-subtle:  #FEF2F2;
+  --rp-warn-bg:       #FFFBEB;
+  --rp-warn-border:   #F59E0B;
+  --rp-warn-ink:      #92400E;
+
+  /* ── Constant whites (accent buttons, overlay text) ─────────────────────── */
+  --rp-white: #ffffff;
+}
+
+/* ── Warm stone dark overrides — triggered by OS preference ─────────────────
+   The landing page uses @media prefers-color-scheme (not a .dark class) because
+   it is outside the app shell. Only the values that differ from light are listed.
+   ─────────────────────────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --rp-warm-canvas:        #0C0A09;
+    --rp-warm-surface:       #111110;
+    --rp-warm-subtle:        #1C1A19;
+    --rp-warm-border:        #282624;
+    --rp-warm-border-strong: #3A3633;
+    --rp-warm-ink-1:         #FAFAF9;
+    --rp-warm-ink-2:         #A8A29E;
+    --rp-warm-ink-3:         #57534E;
+    --rp-warm-accent:        #22C55E;
+    --rp-warm-accent-hover:  #4ADE80;
+    --rp-warm-accent-subtle: rgba(34,197,94,.12);
+    --rp-success:            #22C55E;
+    --rp-success-subtle:     rgba(34,197,94,.10);
+    --rp-error:              #EF4444;
+    --rp-error-subtle:       #1F1315;
+    --rp-warn-bg:            #1F1B0F;
+    --rp-warn-border:        #F59E0B;
+    --rp-warn-ink:           #FBBF24;
+  }
+}
+
+/* ── App-level dark toggle — warm-stone surfaces (login, pre-login) ─────────
+   The OS media query above covers the default case. This class catches users
+   who toggled dark mode inside the app (saved to localStorage, applied as
+   class `dark` on <html>). Values mirror the @media block exactly.          */
+html.dark {
+  --rp-warm-canvas:        #0C0A09;
+  --rp-warm-surface:       #111110;
+  --rp-warm-subtle:        #1C1A19;
+  --rp-warm-border:        #282624;
+  --rp-warm-border-strong: #3A3633;
+  --rp-warm-ink-1:         #FAFAF9;
+  --rp-warm-ink-2:         #A8A29E;
+  --rp-warm-ink-3:         #57534E;
+  --rp-warm-accent:        #22C55E;
+  --rp-warm-accent-hover:  #4ADE80;
+  --rp-warm-accent-subtle: rgba(34,197,94,.12);
+  --rp-success:            #22C55E;
+  --rp-success-subtle:     rgba(34,197,94,.10);
+  --rp-error:              #EF4444;
+  --rp-error-subtle:       #1F1315;
+  --rp-warn-bg:            #1F1B0F;
+  --rp-warn-border:        #F59E0B;
+  --rp-warn-ink:           #FBBF24;
+}
+
+/* ── Dark-mode token overrides ───────────────────────────────────────────────
+   Applied by .app-layout.dark — tokens cascade into sidebar & topbar
+   ───────────────────────────────────────────────────────────────────────────── */
+.app-layout.dark {
+  --rp-bg-glass:   rgba(12,14,19,.88);
+  --rp-bg-surface: #15171C;
+  --rp-bg-subtle:  #1C1F26;
+  --rp-border:     rgba(255,255,255,.08);
+  --rp-border-hi:  rgba(10,165,80,.30);
+  --rp-ink-1:      #E8EAED;
+  --rp-ink-2:      #9BA1AC;
+  --rp-ink-3:      #6B7280;
+  --rp-accent: var(--brand);
+  --rp-e1: 0 1px  2px rgba(0,0,0,.30);
+  --rp-e2: 0 4px  10px -2px rgba(0,0,0,.40), 0 1px 3px rgba(0,0,0,.30);
+  --rp-e3: 0 10px 24px -4px rgba(0,0,0,.50), 0 4px 8px -2px rgba(0,0,0,.35);
+  --rp-e4: 0 22px 44px -10px rgba(0,0,0,.65), 0 8px 16px -4px rgba(0,0,0,.45);
+  --rp-success:        #22C55E;
+  --rp-success-subtle: rgba(34,197,94,.10);
+  --rp-error:          #EF4444;
+  --rp-error-subtle:   #1F1315;
+  --rp-warn-bg:        #1F1B0F;
+  --rp-warn-border:    #F59E0B;
+  --rp-warn-ink:       #FBBF24;
+}

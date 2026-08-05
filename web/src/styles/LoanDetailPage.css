@@ -1,0 +1,437 @@
+/* ── AllocationDetail — page-specific layout on ds-* primitives ────────────
+   Card chrome, pills, buttons, modal, skeleton, empty state come from ds-*.
+   This file owns the page composition (header, stat grid, sections, status
+   dropdown, banners, definition rows).
+   ────────────────────────────────────────────────────────────────────────── */
+
+.alloc-detail-page {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  min-height: 100%;
+}
+
+/* ── Fill-viewport root — left summary card stays fixed in place while only
+   the right column scrolls, instead of the whole page scrolling underneath
+   a sticky sidebar. Mirrors LoansPage.css's .alloc-root pattern, scoped to
+   this page only so no other .db-root consumer is affected. ─────────────── */
+.alloc-detail-root {
+  height: 100%;
+  overflow: hidden;
+}
+.alloc-detail-root .db-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 36px;
+}
+.alloc-detail-root .db-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.alloc-detail-split {
+  flex: 1;
+  min-height: 0;
+}
+.alloc-detail-scroll {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.alloc-detail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Banner (error / success) ────────────────────────────────────────────── */
+
+.alloc-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.alloc-banner.is-error {
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 30%, transparent);
+  background: var(--error-subtle);
+}
+.alloc-banner.is-success {
+  color: var(--ink-solid);
+  border-color: color-mix(in srgb, var(--ink-solid) 30%, var(--border));
+  background: color-mix(in srgb, var(--ink-solid) 4%, var(--bg-surface));
+}
+.alloc-banner-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.alloc-banner-title { font-weight: 600; font-size: 12px; }
+.alloc-banner-sub   { font-size: 11px; opacity: 0.8; }
+.alloc-banner-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.alloc-banner-action:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.alloc-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alloc-back {
+  align-self: flex-start;
+}
+
+.alloc-detail-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.alloc-detail-title-col {
+  min-width: 0;
+  flex: 1;
+}
+
+.alloc-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.alloc-detail-title h1 {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: var(--ink-primary);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.alloc-detail-meta {
+  font-family: var(--ds-font-num);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  font-feature-settings: 'tnum','zero';
+}
+
+.alloc-detail-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  text-decoration: none;
+  margin-top: 6px;
+  transition: color 120ms var(--ease);
+}
+.alloc-detail-map-link:hover {
+  color: var(--ink-solid);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.alloc-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Split button + status dropdown ──────────────────────────────────────── */
+
+.alloc-status-dropdown {
+  position: relative;
+}
+
+.alloc-split-btn {
+  display: inline-flex;
+  align-items: stretch;
+}
+.alloc-split-btn .ds-btn.is-primary {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid color-mix(in srgb, black 14%, var(--ink-solid));
+}
+.alloc-split-btn-caret {
+  padding-left: 8px;
+  padding-right: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: none;
+}
+
+.alloc-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+  box-shadow: var(--ds-shadow-float);
+  padding: 4px;
+  z-index: var(--z-dropdown, 200);
+  display: flex;
+  flex-direction: column;
+}
+
+.alloc-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  color: var(--ink-primary);
+  border-radius: var(--ds-radius-sm);
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: background 120ms var(--ease);
+}
+.alloc-dropdown-item:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+.alloc-dropdown-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.alloc-dropdown-item:disabled,
+.alloc-dropdown-item.is-active {
+  cursor: default;
+  opacity: 0.7;
+}
+.alloc-dropdown-current {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--ink-tertiary);
+}
+
+/* ── Stat grid (5 tiles, wraps responsively) ─────────────────────────────── */
+
+.alloc-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1100px) { .alloc-stat-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px)  { .alloc-stat-grid { grid-template-columns: 1fr 1fr; } }
+
+.alloc-stat-tile {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  overflow: hidden;
+}
+
+.alloc-stat-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ds-radius);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--ink-tertiary);
+  flex-shrink: 0;
+}
+
+.alloc-stat-tile.is-accent  .alloc-stat-tile-icon { background: var(--bg-subtle); border-color: var(--border); color: var(--ink-solid); }
+.alloc-stat-tile.is-success .alloc-stat-tile-icon { background: var(--success-subtle); border-color: var(--success-border); color: var(--success); }
+.alloc-stat-tile.is-warn    .alloc-stat-tile-icon { background: var(--warning-subtle); border-color: var(--warning-border); color: var(--warning); }
+.alloc-stat-tile.is-danger  .alloc-stat-tile-icon { background: var(--danger-subtle); border-color: var(--danger-border); color: var(--danger); }
+.alloc-stat-tile.is-info    .alloc-stat-tile-icon { background: var(--info-subtle); border-color: var(--info-border); color: var(--info); }
+
+.alloc-stat-tile-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alloc-stat-tile-label {
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-tertiary);
+  line-height: 1.2;
+}
+
+.alloc-stat-tile-value {
+  font-family: var(--ds-font-num);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  font-feature-settings: 'tnum','zero';
+  word-break: break-word;
+}
+.alloc-stat-tile-value.is-mono {
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.alloc-stat-tile.is-danger .alloc-stat-tile-value { color: var(--danger); }
+.alloc-stat-tile.is-warn   .alloc-stat-tile-value { color: var(--warning); }
+
+.alloc-stat-tile-sub {
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
+}
+
+/* ── Section (grouped content card) ──────────────────────────────────────── */
+
+.alloc-section {
+  padding: 18px 20px;
+}
+
+.alloc-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--ds-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.005em;
+  margin-bottom: 16px;
+}
+
+.alloc-section-title > svg {
+  color: var(--ink-tertiary);
+}
+
+.alloc-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Sub-group inside a section ──────────────────────────────────────────── */
+
+.alloc-sub-group + .alloc-sub-group {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.alloc-sub-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 10px;
+}
+.alloc-sub-group-title > svg {
+  color: var(--ink-tertiary);
+}
+
+.alloc-def-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 16px;
+}
+
+@media (max-width: 700px) {
+  .alloc-def-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Definition row (label : value) ──────────────────────────────────────── */
+
+.alloc-def-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  min-width: 0;
+}
+
+.alloc-def-row + .alloc-def-row {
+  border-top: 1px solid var(--border);
+}
+
+.alloc-def-label {
+  flex-shrink: 0;
+  width: 140px;
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  line-height: 1.4;
+}
+
+.alloc-def-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--ink-primary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+@media (max-width: 700px) {
+  .alloc-def-row { flex-direction: column; gap: 2px; padding: 8px 0; }
+  .alloc-def-label { width: auto; }
+}
+
+/* ── Misc text helpers ───────────────────────────────────────────────────── */
+
+.alloc-text-error {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.alloc-agent-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.alloc-agent-icon {
+  color: var(--ink-tertiary);
+}

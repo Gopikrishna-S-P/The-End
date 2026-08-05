@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/* Make the design tokens (--sans, --serif, --mono, accents, etc.) available
+ * to every stylesheet — including the ones that render BEFORE AppLayout
+ * mounts (login page, post-login splash, lazy-load Suspense fallback). */
+@import "./design-tokens.css";
+
+/* Shared motion utilities (pm-aurora, pm-noise, pm-hover-lift, pm-magnetic,
+ * pm-reveal, pm-text-gradient, pm-page-enter, etc.) — load globally so the
+ * post-login app inherits the landing page's motion DNA. */
+@import "./public-motion.css";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Global typography base
+   ─────────────────────────────────────────────────────────────────────────────
+   The app had a recurring "same tag, different font" drift problem: inputs
+   would fall back to the browser's system font, some <h1>s used the body
+   sans by default while a few card titles inlined a different stack, etc.
+   This base locks every common tag to exactly one canonical family. Pages
+   are still free to opt in to the serif/mono explicitly with `var(--serif)`
+   or `var(--mono)`, but they no longer pick up a different family by
+   accident.
+   ───────────────────────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border, #e2e5ea) transparent;
+}
+*::-webkit-scrollbar { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border, #e2e5ea); border-radius: 999px; }
+
+html, body {
+  /* Guard against off-canvas `position:fixed` panels (LucienPanel.css) creating
+     a page-level horizontal scrollbar. Fixed elements are meant to be excluded
+     from the document's scrollable area even when transformed off-screen, but
+     Chromium includes their transformed bounds anyway — confirmed via
+     getBoundingClientRect at viewport 1366/1920/2560: .lucien-panel measures
+     hundreds of px past the right edge purely from its closed-state
+     `transform: translateX(calc(100% + 32px))`, and that alone was producing a
+     real scrollbar and pushing the topbar's search/notification/settings/avatar
+     cluster out of the visible page. */
+  /* Both axes must be set explicitly: overflow-x:hidden alone is silently
+     upgraded back to auto by the browser per spec, because overflow-y was
+     left at its default `visible` (a "visible paired with non-visible"
+     value forces the visible one to auto — it does not stay hidden). */
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: var(--sans);
+  /* `font-synthesis: none` prevents browsers from inventing a bold/italic
+     when the requested weight isn't available in the loaded face — it
+     reliably yields a heavier-looking glyph than a real bold cut. */
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings inherit the body family by default. Pages that intentionally use
+   the editorial serif (e.g. AllocationDetailPage hero) opt in by setting
+   `font-family: var(--serif)` on the specific node. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: inherit;
+}
+
+em, i, [data-italic] {
+  font-style: italic;
+}
+h1 em, h2 em { font-weight: 400; }
+
+/* Form controls reset to the host font instead of the browser's system
+   default (Arial/Helvetica on most platforms). */
+input,
+button,
+textarea,
+select,
+optgroup,
+option,
+fieldset,
+legend,
+label {
+  font-family: inherit;
+}
+
+/* Code-like tags — mono everywhere they appear. */
+code,
+pre,
+kbd,
+samp,
+var {
+  font-family: var(--mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Shared list-page pagination — used by every paginated list page in the app
+   (Loans, Visits, Ptps, Collections, Uploads, etc.) via the shared
+   <Pagination> component (src/components/Pagination.tsx). Lives here, not in
+   any single page's stylesheet, precisely because it's used everywhere:
+   most list pages don't import each other's page-specific CSS, so a
+   page-scoped definition only worked by accident when some other page's
+   chunk happened to already be loaded in the same session.
+   ───────────────────────────────────────────────────────────────────────── */
+.up-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border, #EBEDF1);
+  background: var(--bg-surface, #fff);
+  flex-shrink: 0;
+}
+
+.up-pagination.is-embedded {
+  padding: 0;
+  border-top: none;
+  background: transparent;
+}
+
+.up-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border, #EBEDF1);
+  border-radius: var(--radius-sm, 9px);
+  background: transparent;
+  color: var(--text-secondary, #475467);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background var(--dur-fast, 140ms), border-color var(--dur-fast, 140ms), color var(--dur-fast, 140ms);
+}
+
+.up-page-btn:hover:not(:disabled) {
+  background: var(--bg-hover, #E8EBF0);
+  border-color: var(--border-strong, #D6DAE1);
+  color: var(--text-primary, #101828);
+}
+
+.up-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.up-page-btn.is-active {
+  background: var(--ink-solid, #0AA550);
+  border-color: var(--ink-solid, #0AA550);
+  color: var(--text-on-solid, #fff);
+}
+.up-page-btn.is-active:hover:not(:disabled) {
+  background: var(--ink-solid-hover, #088A42);
+  border-color: var(--ink-solid-hover, #088A42);
+  color: var(--text-on-solid, #fff);
+}
+
+.up-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.up-page-meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 450;
+  color: var(--text-tertiary, #667085);
+  padding: 0 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.up-page-meta strong { color: var(--text-primary, #101828); font-weight: 600; }

@@ -1,0 +1,68 @@
+/* ── Allocations — page-specific layout only ───────────────────────────────
+   All card, search, filter-button, pill, modal, table, skeleton chrome is
+   supplied by ds-*. This file only owns the page's height composition.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Height fix ──────────────────────────────────────────────────────────
+   .db-root only sets min-height:100%, so a full 20-row page can grow past
+   the viewport and .app-main scrolls the whole page instead of just the
+   list. .dd-cases-card (borrowed from Daily Dispatch) also hardcodes
+   height: calc(100vh - 220px) — an offset tuned for .dd-page's chrome, not
+   this page's taller .db-page-header/.db-content padding, so it overshoots
+   the real available space. Bound the chain properly instead and let flex
+   hand the list only what's actually left. */
+.alloc-root {
+  height: 100%;
+  overflow: hidden;
+}
+.alloc-root .db-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  /* Base .db-content has a 64px bottom pad for naturally-scrolling pages —
+     trimmed here since the card fills the remaining height, but kept wide
+     enough to leave breathing room below the pagination footer. */
+  padding-bottom: 36px;
+}
+.alloc-root .dd-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.alloc-root .dd-cases-card {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Denser rows + stronger contrast — scoped to this page only, since
+   .dd-case-row is shared with Daily Dispatch / Case Assignments / Today's
+   Visits and shouldn't change for them. ────────────────────────────────── */
+.alloc-root .dd-case-row {
+  padding: 5px 12px;
+  min-height: 40px;
+  border-bottom-color: var(--border-strong);
+}
+.alloc-root .dd-case-borrower {
+  font-weight: 600;
+}
+.alloc-root .dd-case-loan,
+.alloc-root .dd-case-product {
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+.alloc-root .dd-case-product {
+  border-color: var(--border-strong);
+}
+
+/* ── "N total loans" — plain text instead of the shared pill badge ──────── */
+.alloc-root .db-page-org {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: var(--font-sans);
+  font-weight: 500;
+}

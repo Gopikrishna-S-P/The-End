@@ -1,0 +1,250 @@
+/* ── ProfileSettingsDialog — same glass/blur recipe as the topbar customize dialog ── */
+
+.ps-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  animation: ps-dialog-fade var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes ps-dialog-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ps-dialog {
+  width: 100%;
+  max-width: 760px;
+  height: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: row; /* Changed to row so sidebar is full height */
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  animation: ps-dialog-rise var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes ps-dialog-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ps-dialog-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ps-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.ps-dialog-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-primary);
+}
+
+.ps-dialog-close {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--ink-tertiary);
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms, color 120ms;
+}
+
+.ps-dialog-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ps-dialog {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.ps-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  overflow-y: auto;
+}
+
+.ps-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.ps-sidebar-item:hover {
+  background: var(--bg-hover);
+  color: var(--ink-primary);
+}
+
+.ps-sidebar-item.is-active {
+  background: var(--bg-hover);
+  color: var(--ink-primary);
+}
+
+.ps-sidebar-item.is-danger {
+  color: var(--danger);
+}
+
+.ps-sidebar-item.is-danger:hover,
+.ps-sidebar-item.is-danger.is-active {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger);
+}
+
+.ps-dialog-body {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* ── Section chrome — used by every section inside the dialog body ── */
+
+.ps-section {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ps-section:last-child {
+  border-bottom: none;
+}
+
+.ps-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+}
+
+.ps-section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-hover);
+  color: var(--ink-solid);
+}
+
+.ps-section-icon.is-danger {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.ps-section-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--ink-primary);
+}
+
+.ps-section-title.is-danger {
+  color: var(--danger);
+}
+
+.ps-section-sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+}
+
+.ps-section-body {
+  padding: 4px 28px 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-dialog-backdrop,
+  .ps-dialog {
+    animation: none;
+  }
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────────────── */
+.app-layout.dark .ps-dialog {
+  background: rgba(21, 23, 28, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.app-layout.dark .ps-dialog-header,
+.app-layout.dark .ps-sidebar,
+.app-layout.dark .ps-section { border-color: rgba(255, 255, 255, 0.08); }
+.app-layout.dark .ps-dialog-close:hover { background: rgba(255, 255, 255, 0.06); color: #E8EAED; }
+.app-layout.dark .ps-sidebar-item:hover,
+.app-layout.dark .ps-sidebar-item.is-active { background: rgba(255, 255, 255, 0.06); }
+.app-layout.dark .ps-section-icon { background: rgba(255, 255, 255, 0.06); }
+
+@media (max-width: 640px) {
+  .ps-dialog {
+    max-width: 100%;
+    flex-direction: column;
+  }
+
+  .ps-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 8px 16px;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .ps-sidebar-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}

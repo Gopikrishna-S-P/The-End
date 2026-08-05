@@ -1,0 +1,47 @@
+/* ── Uploads Page ──────────────────────────────────────────────────────────── */
+
+/* ── Org picker — compact inline control ── */
+.up-org-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  transition: border-color var(--dur-instant);
+}
+
+.up-org-picker:focus-within { border-color: var(--border-strong); }
+
+.up-org-icon { color: var(--text-tertiary); flex-shrink: 0; }
+
+.up-org-select {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-primary);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  max-width: 240px;
+}
+
+.up-org-caret {
+  position: absolute;
+  right: 9px;
+  pointer-events: none;
+  color: var(--text-tertiary);
+}
+
+/* ── Pagination — moved to src/styles/index.css (global) ──────────────────
+   .up-pagination/.up-page-btn/.up-page-meta are used by every list page in
+   the app, most of which never import this file. Keeping the rules here
+   made them work only by accident, when some other page's chunk happened
+   to already be loaded in the same session. See index.css. ── */

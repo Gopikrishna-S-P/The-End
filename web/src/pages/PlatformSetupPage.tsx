@@ -1,0 +1,83 @@
+import { useCallback, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus } from 'lucide-react';
+import { platformApi } from '../api/platformApi';
+import type { OrganizationSummary } from '../api/platformApi';
+import { OrgsTab } from './PlatformSetupOrgsTab';
+import { UsersTab } from './PlatformSetupUsersTab';
+import '../styles/AppPage.css';
+import '../styles/PlatformSetupPage.css';
+import './Dashboard.css';
+
+type Tab = 'orgs' | 'users';
+
+export default function PlatformSetupPage() {
+  const [tab,  setTab]  = useState<Tab>('orgs');
+  const [orgs, setOrgs] = useState<OrganizationSummary[]>([]);
+  const [showCreateOrg, setShowCreateOrg] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+
+  const loadOrgs = useCallback(async () => {
+    try { setOrgs(await platformApi.listOrganizations()); } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => { loadOrgs(); }, [loadOrgs]);
+  useEffect(() => { setShowCreateOrg(false); setShowCreateUser(false); }, [tab]);
+
+  return (
+    <div className="db-root">
+      <div className="db-content">
+        <motion.div className="db-inner" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <div className="db-page-header">
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+              Manage organizations and platform users
+            </p>
+            <div className="db-kpi-toggle" role="tablist" aria-label="Platform setup view">
+              <button type="button" onClick={() => setTab('orgs')}
+                className={`db-kpi-toggle-btn${tab === 'orgs' ? ' is-active' : ''}`}
+                role="tab" aria-selected={tab === 'orgs'}>
+                Organizations
+              </button>
+              <button type="button" onClick={() => setTab('users')}
+                className={`db-kpi-toggle-btn${tab === 'users' ? ' is-active' : ''}`}
+                role="tab" aria-selected={tab === 'users'}>
+                Admin Users
+              </button>
+            </div>
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {tab === 'orgs'
+                ? <OrgsTab orgs={orgs} onOrgsChange={setOrgs} showCreate={showCreateOrg} setShowCreate={setShowCreateOrg} />
+                : <UsersTab orgs={orgs} showCreate={showCreateUser} setShowCreate={setShowCreateUser} />}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
+      </div>
+      {(tab === 'orgs' || tab === 'users') && (
+        <button type="button"
+          onClick={() => tab === 'orgs' ? setShowCreateOrg(true) : setShowCreateUser(true)}
+          title={tab === 'orgs' ? 'New organization' : 'New admin user'}
+          aria-label={tab === 'orgs' ? 'New organization' : 'New admin user'}
+          style={{
+            position: 'fixed', bottom: 28, right: 32, zIndex: 50,
+            width: 56, height: 56, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer',
+            boxShadow: '0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)',
+            transition: 'transform 120ms ease, box-shadow 120ms ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}>
+          <Plus size={24} />
+        </button>
+      )}
+    </div>
+  );
+}

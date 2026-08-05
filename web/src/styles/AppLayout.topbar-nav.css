@@ -1,0 +1,255 @@
+/* ── Breadcrumb — mobile dropdown ─────────────────────────────────────────── */
+.app-breadcrumb-mobile-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+.app-breadcrumb-mobile-chevron { color: var(--ink-tertiary); flex-shrink: 0; }
+.app-breadcrumb-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 160px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-3);
+  z-index: var(--z-dropdown);
+  overflow: hidden;
+  animation: app-dropdown-in 160ms var(--ease) both;
+}
+.app-breadcrumb-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+}
+.app-breadcrumb--mobile { position: relative; }
+
+/* Desktop/mobile visibility */
+.app-breadcrumb--mobile { display: none; }
+.app-breadcrumb--desktop { display: flex; }
+
+/* ── Topbar right ──────────────────────────────────────────────────────────── */
+.app-topbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* ── Generic icon button (bell, lucien, etc.) ──────────────────────────────── */
+/* Borderless icon buttons */
+.app-icon-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  border-radius: 8px; /* Match help window icon box */
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .18s var(--ease), color .18s var(--ease), transform .18s var(--ease);
+  flex-shrink: 0;
+}
+.app-icon-btn:hover {
+  background: var(--bg-subtle); /* one step up from resting, matching help window feel */
+  color: var(--text-primary);
+}
+.app-icon-btn:active { transform: scale(0.96); }
+.app-icon-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Lucien AI — same plain transparent style as the other topbar icon buttons */
+.app-icon-btn[aria-label*="Lucien"]:hover {
+  color: var(--ink-solid);
+}
+
+/* Toggled-on state */
+.app-icon-btn.is-active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Notification badge — unread count chip on bell ───────────────────────── */
+.app-notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #0AA550; /* Brand green */
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  font-feature-settings: 'tnum';
+  letter-spacing: 0.02em;
+  line-height: 1;
+  border: 1.5px solid #fff;
+  animation: app-notif-badge-pop 180ms var(--ease) both;
+}
+@keyframes app-notif-badge-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Back to top — slide in ────────────────────────────────────────────────── */
+.app-back-top-btn { animation: app-back-top-in 200ms var(--ease) both; }
+@keyframes app-back-top-in {
+  from { opacity: 0; transform: scale(0.7) translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Notification panel — centered modal overlay ── */
+.app-notif-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 500);
+  background: rgba(12, 10, 9, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: mfag-in 200ms ease both;
+}
+.app-notif-panel {
+  width: 100%;
+  max-width: 520px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  animation: mfag-card-in 260ms cubic-bezier(0.34, 1.15, 0.64, 1) both;
+}
+.app-notif-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  transition: background var(--transition), color var(--transition);
+}
+.app-notif-close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── New / CTA pill button ─────────────────────────────────────────────────── */
+.app-topbar-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease, transform .18s ease;
+}
+.app-topbar-cta:hover {
+  background: rgba(10, 165, 80, 0.1);
+  border-color: #0AA550;
+  color: #0AA550;
+}
+.app-topbar-cta:active { transform: scale(0.97); }
+
+/* ── User avatar circle ────────────────────────────────────────────────────── */
+.app-topbar-avatar {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.app-topbar-avatar:hover { opacity: 0.88; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent); }
+
+/* ── Palette trigger — widened, stronger visual (GitHub-style) ─────────────── */
+.app-search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 10px 0 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms var(--ease), border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+  width: 300px;
+  flex-shrink: 0;
+}
+.app-search-trigger:hover {
+  background: var(--bg-hover);
+}
+.app-search-trigger:focus-visible {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+  outline: none;
+}
+.app-search-trigger-icon  { color: var(--text-secondary); flex-shrink: 0; }
+.app-search-trigger-text  { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-tertiary); font-weight: 400; }
+.app-search-trigger-text::placeholder { color: var(--text-tertiary); opacity: 1; }
+.app-search-trigger-scope { color: var(--text-primary); font-weight: 600; }
+/* ⌘K badge */
+.app-search-trigger-kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  border: none;
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+

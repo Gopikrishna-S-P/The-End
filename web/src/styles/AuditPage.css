@@ -1,0 +1,180 @@
+/* ── Audit trail (timeline) — page-specific layout ───────────────────────── */
+
+/* ── Admin Actions tab — fill remaining viewport height ────────────────────
+   Scoped to this page only (not the shared .dd-page) so the Admin Actions
+   table card fills exactly like Loans' card, without affecting the other
+   .dd-page users (Visits, Agents, Attendance, etc). */
+.audit-fill-root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Timeline card ───────────────────────────────────────────────────────── */
+
+.audit-trail-card { padding: 0; }
+
+.audit-trail-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px 12px;
+}
+.audit-trail-card-title {
+  font-family: var(--ds-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+.audit-trail-card-count {
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--bg-subtle);
+  color: var(--ink-secondary);
+  font-feature-settings: 'tnum','zero';
+}
+
+.audit-trail-list { padding: 16px 20px; }
+
+/* ── Timeline row ────────────────────────────────────────────────────────── */
+
+.audit-trail-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.audit-trail-row + .audit-trail-row { margin-top: 14px; }
+
+.audit-trail-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 18px;
+  flex-shrink: 0;
+  padding-top: 5px;
+}
+
+.audit-trail-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+  background: var(--ink-solid);
+  z-index: 1;
+  box-shadow: 0 0 0 1px var(--border);
+}
+.audit-trail-dot.is-warn  { background: var(--warning); }
+.audit-trail-dot.is-error { background: var(--danger); }
+.audit-trail-dot.is-info  { background: var(--info); }
+.audit-trail-dot.is-muted { background: var(--ink-tertiary); }
+.audit-trail-dot.is-skel  { background: var(--border); }
+
+.audit-trail-line {
+  position: absolute;
+  top: 16px;
+  bottom: -20px;
+  width: 1px;
+  background: var(--border);
+}
+
+.audit-trail-content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 4px;
+}
+
+.audit-trail-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.audit-trail-row-head-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.audit-trail-event-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.audit-trail-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--ds-font-label);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--bg-subtle);
+}
+
+.audit-trail-status-pill {
+  font-size: 9.5px;
+  padding: 2px 6px;
+}
+
+.audit-trail-ts {
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+
+.audit-trail-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 4px;
+}
+
+.audit-trail-meta-actor,
+.audit-trail-meta-case,
+.audit-trail-meta-sub {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.audit-trail-meta-actor > svg,
+.audit-trail-meta-case > svg { color: var(--ink-tertiary); }
+.audit-trail-meta-case {
+  font-family: var(--ds-font-num);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-tertiary);
+}
+
+.audit-trail-meta-amount {
+  font-family: var(--ds-font-num);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-solid);
+  font-feature-settings: 'tnum','zero';
+}
+
+.audit-trail-reason {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: var(--warning-subtle);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--ds-radius-sm);
+  color: var(--warning);
+  font-size: 12.5px;
+}

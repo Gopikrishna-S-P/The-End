@@ -1,0 +1,796 @@
+/* ── AppSidebar — persistent navigation sidebar ─────────────────────────────
+   Light-only. No dark mode. No glass. No brand-green accent anywhere except
+   --brand-subtle as the selected-nav fill (the single approved use).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Local token layer (light only) ──────────────────────────────────────── */
+.asb-root {
+  --asb-bg: var(--bg-surface);
+  --asb-canvas: var(--bg-canvas);
+  --asb-surface: var(--bg-subtle);
+  --asb-border: var(--border);
+  --asb-border-hi: var(--border-strong);
+  --asb-ink: var(--text-primary);
+  --asb-ink-dim: var(--text-secondary);
+  --asb-ink-faint: var(--text-tertiary);
+}
+
+/* ── Root shell ───────────────────────────────────────────────────────────── */
+.asb-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--rp-sb-on, 280px);
+  height: 100%;
+  background: var(--asb-bg);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width var(--dur-slow) var(--ease-out);
+  z-index: var(--z-sidebar, 90);
+  contain: paint;
+  border-right: 1px solid var(--border);
+  box-shadow: 1px 0 0 rgba(16,24,40,0.02), var(--shadow-xs);
+}
+
+.asb-root * {
+  box-sizing: border-box;
+}
+
+.asb-root.is-collapsed {
+  width: var(--rp-sb-off, 64px);
+}
+
+/* ── Brand header ─────────────────────────────────────────────────────────── */
+.asb-root .asb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 64px;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.asb-root.is-collapsed .asb-header {
+  justify-content: center;
+  padding: 0;
+  position: relative;
+}
+
+.asb-root .asb-header-logo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.asb-root .asb-header-logo img {
+  height: 40px;
+  width: auto;
+
+  transition:
+    height var(--dur-slow) var(--ease-out),
+    width var(--dur-slow) var(--ease-out);
+}
+
+.asb-root .asb-header-logo--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.asb-root .asb-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-tertiary, #667085);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.asb-root .asb-collapse-toggle:hover {
+  background: var(--bg-hover, #E8EBF0);
+  color: var(--text-primary, #101828);
+}
+.asb-root.is-collapsed .asb-collapse-toggle {
+  margin: 0 auto;
+}
+
+
+/* ── Scroll position indicator (Compact) ─────────────────────────────────── */
+.asb-scroll-map {
+  position: absolute;
+  right: 2px;
+  width: 1.5px;
+  background: var(--asb-border-hi);
+  border-radius: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out), top 120ms ease-out, height 120ms ease-out;
+  z-index: 5;
+}
+
+.asb-root:hover .asb-scroll-map {
+  opacity: .18;
+  transform: translateX(2px);
+}
+
+/* ── Nav list ─────────────────────────────────────────────────────────────── */
+.asb-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 12px;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.asb-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.asb-root .asb-section {
+  padding: 0;
+}
+
+/* Section header — static label per spec (no accordion theatrics) */
+.asb-root .asb-section-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 18px 10px 8px;
+  background: none;
+  border: none;
+  text-align: left;
+  pointer-events: none;
+  /* remove accordion interaction */
+}
+
+/* Section label — 11px uppercase tertiary */
+.asb-root .asb-section-label {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #98A2B3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* CSS grid height-collapse trick */
+.asb-root .asb-section-wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--dur-slow) var(--ease-out);
+}
+
+.asb-root .asb-section-wrap>ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px 0 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.asb-root .asb-section+.asb-section {
+  margin-top: 0;
+}
+
+/* Collapsed rail: show a subtle gap rule between nav sections */
+.asb-section-divider {
+  display: none;
+}
+
+.asb-root.is-collapsed .asb-section-divider {
+  display: block;
+  height: 1px;
+  margin: 4px 12px;
+  background: var(--border-subtle);
+}
+
+/* ── Nav item ─────────────────────────────────────────────────────────────── */
+.asb-root .asb-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 2px 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+
+  /* Font style matching help & resources row labels */
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+
+  transition:
+    background-color .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease;
+
+  cursor: pointer;
+}
+
+.asb-root .asb-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Collapsed: a true square chip (equal width/height), sized to whatever the
+   rail actually leaves available — width: 100% of the fixed-width <li>, with
+   aspect-ratio locking the height to match, rather than a guessed pixel value
+   (46px available, 44px assumed) that clips the moment the real render
+   doesn't match the guess. This is mathematically overflow-proof: the square
+   IS the available space, so it can never exceed it.
+
+   No bg, no border, no hover state, no active state — every listed selector
+   is pinned to the exact same blank appearance. It's still necessary to name
+   each state explicitly and override it: the base rules further down (row
+   hover → --bg-hover, active → --brand-subtle) still match a collapsed item
+   by class, so without these overrides they'd repaint it regardless of
+   collapse. Only the icon glyph itself (rendered plain, see .asb-nav-icon
+   below) shows at all; the row is otherwise fully inert visually. */
+.asb-root.is-collapsed .asb-nav-item,
+.asb-root.is-collapsed .asb-nav-item:hover,
+.asb-root.is-collapsed .asb-nav-item.is-active,
+.asb-root.is-collapsed .asb-nav-item.is-active:hover {
+  justify-content: center;
+  padding: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  min-height: 0;
+  margin: 2px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Active — brand-subtle green fill, the one deliberate use of the accent */
+.asb-root .asb-nav-item.is-active,
+.asb-root .asb-nav-item.is-active:hover {
+  background: var(--brand-subtle);
+  color: var(--ink-solid-hover, var(--brand));
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* ── Nav icon + badge ─────────────────────────────────────────────────────── */
+.asb-nav-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.asb-root .asb-nav-item:hover .asb-nav-icon {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
+/* Collapsed: the icon renders as a plain glyph in every state — no chip
+   background, no shadow, no colour shift on hover or active (the base rules
+   further down set bg-surface+shadow on hover and brand green on active;
+   overridden back to nothing here, same reasoning as the row above). Size
+   stays fixed so nothing can bloom into a "bigger button" illusion either. */
+.asb-root.is-collapsed .asb-nav-item .asb-nav-icon,
+.asb-root.is-collapsed .asb-nav-item:hover .asb-nav-icon,
+.asb-root.is-collapsed .asb-nav-item.is-active .asb-nav-icon,
+.asb-root.is-collapsed .asb-nav-item.is-active:hover .asb-nav-icon {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.asb-root .asb-nav-item.is-active .asb-nav-icon {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--brand);
+}
+
+/* The active row used to end in a chevron, which cost the label 38px (24px box
+   + 14px gap) and said nothing the fill, the bold weight, and the white icon
+   box weren't already saying. Removed so the label gets that width back. */
+
+.asb-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--danger-solid);
+  color: var(--text-on-solid);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--asb-bg);
+  line-height: 1;
+}
+
+/* ── Nav label + arrow ────────────────────────────────────────────────────── */
+.asb-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Nav count chip ───────────────────────────────────────────────────────── */
+.asb-nav-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--asb-ink-dim);
+  background: var(--asb-surface);
+  border: 1px solid var(--asb-border);
+  flex-shrink: 0;
+  transition: color var(--dur-fast), background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.asb-nav-item:hover .asb-nav-count {
+  color: var(--asb-ink);
+  border-color: var(--asb-border-hi);
+  transform: translateX(2px);
+}
+
+.asb-nav-item.is-active .asb-nav-count {
+  color: var(--asb-ink);
+  background: var(--asb-surface);
+  border-color: var(--asb-border);
+}
+
+/* The Alt+N hint chip that used to sit at the end of each row is gone — the
+   shortcut is still live and documented in the Shortcuts dialog, so the row
+   keeps its full width for the label. */
+
+/* ── Org workspace anchor ─────────────────────────────────────────────────── */
+.asb-org-anchor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+  transition: background var(--dur-fast);
+}
+
+.asb-org-anchor:hover {
+  background: var(--bg-hover);
+  transform: translateX(2px);
+}
+
+.asb-org-anchor:hover .asb-org-anchor-name {
+  color: var(--asb-ink);
+  transform: translateX(2px);
+}
+
+.asb-org-anchor-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+
+.asb-org-anchor-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--asb-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--dur-fast);
+}
+
+/* ── Identity footer ──────────────────────────────────────────────────────── */
+.asb-root .asb-footer {
+  flex-shrink: 0;
+  padding: 16px;
+  margin-top: auto;
+  position: relative;
+  background: transparent;
+}
+
+/* Avatar */
+.asb-root .asb-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.asb-root .asb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  color: var(--text-on-solid);
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Footer pill row — static identity card (avatar/name/org); the sign-out
+   icon inside it is the only interactive control here. */
+.asb-root .asb-footer-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--dur-fast) var(--ease-standard);
+}
+.asb-root .asb-footer-pill:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Collapsed rail — static avatar, no click target */
+.asb-root .asb-footer-rail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 0;
+}
+
+/* Identity text */
+.asb-root .asb-footer-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.asb-root .asb-footer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.asb-root .asb-footer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.asb-root .asb-footer-role {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 450;
+  color: #98A2B3;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.asb-root .asb-footer-sep {
+  font-size: 10px;
+  color: #98A2B3;
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+.asb-root .asb-footer-org {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 450;
+  color: #98A2B3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+/* Logout icon button — Subtle destructive action */
+.asb-root .asb-footer-logout-icon {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #98A2B3;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  margin-left: 2px;
+}
+
+.asb-root .asb-footer-logout-icon:hover {
+  background: #FEF3F2;
+  border-color: #FECACA;
+  color: #DC2626;
+  transform: translateX(2px);
+}
+
+.asb-root .asb-footer-logout-icon:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+}
+
+/* ── Ripple effect ────────────────────────────────────────────────────────── */
+.popup-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink-solid) 6%, transparent);
+  transform: scale(0);
+  pointer-events: none;
+  animation: popup-ripple-anim 500ms cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes popup-ripple-anim {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ── Sign-out confirm popup ───────────────────────────────────────────────── */
+.asb-signout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--shadow-overlay-scrim);
+  animation: asb-overlay-in var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes asb-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.asb-signout-window {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 20px 60px rgba(16, 24, 40, .12);
+  animation: asb-window-in var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes asb-window-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.asb-signout-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+
+.asb-signout-titlebar-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.asb-signout-titlebar-text {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+
+.asb-signout-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: #98A2B3;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.asb-signout-close:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.asb-signout-body {
+  padding: 20px 20px 18px;
+}
+
+.asb-signout-msg {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.asb-signout-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.asb-signout-cancel {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+
+.asb-signout-cancel:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  transform: translateX(2px);
+}
+
+.asb-signout-confirm {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--danger);
+  color: var(--text-on-solid);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+
+.asb-signout-confirm:hover {
+  background: color-mix(in srgb, var(--danger) 85%, black);
+  transform: translateY(-1px);
+}
+
+.asb-signout-confirm:active {
+  transform: none;
+}
+
+.asb-signout-confirm:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 3px;
+}
+
+/* ── Rail tooltip ─────────────────────────────────────────────────────────── */
+.asb-tip {
+  position: fixed;
+  transform: translateY(-50%);
+  z-index: var(--z-elevated);
+  padding: 5px 10px;
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  animation: asb-tip-in var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes asb-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+
+  .asb-root,
+  .asb-root * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

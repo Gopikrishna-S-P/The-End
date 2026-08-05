@@ -1,0 +1,231 @@
+/* ── Billing filter popover ───────────────────────────────────────────────────
+   Consumes the existing toolbar primitives (.ds-toolbar, .ds-search,
+   .ds-filter-btn, .ds-filter-dot in ds.toolbar.css) and adds only the panel
+   they anchor, which the design system did not yet have a shape for.
+   Everything here inherits from the shared tokens; no new colours are invented.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.ps-filter-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ps-filter-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 320px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: 4px 0 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(12, 10, 9, 0.16), 0 2px 8px rgba(12, 10, 9, 0.08);
+}
+
+/* On narrow screens the panel would overflow the viewport anchored right,
+   so it becomes a full-width sheet under the toolbar instead. */
+@media (max-width: 640px) {
+  .ps-filter-pop {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    top: auto;
+  }
+}
+
+.ps-filter-group {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+
+/* Search lives inside the filter popover instead of a standalone toolbar
+   search bar — reuses .ds-search-input/.ds-search-icon/.ds-search-clear,
+   just with its own border since it's no longer inside .ds-toolbar. */
+.ps-filter-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.ps-filter-search .ds-search-input { font-size: 12.5px; }
+.ps-filter-group:last-of-type { border-bottom: none; }
+
+.ps-filter-group-title {
+  display: block;
+  margin-bottom: 9px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.ps-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ps-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.4;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.ps-filter-chip:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.ps-filter-chip.is-on {
+  background: var(--bg-active);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.ps-filter-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Count of matching rows, dimmed so it reads as metadata not label */
+.ps-filter-chip-n {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+.ps-filter-chip.is-on .ps-filter-chip-n { color: var(--text-secondary); }
+
+/* Attention rows are full-width: their labels are sentences, not one-word tags */
+.ps-filter-rows { display: flex; flex-direction: column; gap: 4px; }
+
+.ps-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.ps-filter-row:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.ps-filter-row.is-on {
+  background: var(--bg-active);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.ps-filter-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.ps-filter-row[data-empty='true'] { opacity: 0.45; cursor: default; }
+.ps-filter-row[data-empty='true']:hover { background: transparent; }
+
+.ps-filter-row-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.ps-filter-foot {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Merged KPI stat line in the Subscribers card header ──────────────────── */
+
+.ps-stat-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.ps-stat-link:hover:not(:disabled) { text-decoration: underline; }
+.ps-stat-link:disabled { cursor: default; opacity: 0.7; }
+
+/* ── Active filter summary, below the toolbar ─────────────────────────────── */
+
+.ps-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.ps-active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.ps-active-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.ps-active-chip-x:hover { background: var(--bg-active); color: var(--text-primary); }
+.ps-active-chip-x:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-filter-chip,
+  .ps-filter-row,
+  .ps-active-chip-x { transition: none; }
+}

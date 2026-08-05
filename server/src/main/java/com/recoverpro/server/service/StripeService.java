@@ -1,0 +1,120 @@
+package com.recoverpro.server.service;
+
+import com.recoverpro.server.config.StripeConfig;
+import com.recoverpro.server.entity.OrgSubscription;
+import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.stripe.exception.StripeException;
+import com.stripe.model.Customer;
+import com.stripe.model.Invoice;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.InvoiceListParams;
+import com.stripe.param.checkout.SessionCreateParams;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class StripeService {
+
+    private final StripeConfig stripeConfig;
+    private final OrgSubscriptionRepository subRepo;
+
+    /**
+     * Values SubscriptionPage.tsx switches on after Stripe redirects the user back.
+     * That page reads a single {@code checkout} query param; these are the only two
+     * values it recognises.
+     *
+     * <p>They are named constants rather than inline strings because the previous
+     * form -- {@code ?success=true} / {@code ?cancelled=true} -- matched nothing the
+     * page looked for, so a completed payment returned the user to a silent screen
+     * with no confirmation. The mismatch was invisible from either file alone.
+     * {@code StripeServiceReturnUrlTest} pins them.
+     */
+    static final String CHECKOUT_SUCCESS = "success";
+    static final String CHECKOUT_CANCEL  = "cancel";
+
+    /** Where Stripe Checkout sends the user back to, carrying its outcome. */
+    String checkoutReturnUrl(String outcome) {
+        return stripeConfig.getBaseUrl() + "/app/subscription?checkout=" + outcome;
+    }
+
+    public String createCheckoutUrl(UUID orgId, String planName) throws StripeException {
+        OrgSubscription sub = subRepo.findByOrgId(orgId).orElseGet(() ->
+                OrgSubscription.builder().orgId(orgId).build());
+
+        String customerId = ensureCustomer(sub, orgId);
+        String priceId = resolvePriceId(planName);
+
+        SessionCreateParams params = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
+                .setCustomer(customerId)
+                .addLineItem(SessionCreateParams.LineItem.builder()
+                        .setPrice(priceId)
+                        .setQuantity(1L)
+                        .build())
+                .setSuccessUrl(checkoutReturnUrl(CHECKOUT_SUCCESS))
+                .setCancelUrl(checkoutReturnUrl(CHECKOUT_CANCEL))
+                .build();
+
+        Session session = Session.create(params);
+        log.info("Stripe checkout session created: org={}, plan={}, sessionId={}", orgId, planName, session.getId());
+        return session.getUrl();
+    }
+
+    public String createPortalUrl(UUID orgId) throws StripeException {
+        OrgSubscription sub = subRepo.findByOrgId(orgId)
+                .orElseThrow(() -> new IllegalStateException("No subscription found for org: " + orgId));
+
+        if (sub.getStripeCustomerId() == null) {
+            throw new IllegalStateException("No Stripe customer linked to org: " + orgId);
+        }
+
+        com.stripe.param.billingportal.SessionCreateParams params =
+                com.stripe.param.billingportal.SessionCreateParams.builder()
+                        .setCustomer(sub.getStripeCustomerId())
+                        .setReturnUrl(stripeConfig.getBaseUrl() + "/app/subscription")
+                        .build();
+
+        com.stripe.model.billingportal.Session session =
+                com.stripe.model.billingportal.Session.create(params);
+        log.info("Stripe portal session created: org={}", orgId);
+        return session.getUrl();
+    }
+
+    /** Lists this Stripe customer's invoices, most recent first. Used by the platform-admin
+     * cross-org billing view (BCR-5) -- requires a real Stripe customer to already exist. */
+    public List<Invoice> listInvoices(String stripeCustomerId) throws StripeException {
+        InvoiceListParams params = InvoiceListParams.builder()
+                .setCustomer(stripeCustomerId)
+                .setLimit(25L)
+                .build();
+        return Invoice.list(params).getData();
+    }
+
+    private String ensureCustomer(OrgSubscription sub, UUID orgId) throws StripeException {
+        if (sub.getStripeCustomerId() != null) {
+            return sub.getStripeCustomerId();
+        }
+        Customer customer = Customer.create(CustomerCreateParams.builder()
+                .putMetadata("orgId", orgId.toString())
+                .build());
+        sub.setStripeCustomerId(customer.getId());
+        subRepo.save(sub);
+        log.info("Stripe customer created: org={}, customerId={}", orgId, customer.getId());
+        return customer.getId();
+    }
+
+    private String resolvePriceId(String planName) {
+        return switch (planName.toUpperCase()) {
+            case "GROWTH"     -> stripeConfig.getPriceGrowth();
+            case "ENTERPRISE" -> stripeConfig.getPriceEnterprise();
+            default           -> stripeConfig.getPriceStarter();
+        };
+    }
+}

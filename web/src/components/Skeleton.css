@@ -1,0 +1,64 @@
+/* ── Skeleton — shimmer placeholders ─────────────────────────────────────── */
+
+.app-skel {
+  display: inline-block;
+  width: 100%;
+  height: 14px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 0%,
+    var(--border) 50%,
+    var(--bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: app-skel-shimmer 1200ms linear infinite;
+}
+
+.app-skel-text   { height: 12px; border-radius: var(--radius-xs); }
+.app-skel-title  { height: 20px; border-radius: var(--radius-sm); }
+.app-skel-circle { border-radius: 50%; }
+.app-skel-pill   { border-radius: var(--radius-full); height: 20px; }
+.app-skel-rect   { border-radius: var(--radius-md); }
+
+@keyframes app-skel-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-skel { animation: none; background: var(--bg-subtle); }
+}
+
+/* ── Page-level skeleton layout ──────────────────────────────────────────── */
+.app-page-skel {
+  padding: 28px clamp(16px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: app-page-skel-in var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-page-skel-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.app-page-skel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.app-page-skel-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.app-page-skel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-page-skel { animation: none; }
+}

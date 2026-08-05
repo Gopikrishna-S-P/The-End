@@ -1,0 +1,25 @@
+/* ── NoiseOverlay — film-grain across viewport ────────────────────────────── */
+
+.app-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-decorative);
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.85 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 220px 220px;
+  animation: app-noise-jitter 0.7s steps(4) infinite;
+  will-change: transform;
+}
+@keyframes app-noise-jitter {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-4px, 3px); }
+  50%  { transform: translate(3px, -3px); }
+  75%  { transform: translate(-2px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-noise { animation: none; }
+}

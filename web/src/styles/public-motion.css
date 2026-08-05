@@ -1,0 +1,480 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   public-motion.css
+   Shared motion + interaction effects for the open / public pages
+   (Login, Landing, Privacy, Terms, Download).
+
+   Everything in this file is opt-in via class. Pages import this stylesheet
+   once and decorate their existing markup with the utility classes below —
+   nothing here cascades to elements that don't ask for it.
+
+   Every animation respects prefers-reduced-motion. The fallback at the very
+   bottom hard-disables all motion for users who've asked for that.
+   ───────────────────────────────────────────────────────────────────────── */
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   1. SCROLL-TRIGGERED
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Reveal-on-scroll — set on any element. The IntersectionObserver in
+   public-motion.ts adds `.is-revealed` when the element crosses the
+   viewport, which triggers the transition. */
+.pm-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.pm-reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+/* Variants — direction the reveal slides from. */
+.pm-reveal-left   { transform: translateX(-24px); }
+.pm-reveal-right  { transform: translateX(24px); }
+.pm-reveal-up     { transform: translateY(24px); }
+.pm-reveal-down   { transform: translateY(-24px); }
+.pm-reveal-scale  { transform: scale(0.96); }
+.pm-reveal-left.is-revealed,
+.pm-reveal-right.is-revealed,
+.pm-reveal-up.is-revealed,
+.pm-reveal-down.is-revealed,
+.pm-reveal-scale.is-revealed { transform: none; }
+
+/* Stagger — when a parent has .pm-stagger, the IntersectionObserver also
+   sets a per-child --pm-i index and the children pick it up here. */
+.pm-stagger > .pm-reveal {
+  transition-delay: calc(var(--pm-i, 0) * 80ms);
+}
+
+/* Sticky scroll-progress bar — a thin bar at the top of the
+   viewport whose width tracks `window.scrollY / scrollHeight`. Updated by
+   the hook in JS. Neutral ink color — no decorative gradient. */
+.pm-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: var(--pm-scroll, 0%);
+  background: #0AA550;
+  z-index: 9999;
+  pointer-events: none;
+  transition: width 80ms linear;
+}
+
+/* Parallax — element with [data-parallax="0.2"] moves at 0.2× scroll speed.
+   The transform is written by the hook to keep the work off the layout
+   thread. Just declare GPU compositing here. */
+[data-parallax] {
+  will-change: transform;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   2. HOVER & CURSOR
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Cursor-aware "ambient ring" — a soft 28-px ring that follows the mouse,
+   using mix-blend-mode so it tints whatever's underneath without needing
+   per-page colour tuning. Only the marker element exists in DOM; the page
+   opts in by adding `.pm-has-cursor` to its root, and the JS hook updates
+   the ring position via CSS variables. */
+.pm-has-cursor { cursor: none; }
+.pm-has-cursor a,
+.pm-has-cursor button,
+.pm-has-cursor input,
+.pm-has-cursor textarea,
+.pm-has-cursor select,
+.pm-has-cursor [role="button"],
+.pm-has-cursor [contenteditable] { cursor: none; }
+
+.pm-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1.5px solid var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%) translate(var(--pm-cx, -100px), var(--pm-cy, -100px)) scale(var(--pm-cs, 1));
+  transition:
+    transform 100ms cubic-bezier(0.16,1,0.3,1),
+    border-color 200ms ease,
+    background 200ms ease,
+    width 200ms ease, height 200ms ease;
+  mix-blend-mode: difference;
+}
+.pm-cursor.is-grow {
+  --pm-cs: 1.6;
+  background: color-mix(in srgb, var(--focus-ring) 18%, transparent);
+}
+
+/* Magnetic hover — buttons / CTAs pull slightly toward the cursor. The
+   hook reads --pm-mx / --pm-my (set on the element) and translates. */
+.pm-magnetic {
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.pm-magnetic-target {
+  transform: translate(var(--pm-mx, 0px), var(--pm-my, 0px));
+}
+
+/* Card hover-lift — a generic refined card hover (shadow + slight rise).
+   Honours forced-colors / reduced-motion via the global rule at the bottom. */
+.pm-hover-lift {
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pm-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.04);
+}
+
+/* Image hover zoom for media tiles */
+.pm-zoom-wrap { overflow: hidden; }
+.pm-zoom {
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.pm-zoom-wrap:hover .pm-zoom { transform: scale(1.04); }
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   3. PAGE LOAD & TRANSITIONS
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Default page entry — light fade-up. Used by adding .pm-page-enter to the
+   page's root. */
+.pm-page-enter {
+  animation: pm-page-enter 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes pm-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Sequential hero entry — eyebrow → headline → sub → CTA. Each child reads
+   --pm-i (set inline) and waits proportionally. */
+.pm-hero-stack > * {
+  animation: pm-hero-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--pm-i, 0) * 80ms + 100ms);
+}
+@keyframes pm-hero-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Route-crossfade wrapper — used by PageTransition. */
+.pm-route-fade {
+  animation: pm-route-fade 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes pm-route-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   4. CLICK & INTERACTION
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Ripple — the JS hook injects a span on click; this provides the visual.
+   Apply to <button class="pm-ripple"> etc. Element must be position:relative. */
+.pm-ripple { position: relative; overflow: hidden; isolation: isolate; }
+.pm-ripple-wave {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .35);
+  pointer-events: none;
+  transform: scale(0);
+  animation: pm-ripple 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+html.dark .pm-ripple-wave { background: rgba(255, 255, 255, .18); }
+@keyframes pm-ripple {
+  to { transform: scale(2.8); opacity: 0; }
+}
+
+/* Universal active-press feedback — apply to anything tactile. */
+.pm-press {
+  transition: transform 80ms ease-out;
+}
+.pm-press:active { transform: scale(0.98); }
+
+/* Animated focus ring — soft spring bloom on focus-visible. */
+.pm-focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--focus-ring) 28%, transparent),
+    0 0 0 1px var(--focus-ring);
+  animation: pm-focus-bloom 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes pm-focus-bloom {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--focus-ring) 28%, transparent), 0 0 0 1px var(--focus-ring); }
+  100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 28%, transparent), 0 0 0 1px var(--focus-ring); }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   5. TEXT EFFECTS
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Gradient-pan — endless slow horizontal shift across an accent gradient.
+   Best on display-size text; sub-pixel banding shows up on tiny copy. */
+.pm-text-gradient {
+  /* `display: inline-block` gives the gradient its own paint box so italic
+     descenders (the tail on "g", "y", "j" in Fraunces) aren't clipped at
+     the baseline. The bottom padding adds physical room below the
+     baseline; -webkit-text-fill-color is the property that actually makes
+     the clipped fill transparent in Safari (color: transparent alone
+     leaves a faint outline on some builds). */
+  display: inline-block;
+  padding-bottom: 0.12em;
+  background: linear-gradient(
+    100deg,
+    var(--brand),
+    var(--rp-teal, #14b8a6),
+    var(--rp-cyan, #06b6d4),
+    var(--brand)
+  );
+  background-size: 280% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: pm-text-pan 9s linear infinite;
+}
+@keyframes pm-text-pan {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: -280% 50%; }
+}
+
+/* Split-word reveal — wrap each word with <span class="pm-word"> and the
+   hook will pre-stamp --pm-i on each. */
+.pm-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(60%);
+  animation: pm-word-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--pm-i, 0) * 60ms);
+}
+@keyframes pm-word-rise {
+  from { opacity: 0; transform: translateY(60%); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Underline-draw — a left-to-right underline that pencils in on hover. */
+.pm-link-underline {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+}
+.pm-link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pm-link-underline:hover::after,
+.pm-link-underline:focus-visible::after { transform: scaleX(1); }
+
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   6. BACKGROUND & AMBIENT
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Aurora — two slowly-drifting blurred gradient blobs. Drop in once near
+   the start of a section with `position: relative` and the blobs sit
+   behind everything else as ambient glow. */
+.pm-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.pm-aurora::before,
+.pm-aurora::after {
+  content: '';
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .45;
+}
+.pm-aurora::before {
+  top: -20vmax;
+  left: -10vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 35%, transparent), transparent 70%);
+  animation: pm-aurora-1 22s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+.pm-aurora::after {
+  bottom: -20vmax;
+  right: -10vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rp-cyan, #06b6d4) 28%, transparent), transparent 70%);
+  animation: pm-aurora-2 28s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+@keyframes pm-aurora-1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(8vmax, 4vmax) scale(1.18); }
+}
+@keyframes pm-aurora-2 {
+  0%   { transform: translate(0, 0) scale(1.1); }
+  100% { transform: translate(-6vmax, -8vmax) scale(0.95); }
+}
+html.dark .pm-aurora::before { opacity: .35; }
+html.dark .pm-aurora::after  { opacity: .3; }
+
+/* Noise — 1×1 SVG noise tile rendered as a faint overlay. Adds film-grain
+   warmth so flat colour fields don't look plasticky. */
+.pm-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .04;
+  z-index: 1;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+html.dark .pm-noise { opacity: .06; }
+
+/* Soft dot-grid pattern — a measured, technical texture for legal pages
+   and other "documentation" surfaces. */
+.pm-dotgrid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .55;
+  z-index: 0;
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--ink-tertiary, #A8A29E) 35%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+}
+
+/* Ambient time-of-day gradient — slowly shifts hue between morning / day /
+   evening / night. Use as the page background instead of a flat colour. */
+.pm-ambient-bg {
+  background: linear-gradient(
+    130deg,
+    color-mix(in srgb, var(--brand) 6%, var(--bg-canvas, #FAFAF9)),
+    var(--bg-canvas, #FAFAF9) 35%,
+    var(--bg-canvas, #FAFAF9) 65%,
+    color-mix(in srgb, var(--rp-cyan, #06b6d4) 6%, var(--bg-canvas, #FAFAF9))
+  );
+  background-size: 200% 200%;
+  animation: pm-ambient-shift 40s ease-in-out infinite;
+}
+@keyframes pm-ambient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   7. LEGAL-PAGE ADOPTION (Privacy + Terms — auto-reveal sections)
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Tag every <section class="section"> inside .legal-page with reveal-on-
+   scroll behaviour automatically — pages don't have to touch their JSX.
+   The IntersectionObserver in public-motion.ts looks for `.pm-reveal`, so
+   we alias it here and apply the same initial state. */
+.legal-page .section {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.legal-page .section.is-revealed,
+.legal-page .section:not(.pm-reveal):not(.is-revealed):where(:nth-of-type(1)) {
+  /* Reveal the FIRST section immediately so it's never below the fold-
+     yet-invisible. Subsequent sections fade in as the user scrolls. */
+  opacity: 1;
+  transform: none;
+}
+
+/* TOC link refinement — hover lift, active section accent. The `.active`
+   class is set by the existing TOC code in PrivacyPolicyPage / TermsPage,
+   which uses an IntersectionObserver to spot the current section. */
+.legal-page .sidebar-link,
+.legal-page .toc-link {
+  position: relative;
+  transition: color 180ms ease, transform 180ms ease, padding-left 180ms ease;
+}
+.legal-page .sidebar-link:hover,
+.legal-page .toc-link:hover {
+  color: var(--brand);
+  transform: translateX(2px);
+}
+.legal-page .sidebar-link.active,
+.legal-page .toc-link.active {
+  color: var(--brand);
+  padding-left: 4px;
+}
+/* Callout box — border darkens on hover; no lift for static content. */
+.legal-page .callout,
+.legal-page .info-card {
+  transition: border-color 150ms ease;
+}
+.legal-page .callout:hover,
+.legal-page .info-card:hover {
+  border-color: var(--border-strong);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION FALLBACK
+   ════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-reveal,
+  .pm-reveal-left, .pm-reveal-right, .pm-reveal-up, .pm-reveal-down, .pm-reveal-scale,
+  .legal-page .section {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .legal-page .sidebar-link:hover,
+  .legal-page .toc-link:hover { transform: none !important; }
+  .pm-hover-lift:hover,
+  .pm-zoom-wrap:hover .pm-zoom,
+  .pm-press:active,
+  .pm-magnetic-target { transform: none !important; }
+  .pm-text-gradient { animation: none; background-position: 50% 50%; }
+  .pm-word,
+  .pm-page-enter,
+  .pm-hero-stack > *,
+  .pm-route-fade,
+  .pm-ambient-bg,
+  .pm-aurora::before,
+  .pm-aurora::after,
+  .pm-cursor { animation: none !important; }
+  .pm-word { opacity: 1 !important; transform: none !important; }
+  .pm-aurora::before,
+  .pm-aurora::after { opacity: .25; }
+  .pm-scroll-progress { transition: none; }
+  .pm-has-cursor,
+  .pm-has-cursor a,
+  .pm-has-cursor button,
+  .pm-has-cursor input { cursor: auto; }
+  .pm-cursor { display: none; }
+}

@@ -1,0 +1,127 @@
+/* ── NotificationsPage ────────────────────────────────────────────────────── */
+
+.np-root {
+  /* ── Design-system token aliases for items/snooze sub-sheets ── */
+  --np-surface:   var(--bg-surface);
+  --np-subtle:    var(--bg-subtle);
+  --np-border:    var(--border);
+  --np-border-s:  var(--border-strong, color-mix(in srgb, var(--border) 180%, transparent));
+  --np-ink:       var(--ink-primary);
+  --np-ink-2:     var(--ink-secondary);
+  --np-ink-3:     var(--ink-tertiary);
+  --np-mono:      var(--ds-font-num);
+  --np-sans:      var(--ds-font-body);
+  --np-accent:    var(--ink-solid);
+  --np-accent-s:  var(--bg-subtle);
+  --np-accent-h:  var(--ink-solid-hover);
+  --np-ease:      cubic-bezier(0.4, 0, 0.2, 1);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 14px;
+  min-height: calc(100vh - 80px);
+  max-width: 680px;
+  margin: 24px auto;
+  
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-layout.dark .np-root {
+  background: rgba(21, 23, 28, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ── Toolbar: tabs + actions ── */
+.np-toolbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.np-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+/* ── Tabs ── */
+.np-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.np-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms;
+}
+.np-tab:hover { color: var(--ink-secondary); }
+.np-tab.is-active {
+  color: var(--ink-primary);
+  border-bottom-color: var(--ink-primary);
+  font-weight: 600;
+}
+
+.np-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  color: var(--ink-tertiary);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+}
+.np-tab-count.has-unread {
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+}
+
+/* ── Danger button tint ── */
+.np-btn-danger:hover:not(:disabled) {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+/* ── Content card ── */
+.np-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .np-toolbar { flex-wrap: wrap; gap: 8px; }
+  .np-toolbar-actions { padding: 0 0 8px; }
+}

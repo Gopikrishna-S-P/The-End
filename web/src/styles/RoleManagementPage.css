@@ -1,0 +1,45 @@
+/* ── Role card (sub-component) ───────────────────────────────────────────── */
+
+.rm-role-card { padding: 0; }
+
+.rm-card-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--ds-radius);
+  background: color-mix(in srgb, var(--error) 8%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--error) 30%, var(--border));
+  color: var(--error);
+  font-size: 12.5px;
+}
+
+.rm-perm-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+  background: var(--bg-surface);
+  padding: 0 12px;
+  height: var(--ds-ctl-h);
+}
+.rm-perm-search > svg {
+  color: var(--ink-tertiary);
+  flex-shrink: 0;
+}
+.rm-perm-search > input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0 0 0 8px;
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  color: var(--ink-primary);
+}
+.rm-perm-search > input::placeholder { color: var(--ink-tertiary); }
+.rm-perm-search:focus-within {
+  border-color: var(--ink-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-solid) 18%, transparent);
+}

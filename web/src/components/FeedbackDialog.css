@@ -1,0 +1,239 @@
+/* ── FeedbackDialog — in-app feedback widget ──────────────────────────────── */
+
+.app-feedback-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--shadow-overlay-scrim);
+  animation: app-feedback-fade var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-feedback-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.app-feedback-dialog {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: app-feedback-rise var(--dur-slow) var(--ease-out) both;
+}
+@keyframes app-feedback-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-feedback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.app-feedback-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.app-feedback-title svg { color: var(--text-secondary); }
+.app-feedback-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.app-feedback-close:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.app-feedback-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+.app-feedback-intro {
+  margin: 14px 16px 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Mood scale ────────────────────────────────────────────────────────── */
+.app-feedback-moods {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 4px 16px 14px;
+}
+.app-feedback-mood {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast),
+              transform var(--dur-base) var(--ease-out);
+}
+.app-feedback-mood svg { transition: color var(--dur-fast), transform var(--dur-base) var(--ease-out); }
+.app-feedback-mood:hover {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
+.app-feedback-mood:hover svg { transform: scale(1.12); }
+
+.app-feedback-mood.is-selected {
+  background: color-mix(in srgb, var(--mood-tone) 10%, transparent);
+  border-color: var(--mood-tone);
+  color: var(--mood-tone);
+  transform: translateY(-2px);
+}
+.app-feedback-mood.is-selected svg { color: var(--mood-tone); transform: scale(1.15); }
+
+/* Semantic mood tokens */
+.app-feedback-mood.mood-sad    { --mood-tone: var(--danger); }
+.app-feedback-mood.mood-meh    { --mood-tone: var(--warning); }
+.app-feedback-mood.mood-happy  { --mood-tone: var(--success); }
+.app-feedback-mood.mood-love   { --mood-tone: var(--success); }
+
+/* ── Comment textarea ─────────────────────────────────────────────────── */
+.app-feedback-comment-label {
+  display: block;
+  padding: 0 16px 4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.app-feedback-comment-label span {
+  text-transform: none;
+  letter-spacing: 0.005em;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.app-feedback-comment {
+  margin: 0 16px;
+  width: calc(100% - 32px);
+  min-height: 88px;
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+  box-sizing: border-box;
+}
+.app-feedback-comment:focus {
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+.app-feedback-charcount {
+  padding: 2px 16px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-align: right;
+  font-feature-settings: 'tnum';
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.app-feedback-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 16px;
+  margin-top: 6px;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+.app-feedback-privacy {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+  max-width: 60%;
+}
+.app-feedback-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast), opacity var(--dur-fast);
+}
+.app-feedback-submit:hover:not(:disabled) { background: var(--ink-solid-hover); }
+.app-feedback-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Success state ────────────────────────────────────────────────────── */
+.app-feedback-success {
+  text-align: center;
+  padding: 36px 24px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: app-feedback-success-in var(--dur-slow) var(--ease-out) both;
+}
+@keyframes app-feedback-success-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: none; }
+}
+.app-feedback-success-title {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.app-feedback-success-hint {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-feedback-backdrop,
+  .app-feedback-dialog,
+  .app-feedback-mood,
+  .app-feedback-success { animation: none; transition: none; }
+}

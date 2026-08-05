@@ -1,0 +1,89 @@
+/* ── SlashMenu — popover triggered by `/` inside an input/textarea ────────── */
+
+.app-slash-menu {
+  position: fixed;
+  z-index: var(--z-context-menu);
+  min-width: 260px;
+  max-width: 360px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: app-slash-in var(--dur-fast) var(--ease-out) both;
+}
+@keyframes app-slash-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-slash-menu-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+.app-slash-menu-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 8px;
+  padding: 6px 9px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  text-align: left;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.app-slash-menu-item:hover,
+.app-slash-menu-item.is-active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.app-slash-menu-item-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-slash-menu-item-cat {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  text-align: right;
+  white-space: nowrap;
+}
+.app-slash-menu-item-snippet {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-slash-menu { animation: none; }
+}

@@ -1,0 +1,56 @@
+/* ── Empty / no-data primitive ────────────────────────────────────────────── */
+
+.ds-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  /* min-height matches Loans' .dd-cp-empty floor (Platform Setup's own stub
+     already renders taller than this from its icon+copy, so this only raises
+     shorter/sparser stubs elsewhere up to the same floor). Deliberately no
+     flex:1 here — stretching the stub to fill a now taller, viewport-height
+     card reads as broken/unfinished, so it stays a modest, content-sized
+     box instead of growing with the card. */
+  min-height: 200px;
+}
+
+.ds-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+  color: var(--text-tertiary);
+}
+
+.ds-empty-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.ds-empty-sub {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  max-width: 320px;
+  text-align: center;
+}
+
+.ds-empty-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}

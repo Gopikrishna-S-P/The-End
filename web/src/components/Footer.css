@@ -1,0 +1,122 @@
+/* ── Footer — light multi-column ── */
+
+.rp-footer {
+  background: #E3EDE6;
+  padding: 64px 48px 24px !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  border-top: 1px solid var(--border) !important;
+}
+
+.rp-footer *, .rp-footer *::before, .rp-footer *::after {
+  box-sizing: border-box;
+}
+
+.rp-footer-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.rp-footer-top {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 56px;
+  padding-bottom: 40px;
+}
+
+.rp-footer-brand-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rp-footer-logo {
+  height: 28px !important;
+  width: auto !important;
+  align-self: flex-start;
+}
+
+.rp-footer-tagline {
+  font-size: 13px;
+  color: var(--ink-secondary, #6B6B6B);
+  line-height: 1.5;
+  max-width: 240px;
+}
+
+.rp-footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.rp-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rp-footer-col-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-solid, #0AA550);
+  margin-bottom: 4px;
+}
+
+.rp-footer-link {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ink-secondary, #6B6B6B);
+  text-decoration: none;
+  transition: color 150ms ease;
+  line-height: 1;
+  width: fit-content;
+}
+.rp-footer-link:hover { color: var(--ink-primary, #1A1A1A); }
+
+/* ── Bottom bar ── */
+.rp-footer-bottom {
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rp-footer-copy {
+  font-size: 12px;
+  color: var(--ink-tertiary, #9B9B9B);
+}
+
+.rp-footer-legal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rp-footer-legal-link {
+  font-size: 12px;
+  color: var(--ink-tertiary, #9B9B9B);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+.rp-footer-legal-link:hover { color: var(--ink-primary, #1A1A1A); }
+
+.rp-footer-legal-sep { font-size: 12px; color: var(--border-strong, #A6B8AC); }
+
+@media (max-width: 768px) {
+  .rp-footer { padding: 48px 24px 20px !important; }
+  .rp-footer-top {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .rp-footer-brand-col { grid-column: 1 / -1; }
+}
+
+@media (max-width: 480px) {
+  .rp-footer-top { grid-template-columns: 1fr; }
+  .rp-footer-bottom { flex-direction: column; align-items: flex-start; gap: 10px; }
+}

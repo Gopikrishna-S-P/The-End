@@ -1,0 +1,35 @@
+/* ── Page layout ─────────────────────────────────────────────────────────────── */
+
+.ud-cell-editable:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────────── */
+
+.ud-body {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-surface);
+  min-height: 0;
+}
+
+/* ── Column header — hover-only delete ───────────────────────────────────────── */
+
+.ud-col-header {
+  position: relative;
+}
+
+.ud-col-header .ud-col-del {
+  opacity: 0;
+  transition: opacity var(--dur-instant);
+}
+
+.ud-col-header:hover .ud-col-del {
+  opacity: 1;
+}
+
+/* ── Row hover ─────────────────────────────────────────────────────────────────── */
+.ud-data-row:hover {
+  background: var(--bg-hover);
+}

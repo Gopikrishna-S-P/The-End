@@ -1,0 +1,7 @@
+{
+  "name": "call-recording",
+  "version": "1.0.0",
+  "description": "Local Expo module: Android foreground service that keeps mic recording alive while the native dialer is in front.",
+  "main": "index.ts",
+  "platforms": ["android"]
+}

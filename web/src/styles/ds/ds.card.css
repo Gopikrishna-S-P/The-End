@@ -1,0 +1,41 @@
+/* ── Card primitive ──────────────────────────────────────────────────────────
+   Soft-shadow surface, faint border. Hoverable cards lift further on hover.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.ds-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.ds-card.is-flat   { box-shadow: none; }
+.ds-card.is-pad    { padding: 16px 18px; gap: 12px; }
+.ds-card.is-pad-lg { padding: 20px; }
+.ds-card.is-overflow-hidden { overflow: hidden; }
+
+.ds-card-head  { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ds-card-title { font: 700 13px var(--font-sans); letter-spacing: -0.01em; color: var(--text-primary); }
+.ds-card-sub   { font: 500 10.5px var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary); }
+
+/* Hoverable card */
+.ds-card.is-hoverable {
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+.ds-card.is-hoverable:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.ds-card.is-hoverable:active {
+  background: var(--bg-hover);
+}
+.ds-card.is-hoverable:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

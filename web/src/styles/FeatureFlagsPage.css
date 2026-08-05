@@ -1,0 +1,171 @@
+/* ── Feature Flags — page-specific layout ────────────────────────────────── */
+
+.ff-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  min-height: 100%;
+}
+
+/* ── Hero row: title left + action right ─────────────────────────────────── */
+
+.ff-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ff-hero-left { min-width: 0; }
+
+.ff-hero-actions {
+  flex-shrink: 0;
+  padding-bottom: 2px;  /* optical align with title baseline */
+}
+
+/* ── Scope toggle (underline tabs per spec) ─────────────────────────────── */
+
+.ff-scope {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.ff-scope-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+}
+
+.ff-scope-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  margin-right: 20px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-family: var(--ds-font-body);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: color 80ms, border-color 80ms;
+  margin-bottom: -1px;
+}
+.ff-scope-tab:hover { color: var(--ink-primary); border-bottom-color: var(--border-strong); }
+.ff-scope-tab.is-active {
+  color: var(--ink-primary);
+  font-weight: 550;
+  border-bottom-color: var(--ink-solid);
+}
+
+.ff-org-input {
+  flex: 1 1 280px;
+  min-width: 240px;
+  font-family: var(--ds-font-num);
+  font-size: 12px;
+}
+
+/* ── Banner ──────────────────────────────────────────────────────────────── */
+
+.ff-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.ff-banner.is-warn {
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-color: var(--warning-border);
+}
+.ff-banner > span { flex: 1; }
+
+/* ── Add-flag form ───────────────────────────────────────────────────────── */
+
+.ff-form {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ff-checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-primary);
+}
+
+.ff-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Loader / empty ──────────────────────────────────────────────────────── */
+
+.ff-loader {
+  display: flex;
+  justify-content: center;
+  padding: 80px;
+  color: var(--ink-solid);
+}
+
+.ff-empty-card { padding: 8px; }
+
+/* ── Flag list rows ──────────────────────────────────────────────────────── */
+
+.ff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.ff-row-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.ff-row-key {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.ff-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ff-row-desc {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+}
+
+.ff-row-actions {
+  flex-shrink: 0;
+}

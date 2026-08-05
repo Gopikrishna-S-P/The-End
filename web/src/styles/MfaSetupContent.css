@@ -1,0 +1,396 @@
+﻿/* â”€â”€ Card / step content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Buttons + banners — in-app equivalents of the signin-page ones,
+   so this page doesn't need to borrow the login page's CSS scope ── */
+.btn-primary {
+  width: auto;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  text-decoration: none;
+  margin-bottom: 20px;
+  position: relative;
+  transition: background 150ms var(--ease), box-shadow 150ms var(--ease), transform 150ms var(--ease);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--ink-solid) 20%, transparent),
+              0 4px 16px color-mix(in srgb, var(--ink-solid) 12%, transparent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--ink-solid-hover);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ink-solid) 28%, transparent),
+              0 8px 24px color-mix(in srgb, var(--ink-solid) 16%, transparent);
+  transform: translateY(-1px);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-primary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.btn-primary:disabled { opacity: 0.65; cursor: not-allowed; }
+.btn-primary-text { font-size: 14px; font-weight: 600; }
+.btn-primary.loading { justify-content: center; gap: 8px; }
+.btn-spinner-abs { display: inline-flex; align-items: center; }
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  border: 1px solid;
+}
+.banner svg { flex-shrink: 0; margin-top: 2px; }
+.banner-error {
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.mfa-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+.mfa-card-instruction {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  margin-bottom: 20px;
+}
+
+/* â”€â”€ QR area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-qr-frame {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.mfa-qr-inner {
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px dashed var(--border-strong);
+  background: #fff; /* intentional: QR scanners need a white background */
+}
+.mfa-qr-fallback {
+  height: 160px;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-subtle);
+  border-radius: 8px;
+  color: var(--ink-tertiary);
+}
+
+.mfa-secret-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 8px;
+}
+.mfa-secret-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-canvas);
+}
+.mfa-secret-code {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ink-primary);
+  word-break: break-all;
+  user-select: all;
+}
+.mfa-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 150ms var(--ease);
+}
+.mfa-icon-btn:hover { color: var(--ink-solid); }
+.mfa-icon-btn.is-success { color: var(--ink-solid); }
+.mfa-manual-key {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin-top: 6px;
+  font-family: var(--mono);
+}
+
+/* â”€â”€ Recovery codes grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-codes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.mfa-code-cell {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-canvas);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink-primary);
+  text-align: center;
+  user-select: all;
+}
+.mfa-codes-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* â”€â”€ Secondary button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-btn-secondary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--sans);
+  color: var(--ink-secondary);
+  transition: border-color 150ms var(--ease), background 150ms var(--ease), color 150ms var(--ease);
+}
+.mfa-btn-secondary:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+}
+.mfa-btn-secondary.is-success {
+  border-color: var(--ink-solid);
+  color: var(--ink-solid);
+}
+
+/* â”€â”€ Acknowledge checkbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-ack-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  margin-bottom: 18px;
+}
+.mfa-ack-row input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: var(--ink-solid);
+}
+.mfa-ack-text {
+  font-size: 13px;
+  color: var(--ink-secondary);
+  line-height: 1.5;
+}
+
+/* â”€â”€ Notice banners (info / warn) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.mfa-notice svg { flex-shrink: 0; margin-top: 2px; }
+.mfa-notice-info {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+  color: var(--ink-secondary);
+}
+.mfa-notice-warn {
+  background: var(--warning-subtle);
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+.mfa-notice-success {
+  background: color-mix(in srgb, var(--ink-solid) 6%, transparent);
+  border-color: color-mix(in srgb, var(--ink-solid) 30%, transparent);
+  color: var(--ink-solid);
+}
+.mfa-notice strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+/* â”€â”€ Disable button (destructive) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--error) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: var(--error);
+  transition: background 150ms var(--ease);
+}
+.mfa-btn-danger:hover { background: color-mix(in srgb, var(--error) 12%, transparent); }
+.mfa-btn-danger.is-solid {
+  background: var(--error);
+  color: var(--text-on-solid);
+  border-color: var(--error);
+}
+.mfa-btn-danger.is-solid:hover { background: color-mix(in srgb, black 25%, var(--error)); }
+.mfa-btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* â”€â”€ Final success badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-success-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 24px 0;
+}
+.mfa-success-icon {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--bg-subtle);
+  color: var(--ink-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mfa-success-icon--warn {
+  background: var(--warning-subtle);
+  color: var(--warning-border);
+}
+.mfa-success-icon-check {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-canvas);
+}
+.mfa-success-title {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink-primary);
+}
+.mfa-success-sub {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-secondary);
+  max-width: 360px;
+}
+
+/* â”€â”€ Inline initializing loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-initial-loader {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--ink-tertiary);
+}
+
+/* â”€â”€ Action row (back + primary) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-actions-row {
+  display: flex;
+  gap: 10px;
+}
+.mfa-actions-row .btn-primary { margin-bottom: 0; flex: 1; }
+.mfa-actions-row .mfa-btn-secondary { flex: 0 0 auto; padding: 0 18px; }
+.mfa-actions-row .mfa-btn-danger.is-solid { flex: 1; height: 44px; }
+.mfa-card .mfa-actions-row { margin-top: 18px; }
+
+/* â”€â”€ Card-internal banner + misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.mfa-card .banner { margin-bottom: 16px; }
+.mfa-qr-fallback span { font-size: 11px; }
+.mfa-secret-icon { color: var(--ink-tertiary); flex-shrink: 0; }
+.mfa-initial-loader .spinner-icon { color: var(--ink-solid); }
+.mfa-initial-loader p { font-size: 13px; }
+.mfa-success-stack .btn-primary { text-decoration: none; max-width: 280px; }
+
+/* Responsive */
+@media (max-width: 540px) {
+  .mfa-card { padding: 20px; }
+  .mfa-codes-grid { grid-template-columns: 1fr; }
+  .mfa-step-label { display: none; }
+  .mfa-step { flex: 0 0 auto; }
+  .mfa-step-divider { flex: 1; }
+}
+
+.otp-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.otp-box {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--ink-primary);
+  outline: none;
+  transition: border-color 150ms var(--ease);
+}
+.otp-box:focus,
+.otp-box:focus-visible {
+  border-color: var(--ink-solid);
+  outline: none;
+}
+.otp-box:disabled { opacity: 0.5; }

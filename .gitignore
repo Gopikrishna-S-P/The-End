@@ -1,0 +1,16 @@
+target/
+node_modules/
+dist/
+.env
+*.log
+*.zip
+*.tar.gz
+*.dump
+db-dump/
+dump.rdb
+.claude/
+server/reports/
+server/uploads/
+mobile/build_output.txt
+mobile/modules/*/android/build/
+mobile/modules/*/android/.cxx/

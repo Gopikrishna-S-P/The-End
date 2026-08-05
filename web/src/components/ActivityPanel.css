@@ -1,0 +1,265 @@
+/* ── ActivityPanel — recent-actions timeline modal ────────────────────────── */
+
+.app-activity-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--shadow-overlay-scrim);
+  animation: app-activity-fade var(--dur-base) var(--ease-out) both;
+}
+@keyframes app-activity-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.app-activity-panel {
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: app-activity-rise var(--dur-slow) var(--ease-out) both;
+}
+@keyframes app-activity-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.app-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.app-activity-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.app-activity-title svg { color: var(--text-secondary); }
+.app-activity-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+.app-activity-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.app-activity-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.app-activity-clear:hover {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+.app-activity-close {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.app-activity-close:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.app-activity-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.app-activity-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.app-activity-body::-webkit-scrollbar { width: 6px; }
+.app-activity-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.app-activity-empty {
+  text-align: center;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.app-activity-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.app-activity-empty-title {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.app-activity-empty-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* ── Timeline list ───────────────────────────────────────────────────────── */
+.app-activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-activity-item {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  position: relative;
+  padding: 4px 0;
+}
+
+.app-activity-rail {
+  position: relative;
+  flex-shrink: 0;
+  width: 14px;
+  display: flex;
+  justify-content: center;
+}
+.app-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  box-shadow: 0 0 0 3px var(--bg-canvas);
+  margin-top: 9px;
+  z-index: 1;
+}
+.app-activity-line {
+  position: absolute;
+  top: 16px;
+  bottom: -4px;
+  left: 50%;
+  width: 1px;
+  background: var(--border);
+  transform: translateX(-50%);
+}
+
+.app-activity-row {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: default;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.app-activity-row:disabled { cursor: default; }
+.app-activity-item.is-clickable .app-activity-row { cursor: pointer; }
+.app-activity-item.is-clickable .app-activity-row:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border);
+}
+.app-activity-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.app-activity-row-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.app-activity-row-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-activity-row-detail {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+.app-activity-row-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-feature-settings: 'tnum';
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-activity-backdrop,
+  .app-activity-panel { animation: none; }
+}

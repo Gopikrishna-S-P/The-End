@@ -1,0 +1,197 @@
+/* ── PTP drawer/modal styles — shared by Ptp, Restructure Proposal and
+   Reconciliation detail drawers and their update/create modals ──────────── */
+
+.ptp-drawer-title-col {
+  min-width: 0;
+  flex: 1;
+}
+.ptp-drawer-title {
+  font-family: var(--ds-font-body);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.ptp-drawer-sub-meta {
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+.ptp-drawer-sub {
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+  margin-top: 2px;
+}
+
+.ptp-drawer-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+/* ── Drawer stat grid ────────────────────────────────────────────────────── */
+
+.ptp-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.ptp-stat {
+  padding: 12px 14px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+}
+.ptp-stat.is-accent {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+.ptp-stat.is-error {
+  background: var(--error-subtle);
+  border-color: color-mix(in srgb, var(--error) 25%, transparent);
+}
+
+.ptp-stat-label {
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 4px;
+}
+.ptp-stat.is-error .ptp-stat-label { color: var(--error); }
+
+.ptp-stat-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--ink-primary);
+}
+.ptp-stat-value.is-mono {
+  font-family: var(--ds-font-num);
+  font-size: 16px;
+  font-weight: 600;
+  font-feature-settings: 'tnum','zero';
+}
+.ptp-stat-value.is-text {
+  font-family: var(--ds-font-body);
+  font-size: 14px;
+  font-weight: 600;
+}
+.ptp-stat.is-accent .ptp-stat-value { color: var(--ink-solid); }
+.ptp-stat.is-error  .ptp-stat-value { color: var(--error); }
+
+/* ── Drawer group ────────────────────────────────────────────────────────── */
+
+.ptp-drawer-group + .ptp-drawer-group {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.ptp-drawer-group-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ds-font-label);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 8px;
+}
+.ptp-drawer-group-label > svg { color: var(--ink-tertiary); }
+
+.ptp-drawer-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Drawer text helpers ─────────────────────────────────────────────────── */
+
+.ptp-mono-bold {
+  font-family: var(--ds-font-num);
+  font-weight: 600;
+  font-feature-settings: 'tnum','zero';
+}
+.ptp-collected-text { color: var(--ink-solid); }
+.ptp-error-text     { color: var(--error); }
+
+.ptp-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+}
+.ptp-no-history {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Status history ──────────────────────────────────────────────────────── */
+
+.ptp-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ptp-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.ptp-history-pill {
+  font-size: 10px;
+  padding: 2px 7px;
+}
+.ptp-history-arrow { color: var(--ink-tertiary); }
+.ptp-history-time {
+  color: var(--ink-tertiary);
+  margin-left: auto;
+  font-family: var(--ds-font-num);
+  font-size: 11px;
+}
+
+/* ── Update modal ────────────────────────────────────────────────────────── */
+
+.ptp-modal-summary {
+  padding: 12px 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--ds-radius);
+  margin-bottom: 16px;
+}
+
+.ptp-modal-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ptp-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--ds-radius);
+  background: color-mix(in srgb, var(--error) 8%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--error) 30%, var(--border));
+  color: var(--error);
+  font-size: 12.5px;
+  line-height: 1.4;
+  margin-top: 12px;
+}

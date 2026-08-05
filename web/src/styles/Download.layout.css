@@ -1,0 +1,535 @@
+/* ── DownloadPage — Zapier-matched design ── */
+
+.download-page {
+  min-height: 100vh;
+  background: #ffffff;
+  color: var(--ink-primary);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  flex-direction: column;
+}
+
+.download-page *,
+.download-page *::before,
+.download-page *::after {
+  box-sizing: border-box;
+}
+
+/* ── Navbar ── */
+.download-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 48px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.download-nav-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  text-decoration: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  transition: color 150ms var(--ease), background 150ms var(--ease);
+  font-family: var(--sans);
+}
+.download-nav-back:hover {
+  color: var(--ink-primary);
+  background: var(--bg-subtle);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────
+   Same dot grid as the landing hero (28px pitch, #D1D5DB), fading out at the
+   bottom so it dissolves into the white page rather than stopping on an edge. */
+.download-header {
+  text-align: center;
+  padding: 96px 24px 64px;
+  opacity: 0;
+  animation: dl-fadeUp 500ms var(--ease) 0ms forwards;
+  position: relative;
+  background-color: #ffffff;
+  /* dot-grid effect temporarily disabled
+  background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+  background-size: 28px 28px;
+  */
+}
+
+.download-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, #ffffff);
+  pointer-events: none;
+}
+
+/* Keep the copy above the fade overlay. */
+.download-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.download-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-solid);
+  margin-bottom: 20px;
+  font-family: var(--sans);
+}
+
+.download-title {
+  font-family: var(--sans);
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+  color: var(--ink-primary);
+  margin-bottom: 16px;
+}
+.download-title em {
+  font-style: italic;
+  color: var(--ink-solid);
+}
+
+.download-subtitle {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-secondary);
+  max-width: 480px;
+  margin: 0 auto;
+  font-weight: 400;
+}
+
+/* ── Stats strip ── */
+.download-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 760px;
+  margin: 0 auto 80px;
+  padding: 32px 24px;
+  border-top: 1px solid #E8ECF0;
+  border-bottom: 1px solid #E8ECF0;
+  opacity: 0;
+  animation: dl-fadeUp 500ms var(--ease) 80ms forwards;
+}
+.download-stat {
+  flex: 1;
+  min-width: 140px;
+  padding: 0 28px;
+  position: relative;
+  text-align: center;
+}
+.download-stat + .download-stat::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 10%;
+  height: 80%; width: 1px;
+  background: #E8ECF0;
+}
+.download-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 4px;
+  font-family: var(--sans);
+}
+.download-stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+}
+
+/* ── Features section ── */
+.download-features {
+  background: #E3EDE6;
+  border-top: 1px solid #E8ECF0;
+  border-bottom: 1px solid #E8ECF0;
+  padding: 80px 48px;
+}
+.download-section-head {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.download-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-solid);
+  margin-bottom: 10px;
+  font-family: var(--sans);
+}
+.download-section-title {
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--ink-primary);
+  font-family: var(--sans);
+}
+.download-fgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.download-fgrid-card {
+  background: #EBF2EC;
+  border: 1px solid #C4D4C9;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.03);
+  transition: transform 200ms var(--ease), box-shadow 200ms var(--ease), border-color 200ms var(--ease), background 200ms var(--ease);
+  will-change: transform;
+}
+.download-fgrid-card:hover {
+  transform: scale(1.025);
+  background: #E4EDE6;
+  border-color: #A6B8AC;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07), 0 12px 32px rgba(0,0,0,.06);
+}
+.download-fgrid-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: #EDF7F2;
+  border: 1px solid #C8E6D4;
+  color: #0AA550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.download-fgrid-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-primary);
+  font-family: var(--sans);
+}
+.download-fgrid-desc {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ink-secondary);
+}
+
+/* ── Download + desktop side by side ── */
+.download-get {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── FAQ section ── */
+.download-faq-section {
+  background: #FFFFFF;
+  border-top: 1px solid #E8ECF0;
+  border-bottom: 1px solid #E8ECF0;
+  padding: 80px 48px;
+}
+.download-faq-list {
+  max-width: 640px;
+  margin: 0 auto;
+  border: 1px solid #E8ECF0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.04);
+}
+.dl-faq-item {
+  border-bottom: 1px solid var(--border);
+}
+.dl-faq-item:last-child { border-bottom: none; }
+.dl-faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  text-align: left;
+  font-family: var(--sans);
+  transition: color 160ms;
+}
+.dl-faq-q:hover { color: var(--ink-solid); }
+.dl-faq-item.is-open .dl-faq-q { color: var(--ink-solid); }
+.dl-faq-chevron {
+  flex-shrink: 0;
+  color: var(--ink-tertiary);
+  transition: transform 260ms var(--ease);
+}
+.dl-faq-item.is-open .dl-faq-chevron { transform: rotate(180deg); }
+.dl-faq-a-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms var(--ease);
+}
+.dl-faq-item.is-open .dl-faq-a-wrap { grid-template-rows: 1fr; }
+.dl-faq-a-inner { overflow: hidden; }
+.dl-faq-a {
+  padding: 0 24px 18px;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+}
+
+/* ── Cards (unused wrapper — kept for BC) ── */
+.download-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 24px 24px;
+}
+
+.download-card {
+  background: #ffffff;
+  border: 1px solid #E8ECF0;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.04);
+  transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+.download-card:hover {
+  border-color: #C8D8C8;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07), 0 8px 24px rgba(0,0,0,.09);
+}
+
+.download-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.download-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #EDF7F2;
+  border: 1px solid #C8E6D4;
+  color: #0AA550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.download-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-family: var(--sans);
+}
+.download-badge--green { color: var(--ink-solid); }
+
+.download-card-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  font-family: var(--sans);
+}
+
+.download-card-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-secondary);
+  margin-bottom: 24px;
+}
+
+/* ── Steps ── */
+.download-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+  flex: 1;
+}
+
+.download-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--ink-secondary);
+  line-height: 1.55;
+}
+
+.download-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #EDF7F2;
+  border: 1px solid #C8E6D4;
+  color: #0AA550;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-family: var(--sans);
+}
+
+/* ── Card footer ── */
+.download-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.download-note {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  font-family: var(--sans);
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 150ms var(--ease), transform 100ms var(--ease);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+.download-btn:hover {
+  background: var(--ink-solid-hover);
+  transform: translateY(-1px);
+}
+.download-btn:active { transform: translateY(0); }
+
+/* ── Desktop callout ── */
+.download-desktop-callout {
+  background: #ffffff;
+  border: 1px solid #E8ECF0;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.download-desktop-callout-icon {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 10px;
+  background: #EDF7F2;
+  border: 1px solid #C8E6D4;
+  display: grid;
+  place-items: center;
+  color: #0AA550;
+}
+.download-desktop-callout-text {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-secondary);
+  font-family: var(--sans);
+  flex: 1;
+}
+.download-desktop-callout-text strong {
+  color: var(--ink-primary);
+  font-weight: 700;
+  display: block;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.download-desktop-callout-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-solid);
+  text-decoration: none;
+  transition: color 150ms var(--ease);
+  font-family: var(--sans);
+  margin-top: auto;
+}
+.download-desktop-callout-link:hover { color: var(--ink-solid-hover); }
+
+/* ── Animation ── */
+@keyframes dl-fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .download-fgrid { grid-template-columns: repeat(2, 1fr); }
+  .download-get   { grid-template-columns: 1fr; max-width: 520px; }
+}
+@media (max-width: 768px) {
+  .download-nav      { padding: 0 24px; }
+  .download-header   { padding: 72px 24px 48px; }
+  .download-features { padding: 64px 24px; }
+  .download-faq-section { padding: 64px 24px; }
+  .download-stats    { margin-bottom: 56px; }
+}
+@media (max-width: 560px) {
+  .download-fgrid { grid-template-columns: 1fr; }
+  .download-stats { flex-direction: column; gap: 24px; }
+  .download-stat  { padding: 0; }
+  .download-stat + .download-stat::before { display: none; }
+}
+@media (max-width: 480px) {
+  .download-title { font-size: 36px; }
+}

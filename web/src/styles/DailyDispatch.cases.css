@@ -1,0 +1,517 @@
+/* ── Case panel (right, flex 1) ──────────────────────────────────────────────── */
+
+/* Card head — 3-slot grid: tabs pinned left, calendar pinned right. */
+.dd-cases-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  overflow: visible;
+}
+
+.dd-cases-head-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  min-width: 0;
+}
+
+.dd-cases-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+  min-width: 0;
+}
+
+.dd-cases-head .dd-cp-search {
+  flex-shrink: 1;
+  min-width: 120px;
+}
+
+/* Tabs — pill segment style matching db-kpi-toggle */
+.dd-cp-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  flex-shrink: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.dd-cp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  height: auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 5px;
+  transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
+  white-space: nowrap;
+}
+
+.dd-cp-tab:hover { color: var(--text-primary); }
+
+.dd-cp-tab.is-active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.dd-cp-tab-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dd-cp-tab.is-active .dd-cp-tab-count {
+  color: var(--ink-solid);
+}
+
+/* Search — matches topbar search trigger style */
+.dd-cp-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  align-self: center;
+  margin-right: 0;
+  align-self: center;
+  padding: 0 10px 0 12px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-surface);
+  color: var(--ink-tertiary);
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+
+.dd-cp-search:hover { border-color: var(--border-strong); background: var(--bg-subtle); }
+
+.dd-cp-search:focus-within {
+  border-color: var(--border-strong);
+  background: var(--bg-surface);
+  box-shadow: none;
+}
+
+.dd-cp-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.dd-cp-search input:focus,
+.dd-cp-search input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.dd-cp-search input::placeholder { color: var(--ink-tertiary); }
+.dd-cp-search input:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.dd-cp-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--ink-tertiary);
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+
+.dd-cp-search-clear:hover { color: var(--ink-primary); }
+
+/* Selection count strip — action context */
+.dd-cp-selection-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 18px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-solid) 18%, transparent);
+  flex-shrink: 0;
+}
+
+.dd-cp-sel-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.dd-cp-sel-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ink-solid);
+  color: var(--text-on-solid);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dd-cp-sel-amount {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-solid);
+}
+
+.dd-cp-sel-clear {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 5px;
+  transition: color 120ms, background 120ms;
+}
+
+.dd-cp-sel-clear:hover {
+  color: var(--ink-primary);
+  background: var(--bg-subtle);
+}
+
+/* Scrollable case list — wrapper clips partial rows */
+.dd-cp-list-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.dd-cp-list {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 200ms;
+}
+
+.dd-cp-list:hover {
+  scrollbar-color: var(--border) transparent;
+}
+
+.dd-cp-list::-webkit-scrollbar {
+  width: 4px;
+}
+.dd-cp-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dd-cp-list::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background 200ms;
+}
+.dd-cp-list:hover::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+.dd-cp-list .dd-case-row,
+.dd-cp-list .dd-case-skel { flex-shrink: 0; }
+
+/* ── Case row ────────────────────────────────────────────────────────────────── */
+
+/* Case row */
+.dd-case-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  min-height: 50px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--bg-surface);
+  transition: background 100ms;
+}
+
+.dd-case-row:last-child { border-bottom: none; }
+
+.dd-case-row:not(.is-done):hover { background: var(--bg-hover); }
+
+/* Selected row — active tint + left rail */
+.dd-case-row.is-picked {
+  background: var(--bg-active);
+  box-shadow: inset 3px 0 0 var(--ink-solid);
+}
+
+.dd-case-row.is-done { cursor: default; }
+
+/* Custom checkbox — replaces native input for a polished, consistent control */
+.dd-case-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text-on-solid);
+  transition: background 120ms, border-color 120ms;
+}
+.dd-case-row:not(.is-done):hover .dd-case-check { border-color: var(--ink-solid); }
+.dd-case-check.is-checked {
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+}
+.dd-case-check.is-done {
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+  border-radius: 50%;
+}
+
+.dd-case-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dd-case-borrower {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta row: loan ref + DPD pill + product tag */
+.dd-case-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.dd-case-loan {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+/* DPD pill — severity-coloured */
+.dd-case-dpd {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.dd-case-dpd.is-neutral  { background: var(--bg-subtle); color: var(--ink-secondary); border: 1px solid var(--border); }
+.dd-case-dpd.is-warn     { background: var(--warning-subtle); color: var(--warning); border: 1px solid var(--warning-border); }
+.dd-case-dpd.is-high     { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger-border); }
+.dd-case-dpd.is-critical { background: var(--danger); color: var(--text-on-solid); border: 1px solid var(--danger); }
+
+/* Product / loan type tag */
+.dd-case-product {
+  font-family: var(--sans);
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dd-case-row.is-done .dd-case-borrower { color: var(--ink-secondary); }
+
+/* Right column: amount + undo stacked */
+.dd-case-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Labeled amount */
+.dd-case-amount-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.dd-case-amount {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum', 'zero';
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+.dd-case-amount-lbl {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dd-undo-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.dd-undo-btn:hover:not(:disabled) {
+  background: var(--error-subtle);
+  color: var(--error);
+}
+.dd-undo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Skeleton rows */
+.dd-case-skel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.dd-case-skel:last-child { border-bottom: none; }
+
+/* View-dispatched link at list bottom */
+.dd-cp-view-link {
+  display: block;
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--ink-tertiary);
+  text-decoration: none;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  transition: color 120ms, background 120ms;
+}
+
+.dd-cp-view-link:hover {
+  color: var(--ink-secondary);
+  background: var(--bg-subtle);
+}
+
+/* Empty state */
+.dd-cp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 24px;
+  text-align: center;
+  gap: 4px;
+  color: var(--ink-tertiary);
+  height: 100%;
+  min-height: 200px;
+  background: var(--bg-surface);
+}
+
+.dd-cp-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+.dd-cp-empty-icon.is-clear {
+  background: var(--success-subtle);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+
+.dd-cp-empty-title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  letter-spacing: -0.01em;
+}
+
+.dd-cp-empty-sub {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  max-width: 240px;
+  line-height: 1.6;
+  text-align: center;
+}
+
