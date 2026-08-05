@@ -221,9 +221,7 @@
    scoped under .db-root — targeted via their own ps-modal-* class instead. ── */
 
 .ps-modal-overlay {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .ps-modal {

@@ -236,9 +236,35 @@
   color: var(--text-primary);
 }
 
-.asb-root.is-collapsed .asb-nav-item {
+/* Collapsed: a true square chip (equal width/height), sized to whatever the
+   rail actually leaves available — width: 100% of the fixed-width <li>, with
+   aspect-ratio locking the height to match, rather than a guessed pixel value
+   (46px available, 44px assumed) that clips the moment the real render
+   doesn't match the guess. This is mathematically overflow-proof: the square
+   IS the available space, so it can never exceed it.
+
+   No bg, no border, no hover state, no active state — every listed selector
+   is pinned to the exact same blank appearance. It's still necessary to name
+   each state explicitly and override it: the base rules further down (row
+   hover → --bg-hover, active → --brand-subtle) still match a collapsed item
+   by class, so without these overrides they'd repaint it regardless of
+   collapse. Only the icon glyph itself (rendered plain, see .asb-nav-icon
+   below) shows at all; the row is otherwise fully inert visually. */
+.asb-root.is-collapsed .asb-nav-item,
+.asb-root.is-collapsed .asb-nav-item:hover,
+.asb-root.is-collapsed .asb-nav-item.is-active,
+.asb-root.is-collapsed .asb-nav-item.is-active:hover {
   justify-content: center;
   padding: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  min-height: 0;
+  margin: 2px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transform: none;
 }
 
 /* Active — brand-subtle green fill, the one deliberate use of the accent */
@@ -247,12 +273,6 @@
   background: var(--brand-subtle);
   color: var(--ink-solid-hover, var(--brand));
   font-weight: 600;
-  box-shadow: none;
-}
-
-/* Collapsed: left bar is invisible at icon center — use fill only */
-.asb-root.is-collapsed .asb-nav-item.is-active,
-.asb-root.is-collapsed .asb-nav-item.is-active:hover {
   box-shadow: none;
 }
 
@@ -275,6 +295,22 @@
   background: var(--bg-surface);
   box-shadow: var(--shadow-sm);
   color: var(--text-primary);
+}
+
+/* Collapsed: the icon renders as a plain glyph in every state — no chip
+   background, no shadow, no colour shift on hover or active (the base rules
+   further down set bg-surface+shadow on hover and brand green on active;
+   overridden back to nothing here, same reasoning as the row above). Size
+   stays fixed so nothing can bloom into a "bigger button" illusion either. */
+.asb-root.is-collapsed .asb-nav-item .asb-nav-icon,
+.asb-root.is-collapsed .asb-nav-item:hover .asb-nav-icon,
+.asb-root.is-collapsed .asb-nav-item.is-active .asb-nav-icon,
+.asb-root.is-collapsed .asb-nav-item.is-active:hover .asb-nav-icon {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
 }
 
 .asb-root .asb-nav-item.is-active .asb-nav-icon {

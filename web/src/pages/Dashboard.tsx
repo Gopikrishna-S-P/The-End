@@ -25,12 +25,23 @@ import type { FieldAgentSection } from '../types';
 import axiosInstance from '../api/axiosInstance';
 import {
   stagger, fadeUp, fadeIn, fmtINR, fmtNum, useCountUp,
-  KpiCard, Card, DonutChart, DonutCard, HBarList, BarChart, AttentionRow, AllClearRow, Skeleton,
+  KpiCard, Card, DonutCard, HBarList, BarChart, AttentionRow, AllClearRow, Skeleton,
   TrendChart, ProgressRing,
   type DonutSlice as ChartSlice,
 } from './DashboardShared';
 
 const FIELD_ROLES = new Set<DashboardRole>(['FO', 'CALLER']);
+
+// ── Chart palette ────────────────────────────────────────────────────────────
+// Tokens only; hexes and the reasoning behind the slot ORDER live in the
+// palette comment at the top of Dashboard.css. Same families and same rules as
+// PlatformDashboard.tsx, so the two surfaces read as one system:
+//   identity → C_SLOT_*   magnitude → the --dbq-* ramp
+//   "none"   → C_NONE     state     → C_DANGER / C_WARNING (reserved)
+const C_SLOT_1  = 'var(--dbc-1)'; // green (brand) — the lead series everywhere
+const C_SLOT_4  = 'var(--dbc-4)'; // amber
+const C_NONE    = 'var(--dbn-2)'; // no category yet: unassigned, pending, idle
+const C_DANGER  = 'var(--danger)';
 
 // ── Series helpers ──────────────────────────────────────────────────────────────
 
@@ -214,9 +225,11 @@ export default function Dashboard() {
   const momPct     = prevAmt > 0 ? (momDiff / prevAmt) * 100 : null;
 
   // ── Assignment + PTP fulfillment (real) ────────────────────────────────────────
+  // "Unassigned" is the absence of an assignment, not a second category, so it
+  // takes the neutral rather than a categorical slot of its own.
   const assignSlices: ChartSlice[] = [
-    { label: 'Assigned',   value: orgOverview?.assignedAllocations ?? 0,   color: 'var(--brand)' },
-    { label: 'Unassigned', value: orgOverview?.unassignedAllocations ?? 0, color: 'var(--brand-subtle)' },
+    { label: 'Assigned',   value: orgOverview?.assignedAllocations ?? 0,   color: C_SLOT_1 },
+    { label: 'Unassigned', value: orgOverview?.unassignedAllocations ?? 0, color: C_NONE },
   ];
 
   const ptpFulfilled = ptpSummary?.fulfilledPtpsThisMonth ?? 0;
@@ -228,9 +241,9 @@ export default function Dashboard() {
 
   // ── Field-agent donut ──────────────────────────────────────────────────────────
   const slices: ChartSlice[] = isFoView && agentStats ? [
-    { label: 'Completed',   value: agentStats.todayCompletedCases,   color: 'var(--db-green-1)' },
-    { label: 'Pending',     value: agentStats.todayPendingCases,     color: 'var(--db-gray-1)' },
-    { label: 'Rescheduled', value: agentStats.todayRescheduledCases, color: 'var(--db-gray-2)' },
+    { label: 'Completed',   value: agentStats.todayCompletedCases,   color: C_SLOT_1 },
+    { label: 'Pending',     value: agentStats.todayPendingCases,     color: C_NONE },
+    { label: 'Rescheduled', value: agentStats.todayRescheduledCases, color: C_SLOT_4 },
   ] : [];
   const hasChart = slices.some(s => s.value > 0);
 
@@ -382,7 +395,7 @@ export default function Dashboard() {
                   ) : (
                     <TrendChart
                       labels={sortedTrend.map(p => p.label)}
-                      primary={{ label: 'Collections', values: colAmts, color: 'var(--ink-solid)', area: true, fmt: fmtINR }}
+                      primary={{ label: 'Collections', values: colAmts, color: C_SLOT_1, area: true, fmt: fmtINR }}
                       heroTrend={momPct}
                       secondaryStat={{ label: 'Range total', value: fmtINR(ytdAnim) }}
                     />
@@ -422,11 +435,14 @@ export default function Dashboard() {
                 {/* PTP fulfillment ring */}
                 <Card className="db-span-4" title="PTP fulfillment">
                   <div className="db-ptp-ring-inner">
-                    <ProgressRing pct={ptpRate} subLabel="RATE" color="var(--brand)" trackColor="var(--db-gray-1)" />
+                    {/* No trackColor: the ring defaults to a lighter step of its
+                        own ramp, so the meter reads as one arc end to end. */}
+                    <ProgressRing pct={ptpRate} subLabel="RATE" color={C_SLOT_1} />
                     <div className="db-ptp-ring-stats">
-                      <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: 'var(--brand)' }} /><span className="db-ptp-stat-label">Fulfilled</span><span className="db-ptp-stat-val">{ptpFulfilled}</span></div>
-                      <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: 'var(--danger)' }} /><span className="db-ptp-stat-label">Broken</span><span className="db-ptp-stat-val">{ptpBroken}</span></div>
-                      <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: 'var(--ink-tertiary)' }} /><span className="db-ptp-stat-label">Active</span><span className="db-ptp-stat-val">{ptpSummary?.activePtps ?? 0}</span></div>
+                      <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: C_SLOT_1 }} /><span className="db-ptp-stat-label">Fulfilled</span><span className="db-ptp-stat-val">{ptpFulfilled}</span></div>
+                      {/* "Broken" is a genuinely bad state, so it keeps the reserved status colour. */}
+                      <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: C_DANGER }} /><span className="db-ptp-stat-label">Broken</span><span className="db-ptp-stat-val">{ptpBroken}</span></div>
+                      <div className="db-ptp-stat"><span className="db-ptp-stat-dot" style={{ background: C_NONE }} /><span className="db-ptp-stat-label">Active</span><span className="db-ptp-stat-val">{ptpSummary?.activePtps ?? 0}</span></div>
                     </div>
                   </div>
                 </Card>
@@ -436,7 +452,7 @@ export default function Dashboard() {
                   <BarChart data={[
                     { year: 0, month: 0, label: 'Last', totalAmount: collectionsSection?.collectionVolumeLastMonth ?? 0, totalCount: 0 },
                     { year: 0, month: 1, label: 'This', totalAmount: collectionsSection?.collectionVolumeThisMonth ?? orgOverview?.collectionVolumeThisMonth ?? 0, totalCount: 0 }
-                  ]} height={120} />
+                  ]} height={150} />
                   {growthRate != null && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10, fontSize: 11.5, fontWeight: 600,
                       color: growthRate > 0 ? 'var(--success, #1D7A3E)' : growthRate < 0 ? 'var(--danger, #B42318)' : 'var(--ink-tertiary)' }}>
@@ -517,24 +533,12 @@ export default function Dashboard() {
               <div className="db-grid">
                 <Card className="db-span-4" title="Call progress">
                   {callerToday && callerToday.casesAssignedToday > 0 ? (
-                    <div className="db-donut-card">
-                      <DonutChart size={132} centerLabel="CALLS" slices={[
-                        { label: 'Completed', value: callerToday.callsCompletedToday, color: 'var(--brand)' },
-                        { label: 'Pending',   value: callerToday.callsPendingToday,   color: 'var(--danger)' },
-                      ]} />
-                      <div className="db-legend">
-                        {[
-                          { label: 'Completed', color: 'var(--brand)',  v: callerToday.callsCompletedToday },
-                          { label: 'Pending',   color: 'var(--danger)', v: callerToday.callsPendingToday },
-                        ].map(s => (
-                          <div key={s.label} className="db-legend-row">
-                            <span className="db-legend-dot" style={{ background: s.color }} />
-                            <span className="db-legend-label">{s.label}</span>
-                            <span className="db-legend-val">{s.v}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    /* Pending calls are simply not-yet-done, not a failure, so
+                       they take the neutral instead of the danger token. */
+                    <DonutCard centerLabel="CALLS" slices={[
+                      { label: 'Completed', value: callerToday.callsCompletedToday, color: C_SLOT_1 },
+                      { label: 'Pending',   value: callerToday.callsPendingToday,   color: C_NONE },
+                    ]} />
                   ) : (
                     <div className="db-trend-empty"><span className="db-trend-empty-msg">No cases assigned yet today</span></div>
                   )}
@@ -581,18 +585,7 @@ export default function Dashboard() {
               <div className="db-grid">
                 <Card className="db-span-4" title="Today's progress">
                   {hasChart ? (
-                    <div className="db-donut-card">
-                      <DonutChart slices={slices} size={132} centerLabel="VISITS" />
-                      <div className="db-legend">
-                        {slices.map(s => (
-                          <div key={s.label} className="db-legend-row">
-                            <span className="db-legend-dot" style={{ background: s.color }} />
-                            <span className="db-legend-label">{s.label}</span>
-                            <span className="db-legend-val">{s.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <DonutCard slices={slices} centerLabel="VISITS" />
                   ) : (
                     <div className="db-trend-empty"><span className="db-trend-empty-msg">No visits dispatched yet today</span></div>
                   )}

@@ -13,7 +13,7 @@ export function LogoutConfirmDialog({ open, isLoggingOut, onCancel, onConfirm }:
     <AnimatePresence>
       {open && (
         <motion.div className="ds-modal-overlay" onClick={onCancel}
-          style={{ background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+          style={{ background: 'rgba(255, 255, 255, 0.02)' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
           <motion.div className="ds-modal" onClick={e => e.stopPropagation()} 
             style={{ 

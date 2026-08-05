@@ -287,10 +287,16 @@ export default function AppSidebar({
         document.body
       )}
 
-      {tip && (
+      {/* Portaled to <body>: .asb-root sets `contain: paint` (for its own
+          overflow: hidden clipping), which makes it the containing block for
+          any `position: fixed` descendant too — so a tooltip left as a normal
+          child gets clipped the moment it pokes past the 64px collapsed rail
+          and never renders. Portaling escapes that containment entirely. */}
+      {tip && createPortal(
         <div className="asb-tip" role="tooltip" style={{ left: `${tip.x}px`, top: `${tip.y}px` }}>
           {tip.label}
-        </div>
+        </div>,
+        document.body
       )}
     </aside>
   );

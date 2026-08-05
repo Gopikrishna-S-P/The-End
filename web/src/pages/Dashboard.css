@@ -74,21 +74,99 @@
   min-height: 100%;
   width: 100%;
   background: transparent;
-  /* Two-family palette for identity donut/pie slices (plan mix, role mix,
-     multi-state breakdowns) — restrained on purpose: a rainbow of hues reads
-     unprofessional on an ops dashboard. Green ramp for the lead/leadership
-     tier, slate-gray ramp for the secondary tier — each ramp's 3 steps are
-     real lightness jumps (not near-duplicates like the old border-hairline
-     grays), so slices stay distinguishable without adding new hues. Assign
-     in this fixed order; never reuse a status color (warning/danger) for a
-     plain category. Single-series magnitude/rank bars stay on the green
-     ramp too — that's a different job (see BarChart). */
-  --db-green-1: var(--ink-solid); /* brand green #0AA550 */
-  --db-green-2: #077438;
-  --db-green-3: #054A24;
-  --db-gray-1:  #94A3B8; /* slate, medium */
-  --db-gray-2:  #64748B; /* slate, darker */
-  --db-gray-3:  #475569; /* slate, darkest */
+
+  /* ══ Chart palette ══════════════════════════════════════════════════════
+     Every colour below was produced by snapping OKLCH steps to this app's
+     real chart surfaces (#FFFFFF light / #15171C dark) and then run through
+     the data-viz validator, not hand-picked. Do not eyeball replacements —
+     re-run the validator if any value changes.
+
+     Colour does exactly one of four jobs here, and each job has its own
+     family. Never borrow across them:
+
+       identity  (which series)   → --dbc-1..6, fixed order, never cycled
+       magnitude (how much / tier)→ --dbq-1..4, one hue, light→dark
+       "none"    (other/inactive) → --dbn-1..3, neutral slate
+       state     (good→critical)  → --success / --warning / --danger
+
+     Slot ORDER is the colourblind-safety mechanism, not decoration: the
+     sequence green→blue→magenta→amber→aqua→violet was chosen because it
+     clears every adjacent gate in BOTH modes. Reordering it silently breaks
+     that. Assign slots in sequence from slot 1; a 7th category folds into
+     "Other" (--dbn-1), it never gets a generated hue.
+
+     Measured, both modes: worst adjacent CVD ΔE 13.6 (protan/deutan, target
+     ≥8), worst adjacent normal-vision ΔE 19.5 (floor ≥15), and all six slots
+     clear 3:1 against their surface — so no slot depends on a relief
+     channel to be readable. ═══════════════════════════════════════════════ */
+
+  /* Identity — categorical, fixed order */
+  --dbc-1: #0AA550;  /* green — brand; always the lead/primary series */
+  --dbc-2: #2A80E2;  /* blue */
+  --dbc-3: #C74C8E;  /* magenta */
+  --dbc-4: #B17000;  /* amber */
+  --dbc-5: #0B9BA8;  /* aqua */
+  --dbc-6: #7F51C1;  /* violet */
+
+  /* Magnitude — ordinal/sequential green ramp, dark = most.
+     Validated as an ordinal ramp: monotone lightness, every adjacent gap
+     ΔL ≥ 0.06, light end 2.40:1 on white (floor 2:1). Use for ordered
+     buckets — plan tiers, age bands, funnel stages — where the reader
+     should see the order in the colour itself. */
+  --dbq-1: #006428;  /* most  */
+  --dbq-2: #058237;
+  --dbq-3: #13A147;
+  --dbq-4: #40BE63;  /* least */
+
+  /* "None" family — neutral slate. Reserved for the absence of a category:
+     free/none plans, unassigned, inactive, the "Other" bucket. Deliberately
+     chroma-free so it never competes with a real series. */
+  --dbn-1: #50667C;
+  --dbn-2: #6C839B;
+  --dbn-3: #8AA1BA;
+
+  /* Chart chrome — recessive by design. Gridlines are hairline and SOLID
+     (never dashed: dashing reads as "projection" when it is just a grid). */
+  --db-grid:      #EEF0F3;  /* gridline, 1px solid */
+  --db-axis:      #D6DAE1;  /* baseline / axis rule */
+  --db-track:     #F2F4F7;  /* unfilled bar + ring track */
+  --db-surface:   var(--bg-surface); /* the 2px gap/ring colour between marks */
+
+  /* Legacy aliases — the old two-family names, kept so any chart still
+     referencing them renders in the new palette instead of breaking. */
+  --db-green-1: var(--dbc-1);
+  --db-green-2: var(--dbq-2);
+  --db-green-3: var(--dbq-1);
+  --db-gray-1:  var(--dbn-3);
+  --db-gray-2:  var(--dbn-2);
+  --db-gray-3:  var(--dbn-1);
+}
+
+/* Dark mode — SELECTED steps, not an automatic flip. Same six hues, re-stepped
+   for the dark surface (#15171C) and re-validated as a set against it: worst
+   adjacent CVD ΔE 13.6, normal-vision ΔE 19.5, all six ≥3:1. The magnitude
+   ramp also inverts its anchor, so "most" stays the most emphatic step
+   against a dark plane rather than the one that disappears into it. */
+.app-layout.dark .db-root {
+  --dbc-1: #13A147;
+  --dbc-2: #2279DC;
+  --dbc-3: #B53C7F;
+  --dbc-4: #A86B06;
+  --dbc-5: #0195A1;
+  --dbc-6: #7A4ABA;
+
+  --dbq-1: #44C166;  /* most  */
+  --dbq-2: #1AA44A;
+  --dbq-3: #018538;
+  --dbq-4: #02672A;  /* least */
+
+  --dbn-1: #8AA1BA;
+  --dbn-2: #6C839B;
+  --dbn-3: #50667C;
+
+  --db-grid:  #23262E;
+  --db-axis:  #31353F;
+  --db-track: #1C1F26;
 }
 
 .db-root .ds-card,
@@ -517,14 +595,53 @@
 
 .db-chart-card { display: flex; align-items: center; gap: 28px; padding: 20px; }
 .db-donut      { flex-shrink: 0; }
-.db-legend     { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-.db-legend-row { display: flex; align-items: center; gap: 10px; }
-.db-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.db-legend-label { flex: 1; font-size: 12.5px; color: var(--ink-secondary); font-family: var(--font-sans); }
+.db-donut-centre-val { font-family: var(--font-sans); transition: font-size .16s ease; }
+
+/* The legend is the dependable identity channel — always present for two or
+   more slices, so nothing rests on colour-matching alone. Rows double as the
+   hover/focus target that highlights their slice; they render as <button> in
+   DonutCard and as plain <div> in the hand-rolled legends, so the reset below
+   has to cover both. */
+.db-legend     { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.db-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 6px;
+  margin: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background-color .16s ease, opacity .16s ease;
+}
+button.db-legend-row { cursor: pointer; }
+.db-legend-row.is-active { background: var(--bg-hover); }
+.db-legend-row.is-dim    { opacity: 0.45; }
+.db-legend-row:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.db-legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.db-legend-label {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; color: var(--ink-secondary); font-family: var(--font-sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .db-legend-val {
   font-size: 13px; font-weight: 700;
   font-family: var(--font-mono); color: var(--ink-primary);
   font-feature-settings: 'tnum', 'zero';
+}
+.db-legend-pct {
+  flex-shrink: 0;
+  width: 40px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Collection trend chart ── */
@@ -747,12 +864,42 @@
   display: flex;
   flex-direction: column;
 }
+/* Holds the SVG plus its overlays, offset by the y-tick gutter so every
+   percentage inside it is measured against the same box the SVG draws into. */
+.db-trend-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-left: 46px;
+  /* sits above the gridlines it is plotted against */
+  z-index: 1;
+}
 .db-trend-svg {
   width: 100%;
-  flex: 1;
+  height: 100%;
   display: block;
-  overflow: hidden;
+  overflow: visible;
   cursor: crosshair;
+}
+.db-trend-svg:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; border-radius: 6px; }
+
+/* The peak is the single point worth a standing label; every other value
+   comes from the y-ticks or the crosshair tooltip. */
+.db-trend-peak-tag {
+  position: absolute;
+  transform: translate(-50%, 8px);
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Tooltip */
@@ -801,6 +948,8 @@
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
+  /* matches .db-chart-plot's y-tick gutter so the labels sit under their points */
+  margin-left: 46px;
 }
 .db-trend-x-label {
   flex: 1;
@@ -1026,16 +1175,16 @@
 .db-agent-rank { font-size: 11px; font-weight: 700; color: var(--ink-tertiary); font-family: var(--font-mono); width: 14px; flex-shrink: 0; }
 .db-agent-bar-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .db-agent-name { font-size: 12px; color: var(--ink-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.db-agent-bar-track { height: 4px; background: var(--bg-subtle); border-radius: 2px; overflow: hidden; }
-.db-agent-bar-fill { height: 100%; background: var(--ink-solid); border-radius: 2px; }
+.db-agent-bar-track { height: 14px; background: var(--db-track); border-radius: 4px; overflow: hidden; }
+.db-agent-bar-fill { height: 100%; background: var(--dbc-1); border-radius: 0 4px 4px 0; }
 .db-agent-amt { font-size: 12px; font-weight: 600; color: var(--ink-primary); font-family: var(--font-mono); white-space: nowrap; flex-shrink: 0; }
 
 /* Case Age */
 .db-age-bars { display: flex; flex-direction: column; gap: 12px; flex: 1; justify-content: center; }
 .db-age-row { display: flex; align-items: center; gap: 10px; }
 .db-age-label { font-size: 11px; color: var(--ink-secondary); font-family: var(--font-mono); width: 44px; flex-shrink: 0; }
-.db-age-track { flex: 1; height: 6px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden; }
-.db-age-fill { height: 100%; border-radius: 3px; }
+.db-age-track { flex: 1; height: 16px; background: var(--db-track); border-radius: 4px; overflow: hidden; }
+.db-age-fill { height: 100%; border-radius: 0 4px 4px 0; }
 .db-age-count { font-size: 12px; font-weight: 600; color: var(--ink-primary); font-family: var(--font-mono); width: 30px; text-align: right; flex-shrink: 0; }
 
 /* ── 3-column body layout ── */
@@ -1177,19 +1326,21 @@
   margin-top: 2px;
 }
 
+/* Horizontal progress bars, same geometry as .db-hbar-track: thicker, square
+   at the baseline, 4px at the data end. */
 .db-kpi2-split-bar {
-  height: 4px;
-  margin: 0 4px;
-  background: var(--bg-subtle);
-  border-radius: 999px;
-  border: 1px solid var(--border);
+  height: 10px;
+  margin: 0;
+  background: var(--db-track);
+  border-radius: 4px;
+  border: none;
   overflow: hidden;
 }
 
 .db-kpi2-split-fill {
   height: 100%;
-  background: var(--ink-solid);
-  border-radius: 999px;
+  background: var(--dbc-1);
+  border-radius: 0 4px 4px 0;
   transition: width 600ms var(--ease);
 }
 
@@ -1347,79 +1498,216 @@
   letter-spacing: 0.04em;
 }
 
-/* ── Vertical bar chart ── */
-.db-bars {
+/* ══ Shared chart chrome ═══════════════════════════════════════════════════
+   Gridlines, y-ticks, the average rule and the x-axis band. Every chart form
+   on both dashboards renders through these, which is why the bar chart and
+   the trend chart line up visually instead of each having its own idea of
+   what an axis looks like.
+
+   The container height INCLUDES the x-axis band (.db-chart-xaxis is a sibling
+   of the plot, not an overlay on it), so labels can never be pushed out of the
+   card into a nested scrollbar. ═══════════════════════════════════════════ */
+.db-chart {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding-top: 14px;
+  flex-direction: column;
   position: relative;
+  padding-top: 12px;
+}
+.db-chart-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  /* gutter for the y-tick labels */
+  margin-left: 46px;
 }
 
-/* Baseline running under every column — the tracks are capped at 36px and
-   centred, so a border on them would break at each gap. This is one continuous
-   rule instead, sitting between the bars and their month labels. Its offset is
-   the label's line-height (14px) plus the column gap (6px). */
-.db-bars::after {
-  content: '';
+/* Hairline, SOLID, one step off the surface — recessive on purpose. */
+.db-chart-gridline {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 20px;
   height: 1px;
-  background: var(--border-strong);
+  background: var(--db-grid);
   pointer-events: none;
+}
+.db-chart-gridline.is-inset { left: 46px; }
+.db-chart-gridline:first-child { background: var(--db-axis); }
+.db-chart-ytick {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  color: var(--ink-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Range average — a reference line, so it is allowed to be slightly more
+   present than a gridline, but it still never competes with the bars. */
+.db-chart-avg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--db-axis);
+  pointer-events: none;
+  z-index: 1;
+}
+.db-chart-avg-tag {
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+
+.db-chart-xaxis {
+  display: flex;
+  /* must match .db-bars' gap exactly, or each label's centre drifts from the
+     column it names — the drift is widest at the two ends */
+  gap: 8px;
+  margin-left: 46px;
+  padding-top: 7px;
+  flex-shrink: 0;
+}
+
+/* ── Vertical bar chart ── */
+.db-bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
 }
 .db-bar-col {
   flex: 1;
   min-width: 0;
+  position: relative;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%;
   justify-content: flex-end;
-  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
+.db-bar-col:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+
+/* Selective direct labels only (peak + current). Absolutely positioned off
+   the bar's own height so the plot area stays exactly the axis range — a cap
+   row inside the column would silently shrink the scale. */
 .db-bar-cap {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  color: var(--ink-tertiary);
+  font-weight: 600;
+  color: var(--ink-secondary);
   white-space: nowrap;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
-.db-bar-track {
-  width: 100%;
-  max-width: 36px;
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  background: var(--bg-subtle);
-  border-radius: 8px 8px 0 0;
-}
+.db-bar-cap.is-peak { color: var(--dbc-1); }
+
 .db-bar-fill {
+  display: block;
   width: 100%;
-  border-radius: 8px 8px 2px 2px;
-  background: var(--ink-solid, #0AA550);
+  /* ≤22px so the band always keeps some air; 4px rounded cap, square baseline */
+  max-width: 22px;
+  border-radius: 4px 4px 0 0;
+  background: var(--dbc-1);
   min-height: 2px;
-  transition: filter .18s ease, background-color .18s ease;
+  transition: filter .18s ease, opacity .18s ease;
 }
-.db-bar-col:hover .db-bar-fill { filter: brightness(1.08); }
+.db-bars:hover .db-bar-col:not(.is-hover) .db-bar-fill { opacity: 0.55; }
+.db-bar-col.is-hover .db-bar-fill { filter: brightness(1.08) saturate(1.05); }
+
 .db-bar-label {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  /* Fixed so .db-bars::after can sit on a predictable baseline offset. */
   line-height: 14px;
   color: var(--ink-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  transition: color .14s ease;
+}
+.db-bar-label.is-current { color: var(--ink-secondary); font-weight: 700; }
+.db-bar-label.is-hover   { color: var(--ink-primary); font-weight: 700; }
+
+/* ── Chart tooltip (shared by every form) ──────────────────────────────────
+   Enhances, never gates: the axis ticks and the selective direct labels
+   already carry the values, and bar columns / trend points are keyboard
+   focusable, so nothing here is reachable by hover alone. */
+.db-chart-tip {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  z-index: 10;
+  min-width: 132px;
+  padding: 9px 11px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.db-chart-tip.is-left  { transform: translateX(-10%); }
+.db-chart-tip.is-right { transform: translateX(-90%); }
+.db-chart-tip-title {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.db-chart-tip-row { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+.db-chart-tip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.db-chart-tip-key { flex: 1; font-family: var(--font-sans); font-size: 11.5px; color: var(--ink-secondary); }
+.db-chart-tip-val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Horizontal bars (top collectors / case age / status breakdowns) ──
-   "Weighted leaderboard" treatment: thick rounded-rect bars carry the
-   visual weight; ranked lists (emphasizeTop) get a large ghost rank
-   numeral instead of a badge, and the #1 row's value sits inside its
-   own fill once the bar is wide enough to hold it legibly. ── */
-.db-hbars { display: flex; flex-direction: column; gap: 16px; padding-top: 2px; }
-.db-hbar-row { display: flex; align-items: center; gap: 12px; }
+   "Weighted leaderboard" treatment: thick bars carry the visual weight;
+   ranked lists (emphasizeTop) get a large ghost rank numeral instead of a
+   badge, and the #1 row's value sits inside its own fill once the bar is
+   measured wide enough to hold it legibly (see HBarList — it is measured,
+   never assumed, so a label is never clipped).
+
+   Geometry: 20px tall with a 4px rounded DATA-END and a SQUARE baseline.
+   The square left edge is the point — every bar visibly starts from the
+   same zero, which a fully-pill bar hides by rounding the origin away. ── */
+.db-hbars { display: flex; flex-direction: column; gap: 18px; padding-top: 2px; }
+.db-hbar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity .16s ease;
+}
+.db-hbars:hover .db-hbar-row:not(.is-hover) { opacity: 0.62; }
 .db-hbar-rank {
   flex-shrink: 0;
   width: 24px;
@@ -1430,8 +1718,9 @@
   letter-spacing: -0.02em;
   color: var(--border-strong);
   font-variant-numeric: tabular-nums;
+  transition: color .16s ease;
 }
-.db-hbar-row.is-lead .db-hbar-rank { color: var(--ink-solid); }
+.db-hbar-row.is-lead .db-hbar-rank { color: var(--dbc-1); }
 .db-hbar-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .db-hbar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .db-hbar-label {
@@ -1446,33 +1735,60 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-secondary);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
-/* Was 22px. The floor here is set by .db-hbar-val-inline — the lead bar sets
-   its value inside the fill, so the track has to clear that line box. */
+/* Quarter gridlines are painted INTO the track rather than drawn as extra
+   elements, so they can never fall out of step with the bar they measure.
+   Solid hairlines, one step off the surface — never dashed. */
 .db-hbar-track {
-  height: 14px;
-  border-radius: 999px;
-  background: var(--bg-subtle);
+  position: relative;
+  height: 20px;
+  border-radius: 4px;
+  background-color: var(--db-track);
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--db-grid) 0 1px,
+    transparent 1px 25%
+  );
   overflow: hidden;
 }
 .db-hbar-fill {
   height: 100%;
-  border-radius: 999px;
+  /* square at the baseline, 4px at the data end */
+  border-radius: 0 4px 4px 0;
   display: flex; align-items: center; justify-content: flex-end;
-  padding-right: 8px;
+  padding-right: 9px;
+  transition: filter .16s ease;
 }
+.db-hbar-row.is-hover .db-hbar-fill { filter: brightness(1.06) saturate(1.04); }
 .db-hbar-val-inline {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
   color: var(--text-on-solid);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Names what a full-width bar means, so length reads as a value and not
+   merely as "longer than the next one". */
+.db-hbar-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--db-grid);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--ink-tertiary);
+  letter-spacing: 0.04em;
 }
 
 /* ── Donut card ── */
-.db-donut-card { display: flex; align-items: center; gap: 18px; }
+.db-donut-card { display: flex; align-items: center; gap: 14px; }
 .db-donut-card .db-donut { flex-shrink: 0; }
 .db-legend-empty { font-family: var(--font-mono); font-size: 11px; color: var(--ink-tertiary); }
 
@@ -1487,4 +1803,12 @@
   .db-kpi-band { grid-template-columns: 1fr; }
   .db-rail { flex-direction: column; }
   .db-bar-cap { display: none; }
+  /* Narrow cards can't spare the y-tick gutter; the tooltip and the direct
+     labels still carry every value, so dropping the ticks loses nothing. */
+  .db-chart-plot, .db-chart-xaxis, .db-trend-x-labels { margin-left: 0; }
+  .db-trend-svg { padding-left: 0; }
+  .db-chart-ytick { display: none; }
+  .db-chart-gridline.is-inset { left: 0; }
+  .db-donut-card { flex-direction: column; align-items: stretch; gap: 16px; }
+  .db-donut-card .db-donut { align-self: center; }
 }

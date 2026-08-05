@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { platformApi, type PlatformStats, type PlatformAnalytics } from '../api/platformApi';
 import {
-  stagger, fadeUp, fadeIn, fmtINR, fmtNum, useCountUp,
+  stagger, fadeUp, fadeIn, fmtINR, fmtNum, fmtPct, useCountUp,
   KpiCard, Card, DonutCard, HBarList, BarChart, AttentionRow, AllClearRow, Skeleton,
   TrendChart, ProgressRing,
   type DonutSlice as Slice,
@@ -16,18 +16,38 @@ import {
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
-// ── Chart palette — two restrained families (--db-green-*/--db-gray-*, see
-// Dashboard.css), not a rainbow of hues: green ramp for the lead/leadership
-// tier, slate-gray ramp for the secondary tier. Assign in this fixed order,
-// never cycled/reassigned per filter. Org's own warn/danger semantics stay
-// reserved for genuinely bad states — a plain category never borrows one.
-const C_ACCENT   = 'var(--db-green-1)'; // brand green, #0AA550
-const C_GREEN_2  = 'var(--db-green-2)';
-const C_GREEN_3  = 'var(--db-green-3)';
-const C_GRAY_1   = 'var(--db-gray-1)';
-const C_GRAY_2   = 'var(--db-gray-2)';
-const C_GRAY_3   = 'var(--db-gray-3)';
-const C_GRAY     = C_GRAY_2; // "none/other" buckets
+// ── Chart palette ────────────────────────────────────────────────────────────
+// Tokens only — the hexes live in Dashboard.css and were produced by validating
+// OKLCH steps against this app's real chart surfaces in both modes. Read that
+// file's palette comment before changing anything here.
+//
+// Which family a chart draws from is decided by the JOB its colour does, not by
+// what looks nice:
+//   identity  → C_SLOT_1..6, assigned in this fixed order and never cycled
+//   magnitude → C_TIER_* (ordinal green ramp) for ordered buckets like plans
+//   "none"    → C_NONE for free/other/inactive
+//   state     → C_WARNING / C_DANGER, reserved for genuinely bad states
+// A plain category never borrows a status colour, and a status never wears a
+// categorical slot.
+
+// Identity — categorical slots, fixed order
+const C_SLOT_1 = 'var(--dbc-1)'; // green (brand) — always the lead series
+const C_SLOT_2 = 'var(--dbc-2)'; // blue
+const C_SLOT_3 = 'var(--dbc-3)'; // magenta
+const C_SLOT_4 = 'var(--dbc-4)'; // amber
+const C_SLOT_5 = 'var(--dbc-5)'; // aqua
+const C_SLOT_6 = 'var(--dbc-6)'; // violet
+
+// Magnitude — ordinal ramp, darkest = the highest tier
+const C_TIER_1 = 'var(--dbq-1)';
+const C_TIER_2 = 'var(--dbq-2)';
+const C_TIER_3 = 'var(--dbq-3)';
+
+// Absence of a category
+const C_NONE     = 'var(--dbn-2)';
+const C_NONE_DIM = 'var(--dbn-3)';
+
+// State
 const C_WARNING = 'var(--warning)';   // org's tone="warn"
 const C_DANGER  = 'var(--danger)';    // org's tone="urgent"/error
 
@@ -42,14 +62,17 @@ function ActivationRing({ active, total }: { active: number; total: number }) {
       <ProgressRing pct={pct} subLabel="ACTIVE" size={150} radius={54} valueFontSize={25} />
       <div className="db-legend" style={{ width: '100%' }}>
         <div className="db-legend-row">
-          <span className="db-legend-dot" style={{ background: 'var(--ink-solid)' }} />
+          <span className="db-legend-dot" style={{ background: 'var(--dbc-1)' }} />
           <span className="db-legend-label">Active orgs</span>
           <span className="db-legend-val">{fmtNum(active)}</span>
+          <span className="db-legend-pct">{fmtPct(active, total)}</span>
         </div>
         <div className="db-legend-row">
-          <span className="db-legend-dot" style={{ background: 'var(--ink-tertiary)' }} />
+          {/* the ring's own unfilled track, so the legend key matches the mark */}
+          <span className="db-legend-dot" style={{ background: 'color-mix(in srgb, var(--dbc-1) 16%, var(--db-track))' }} />
           <span className="db-legend-label">Inactive orgs</span>
           <span className="db-legend-val">{fmtNum(inactive)}</span>
+          <span className="db-legend-pct">{fmtPct(inactive, total)}</span>
         </div>
       </div>
     </div>
@@ -110,45 +133,55 @@ export default function PlatformDashboard() {
   const arr = an?.arr ?? 0;
   const mrrAnim = useCountUp(an?.mrr ?? 0);
 
+  // Plans are ORDERED tiers, not unrelated names — so they take the ordinal
+  // ramp (darkest = highest tier) and the reader sees the ranking in the
+  // colour itself. "Free / none" is the absence of a tier, hence the neutral.
   const planSlices: Slice[] = useMemo(() => {
     const p = an?.planCounts;
     return [
-      { label: 'Enterprise', value: p?.enterprise ?? 0, color: C_ACCENT },
-      { label: 'Growth',     value: p?.growth ?? 0,     color: C_GREEN_2 },
-      { label: 'Starter',    value: p?.starter ?? 0,    color: C_GREEN_3 },
-      { label: 'Free / none',value: p?.none ?? 0,       color: C_GRAY },
+      { label: 'Enterprise', value: p?.enterprise ?? 0, color: C_TIER_1 },
+      { label: 'Growth',     value: p?.growth ?? 0,     color: C_TIER_2 },
+      { label: 'Starter',    value: p?.starter ?? 0,    color: C_TIER_3 },
+      { label: 'Free / none',value: p?.none ?? 0,       color: C_NONE },
     ];
   }, [an]);
 
+  // These rows genuinely MEAN good/bad, so they wear status tokens rather than
+  // categorical slots. Cancelled/inactive aren't failures, just absences.
   const statusRows = useMemo(() => {
     const s = an?.statusCounts;
     return [
-      { label: 'Active',    value: s?.active ?? 0,    display: fmtNum(s?.active),    color: C_ACCENT },
+      { label: 'Active',    value: s?.active ?? 0,    display: fmtNum(s?.active),    color: C_SLOT_1 },
       { label: 'Trial',     value: s?.trial ?? 0,     display: fmtNum(s?.trial),     color: C_WARNING },
       { label: 'Past due',  value: s?.pastDue ?? 0,   display: fmtNum(s?.pastDue),   color: C_DANGER },
-      { label: 'Cancelled', value: s?.cancelled ?? 0, display: fmtNum(s?.cancelled), color: C_GRAY_2 },
-      { label: 'Inactive',  value: s?.inactive ?? 0,  display: fmtNum(s?.inactive),  color: C_GRAY_1 },
+      { label: 'Cancelled', value: s?.cancelled ?? 0, display: fmtNum(s?.cancelled), color: C_NONE },
+      { label: 'Inactive',  value: s?.inactive ?? 0,  display: fmtNum(s?.inactive),  color: C_NONE_DIM },
     ].filter(r => r.value > 0);
   }, [an]);
 
-  // MRR contribution by plan (count × list price) — derived, real
+  // MRR contribution by plan (count × list price) — derived, real.
+  // Same ordered tiers as the plan-mix donut, so the same ordinal ramp: a
+  // reader who learned "darkest = Enterprise" there carries it over here.
   const revByPlan = useMemo(() => {
     const p = an?.planCounts;
     const rows = [
-      { label: 'Enterprise', value: (p?.enterprise ?? 0) * PLAN_PRICE.ENTERPRISE, color: C_ACCENT },
-      { label: 'Growth',     value: (p?.growth ?? 0)     * PLAN_PRICE.GROWTH,     color: C_GREEN_2 },
-      { label: 'Starter',    value: (p?.starter ?? 0)    * PLAN_PRICE.STARTER,    color: C_GREEN_3 },
+      { label: 'Enterprise', value: (p?.enterprise ?? 0) * PLAN_PRICE.ENTERPRISE, color: C_TIER_1 },
+      { label: 'Growth',     value: (p?.growth ?? 0)     * PLAN_PRICE.GROWTH,     color: C_TIER_2 },
+      { label: 'Starter',    value: (p?.starter ?? 0)    * PLAN_PRICE.STARTER,    color: C_TIER_3 },
     ];
     return rows.map(r => ({ ...r, display: fmtINR(r.value) }));
   }, [an]);
 
+  // Roles are unrelated names, not a ranking — nominal identity, so the fixed
+  // categorical order. Six roles is exactly the slot count; a seventh would
+  // fold into an "Other" bucket rather than get a new hue.
   const roleSlices: Slice[] = useMemo(() => [
-    { label: 'Org admins',     value: rb?.orgAdmin ?? 0, color: C_ACCENT },
-    { label: 'Managers',       value: rb?.manager ?? 0,  color: C_GREEN_2 },
-    { label: 'Team leads',     value: rb?.tl ?? 0,       color: C_GREEN_3 },
-    { label: 'Field officers', value: rb?.fo ?? 0,       color: C_GRAY_1 },
-    { label: 'Callers',        value: rb?.caller ?? 0,   color: C_GRAY_2 },
-    { label: 'Tracers',        value: rb?.tracer ?? 0,   color: C_GRAY_3 },
+    { label: 'Org admins',     value: rb?.orgAdmin ?? 0, color: C_SLOT_1 },
+    { label: 'Managers',       value: rb?.manager ?? 0,  color: C_SLOT_2 },
+    { label: 'Team leads',     value: rb?.tl ?? 0,       color: C_SLOT_3 },
+    { label: 'Field officers', value: rb?.fo ?? 0,       color: C_SLOT_4 },
+    { label: 'Callers',        value: rb?.caller ?? 0,   color: C_SLOT_5 },
+    { label: 'Tracers',        value: rb?.tracer ?? 0,   color: C_SLOT_6 },
   ], [rb]);
 
   const orgTrend  = an?.orgGrowthTrend ?? [];
@@ -255,8 +288,8 @@ export default function PlatformDashboard() {
                   ) : (
                     <TrendChart
                       labels={revenueTrend.map(p => p.label)}
-                      primary={{ label: 'MRR', values: revenueTrend.map(p => p.totalAmount), color: 'var(--ink-solid)', area: true, fmt: fmtINR }}
-                      extra={[{ label: 'Paying orgs', values: revenueTrend.map(p => p.totalCount), color: C_GRAY, fmt: fmtNum }]}
+                      primary={{ label: 'MRR', values: revenueTrend.map(p => p.totalAmount), color: C_SLOT_1, area: true, fmt: fmtINR }}
+                      extra={[{ label: 'Paying orgs', values: revenueTrend.map(p => p.totalCount), color: C_NONE, fmt: fmtNum }]}
                       heroTrend={an.mrrGrowthRate}
                       secondaryStat={{ label: 'ARR', value: fmtINR(arr) }}
                     />
@@ -270,7 +303,7 @@ export default function PlatformDashboard() {
                 <Card className="db-span-6" title="Subscription status">
                   {statusRows.length === 0 ? (
                     <div className="db-trend-empty"><span className="db-trend-empty-msg">No subscriptions yet</span></div>
-                  ) : <HBarList rows={statusRows} />}
+                  ) : <HBarList rows={statusRows} scaleCaption={`${fmtNum(Math.max(...statusRows.map(r => r.value)))} orgs`} />}
                 </Card>
 
                 <Card className="db-span-6" title="MRR by plan"
