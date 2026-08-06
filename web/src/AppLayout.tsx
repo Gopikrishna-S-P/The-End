@@ -1,6 +1,6 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Sun, Moon, HelpCircle, Settings, LogOut, Volume2, VolumeX, X, LayoutGrid } from 'lucide-react';
+import { Sun, Moon, HelpCircle, Settings, LogOut, Volume2, VolumeX, X, LayoutGrid, User } from 'lucide-react';
 import AppSidebar from './components/AppSidebar';
 import RouteProgressBar from './components/RouteProgressBar';
 import CommandPalette, { type PaletteItem } from './components/CommandPalette';
@@ -12,7 +12,8 @@ import TopbarCustomizeDialog from './components/TopbarCustomizeDialog';
 import ProfileSettingsDialog from './components/ProfileSettingsDialog';
 import BreadcrumbContextMenu from './components/BreadcrumbContextMenu';
 import LucienPanel from './components/LucienPanel';
-import GlobalSearchModal from './components/GlobalSearchModal';
+import { allocationsApi } from './api/allocationsApi';
+import type { AllocationResponse } from './types';
 import ActingAsBanner from './components/ActingAsBanner';
 import MfaGate from './components/MfaGate';
 import SubscriptionBanner from './components/SubscriptionBanner';
@@ -30,10 +31,14 @@ import { loadingSplash } from './utils/loadingSplash';
 import { profileSettings } from './utils/profileSettings';
 import { notificationsDialog, useNotificationsDialogOpen } from './utils/notificationsDialog';
 
+function fmtINR(n?: number) {
+  if (n == null) return null;
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+}
+
 export default function AppLayout() {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const [searchOpen, setSearchOpen] = React.useState(false);
 
   // Hide the login-flow splash (shown by LoginPage) once the app shell mounts.
   useEffect(() => { loadingSplash.hideAfterMin(2000); }, []);
@@ -79,6 +84,22 @@ export default function AppLayout() {
     return out;
   }, [nav.sections, navigate, s.darkMode, s.soundEnabled, s.user, s.setThemeMode, s.setSoundEnabled, s.setHelpOpen, s.setTopbarCustOpen, s.handleLogout]);
 
+  const searchAllocations = useCallback(async (term: string, signal: AbortSignal): Promise<PaletteItem[]> => {
+    const data = await allocationsApi.listAllocations(
+      { searchTerm: term, page: 0, size: 8 } as any,
+      signal,
+    );
+    return (data.content ?? []).map((a: AllocationResponse) => ({
+      id: `allocation:${a.id}`,
+      label: a.borrowerName || 'Unknown borrower',
+      category: 'Loans & Customers',
+      icon: User,
+      hint: [a.loanNumber, fmtINR(a.outstandingAmount)].filter(Boolean).join(' • '),
+      keywords: a.loanNumber ? [a.loanNumber] : [],
+      run: () => navigate(`/app/allocations/${a.id}`),
+    }));
+  }, [navigate]);
+
   return (
     <div className={s.layoutCls} ref={s.layoutRef}>
       <a href="#main-content" className="app-skip-link">Skip to main content</a>
@@ -89,8 +110,8 @@ export default function AppLayout() {
         onClose={() => s.setPaletteOpen(false)}
         items={paletteItems}
         scope={{ currentPath: location.pathname, currentSection: nav.currentSection }}
+        remoteSearch={searchAllocations}
       />
-      <GlobalSearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ActivityPanel open={s.activityOpen} onClose={() => s.setActivityOpen(false)} onNavigate={p => navigate(p)} />
 
       <PageHelpDrawer open={s.pageHelpOpen} onClose={() => s.setPageHelpOpen(false)} pathname={location.pathname} />
@@ -153,7 +174,6 @@ export default function AppLayout() {
           clearFilters={nav.clearFilters}
           currentSection={nav.currentSection || ''}
           onOpenPalette={() => { s.setPaletteOpen(true); s.play('open'); }}
-          onOpenSearch={() => { setSearchOpen(true); s.play('open'); }}
           showLucien={s.showLucien}
           lucienOpen={s.lucienOpen}
           onToggleLucien={() => { s.setLucienOpen(o => !o); s.play(); }}
