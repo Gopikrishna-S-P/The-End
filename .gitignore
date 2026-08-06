@@ -14,3 +14,4 @@ server/uploads/
 mobile/build_output.txt
 mobile/modules/*/android/build/
 mobile/modules/*/android/.cxx/
+.worktrees/
