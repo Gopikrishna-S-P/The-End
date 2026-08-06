@@ -48,6 +48,7 @@ public class AllocationServiceImpl implements AllocationService {
     private final BorrowerRepository borrowerRepository;
     private final OrgIsolationGuard orgIsolationGuard;
     private final ActiveDatasetResolver activeDatasetResolver;
+    private final com.recoverpro.server.security.encryption.LookupHashService lookupHashService;
 
     private static final UUID NO_ACTIVE_DATASET =
             UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -69,6 +70,11 @@ public class AllocationServiceImpl implements AllocationService {
 
         String statusStr = filterRequest.getStatus() != null ? filterRequest.getStatus().name() : null;
 
+        String normalizedSearch = StringUtils.hasText(filterRequest.getSearchTerm())
+                ? filterRequest.getSearchTerm().trim() : null;
+        String searchTermHash = (normalizedSearch != null && normalizedSearch.length() >= 2)
+                ? lookupHashService.hash(normalizedSearch) : null;
+
         UUID fileUploadId = filterRequest.getFileUploadId();
         if (fileUploadId == null) {
             fileUploadId = activeDatasetResolver.activeFileId(filterRequest.getOrganizationId())
@@ -77,7 +83,7 @@ public class AllocationServiceImpl implements AllocationService {
 
         Page<Allocation> page = allocationRepository.findAllWithFilters(
                 filterRequest.getOrganizationId(), statusStr, fileUploadId,
-                filterRequest.getAssignedToUserId(), pageable);
+                filterRequest.getAssignedToUserId(), normalizedSearch, searchTermHash, pageable);
 
         Page<AllocationResponse> responsePage = page.map(allocationMapper::toResponse);
         List<AllocationResponse> content = new ArrayList<>(responsePage.getContent());
