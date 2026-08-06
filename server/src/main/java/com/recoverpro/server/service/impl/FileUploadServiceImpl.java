@@ -7,6 +7,7 @@ import com.recoverpro.server.dto.response.FileUploadResponse;
 import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.enums.FileUploadStatus;
+import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.mapper.FileProcessingErrorMapper;
 import com.recoverpro.server.mapper.FileUploadMapper;
 import com.recoverpro.server.repository.AllocationRepository;
@@ -44,15 +45,21 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     @Override
     @Transactional
-    public FileUploadResponse initiateUpload(MultipartFile file, UUID organizationId, UUID userId) {
-        log.info("Initiating file upload for organization: {}, file: {}", organizationId, file.getOriginalFilename());
+    public FileUploadResponse initiateUpload(MultipartFile file, UUID organizationId, UUID userId,
+                                             UploadType uploadType, boolean historicalImport) {
+        log.info("Initiating {} upload for organization: {}, file: {}",
+                uploadType, organizationId, file.getOriginalFilename());
 
         fileValidationService.validateFile(file);
         String sha256Hash = fileValidationService.computeSha256Hash(file);
 
-        if (fileValidationService.isDuplicateFile(sha256Hash, organizationId)) {
+        // Scoped by type as well as hash: the same export can legitimately be imported once
+        // per entity, and returning an earlier upload of a different type would silently
+        // hand the caller the wrong record.
+        if (fileValidationService.isDuplicateFile(sha256Hash, organizationId, uploadType)) {
             return fileUploadRepository
-                    .findFirstBySha256HashAndOrganizationIdAndIsDeletedFalse(sha256Hash, organizationId)
+                    .findFirstBySha256HashAndOrganizationIdAndUploadTypeAndIsDeletedFalse(
+                            sha256Hash, organizationId, uploadType)
                     .map(fileUploadMapper::toResponse)
                     .orElseThrow(() -> new ResourceNotFoundException("Duplicate file record not found unexpectedly"));
         }
@@ -68,6 +75,8 @@ public class FileUploadServiceImpl implements FileUploadService {
                 .fileSizeBytes(file.getSize())
                 .sha256Hash(sha256Hash)
                 .status(FileUploadStatus.PENDING)
+                .uploadType(uploadType)
+                .isHistoricalImport(historicalImport)
                 .uploadedByUserId(userId)
                 .build();
 

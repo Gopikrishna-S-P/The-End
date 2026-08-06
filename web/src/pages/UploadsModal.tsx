@@ -1,8 +1,16 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../client';
-import { Upload, X, Loader2, CloudUpload, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import type { UploadType } from '../types/reports';
+import { Upload, X, Loader2, CloudUpload, CheckCircle2, AlertCircle, Clock, Download } from 'lucide-react';
 import './Dashboard.css';
+
+const UPLOAD_TYPES: { value: UploadType; label: string }[] = [
+  { value: 'ALLOCATION', label: 'Allocations' },
+  { value: 'COLLECTION', label: 'Collections' },
+  { value: 'VISIT',      label: 'Visits' },
+  { value: 'PTP',        label: 'PTPs' },
+];
 
 interface Props {
   onClose: () => void;
@@ -18,7 +26,37 @@ export function UploadsModal({ onClose, onSuccess, targetOrgId, accessReason }: 
   const [uploading, setUploading] = useState(false);
   const [progress,  setProgress]  = useState(0);
   const [error,     setError]     = useState<string | null>(null);
+  const [uploadType, setUploadType] = useState<UploadType>('ALLOCATION');
+  // Backfills are the reason the non-allocation types exist, so default them on. Left
+  // unchecked the server would route historical rows through live approval and escalation.
+  const [historicalImport, setHistoricalImport] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectType = (value: UploadType) => {
+    setUploadType(value);
+    setHistoricalImport(value !== 'ALLOCATION');
+  };
+
+  // Fetched through the API client rather than a plain link so the request carries auth,
+  // then handed to the browser as a blob download.
+  const downloadTemplate = async () => {
+    setError(null);
+    try {
+      const res = await apiClient.get(`/api/v1/file-uploads/template?uploadType=${uploadType}`, {
+        responseType: 'blob',
+      });
+      const href = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = `${uploadType.toLowerCase()}-import-template.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(href);
+    } catch {
+      setError('Could not download the template. Please try again.');
+    }
+  };
 
   const handleFile = (f: File) => {
     const ext = f.name.split('.').pop()?.toLowerCase();
@@ -37,12 +75,17 @@ export function UploadsModal({ onClose, onSuccess, targetOrgId, accessReason }: 
     try {
       const form = new FormData();
       form.append('file', file);
+      const params = new URLSearchParams({
+        uploadType,
+        historicalImport: String(historicalImport),
+      });
       // Uploading into another org is a cross-tenant write: the server audits it and refuses
       // without a reason, so carry the one the page already collected for this organization.
-      const url = targetOrgId
-        ? `/api/v1/file-uploads?organizationId=${targetOrgId}`
-          + `&reason=${encodeURIComponent(accessReason ?? '')}`
-        : '/api/v1/file-uploads';
+      if (targetOrgId) {
+        params.set('organizationId', targetOrgId);
+        params.set('reason', accessReason ?? '');
+      }
+      const url = `/api/v1/file-uploads?${params.toString()}`;
       // No explicit Content-Type: a manually-set 'multipart/form-data' header has no
       // boundary parameter and is sent as-is, which breaks Spring's multipart parser.
       // Let axios/the browser generate the correct header for the FormData body.
@@ -73,6 +116,60 @@ export function UploadsModal({ onClose, onSuccess, targetOrgId, accessReason }: 
           </div>
 
           <div style={{ padding: '0 24px 24px' }}>
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: 8 }}>
+                What does this file contain?
+              </span>
+              <div role="radiogroup" aria-label="Upload type" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {UPLOAD_TYPES.map(t => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={uploadType === t.value}
+                    disabled={uploading}
+                    onClick={() => selectType(t.value)}
+                    className={`ds-btn ${uploadType === t.value ? 'is-primary' : 'is-secondary'}`}
+                    style={{ flex: '1 1 auto', height: 32, fontSize: 12.5, minWidth: 84 }}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--ink-tertiary)' }}>
+              <span>Not sure about the columns?</span>
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                disabled={uploading}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  color: 'var(--ink-primary)', fontSize: 12, fontWeight: 600,
+                  textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                <Download size={12} /> Download {UPLOAD_TYPES.find(t => t.value === uploadType)?.label} template
+              </button>
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={historicalImport}
+                disabled={uploading}
+                onChange={e => setHistoricalImport(e.target.checked)}
+                style={{ marginTop: 2 }}
+              />
+              <span style={{ fontSize: 12.5, color: 'var(--ink-secondary)', lineHeight: 1.4 }}>
+                These are past records
+                <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-tertiary)' }}>
+                  Skips approval routing, reminders and escalation for events that already happened.
+                </span>
+              </span>
+            </label>
+
             <div
               onDragOver={e => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}

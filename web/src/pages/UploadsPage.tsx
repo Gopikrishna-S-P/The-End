@@ -81,6 +81,13 @@ const fmtAbsolute = (s?: string | null) =>
 
 const fmtNum = (n?: number | null) => (n ?? 0).toLocaleString('en-IN');
 
+const UPLOAD_TYPE_LABELS: Record<string, string> = {
+  ALLOCATION: 'Allocations',
+  COLLECTION: 'Collections',
+  VISIT: 'Visits',
+  PTP: 'PTPs',
+};
+
 // Mirrors FileUploadController.READERS exactly — PLATFORM_ADMIN, ORG_ADMIN, MANAGER, TL.
 // The /app/uploads route itself is gated more loosely (ANY_ORG_ROLE, incl. FO/CALLER/TRACER),
 // so this page must self-gate to avoid a screen full of silently-failed 403s.
@@ -324,6 +331,12 @@ export default function UploadsPage() {
                             </span>
                             <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10 }}>
                               <UploadStatusBadge status={u.status} />
+                              {u.uploadType && u.uploadType !== 'ALLOCATION' && (
+                                <span className="ds-pill is-neutral" style={{ fontSize: 10 }}>
+                                  {UPLOAD_TYPE_LABELS[u.uploadType] ?? u.uploadType}
+                                  {u.isHistoricalImport ? ' · past' : ''}
+                                </span>
+                              )}
                               <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }} title={fmtAbsolute(u.createdAt)}>
                                 {fmtRelative(u.createdAt)}
                               </span>

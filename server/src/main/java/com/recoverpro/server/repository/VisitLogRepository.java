@@ -12,12 +12,17 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
 public interface VisitLogRepository extends JpaRepository<VisitLog, UUID> {
 
     List<VisitLog> findByAllocationIdAndIsDeletedFalse(UUID allocationId);
+
+    /** Batch dedup for historical imports - narrows on both axes so the fetch stays bounded. */
+    List<VisitLog> findByAllocationIdInAndVisitDateInAndIsDeletedFalse(
+            Set<UUID> allocationIds, Set<LocalDate> visitDates);
 
     @Query("""
             SELECT v FROM VisitLog v

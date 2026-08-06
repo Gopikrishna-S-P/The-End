@@ -1,6 +1,7 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.client.ClamAvScannerClient;
+import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.exception.InvalidFileException;
 import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.service.FileValidationService;
@@ -76,8 +77,9 @@ public class FileValidationServiceImpl implements FileValidationService {
     }
 
     @Override
-    public boolean isDuplicateFile(String sha256Hash, UUID organizationId) {
-        return fileUploadRepository.existsBySha256HashAndOrganizationIdAndIsDeletedFalse(sha256Hash, organizationId);
+    public boolean isDuplicateFile(String sha256Hash, UUID organizationId, UploadType uploadType) {
+        return fileUploadRepository.existsBySha256HashAndOrganizationIdAndUploadTypeAndIsDeletedFalse(
+                sha256Hash, organizationId, uploadType);
     }
 
     private void validateMagicBytes(MultipartFile file, String extension) {

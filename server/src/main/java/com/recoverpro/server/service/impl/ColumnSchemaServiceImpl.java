@@ -4,6 +4,7 @@ import com.recoverpro.server.dto.request.ColumnSchemaRequest;
 import com.recoverpro.server.dto.response.ColumnSchemaResponse;
 import com.recoverpro.server.entity.ColumnSchema;
 import com.recoverpro.server.entity.Organization;
+import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.exception.DuplicateResourceException;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
@@ -36,9 +37,13 @@ public class ColumnSchemaServiceImpl implements ColumnSchemaService {
         if (!orgIsolationGuard.belongsToOrg(request.getOrganizationId())) {
             throw new BusinessException("Access denied: organization mismatch");
         }
-        if (columnSchemaRepository.existsByOrganizationIdAndName(request.getOrganizationId(), request.getName())) {
-            throw new DuplicateResourceException(
-                    "Column schema with name '" + request.getName() + "' already exists for this organization");
+        UploadType entityType = request.getEntityType() != null ? request.getEntityType() : UploadType.ALLOCATION;
+
+        // Scoped by entity: "amount" must be definable separately for collections and PTPs.
+        if (columnSchemaRepository.existsByOrganizationIdAndEntityTypeAndName(
+                request.getOrganizationId(), entityType, request.getName())) {
+            throw new DuplicateResourceException("Column schema with name '" + request.getName()
+                    + "' already exists for " + entityType + " in this organization");
         }
 
         Organization organization = organizationRepository.findById(request.getOrganizationId())
@@ -47,6 +52,7 @@ public class ColumnSchemaServiceImpl implements ColumnSchemaService {
 
         ColumnSchema schema = ColumnSchema.builder()
                 .organization(organization)
+                .entityType(entityType)
                 .name(request.getName())
                 .displayName(request.getDisplayName())
                 .dataType(request.getDataType())
@@ -81,11 +87,19 @@ public class ColumnSchemaServiceImpl implements ColumnSchemaService {
     @Override
     @Transactional(readOnly = true)
     public List<ColumnSchemaResponse> getColumnSchemasByOrganization(UUID organizationId) {
+        return getColumnSchemasByOrganization(organizationId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ColumnSchemaResponse> getColumnSchemasByOrganization(UUID organizationId, UploadType entityType) {
         if (!orgIsolationGuard.belongsToOrg(organizationId)) {
             throw new BusinessException("Access denied: organization mismatch");
         }
-        return columnSchemaRepository.findAllActiveByOrganizationId(organizationId)
-                .stream().map(columnSchemaMapper::toResponse).toList();
+        List<ColumnSchema> schemas = entityType == null
+                ? columnSchemaRepository.findAllActiveByOrganizationId(organizationId)
+                : columnSchemaRepository.findAllActiveByOrganizationIdAndEntityType(organizationId, entityType);
+        return schemas.stream().map(columnSchemaMapper::toResponse).toList();
     }
 
     @Override

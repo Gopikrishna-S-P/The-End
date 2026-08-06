@@ -5,6 +5,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import { columnSchemasApi, type ColumnSchemaResponse } from '../api/columnSchemasApi';
 import { Plus, SquarePen, X, AlertCircle, Columns, Check, Trash2, Loader2 } from 'lucide-react';
 import { RowForm, type RowFormState, EMPTY_FORM, TYPE_VARIANT } from './ColumnSchemaRowForm';
+import type { UploadType } from '../types/reports';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
@@ -25,6 +26,13 @@ const fadeIn: Variants = {
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
 
+const ENTITY_TABS: { value: UploadType; label: string }[] = [
+  { value: 'ALLOCATION', label: 'Allocations' },
+  { value: 'COLLECTION', label: 'Collections' },
+  { value: 'VISIT',      label: 'Visits' },
+  { value: 'PTP',        label: 'PTPs' },
+];
+
 export default function ColumnSchemaPage() {
   const { user } = useAuth();
   const { hasPermission, hasAnyRole } = usePermissions();
@@ -36,6 +44,7 @@ export default function ColumnSchemaPage() {
   const orgId = user?.organizationId ?? '';
 
   const [columns, setColumns]       = useState<ColumnSchemaResponse[]>([]);
+  const [entityType, setEntityType] = useState<UploadType>('ALLOCATION');
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
   const [adding, setAdding]         = useState(false);
@@ -47,11 +56,11 @@ export default function ColumnSchemaPage() {
     if (!orgId || !canView) { setLoading(false); return; }
     setLoading(true); setError(null);
     try {
-      const list = await columnSchemasApi.list(orgId);
+      const list = await columnSchemasApi.list(orgId, entityType);
       setColumns(list.filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder));
     } catch { setError('Failed to load column schemas.'); }
     finally { setLoading(false); }
-  }, [orgId, canView]);
+  }, [orgId, canView, entityType]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -140,8 +149,26 @@ export default function ColumnSchemaPage() {
         <div className="dd-grid">
           <div className="dd-case-panel">
             <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-              <div className="dd-cases-head">
+              <div className="dd-cases-head" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Schema Configuration</span>
+                {/* Each entity keeps its own column mapping, so "amount" can mean one thing
+                    for collections and another for PTPs. */}
+                <div role="tablist" aria-label="Entity type" style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+                  {ENTITY_TABS.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={entityType === t.value}
+                      disabled={loading}
+                      onClick={() => { setAdding(false); setEditingId(null); setEntityType(t.value); }}
+                      className={`ds-btn ${entityType === t.value ? 'is-primary' : 'is-secondary'}`}
+                      style={{ height: 28, fontSize: 12 }}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="dd-cp-list-wrap">
@@ -150,6 +177,7 @@ export default function ColumnSchemaPage() {
                     <RowForm
                       initial={{ ...EMPTY_FORM, sortOrder: String(columns.length) }}
                       orgId={orgId}
+                      entityType={entityType}
                       onSaved={handleSaved}
                       onCancel={() => setAdding(false)}
                     />
@@ -178,7 +206,7 @@ export default function ColumnSchemaPage() {
                       {columns.map((col, idx) => (
                         <Fragment key={col.id}>
                           {editingId === col.id ? (
-                            <RowForm initial={editInitial(col)} orgId={orgId} onSaved={handleSaved} onCancel={() => setEditingId(null)} />
+                            <RowForm initial={editInitial(col)} orgId={orgId} entityType={entityType} onSaved={handleSaved} onCancel={() => setEditingId(null)} />
                           ) : (
                             <motion.div
                               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}

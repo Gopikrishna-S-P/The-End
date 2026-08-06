@@ -2,6 +2,7 @@ package com.recoverpro.server.repository;
 
 import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.enums.FileUploadStatus;
+import com.recoverpro.server.enums.UploadType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,6 +28,12 @@ public interface FileUploadRepository extends JpaRepository<FileUpload, UUID> {
     boolean existsBySha256HashAndOrganizationIdAndIsDeletedFalse(String sha256Hash, UUID organizationId);
 
     Optional<FileUpload> findFirstBySha256HashAndOrganizationIdAndIsDeletedFalse(String sha256Hash, UUID organizationId);
+
+    boolean existsBySha256HashAndOrganizationIdAndUploadTypeAndIsDeletedFalse(
+            String sha256Hash, UUID organizationId, UploadType uploadType);
+
+    Optional<FileUpload> findFirstBySha256HashAndOrganizationIdAndUploadTypeAndIsDeletedFalse(
+            String sha256Hash, UUID organizationId, UploadType uploadType);
 
     @Query("SELECT f FROM FileUpload f WHERE f.status = :status AND f.isDeleted = false")
     List<FileUpload> findAllByStatus(@Param("status") FileUploadStatus status);

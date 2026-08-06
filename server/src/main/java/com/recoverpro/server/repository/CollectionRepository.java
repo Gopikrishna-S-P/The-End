@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -22,6 +23,10 @@ public interface CollectionRepository extends JpaRepository<Collection, UUID> {
     Optional<Collection> findByIdempotencyKey(String idempotencyKey);
 
     boolean existsByIdempotencyKey(String idempotencyKey);
+
+    /** Batch dedup for historical imports - one query per batch instead of one per row. */
+    @Query("SELECT c.idempotencyKey FROM Collection c WHERE c.idempotencyKey IN :keys")
+    Set<String> findExistingIdempotencyKeys(@Param("keys") Set<String> keys);
 
     @Query("SELECT COALESCE(SUM(c.amount), 0) FROM Collection c WHERE c.submittedBy = :agentId AND c.collectionDate = :date AND c.paymentMode = com.recoverpro.server.enums.PaymentMode.CASH AND c.isDeleted = false AND c.status <> com.recoverpro.server.enums.CollectionStatus.CANCELLED")
     java.math.BigDecimal sumCashByAgentAndDate(@Param("agentId") UUID agentId, @Param("date") LocalDate date);

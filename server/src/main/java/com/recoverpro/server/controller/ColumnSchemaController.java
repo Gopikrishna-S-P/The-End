@@ -3,6 +3,7 @@ package com.recoverpro.server.controller;
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.dto.request.ColumnSchemaRequest;
 import com.recoverpro.server.dto.response.ColumnSchemaResponse;
+import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.service.ColumnSchemaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,9 +51,10 @@ public class ColumnSchemaController {
     @PreAuthorize(CAN_CREATE_COLUMN)
     @GetMapping
     public ResponseEntity<ApiResponse<List<ColumnSchemaResponse>>> getColumnSchemas(
-            @RequestParam UUID organizationId) {
+            @RequestParam UUID organizationId,
+            @RequestParam(required = false) UploadType entityType) {
         return ResponseEntity.ok(ApiResponse.success(
-                columnSchemaService.getColumnSchemasByOrganization(organizationId)));
+                columnSchemaService.getColumnSchemasByOrganization(organizationId, entityType)));
     }
 
     @PreAuthorize(ADMINS)

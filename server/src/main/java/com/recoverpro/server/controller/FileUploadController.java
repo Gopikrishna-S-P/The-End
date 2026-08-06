@@ -6,14 +6,17 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.response.FileProcessingErrorResponse;
 import com.recoverpro.server.dto.response.FileUploadResponse;
+import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FileUploadService;
+import com.recoverpro.server.service.importer.ImportTemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +38,7 @@ public class FileUploadController {
 
     private final FileUploadService fileUploadService;
     private final PlatformAdminAccessGuard platformAdminAccessGuard;
+    private final ImportTemplateService importTemplateService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize(WRITERS)
@@ -42,15 +46,31 @@ public class FileUploadController {
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) UUID organizationId,
             @RequestParam(required = false) String reason,
+            @RequestParam(defaultValue = "ALLOCATION") UploadType uploadType,
+            @RequestParam(defaultValue = "false") boolean historicalImport,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         UUID effectiveOrgId = resolveOrgId(principal, organizationId, reason, "file-uploads:create");
         if (effectiveOrgId == null) throw new BusinessException("Authenticated user has no organization context");
-        log.info("POST /api/v1/file-uploads - filename: {}, orgId: {}, userId: {}",
-                file.getOriginalFilename(), effectiveOrgId, principal.getId());
-        FileUploadResponse response = fileUploadService.initiateUpload(file, effectiveOrgId, principal.getId());
+        log.info("POST /api/v1/file-uploads - filename: {}, orgId: {}, userId: {}, type: {}, historical: {}",
+                file.getOriginalFilename(), effectiveOrgId, principal.getId(), uploadType, historicalImport);
+        FileUploadResponse response = fileUploadService.initiateUpload(
+                file, effectiveOrgId, principal.getId(), uploadType, historicalImport);
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(ApiResponse.of("File upload initiated. Processing in background.", response));
+    }
+
+    /**
+     * The canonical column layout for an upload type. Generated from the processors themselves,
+     * so it cannot drift from what the parser actually accepts.
+     */
+    @GetMapping(value = "/template", produces = "text/csv")
+    @PreAuthorize(READERS)
+    public ResponseEntity<String> downloadTemplate(@RequestParam UploadType uploadType) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + importTemplateService.filename(uploadType) + "\"")
+                .body(importTemplateService.buildCsv(uploadType));
     }
 
     @GetMapping("/{id}/status")

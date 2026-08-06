@@ -10,6 +10,7 @@ import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.BorrowerRepository;
 import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.security.RlsOrgIdHolder;
+import com.recoverpro.server.service.importer.AllocationImportProcessor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FileProcessingBorrowerLinkTest extends AbstractIntegrationTest {
 
     @Autowired private FileProcessingServiceImpl fileProcessingService;
+    @Autowired private AllocationImportProcessor allocationImportProcessor;
     @Autowired private FileUploadRepository fileUploadRepository;
     @Autowired private AllocationRepository allocationRepository;
     @Autowired private BorrowerRepository borrowerRepository;
@@ -69,7 +71,8 @@ class FileProcessingBorrowerLinkTest extends AbstractIntegrationTest {
         row.put("total_due", "5000");
         row.put("outstanding", "4000");
 
-        fileProcessingService.processRowsInBatches(upload, managedOrg, List.of(), List.of(row));
+        fileProcessingService.processRowsInBatches(
+                allocationImportProcessor, upload, managedOrg, List.of(), List.of(row));
 
         firstUploadAllocation = allocationRepository.findByOrganizationIdAndLoanNumberIn(
                 org.getId(), List.of(loanNumber)).get(0);
@@ -88,7 +91,8 @@ class FileProcessingBorrowerLinkTest extends AbstractIntegrationTest {
         secondRow.put("total_due", "3000");
         secondRow.put("outstanding", "2000");
 
-        fileProcessingService.processRowsInBatches(upload, managedOrg, List.of(), List.of(secondRow));
+        fileProcessingService.processRowsInBatches(
+                allocationImportProcessor, upload, managedOrg, List.of(), List.of(secondRow));
 
         secondUploadAllocation = allocationRepository.findByOrganizationIdAndLoanNumberIn(
                 org.getId(), List.of(secondLoanNumber)).get(0);

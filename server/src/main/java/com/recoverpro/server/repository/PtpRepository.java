@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -26,6 +27,10 @@ public interface PtpRepository extends JpaRepository<PtpRecord, UUID>, JpaSpecif
     Page<PtpRecord> findAllByIsDeletedFalse(Pageable pageable);
 
     List<PtpRecord> findAllByAllocationIdAndIsDeletedFalse(UUID allocationId);
+
+    /** Batch dedup for historical imports - narrows on both axes so the fetch stays bounded. */
+    List<PtpRecord> findByAllocationIdInAndPromisedDateInAndIsDeletedFalse(
+            Set<UUID> allocationIds, Set<LocalDate> promisedDates);
 
     @Query("SELECT p FROM PtpRecord p WHERE p.allocationId = :allocationId AND p.isDeleted = false ORDER BY p.createdAt DESC")
     List<PtpRecord> findAllByAllocationIdOrderByCreatedAtDesc(@Param("allocationId") UUID allocationId);

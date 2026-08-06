@@ -1,5 +1,8 @@
 import type { ExportFormat, FileUploadStatus, ReportStatus, ReportType } from "./core";
 
+/** Which domain entity a file upload populates. Mirrors the server-side UploadType enum. */
+export type UploadType = 'ALLOCATION' | 'COLLECTION' | 'VISIT' | 'PTP';
+
 export interface FileUploadResponse {
   id: string;
   organizationId: string;
@@ -7,6 +10,8 @@ export interface FileUploadResponse {
   contentType: string;
   fileSizeBytes: number;
   sha256Hash: string;
+  uploadType: UploadType;
+  isHistoricalImport?: boolean;
   status: FileUploadStatus;
   totalRows?: number;
   processedRows: number;

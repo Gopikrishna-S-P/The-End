@@ -1,5 +1,6 @@
 package com.recoverpro.server.entity;
 
+import com.recoverpro.server.enums.UploadType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "column_schemas",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"organization_id", "name"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"organization_id", "entity_type", "name"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,6 +30,15 @@ public class ColumnSchema {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
+
+    /**
+     * Which upload type this column definition describes. Every row predating the
+     * historical-import feature is an allocation column, hence the default.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entity_type", nullable = false, length = 30)
+    @Builder.Default
+    private UploadType entityType = UploadType.ALLOCATION;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;

@@ -1,6 +1,7 @@
 package com.recoverpro.server.entity;
 
 import com.recoverpro.server.enums.FileUploadStatus;
+import com.recoverpro.server.enums.UploadType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -47,6 +48,20 @@ public class FileUpload {
 
     @Column(name = "sha256_hash", nullable = false, length = 64)
     private String sha256Hash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "upload_type", nullable = false, length = 30)
+    @Builder.Default
+    private UploadType uploadType = UploadType.ALLOCATION;
+
+    /**
+     * Marks a backfill of records that already happened, so processors suppress live
+     * side effects (reminders, escalation, approval routing) that would otherwise fire
+     * for events dated in the past.
+     */
+    @Column(name = "is_historical_import", nullable = false)
+    @Builder.Default
+    private Boolean isHistoricalImport = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)

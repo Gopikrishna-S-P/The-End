@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { columnSchemasApi, type ColumnSchemaResponse, type ColumnSchemaRequest } from '../api/columnSchemasApi';
 import { AlertCircle, Save, Loader2, ChevronDown } from 'lucide-react';
+import type { UploadType } from '../types/reports';
 
 export const DATA_TYPES = ['STRING', 'NUMBER', 'DATE', 'BOOLEAN', 'EMAIL', 'PHONE', 'CURRENCY'];
 
@@ -37,10 +38,12 @@ export function validate(form: RowFormState): string | null {
 }
 
 export function RowForm({
-  initial, orgId, onSaved, onCancel,
+  initial, orgId, entityType, onSaved, onCancel,
 }: {
   initial: RowFormState & { id?: string };
   orgId: string;
+  /** Which entity's mapping this column belongs to; omitted means the allocation book. */
+  entityType?: UploadType;
   onSaved: (col: ColumnSchemaResponse) => void;
   onCancel: () => void;
 }) {
@@ -57,6 +60,7 @@ export function RowForm({
     setSaving(true); setError(null);
     const payload: ColumnSchemaRequest = {
       organizationId: orgId,
+      entityType,
       name: form.name.trim(),
       displayName: form.displayName.trim(),
       dataType: form.dataType,

@@ -1,5 +1,6 @@
 package com.recoverpro.server.dto.response;
 
+import com.recoverpro.server.enums.UploadType;
 import lombok.*;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ public class ColumnSchemaResponse {
 
     private UUID id;
     private UUID organizationId;
+    private UploadType entityType;
     private String name;
     private String displayName;
     private String dataType;

@@ -1,5 +1,6 @@
 package com.recoverpro.server.dto.request;
 
+import com.recoverpro.server.enums.UploadType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,6 +18,9 @@ public class ColumnSchemaRequest {
 
     @NotNull(message = "Organization ID is required")
     private UUID organizationId;
+
+    /** Which upload type this column belongs to. Absent means the allocation book, as before. */
+    private UploadType entityType;
 
     @NotBlank(message = "Name is required")
     @Size(max = 100, message = "Name must not exceed 100 characters")

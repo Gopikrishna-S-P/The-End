@@ -1,9 +1,11 @@
 import axiosInstance from './axiosInstance';
 import type { ApiResponse } from '../types';
+import type { UploadType } from '../types/reports';
 
 export interface ColumnSchemaResponse {
   id: string;
   organizationId: string;
+  entityType: UploadType;
   name: string;
   displayName: string;
   dataType: string;
@@ -18,6 +20,8 @@ export interface ColumnSchemaResponse {
 
 export interface ColumnSchemaRequest {
   organizationId: string;
+  /** Omitted means ALLOCATION, matching the server default. */
+  entityType?: UploadType;
   name: string;
   displayName: string;
   dataType: string;
@@ -28,10 +32,11 @@ export interface ColumnSchemaRequest {
 }
 
 export const columnSchemasApi = {
-  list: async (organizationId: string): Promise<ColumnSchemaResponse[]> => {
+  /** @param entityType omit to get every entity's columns, as before */
+  list: async (organizationId: string, entityType?: UploadType): Promise<ColumnSchemaResponse[]> => {
     const response = await axiosInstance.get<ApiResponse<ColumnSchemaResponse[]>>(
       '/api/v1/column-schemas',
-      { params: { organizationId } },
+      { params: entityType ? { organizationId, entityType } : { organizationId } },
     );
     return response.data.data ?? [];
   },
