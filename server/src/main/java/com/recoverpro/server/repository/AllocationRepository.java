@@ -29,19 +29,27 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
             "AND a.isDeleted = false " +
             "AND (:statusStr IS NULL OR CAST(a.status AS String) = :statusStr) " +
             "AND (:fileUploadId IS NULL OR a.fileUpload.id = :fileUploadId) " +
-            "AND (:assignedToUserId IS NULL OR a.assignedToUserId = :assignedToUserId)",
+            "AND (:assignedToUserId IS NULL OR a.assignedToUserId = :assignedToUserId) " +
+            "AND (:searchTerm IS NULL " +
+            "     OR LOWER(a.loanNumber) LIKE LOWER(CONCAT(:searchTerm, '%')) " +
+            "     OR a.id IN (SELECT t.allocationId FROM AllocationNameSearchToken t WHERE t.tokenHash = :searchTermHash))",
            countQuery =
             "SELECT COUNT(a) FROM Allocation a " +
             "WHERE a.organization.id = :organizationId " +
             "AND a.isDeleted = false " +
             "AND (:statusStr IS NULL OR CAST(a.status AS String) = :statusStr) " +
             "AND (:fileUploadId IS NULL OR a.fileUpload.id = :fileUploadId) " +
-            "AND (:assignedToUserId IS NULL OR a.assignedToUserId = :assignedToUserId)")
+            "AND (:assignedToUserId IS NULL OR a.assignedToUserId = :assignedToUserId) " +
+            "AND (:searchTerm IS NULL " +
+            "     OR LOWER(a.loanNumber) LIKE LOWER(CONCAT(:searchTerm, '%')) " +
+            "     OR a.id IN (SELECT t.allocationId FROM AllocationNameSearchToken t WHERE t.tokenHash = :searchTermHash))")
     Page<Allocation> findAllWithFilters(
             @Param("organizationId") UUID organizationId,
             @Param("statusStr") String statusStr,
             @Param("fileUploadId") UUID fileUploadId,
             @Param("assignedToUserId") UUID assignedToUserId,
+            @Param("searchTerm") String searchTerm,
+            @Param("searchTermHash") String searchTermHash,
             Pageable pageable);
 
     Optional<Allocation> findByIdAndIsDeletedFalse(UUID id);
@@ -129,6 +137,9 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
 
     @Query("SELECT a FROM Allocation a WHERE a.organization.id = :orgId AND a.isDeleted = false")
     List<Allocation> findByOrganizationIdAndIsDeletedFalse(@Param("orgId") UUID orgId);
+
+    @Query("SELECT a FROM Allocation a WHERE a.organization.id = :orgId AND a.isDeleted = false ORDER BY a.createdAt ASC")
+    org.springframework.data.domain.Slice<Allocation> findAllByOrganizationIdPaged(@Param("orgId") UUID orgId, Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(a.outstandingAmount), 0) FROM Allocation a WHERE a.assignedToUserId = :agentId AND a.isDeleted = false")
     java.math.BigDecimal sumOutstandingByAgentId(@Param("agentId") UUID agentId);

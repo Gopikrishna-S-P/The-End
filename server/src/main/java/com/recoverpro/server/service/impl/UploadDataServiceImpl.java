@@ -30,6 +30,7 @@ public class UploadDataServiceImpl implements UploadDataService {
     private final AllocationRepository allocationRepo;
     private final FileUploadRepository fileUploadRepo;
     private final OrgIsolationGuard orgIsolationGuard;
+    private final com.recoverpro.server.service.AllocationSearchIndexService allocationSearchIndexService;
 
     @Override
     @Transactional(readOnly = true)
@@ -79,7 +80,9 @@ public class UploadDataServiceImpl implements UploadDataService {
                 .dynamicData(new HashMap<>(data))
                 .build();
 
-        UploadRowResponse response = toRowResponse(allocationRepo.save(allocation));
+        Allocation saved = allocationRepo.save(allocation);
+        allocationSearchIndexService.reindex(saved);
+        UploadRowResponse response = toRowResponse(saved);
         upload.setTotalRows((upload.getTotalRows() != null ? upload.getTotalRows() : 0) + 1);
         fileUploadRepo.save(upload);
         return response;
@@ -103,7 +106,9 @@ public class UploadDataServiceImpl implements UploadDataService {
         String borrowerName = extractString(data, "borrower_name", "borrowerName", null);
         if (borrowerName != null) allocation.setBorrowerName(borrowerName);
 
-        return toRowResponse(allocationRepo.save(allocation));
+        Allocation saved = allocationRepo.save(allocation);
+        allocationSearchIndexService.reindex(saved);
+        return toRowResponse(saved);
     }
 
     @Override

@@ -1,31 +1,40 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  ArrowRight, X, Settings, Search, CornerDownLeft
+  ArrowRight, X, Settings, Search, CornerDownLeft, Loader2, User
 } from 'lucide-react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   type PaletteItem, type CommandPaletteProps, type ScopeMode,
   parseQuery, scoreItem, passesFilters, passesScope, findTypoSuggestion,
-  readStringArray, writeStringArray, RECENT_KEY_DEFAULT,
+  readRecentEntries, writeRecentEntries, RECENT_KEY_DEFAULT,
 } from './CommandPaletteHelpers';
 import './TopbarCustomizeDialog.css';
 
 export type { PaletteItem };
 
 const RECENT_MAX_DEFAULT = 6;
+const REMOTE_DEBOUNCE_MS = 250;
+const REMOTE_MIN_CHARS = 2;
 
 export default function CommandPalette({
-  open, onClose, items, recentMax = RECENT_MAX_DEFAULT, recentKey = RECENT_KEY_DEFAULT, scope
+  open, onClose, items, recentMax = RECENT_MAX_DEFAULT, recentKey = RECENT_KEY_DEFAULT, scope,
+  remoteSearch, remoteLabel = 'Loans & Customers',
 }: CommandPaletteProps) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [scopeMode, setScopeMode] = useState<ScopeMode>('all');
   const [activeIdx, setActiveIdx] = useState(0);
+  const [remoteItems, setRemoteItems] = useState<PaletteItem[]>([]);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const returnFocusRef = useRef<Element | null>(null);
+  const remoteAbortRef = useRef<AbortController | null>(null);
 
   useFocusTrap(dialogRef, open);
 
@@ -35,6 +44,8 @@ export default function CommandPalette({
     setQuery('');
     setScopeMode('all');
     setActiveIdx(0);
+    setRemoteItems([]);
+    setRemoteError(false);
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
 
@@ -57,13 +68,56 @@ export default function CommandPalette({
     [scoped, parsed.filters],
   );
 
+  const showRemote = !!remoteSearch && parsed.text.length >= REMOTE_MIN_CHARS;
+
+  useEffect(() => {
+    remoteAbortRef.current?.abort();
+    if (!open || !remoteSearch || !showRemote) {
+      setRemoteItems([]); setRemoteLoading(false); setRemoteError(false);
+      return;
+    }
+    const term = parsed.text;
+    const controller = new AbortController();
+    remoteAbortRef.current = controller;
+    setRemoteLoading(true);
+    setRemoteError(false);
+    const t = setTimeout(async () => {
+      try {
+        const results = await remoteSearch(term, controller.signal);
+        setRemoteItems(results);
+      } catch (e: any) {
+        if (e?.name !== 'CanceledError' && e?.name !== 'AbortError') { setRemoteItems([]); setRemoteError(true); }
+      } finally {
+        setRemoteLoading(false);
+      }
+    }, REMOTE_DEBOUNCE_MS);
+    return () => { clearTimeout(t); controller.abort(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, remoteSearch, showRemote, parsed.text]);
+
   const recentItems = useMemo(() => {
     if (parsed.text || Object.keys(parsed.filters).length > 0) return null;
-    const ids = readStringArray(recentKey);
+    const entries = readRecentEntries(recentKey);
     const byId = new Map(filtered.map(i => [i.id, i]));
-    const resolved = ids.map(id => byId.get(id)).filter((i): i is PaletteItem => !!i);
+    const resolved = entries
+      .map((e): PaletteItem | null => {
+        const live = byId.get(e.id);
+        if (live) return live;
+        if (e.id.startsWith('allocation:')) {
+          return {
+            id: e.id,
+            label: e.label,
+            category: e.category,
+            hint: e.hint,
+            icon: User,
+            run: () => navigate(`/app/allocations/${e.id.slice('allocation:'.length)}`),
+          };
+        }
+        return null;
+      })
+      .filter((i): i is PaletteItem => !!i);
     return resolved.length > 0 ? resolved.slice(0, recentMax) : null;
-  }, [filtered, parsed.text, parsed.filters, recentKey, recentMax]);
+  }, [filtered, parsed.text, parsed.filters, recentKey, recentMax, navigate]);
 
   const scored = useMemo(() => {
     if (!parsed.text) return filtered.map(item => ({ item, match: { score: 0 } }));
@@ -73,7 +127,8 @@ export default function CommandPalette({
       .sort((a, b) => b.match.score - a.match.score);
   }, [filtered, parsed.text]);
 
-  const flat = recentItems ?? scored.map(s => s.item);
+  const localFlat = recentItems ?? scored.map(s => s.item);
+  const flat = showRemote ? [...remoteItems, ...localFlat] : localFlat;
 
   const typoSuggestion = useMemo(() => {
     if (!parsed.text || flat.length > 0) return null;
@@ -87,9 +142,9 @@ export default function CommandPalette({
   }, [activeIdx, open]);
 
   const remember = useCallback((item: PaletteItem) => {
-    const ids = readStringArray(recentKey).filter(id => id !== item.id);
-    ids.unshift(item.id);
-    writeStringArray(recentKey, ids.slice(0, Math.max(recentMax, 12)));
+    const entries = readRecentEntries(recentKey).filter(e => e.id !== item.id);
+    entries.unshift({ id: item.id, label: item.label, category: item.category, hint: item.hint });
+    writeRecentEntries(recentKey, entries.slice(0, Math.max(recentMax, 12)));
   }, [recentKey, recentMax]);
 
   const activate = useCallback((item: PaletteItem) => {
@@ -114,6 +169,40 @@ export default function CommandPalette({
 
   if (!open) return null;
 
+  const renderRow = (item: PaletteItem, idx: number) => {
+    const isActive = idx === activeIdx;
+    const Icon = item.icon;
+    const subtitle = item.id.startsWith('allocation:') && item.hint ? item.hint : item.category;
+    return (
+      <button key={item.id} type="button" id={`rp-palette-item-${idx}`} data-idx={idx}
+        className={`app-topbar-custom-row${isActive ? ' is-active' : ''}`}
+        style={{ width: '100%', textAlign: 'left', border: 'none', background: isActive ? 'color-mix(in srgb, var(--text-primary) 5%, transparent)' : 'transparent', cursor: 'pointer', alignItems: 'center' }}
+        role="option" aria-selected={isActive}
+        onMouseEnter={() => setActiveIdx(idx)} onClick={() => activate(item)}>
+
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '4px' }}>
+          <Icon size={14} aria-hidden="true" style={{ color: 'var(--ink-secondary)' }} />
+        </div>
+
+        <div className="app-topbar-custom-row-body">
+          <span className="app-topbar-custom-row-label">{item.label}</span>
+          <span className="app-topbar-custom-row-desc">{subtitle}</span>
+        </div>
+
+        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: isActive ? 'var(--ink-solid)' : 'transparent', color: isActive ? 'var(--text-on-solid)' : 'color-mix(in srgb, var(--text-primary) 20%, transparent)', transition: 'all 0.2s', flexShrink: 0 }}>
+          <ArrowRight size={12} aria-hidden="true" />
+        </div>
+      </button>
+    );
+  };
+
+  const groupHeader = (label: string, loading?: boolean) => (
+    <div style={{ padding: '4px 6px 2px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-tertiary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+      {label}
+      {loading && <Loader2 size={11} className="ds-spin" aria-hidden="true" />}
+    </div>
+  );
+
   return createPortal(
     <div className="app-topbar-custom-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true" aria-label="Command palette">
       <div className="app-topbar-custom-dialog" ref={dialogRef} tabIndex={-1} style={{ outline: 'none' }}>
@@ -137,8 +226,8 @@ export default function CommandPalette({
                 value={query}
                 onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
                 onKeyDown={onKeyDown}
-                placeholder="Search pages and commands…"
-                aria-label="Search pages and commands"
+                placeholder="Search loans, customers, pages…"
+                aria-label="Search loans, customers, and pages"
                 aria-controls="rp-palette-list"
                 style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', font: 'inherit', fontSize: 13, color: 'inherit' }}
               />
@@ -164,51 +253,49 @@ export default function CommandPalette({
           tabIndex={scope ? -1 : 0}
           onKeyDown={scope ? undefined : onKeyDown}
         >
-          {recentItems && (
-            <div style={{ padding: '4px 6px 2px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-tertiary)' }}>
-              Recent
-            </div>
-          )}
-          {flat.map((item, idx) => {
-            const isActive = idx === activeIdx;
-            const Icon = item.icon;
-            return (
-              <button key={item.id} type="button" id={`rp-palette-item-${idx}`} data-idx={idx}
-                className={`app-topbar-custom-row${isActive ? ' is-active' : ''}`}
-                style={{ width: '100%', textAlign: 'left', border: 'none', background: isActive ? 'color-mix(in srgb, var(--text-primary) 5%, transparent)' : 'transparent', cursor: 'pointer', alignItems: 'center' }}
-                role="option" aria-selected={isActive}
-                onMouseEnter={() => setActiveIdx(idx)} onClick={() => activate(item)}>
-
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '4px' }}>
-                  <Icon size={14} aria-hidden="true" style={{ color: 'var(--ink-secondary)' }} />
+          {showRemote ? (
+            <>
+              {groupHeader(remoteLabel, remoteLoading)}
+              {remoteError && (
+                <div style={{ padding: '10px 12px', fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
+                  Couldn't load loan results.
                 </div>
-
-                <div className="app-topbar-custom-row-body">
-                  <span className="app-topbar-custom-row-label">{item.label}</span>
-                  <span className="app-topbar-custom-row-desc">{item.category}</span>
+              )}
+              {!remoteError && !remoteLoading && remoteItems.length === 0 && (
+                <div style={{ padding: '10px 12px', fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
+                  No loans or customers match "{parsed.text}".
                 </div>
-
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: isActive ? 'var(--ink-solid)' : 'transparent', color: isActive ? 'var(--text-on-solid)' : 'color-mix(in srgb, var(--text-primary) 20%, transparent)', transition: 'all 0.2s', flexShrink: 0 }}>
-                  <ArrowRight size={12} aria-hidden="true" />
+              )}
+              {remoteItems.map((item, i) => renderRow(item, i))}
+              {groupHeader('Pages & Actions')}
+              {scored.length === 0 && (
+                <div style={{ padding: '10px 12px', fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
+                  No pages or actions match.
                 </div>
-              </button>
-            );
-          })}
+              )}
+              {scored.map((s, i) => renderRow(s.item, remoteItems.length + i))}
+            </>
+          ) : (
+            <>
+              {recentItems && groupHeader('Recent')}
+              {flat.map((item, idx) => renderRow(item, idx))}
 
-          {flat.length === 0 && typoSuggestion && (
-            <button type="button" className="app-topbar-custom-row" onClick={() => activate(typoSuggestion)}
-              style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }}>
-              <div className="app-topbar-custom-row-body">
-                <span className="app-topbar-custom-row-label">Did you mean "{typoSuggestion.label}"?</span>
-                <span className="app-topbar-custom-row-desc">Press <CornerDownLeft size={9} style={{ verticalAlign: 'middle' }} /> to go</span>
-              </div>
-            </button>
-          )}
+              {flat.length === 0 && typoSuggestion && (
+                <button type="button" className="app-topbar-custom-row" onClick={() => activate(typoSuggestion)}
+                  style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }}>
+                  <div className="app-topbar-custom-row-body">
+                    <span className="app-topbar-custom-row-label">Did you mean "{typoSuggestion.label}"?</span>
+                    <span className="app-topbar-custom-row-desc">Press <CornerDownLeft size={9} style={{ verticalAlign: 'middle' }} /> to go</span>
+                  </div>
+                </button>
+              )}
 
-          {flat.length === 0 && !typoSuggestion && (
-            <div style={{ padding: '24px 6px', textAlign: 'center', fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
-              No matches{parsed.text ? ` for "${parsed.text}"` : ''}.
-            </div>
+              {flat.length === 0 && !typoSuggestion && (
+                <div style={{ padding: '24px 6px', textAlign: 'center', fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
+                  No matches{parsed.text ? ` for "${parsed.text}"` : ''}.
+                </div>
+              )}
+            </>
           )}
         </div>
 

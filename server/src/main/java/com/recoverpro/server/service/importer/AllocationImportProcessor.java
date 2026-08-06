@@ -35,6 +35,7 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
     private final AllocationRepository allocationRepository;
     private final BorrowerRepository borrowerRepository;
     private final LookupHashService lookupHashService;
+    private final com.recoverpro.server.service.AllocationSearchIndexService allocationSearchIndexService;
 
     @Override
     public UploadType supportedType() {
@@ -94,6 +95,7 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
     @Override
     public void persistBatch(List<Allocation> batch, ImportContext context) {
         allocationRepository.saveAll(batch);
+        allocationSearchIndexService.reindexAll(batch);
     }
 
     private Allocation buildFromRow(Map<String, String> row, int rowNumber, ImportContext context) {
