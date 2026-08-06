@@ -11,6 +11,8 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -61,6 +63,18 @@ public class LookupHashService {
     public String hashPhone(String phone) {
         if (phone == null) return null;
         return hash(phone.replaceAll("\\D+", ""));
+    }
+
+    public java.util.Set<String> nameSearchTokens(String name) {
+        if (name == null || name.isBlank() || hmacKey == null) return java.util.Set.of();
+        java.util.Set<String> tokens = new java.util.HashSet<>();
+        for (String word : name.trim().toLowerCase().split("\\s+")) {
+            String cleaned = word.replaceAll("[^\\p{L}\\p{N}]", "");
+            for (int len = 2; len <= cleaned.length(); len++) {
+                tokens.add(hash(cleaned.substring(0, len)));
+            }
+        }
+        return tokens;
     }
 
     public static boolean constantTimeEquals(String a, String b) {
