@@ -32,6 +32,7 @@ class UploadDataServiceImplTest {
     @Mock private AllocationRepository allocationRepo;
     @Mock private FileUploadRepository fileUploadRepo;
     @Mock private OrgIsolationGuard orgIsolationGuard;
+    @Mock private com.recoverpro.server.service.AllocationSearchIndexService allocationSearchIndexService;
 
     private UploadDataServiceImpl service;
     private UUID uploadId;
@@ -39,7 +40,7 @@ class UploadDataServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new UploadDataServiceImpl(allocationRepo, fileUploadRepo, orgIsolationGuard);
+        service = new UploadDataServiceImpl(allocationRepo, fileUploadRepo, orgIsolationGuard, allocationSearchIndexService);
         uploadId = UUID.randomUUID();
         Organization org = new Organization();
         org.setId(UUID.randomUUID());
