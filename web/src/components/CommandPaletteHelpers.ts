@@ -53,6 +53,8 @@ export interface CommandPaletteProps {
   recentMax?: number;
   recentKey?: string;
   scope?: { currentPath: string; currentSection?: string };
+  remoteSearch?: (term: string, signal: AbortSignal) => Promise<PaletteItem[]>;
+  remoteLabel?: string;
 }
 
 export interface MatchInfo {
@@ -68,22 +70,35 @@ export interface ParsedQuery {
 
 export type ScopeMode = 'all' | 'page';
 
-export const RECENT_KEY_DEFAULT = 'rp-palette-recent';
+export const RECENT_KEY_DEFAULT = 'rp-palette-recent-v2';
 export const SAVED_KEY          = 'rp-palette-saved';
 export const SAVED_MAX          = 12;
 
 const TOKEN_KEYS = new Set(['in', 'cat', 'kind', 'type']);
 
-/* ── localStorage helpers ─────────────────────────────────────────────────── */
-export function readStringArray(key: string): string[] {
+/* ── Recent-item storage ──────────────────────────────────────────────────── */
+export interface RecentEntry {
+  id: string;
+  label: string;
+  category: string;
+  hint?: string;
+}
+
+export function readRecentEntries(key: string): RecentEntry[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((x: unknown) => typeof x === 'string') : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x: unknown): x is RecentEntry =>
+      !!x && typeof x === 'object'
+      && typeof (x as RecentEntry).id === 'string'
+      && typeof (x as RecentEntry).label === 'string'
+      && typeof (x as RecentEntry).category === 'string');
   } catch { return []; }
 }
-export function writeStringArray(key: string, list: string[]): void {
+
+export function writeRecentEntries(key: string, list: RecentEntry[]): void {
   try { localStorage.setItem(key, JSON.stringify(list)); } catch {}
 }
 
