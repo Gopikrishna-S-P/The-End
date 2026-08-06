@@ -80,7 +80,12 @@ public class UploadDataServiceImpl implements UploadDataService {
                 .dynamicData(new HashMap<>(data))
                 .build();
 
-        Allocation saved = allocationRepo.save(allocation);
+        // Must use save()'s returned instance, not the original `allocation` reference: Allocation's
+        // @Version field is pre-set to 0L via @Builder.Default, so Spring Data's isNew() check
+        // treats this new row as "existing" and routes it through em.merge() instead of
+        // em.persist() -- merge() returns a different managed copy and never populates the
+        // original object's generated id.
+        Allocation saved = allocationRepo.saveAndFlush(allocation);
         allocationSearchIndexService.reindex(saved);
         UploadRowResponse response = toRowResponse(saved);
         upload.setTotalRows((upload.getTotalRows() != null ? upload.getTotalRows() : 0) + 1);
@@ -106,7 +111,7 @@ public class UploadDataServiceImpl implements UploadDataService {
         String borrowerName = extractString(data, "borrower_name", "borrowerName", null);
         if (borrowerName != null) allocation.setBorrowerName(borrowerName);
 
-        Allocation saved = allocationRepo.save(allocation);
+        Allocation saved = allocationRepo.saveAndFlush(allocation);
         allocationSearchIndexService.reindex(saved);
         return toRowResponse(saved);
     }

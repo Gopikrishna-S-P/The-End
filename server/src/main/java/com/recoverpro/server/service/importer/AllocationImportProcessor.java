@@ -94,8 +94,13 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
 
     @Override
     public void persistBatch(List<Allocation> batch, ImportContext context) {
-        allocationRepository.saveAll(batch);
-        allocationSearchIndexService.reindexAll(batch);
+        // Allocation.version is pre-set to 0L via @Builder.Default, so Spring Data's isNew()
+        // check (which treats a non-null @Version field as "existing") routes every new
+        // allocation through em.merge() instead of em.persist() -- merge() returns a *different*
+        // managed instance and leaves the original object's generated id null forever. Reindexing
+        // must use saveAll's returned list, not the original batch reference.
+        List<Allocation> saved = allocationRepository.saveAllAndFlush(batch);
+        allocationSearchIndexService.reindexAll(saved);
     }
 
     private Allocation buildFromRow(Map<String, String> row, int rowNumber, ImportContext context) {

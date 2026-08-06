@@ -53,7 +53,7 @@ class UploadDataServiceImplTest {
     @Test
     void addRow_incrementsTotalRows() {
         when(allocationRepo.findMaxRowNumberByFileUploadId(uploadId)).thenReturn(3);
-        when(allocationRepo.save(any(Allocation.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(allocationRepo.saveAndFlush(any(Allocation.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.addRow(uploadId, Map.of("loan_number", "LN-1"), UUID.randomUUID());
 
@@ -66,7 +66,7 @@ class UploadDataServiceImplTest {
     void addRow_nullTotalRows_startsFromOne() {
         upload.setTotalRows(null);
         when(allocationRepo.findMaxRowNumberByFileUploadId(uploadId)).thenReturn(null);
-        when(allocationRepo.save(any(Allocation.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(allocationRepo.saveAndFlush(any(Allocation.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.addRow(uploadId, Map.of(), UUID.randomUUID());
 
