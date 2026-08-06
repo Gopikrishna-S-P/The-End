@@ -2,31 +2,66 @@
 
 .lucien-panel {
   position: fixed;
-  top: 16px;
+  top: 12px;
   right: 16px;
-  bottom: 16px;
-  /* Sized for reading measure, not for the viewport. Subtract borders, body
-     padding, avatar and gap and the text column is width - 66px; at 13px Inter
-     that lands ~65-70 characters per line across common laptop and desktop
-     widths, inside the 45-75 comfortable range. The 520px cap is deliberate —
-     34vw unbounded gives an 870px column on a 27" monitor, which reads worse
-     and buries a third of the app underneath. The floor keeps code blocks
-     usable; the min() keeps it on-screen on narrow windows. */
-  width: min(clamp(400px, 34vw, 520px), calc(100vw - 32px));
-  z-index: var(--z-elevated, 300);
+  /* Capped, not full-height (was `bottom: 12px`, i.e. 100vh - 24px — a
+     460-580px-wide column nearly spanning the viewport height reads as a
+     docked sidebar, not an "AI window": width:height was pushing 1:2. 780px
+     gives a window-like ~3:5 to 2:3 ratio at this panel's actual widths, with
+     visible app below it, closer to how Notion AI / Copilot-style panels
+     float rather than a full-bleed IDE sidebar. min() keeps the old
+     full-height behaviour on shorter viewports instead of overflowing. */
+  height: min(calc(100vh - 24px), 780px);
+  /* Width must clear the topbar's search trigger — .app-topbar-right is a
+     right-aligned cluster (search, help, bell, settings, this panel's own
+     toggle: four 36px icon buttons + 6px gaps + 24px topbar padding = 192px
+     from the viewport edge), and the search trigger itself is
+     clamp(180px, 20vw, 300px) wide. At common widths the old 400/34vw/520
+     reading-measure numbers left only a few px of margin past the search
+     trigger's left edge (worst case ~3px at 1280px) — raised the floor/vw
+     ratio/ceiling by ~60px each so the panel's left edge clears it with
+     real headroom (~50-100px) instead of by accident. Text column is still
+     width - 66px, now ~70-75 characters per line at 13px Inter — the very
+     top of comfortable, not the middle of it, but that's the deliberate
+     trade for actually covering the search bar. min() keeps it on-screen on
+     narrow windows. */
+  width: min(clamp(460px, 38vw, 580px), calc(100vw - 32px));
+  z-index: var(--z-elevated);
   transform: translateX(calc(100% + 32px));
-  transition: transform 240ms var(--ease);
+  transition: transform 240ms var(--ease), width 240ms var(--ease);
 
-  /* Floating solid container */
+  /* Floating solid container. Radius comes off the token scale — 16px was a
+     fifth unrelated radius in an app that already runs 6/9/14/20, and this is
+     exactly what --radius-lg ("modals, large containers") is for.
+
+     Shadow is --shadow-lg, whose light-mode value is the same 0 24px 48px this
+     rule hardcoded, plus the -12px spread and the second contact layer every
+     other floating surface here gets. The `inset 0 1px 0 rgba(255,255,255,.5)`
+     is gone: it's a glass gloss, which this design system explicitly doesn't
+     use anywhere else, and being raw white it stayed a bright highlight along
+     the top edge in dark mode instead of re-theming. */
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 
   overflow: hidden;
 }
 .lucien-panel.is-open {
   transform: translateX(0);
+}
+
+/* Narrower while the sidebar is collapsed (.asb-root.is-collapsed) — this is
+   the default state (see useAppLayoutState's sidebarCollapsed init), and at
+   the base 460-580px the panel's width:height ratio read too wide against
+   its now-capped 780px height. .asb-root and .app-right (the panel's
+   ancestor) are siblings under .app-layout, so this sibling selector reaches
+   it without a class on the panel itself. Floor/ceiling trimmed by ~30-40px —
+   enough to fix the ratio without dropping the panel's left edge behind the
+   topbar search trigger (verified against .app-search-trigger's own clamp at
+   1024/1280/1440/1920px: tightest margin ~16px at 1280px, 25-65px elsewhere). */
+.asb-root.is-collapsed ~ .app-right .lucien-panel {
+  width: min(clamp(430px, 35vw, 540px), calc(100vw - 32px));
 }
 
 .lucien-panel-inner {
@@ -240,7 +275,9 @@
 .lucien-history-note {
   flex-shrink: 0;
   padding: 10px 14px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  /* --border, like every other hairline in the panel. Raw black at 6% sat on
+     top of the surface colour instead of re-theming with it. */
+  border-top: 1px solid var(--border);
   font-family: var(--font-sans);
   font-size: 11px;
   color: var(--ink-tertiary);
@@ -718,8 +755,11 @@
   gap: 10px;
   margin: 0 14px 4px;
   padding: 12px 14px;
-  background: var(--warning-subtle, rgba(245, 158, 11, 0.1));
-  border: 1px solid var(--warning-border, rgba(245, 158, 11, 0.35));
+  /* Both tokens are defined, so these fallbacks were dead — and they weren't
+     even the same amber (#FFFAEB/#FEDF89 vs. a translucent 245,158,11), so the
+     file read as if this callout were a different colour than it renders. */
+  background: var(--warning-subtle);
+  border: 1px solid var(--warning-border);
   border-radius: var(--radius-md);
   color: var(--warning);
   flex-shrink: 0;
@@ -807,7 +847,7 @@
   gap: 4px;
   padding: 5px 6px 5px 4px;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: var(--bg-surface);
   transition: border-color 140ms, box-shadow 140ms;
 }
@@ -815,7 +855,7 @@
    still has to change, though: the textarea sets `outline: none`, so this is
    the only thing telling a keyboard user where they are. */
 .lucien-composer.is-focused {
-  border-color: var(--ink-tertiary, #667085);
+  border-color: var(--ink-tertiary);
 }
 .lucien-composer.is-disabled { opacity: .6; }
 
@@ -889,7 +929,7 @@
   height: 32px;
   padding: 0 4px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--ink-tertiary);
   font-size: 11px;
@@ -936,7 +976,11 @@
   z-index: 4;
   max-width: calc(100% - 32px);
   padding: 6px 12px;
-  border-radius: var(--radius-lg, 10px);
+  /* Pill, stated as such. The old `var(--radius-lg, 10px)` read as "10px" but
+     rendered at 20px — the token is defined, so the fallback was dead and
+     contradicted it. At this height 20px already clamps to a pill anyway, so
+     --radius-full is what it has always actually been. */
+  border-radius: var(--radius-full);
   background: var(--ink-primary);
   color: var(--text-on-solid);
   font-family: var(--font-sans);

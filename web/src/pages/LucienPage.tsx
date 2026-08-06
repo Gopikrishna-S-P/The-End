@@ -220,9 +220,9 @@ export default function LucienPage() {
 
             {pendingConfirm && (
               <div style={{
-                margin: '0 24px 16px', padding: '14px 16px', borderRadius: 10,
-                background: 'var(--warning-subtle, rgba(245,158,11,0.1))',
-                border: '1px solid var(--warning-border, rgba(245,158,11,0.35))',
+                margin: '0 24px 16px', padding: '14px 16px', borderRadius: 'var(--radius-md)',
+                background: 'var(--warning-subtle)',
+                border: '1px solid var(--warning-border)',
                 display: 'flex', alignItems: 'flex-start', gap: 12,
               }}>
                 <ShieldAlert size={18} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 1 }} />

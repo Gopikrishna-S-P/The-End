@@ -71,7 +71,7 @@ export default function VisitImportModal({ onClose, onDone }: Props) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200,
-      background: 'rgba(255,255,255,0.02)',
+      background: 'var(--shadow-overlay-scrim)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}

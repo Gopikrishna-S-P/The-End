@@ -455,7 +455,7 @@ export default function Dashboard() {
                   ]} height={150} />
                   {growthRate != null && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10, fontSize: 11.5, fontWeight: 600,
-                      color: growthRate > 0 ? 'var(--success, #1D7A3E)' : growthRate < 0 ? 'var(--danger, #B42318)' : 'var(--ink-tertiary)' }}>
+                      color: growthRate > 0 ? 'var(--success)' : growthRate < 0 ? 'var(--danger)' : 'var(--ink-tertiary)' }}>
                       {growthRate > 0 ? <ArrowUp size={12} /> : growthRate < 0 ? <ArrowDown size={12} /> : <Minus size={12} />}
                       {Math.abs(growthRate).toFixed(1)}% {growthRate > 0 ? 'growth' : growthRate < 0 ? 'decline' : 'flat'}
                     </div>

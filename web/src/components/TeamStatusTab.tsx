@@ -5,10 +5,10 @@ import { Navigation, Calendar } from 'lucide-react';
 
 function statusDot(status: VisitSessionStatus | null): { color: string; label: string } {
   switch (status) {
-    case 'STARTED':  return { color: '#3b82f6', label: 'Started' };
-    case 'REACHED':  return { color: '#22c55e', label: 'Reached' };
-    case 'WAITING':  return { color: '#f59e0b', label: 'Waiting' };
-    default:         return { color: '#9ca3af', label: 'No active visit' };
+    case 'STARTED':  return { color: 'var(--info)', label: 'Started' };
+    case 'REACHED':  return { color: 'var(--success)', label: 'Reached' };
+    case 'WAITING':  return { color: 'var(--warning)', label: 'Waiting' };
+    default:         return { color: 'var(--text-tertiary)', label: 'No active visit' };
   }
 }
 

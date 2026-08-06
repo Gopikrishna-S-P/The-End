@@ -84,7 +84,7 @@ export function FieldOpsIncidentPanel({
                 <li key={incident.id} ref={open && idx === 0 ? firstOpenRef : null}
                   style={{ borderBottom: '1px solid var(--border-subtle)', padding: '20px', background: open ? 'var(--danger-subtle)' : 'transparent', display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <span className="db-att-chip" style={{ width: 40, height: 40, flexShrink: 0, background: open ? 'var(--danger)' : 'var(--bg-subtle)', color: open ? '#fff' : 'var(--ink-solid)', fontSize: 13 }}>
+                    <span className="db-att-chip" style={{ width: 40, height: 40, flexShrink: 0, background: open ? 'var(--danger)' : 'var(--bg-subtle)', color: open ? 'var(--text-on-solid)' : 'var(--ink-solid)', fontSize: 13 }}>
                       {initials(agentLabel)}
                     </span>
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 4 }}>
@@ -93,7 +93,7 @@ export function FieldOpsIncidentPanel({
                         {open && !isResolving && (
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button type="button" onClick={() => onListen(incident.id, incident.agentId)}
-                              className="db-error-retry" style={{ background: 'var(--danger)', color: '#fff', padding: '0 10px', height: 28, fontSize: 11 }}>
+                              className="db-error-retry" style={{ background: 'var(--danger)', color: 'var(--text-on-solid)', padding: '0 10px', height: 28, fontSize: 11 }}>
                               <Headphones size={12} style={{ marginRight: 4 }} /> Listen
                             </button>
                             <button type="button" onClick={() => { setResolvingId(incident.id); setResolveNotes(''); }}

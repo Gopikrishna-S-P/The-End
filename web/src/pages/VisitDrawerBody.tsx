@@ -196,7 +196,7 @@ export function VisitDrawerBody({ visit, allocation, img1, img2, imgLoading, pro
 
               {/* STARTED */}
               <TimelineStep
-                color="#3b82f6" label="Started"
+                color="var(--info)" label="Started"
                 time={fmtTime(session.startedAt)}
                 gps={<GpsPin lat={session.startedLat} lng={session.startedLng} />}
                 gap={session.reachedAt ? `${fmtMins(diffMins(session.startedAt, session.reachedAt))} transit` : null}
@@ -205,7 +205,7 @@ export function VisitDrawerBody({ visit, allocation, img1, img2, imgLoading, pro
               {/* REACHED */}
               {session.reachedAt && (
                 <TimelineStep
-                  color="#22c55e" label="Reached"
+                  color="var(--success)" label="Reached"
                   time={fmtTime(session.reachedAt)}
                   gps={<GpsPin lat={session.reachedLat} lng={session.reachedLng} />}
                   gap={session.waitingSince ? `${fmtMins(diffMins(session.reachedAt, session.waitingSince))} before waiting` : null}
@@ -215,7 +215,7 @@ export function VisitDrawerBody({ visit, allocation, img1, img2, imgLoading, pro
               {/* WAITING */}
               {session.waitingSince && (
                 <TimelineStep
-                  color="#f59e0b" label="Waiting"
+                  color="var(--warning)" label="Waiting"
                   time={fmtTime(session.waitingSince)}
                   gps={null}
                   gap={session.closedAt ? `waited ${fmtMins(diffMins(session.waitingSince, session.closedAt))}` : 'still waiting'}
@@ -225,7 +225,7 @@ export function VisitDrawerBody({ visit, allocation, img1, img2, imgLoading, pro
               {/* CLOSED / ABANDONED */}
               {session.closedAt && (
                 <TimelineStep
-                  color={session.status === 'ABANDONED' ? '#ef4444' : '#6b7280'}
+                  color={session.status === 'ABANDONED' ? 'var(--danger)' : 'var(--text-tertiary)'}
                   label={session.status === 'ABANDONED' ? 'Abandoned' : 'Closed'}
                   time={fmtTime(session.closedAt)}
                   gps={null}

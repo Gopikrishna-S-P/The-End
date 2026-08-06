@@ -263,7 +263,7 @@ export default function RoleManagementPage() {
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {customRoles.length > 0 && (
                       <div>
-                        <div style={{ padding: '16px 16px 8px', background: '#ffffff', borderBottom: '1px solid var(--border-subtle)', position: 'sticky', top: 0, zIndex: 10 }}>
+                        <div style={{ padding: '16px 16px 8px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)', position: 'sticky', top: 0, zIndex: 10 }}>
                           <h3 className="db-section-label" style={{ margin: 0 }}>Custom roles</h3>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -286,7 +286,7 @@ export default function RoleManagementPage() {
 
                     {systemRoles.length > 0 && (
                       <div>
-                        <div style={{ padding: '16px 16px 8px', background: '#ffffff', borderBottom: '1px solid var(--border-subtle)', borderTop: customRoles.length > 0 ? '4px solid var(--bg-subtle)' : 'none', position: 'sticky', top: customRoles.length > 0 ? 0 : 0, zIndex: 10 }}>
+                        <div style={{ padding: '16px 16px 8px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)', borderTop: customRoles.length > 0 ? '4px solid var(--bg-subtle)' : 'none', position: 'sticky', top: customRoles.length > 0 ? 0 : 0, zIndex: 10 }}>
                           <h3 className="db-section-label" style={{ margin: 0 }}>System roles</h3>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>

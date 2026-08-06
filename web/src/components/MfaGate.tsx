@@ -74,7 +74,7 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
   const countdown  = Math.ceil((1 - elapsed) * 15);
   const dashOffset = CIRCUMFERENCE * (1 - elapsed);
   const isLocked   = elapsed < 1;
-  const ringColor   = isLocked ? 'var(--warning)' : 'rgba(0, 0, 0, 0.35)';
+  const ringColor   = isLocked ? 'var(--warning)' : 'color-mix(in srgb, var(--text-primary) 35%, transparent)';
 
   return createPortal(
     <div
@@ -96,7 +96,7 @@ export default function MfaGate({ mfaEnabled }: MfaGateProps) {
             <svg width={48} height={48} viewBox="0 0 48 48"
               aria-label={`Later available in ${countdown}s`}
               style={{ position: 'absolute', top: -4, left: -4, pointerEvents: 'none' }}>
-              <circle cx={24} cy={24} r={RING_R} fill="none" stroke="rgba(0, 0, 0, 0.1)" strokeWidth={1.5} />
+              <circle cx={24} cy={24} r={RING_R} fill="none" stroke="color-mix(in srgb, var(--text-primary) 10%, transparent)" strokeWidth={1.5} />
               <circle
                 cx={24} cy={24} r={RING_R} fill="none"
                 stroke={ringColor} strokeWidth={1.5}

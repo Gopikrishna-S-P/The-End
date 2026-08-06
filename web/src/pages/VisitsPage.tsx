@@ -242,7 +242,7 @@ export default function VisitsPage() {
           <motion.section variants={fadeUp} className="ds-card dd-cases-card is-overflow-hidden" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="dd-cases-head" style={{ padding: '0 16px', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-subtle)', padding: 4, borderRadius: 'var(--radius-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-subtle)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
                   <button
                     type="button"
                     onClick={() => { setActiveTab('my'); setPage(0); }}
@@ -250,7 +250,7 @@ export default function VisitsPage() {
                       background: activeTab === 'my' ? 'var(--bg-surface)' : 'transparent',
                       color: activeTab === 'my' ? 'var(--text-primary)' : 'var(--text-tertiary)',
                       border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
-                      boxShadow: activeTab === 'my' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                      boxShadow: activeTab === 'my' ? 'var(--shadow-xs)' : 'none'
                     }}
                   >
                     My Visits
@@ -262,7 +262,7 @@ export default function VisitsPage() {
                       background: activeTab === 'all' ? 'var(--bg-surface)' : 'transparent',
                       color: activeTab === 'all' ? 'var(--text-primary)' : 'var(--text-tertiary)',
                       border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
-                      boxShadow: activeTab === 'all' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                      boxShadow: activeTab === 'all' ? 'var(--shadow-xs)' : 'none'
                     }}
                   >
                     All Visits

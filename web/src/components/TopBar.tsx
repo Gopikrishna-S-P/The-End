@@ -249,55 +249,55 @@ export default function TopBar(props: TopBarProps) {
 
                 <div className="app-topbar-custom-list">
                   <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); onOpenShortcuts(); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px' }}>
-                      <Keyboard size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
+                      <Keyboard size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
                     </div>
                     <div className="app-topbar-custom-row-body">
                       <span className="app-topbar-custom-row-label">Keyboard shortcuts</span>
                       <span className="app-topbar-custom-row-desc">View all global hotkeys</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 600, background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px', color: '#111', fontFamily: 'monospace' }}>?</span>
+                      <span style={{ fontSize: '10px', fontWeight: 600, background: 'var(--bg-hover)', padding: '2px 6px', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>?</span>
                     </div>
                   </button>
 
                   <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); onOpenPageHelp(); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px' }}>
-                      <BookOpen size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
+                      <BookOpen size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
                     </div>
                     <div className="app-topbar-custom-row-body">
                       <span className="app-topbar-custom-row-label">Page guide</span>
                       <span className="app-topbar-custom-row-desc">Tips &amp; links for this screen</span>
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '6px', background: 'transparent', color: 'rgba(0,0,0,0.2)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: 'transparent', color: 'var(--text-placeholder)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
                       <ArrowRight size={12} aria-hidden="true" />
                     </div>
                   </button>
 
                   <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); tour.start(); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px' }}>
-                      <Compass size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
+                      <Compass size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
                     </div>
                     <div className="app-topbar-custom-row-body">
                       <span className="app-topbar-custom-row-label">Product tour</span>
                       <span className="app-topbar-custom-row-desc">Restart the onboarding walkthrough</span>
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '6px', background: 'transparent', color: 'rgba(0,0,0,0.2)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: 'transparent', color: 'var(--text-placeholder)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
                       <ArrowRight size={12} aria-hidden="true" />
                     </div>
                   </button>
 
-                  <div className="app-topbar-custom-row-desc" style={{ padding: '8px 12px 0', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', marginTop: '4px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '16px' }}>Support</div>
+                  <div className="app-topbar-custom-row-desc" style={{ padding: '8px 12px 0', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em', marginTop: '4px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>Support</div>
 
                   <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); window.open('mailto:support@recoverpro.in'); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px' }}>
-                      <MessageSquare size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
+                      <MessageSquare size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
                     </div>
                     <div className="app-topbar-custom-row-body">
                       <span className="app-topbar-custom-row-label">Contact support</span>
                       <span className="app-topbar-custom-row-desc">Email the RecoverPro team</span>
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '6px', background: 'transparent', color: 'rgba(0,0,0,0.2)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: 'transparent', color: 'var(--text-placeholder)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
                       <ExternalLink size={12} aria-hidden="true" />
                     </div>
                   </button>

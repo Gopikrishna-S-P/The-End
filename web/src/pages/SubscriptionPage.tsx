@@ -46,7 +46,7 @@ function PlanCard({ plan, current, canManage, onSelect, loading }: {
   return (
     <motion.div variants={fadeUp} className="ds-card db-card" style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', border: isCurrent ? '2px solid var(--ink-solid)' : plan.highlighted ? '2px solid var(--info)' : '1px solid var(--border-subtle)' }}>
       {plan.highlighted && <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--info-subtle)', color: 'var(--info)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottomLeftRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}><Zap size={10} />Most popular</div>}
-      {isCurrent && <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--ink-solid)', color: 'var(--bg-surface)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottomLeftRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}><Crown size={10} />Current plan</div>}
+      {isCurrent && <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--ink-solid)', color: 'var(--text-on-solid)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottomLeftRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}><Crown size={10} />Current plan</div>}
       
       <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-primary)', marginBottom: 8, display: 'block' }}>{plan.name}</span>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 24 }}>

@@ -92,7 +92,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px 14px 18px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-surface);
   position: relative;
@@ -103,13 +103,13 @@
 .app-page-stat-tile:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 8px 24px rgba(16,24,40,.06),
-    0 2px 6px rgba(16,24,40,.04);
+    0 8px 24px color-mix(in srgb, var(--text-primary) 6%, transparent),
+    0 2px 6px color-mix(in srgb, var(--text-primary) 4%, transparent);
 }
 .app-page-stat-tile-icon {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -151,11 +151,15 @@
   color: var(--ink-tertiary);
 }
 
+/* is-success/is-info used to be raw Tailwind colours (green-700 #15803D,
+   indigo-500 #6366f1) instead of this app's actual --success (#067647) /
+   --info (#175CD3) tokens the neighbouring is-warn/is-danger variants
+   already correctly use. */
 .app-page-stat-tile.is-accent .app-page-stat-tile-icon  { background: var(--bg-subtle); color: var(--ink-solid); }
-.app-page-stat-tile.is-success .app-page-stat-tile-icon { background: rgba(21,128,61,.10); color: var(--success, #15803D); }
+.app-page-stat-tile.is-success .app-page-stat-tile-icon { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
 .app-page-stat-tile.is-warn .app-page-stat-tile-icon    { background: var(--warning-subtle); color: var(--warning); }
 .app-page-stat-tile.is-danger .app-page-stat-tile-icon  { background: var(--error-subtle); color: var(--error); }
-.app-page-stat-tile.is-info .app-page-stat-tile-icon    { background: rgba(99,102,241,.10); color: #6366f1; }
+.app-page-stat-tile.is-info .app-page-stat-tile-icon    { background: color-mix(in srgb, var(--info) 10%, transparent); color: var(--info); }
 
 /* Split-button: primary action + chevron toggle, fused */
 .app-page-split-btn {
@@ -201,19 +205,19 @@
 .app-page-skel-block {
   background: linear-gradient(90deg, var(--bg-subtle) 0%, var(--border) 50%, var(--bg-subtle) 100%);
   background-size: 200% 100%;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   animation: app-page-skel 1.4s ease-in-out infinite;
 }
 .app-page-skel-tile {
   height: 78px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: linear-gradient(90deg, var(--bg-subtle) 0%, var(--border) 50%, var(--bg-subtle) 100%);
   background-size: 200% 100%;
   animation: app-page-skel 1.4s ease-in-out infinite;
 }
 .app-page-skel-section {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   padding: 16px 18px;
   background: var(--bg-surface);

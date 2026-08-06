@@ -1,5 +1,13 @@
 /* ── LoadingSplash — full-bleed post-login overlay ─────────────────────────── */
-
+/* Deliberately not tokenized further: this component has no .app-layout.dark
+   override anywhere in the file — background-color, the dot-grid pattern
+   AND the vignette gradient below are ALL raw light-mode values with no
+   dark counterpart. Mapping just the root #ffffff to var(--bg-surface)
+   would flip only the base colour dark while leaving the grey dot pattern
+   and white vignette hardcoded light, which is worse than the current
+   consistent (if theme-blind) light-only state. This is a real gap — the
+   splash never got a dark variant — flagged for a decision, not
+   half-patched here. */
 .app-loading-splash {
   position: fixed;
   inset: 0;

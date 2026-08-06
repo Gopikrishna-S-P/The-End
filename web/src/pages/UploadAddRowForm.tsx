@@ -40,7 +40,7 @@ export function UploadAddRowForm({ columns, onAdd, onCancel }: Props) {
       <td style={{ padding: '8px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
           <button type="button" onClick={handleAdd} disabled={saving}
-            className="ds-btn is-primary" style={{ height: 28, padding: '0 10px', fontSize: 11.5, background: 'var(--success)', border: 'none', color: '#fff' }}>
+            className="ds-btn is-primary" style={{ height: 28, padding: '0 10px', fontSize: 11.5, background: 'var(--success)', border: 'none', color: 'var(--text-on-solid)' }}>
             {saving ? <Loader2 size={12} className="ds-spin" style={{ marginRight: 4 }} /> : <Check size={12} style={{ marginRight: 4 }} />}
             Add
           </button>

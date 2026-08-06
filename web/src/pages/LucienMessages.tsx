@@ -98,7 +98,7 @@ export function LucienMessages({ messages, sending, starting, loadingHistory, er
                 </div>
               </div>
             ) : msg.role === 'ASSISTANT' ? renderMarkdown(msg.content) : <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>}
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, marginTop: 8, letterSpacing: '0.04em', color: msg.role === 'USER' ? 'rgba(255,255,255,0.65)' : 'var(--ink-tertiary)' }}>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, marginTop: 8, letterSpacing: '0.04em', color: msg.role === 'USER' ? 'color-mix(in srgb, var(--text-on-solid) 65%, transparent)' : 'var(--ink-tertiary)' }}>
               {new Date(msg.createdAt).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>

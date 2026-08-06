@@ -139,7 +139,7 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
                 </button>
                 <button type="button" onClick={() => setAction('REJECT')}
                   className={`ds-btn ${action === 'REJECT' ? 'is-primary' : 'is-secondary'}`}
-                  style={action === 'REJECT' ? { flex: 1, height: 36, background: 'var(--danger)', border: 'none', color: '#fff' } : { flex: 1, height: 36 }}>
+                  style={action === 'REJECT' ? { flex: 1, height: 36, background: 'var(--danger)', border: 'none', color: 'var(--text-on-solid)' } : { flex: 1, height: 36 }}>
                   <XCircle size={14} style={{ marginRight: 6 }} /> Reject
                 </button>
               </div>
@@ -157,7 +157,7 @@ export function CollectionApprovalModal({ collection, isOpen, initialAction, onC
             <div className="ds-modal-actions" style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
               <button type="button" onClick={onClose} className="ds-btn is-secondary" style={{ flex: 1, height: 36 }}>Cancel</button>
               <button type="button" onClick={handleSubmit} disabled={loading || !canSubmit}
-                className={`ds-btn is-primary`} style={action === 'REJECT' ? { flex: 1, height: 36, background: 'var(--danger)', border: 'none', color: '#fff' } : { flex: 1, height: 36, background: 'var(--success)', border: 'none', color: '#fff' }}>
+                className={`ds-btn is-primary`} style={action === 'REJECT' ? { flex: 1, height: 36, background: 'var(--danger)', border: 'none', color: 'var(--text-on-solid)' } : { flex: 1, height: 36, background: 'var(--success)', border: 'none', color: 'var(--text-on-solid)' }}>
                 {loading && <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} />}
                 {!loading && action === 'APPROVE' && <CheckCircle2 size={14} style={{ marginRight: 6 }} />}
                 {!loading && action === 'REJECT' && <XCircle size={14} style={{ marginRight: 6 }} />}

@@ -22,7 +22,9 @@
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 12px 32px rgba(12, 10, 9, 0.16), 0 2px 8px rgba(12, 10, 9, 0.08);
+  /* Was rgba(12,10,9,X) — Tailwind stone-950, not this app's ink hue. */
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--text-primary) 16%, transparent),
+              0 2px 8px color-mix(in srgb, var(--text-primary) 8%, transparent);
 }
 
 /* On narrow screens the panel would overflow the viewport anchored right,

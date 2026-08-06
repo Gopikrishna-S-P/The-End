@@ -437,11 +437,11 @@ export default function AuditPage() {
                       key={f.id}
                       type="button"
                       className={`ds-btn is-sm ${tempFilter === f.id ? 'is-primary' : 'is-secondary'}`}
-                      style={tempFilter === f.id ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}}
+                      style={tempFilter === f.id ? { background: 'var(--ink-solid)', color: 'var(--text-on-solid)' } : {}}
                       onClick={() => setTempFilter(f.id as FilterKind)}
                     >
                       {f.label}
-                      {count > 0 && <span className="ds-pill is-neutral" style={tempFilter === f.id ? { background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', marginLeft: 6 } : { marginLeft: 6 }}>{count}</span>}
+                      {count > 0 && <span className="ds-pill is-neutral" style={tempFilter === f.id ? { background: 'color-mix(in srgb, var(--text-on-solid) 20%, transparent)', color: 'var(--text-on-solid)', border: 'none', marginLeft: 6 } : { marginLeft: 6 }}>{count}</span>}
                     </button>
                   );
                 })}

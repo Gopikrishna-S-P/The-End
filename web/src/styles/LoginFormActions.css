@@ -80,7 +80,7 @@
   height: 44px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -169,7 +169,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   line-height: 1.5;
   margin-bottom: 20px;
@@ -239,7 +239,7 @@
   height: 44px;
   flex: 0 0 44px;
   border: 1.5px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-surface);
   text-align: center;
   font-size: 18px;

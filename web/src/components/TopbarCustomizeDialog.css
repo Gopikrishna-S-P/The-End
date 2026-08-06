@@ -8,7 +8,10 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.02);
+  /* --shadow-overlay-scrim is exactly this value, already used by ~15 other
+     overlays (FeedbackDialog, MfaGate, ShortcutsDialog, …). This rule
+     hardcoded the same number instead of referencing it. */
+  background: var(--shadow-overlay-scrim);
   animation: app-topbar-custom-fade var(--dur-base) var(--ease-out) both;
 }
 
@@ -28,12 +31,16 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  /* Radius off the token scale (16px vs. this app's 6/9/14/20) — --radius-lg
+     is exactly "modals, large containers". Shadow was a glass gloss (the inset
+     white top-edge line): this design system uses no glass anywhere, and being
+     raw white it never re-themed — see the deleted dark-mode block below,
+     which had to hand-carry a second, darker version of this same shadow only
+     because the light one was hardcoded. --shadow-lg re-themes on its own. */
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: app-topbar-custom-rise var(--dur-slow) var(--ease-out) both;
 }
@@ -66,14 +73,17 @@
   font-family: var(--sans);
   font-size: 16px;
   font-weight: 700;
+  /* Was a grey-to-grey gradient text-clip (#111→#444, with a separate
+     hardcoded dark-mode version) sitting on top of a `color` that could never
+     show through it. No other dialog title in the app does this — FeedbackDialog
+     and MfaGate both use flat var(--text-primary) — and this gradient wasn't
+     even a brand moment (compare AppPage.detail.css's actual green gradient),
+     just two greys standing in for one token. Flat text re-themes for free. */
   color: var(--text-primary);
-  background: linear-gradient(135deg, #111, #444);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .app-topbar-custom-title svg {
-  color: #444;
+  color: var(--text-secondary);
 }
 
 .app-topbar-custom-close {
@@ -82,7 +92,7 @@
   border: none;
   background: transparent;
   color: var(--ink-tertiary);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -119,20 +129,22 @@
 
 .app-topbar-custom-row {
 
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 
   transition:
     background-color .18s ease;
 }
 
+/* A hover rule targeting `.app-topbar-action-icon` (with `!important`) used to
+   sit here. That class belongs to TopBar.tsx's own action icons, not to
+   anything this dialog renders (its rows are label + description + toggle,
+   no icon) — a `.app-topbar-custom-row:hover .app-topbar-action-icon`
+   descendant selector can never match across two separate DOM subtrees
+   (this dialog is a `createPortal` into `document.body`). Dead on arrival;
+   removed. */
+
 .app-topbar-custom-row:hover {
   background: var(--bg-hover);
-}
-
-.app-topbar-custom-row:hover .app-topbar-action-icon,
-.app-topbar-custom-row:focus-visible .app-topbar-action-icon {
-  background: #0AA550 !important;
-  color: #fff !important;
 }
 
 .app-topbar-custom-row {
@@ -172,9 +184,10 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 1px 5px;
-  border-radius: 4px;
+  /* --radius-xs is defined for exactly this ("badges, chips, tags, checkboxes"). */
+  border-radius: var(--radius-xs);
   background: var(--bg-hover);
-  color: #333;
+  color: var(--text-secondary);
 }
 
 .app-topbar-custom-row-desc {
@@ -208,9 +221,12 @@
 .app-topbar-custom-toggle-track {
   position: absolute;
   inset: 0;
-  background: var(--bg-hover);
+  /* --bg-subtle, matching NotificationPrefsDialog's toggle (the only other
+     on/off switch in the app) — this one used --bg-hover for the "off" fill,
+     a role meant for pointer interaction, not a switch's resting state. */
+  background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   transition: background 160ms var(--ease), border-color 160ms var(--ease);
 }
 
@@ -226,9 +242,18 @@
   transition: transform var(--dur-slow) var(--ease-out);
 }
 
+/* Flat fill, matching NotificationPrefsDialog's .app-prefs-toggle.is-on —
+   the only other switch in the app, and it uses no gradient. This dialog's
+   own toggle was the one place a two-stop green gradient showed up on a
+   functional control; the "no rainbow of hues" restraint documented in
+   Dashboard.css's chart-palette comment applies here too. */
 .app-topbar-custom-toggle.is-on .app-topbar-custom-toggle-track {
-  background: linear-gradient(135deg, #22C55E, #0AA550);
-  border-color: transparent;
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+}
+.app-topbar-custom-toggle.is-on:hover:not(.is-protected) .app-topbar-custom-toggle-track {
+  background: var(--ink-solid-hover);
+  border-color: var(--ink-solid-hover);
 }
 
 .app-topbar-custom-toggle.is-on .app-topbar-custom-toggle-knob {
@@ -240,10 +265,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--border);
   background: transparent;
   flex-shrink: 0;
   gap: 8px;
+}
+
+/* Scoped to this specific consumer of the shared footer, not the footer
+   class itself. */
+.app-topbar-custom-footer-logo {
+  flex-shrink: 0;
 }
 
 .app-topbar-custom-reset {
@@ -253,19 +284,19 @@
   padding: 8px 14px;
   background: var(--bg-hover);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-family: var(--sans);
   font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 120ms;
 }
 
 .app-topbar-custom-reset:hover {
-  background: rgba(10, 165, 80, 0.1);
-  color: #0AA550;
-  border-color: #0AA550;
+  background: var(--brand-subtle);
+  color: var(--brand);
+  border-color: var(--brand);
 }
 
 .app-topbar-custom-hint {
@@ -285,29 +316,18 @@
   }
 }
 
-/* ── Dark mode ────────────────────────────────────────────────────────────── */
-.app-layout.dark .app-topbar-custom-dialog {
-  background: rgba(21, 23, 28, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.app-layout.dark .app-topbar-custom-title,
-.app-layout.dark .app-topbar-custom-row-label {
-  color: #E8EAED;
-}
-.app-layout.dark .app-topbar-custom-title {
-  background: linear-gradient(135deg, #E8EAED, #9BA1AC);
-  -webkit-background-clip: text;
-}
-.app-layout.dark .app-topbar-custom-title svg { color: #9BA1AC; }
-.app-layout.dark .app-topbar-custom-close:hover { background: rgba(255, 255, 255, 0.06); color: #E8EAED; }
-.app-layout.dark .app-topbar-custom-intro,
-.app-layout.dark .app-topbar-custom-row-desc,
-.app-layout.dark .app-topbar-custom-hint { color: rgba(255, 255, 255, 0.55); }
-.app-layout.dark .app-topbar-custom-row:hover { background: rgba(255, 255, 255, 0.04); }
-.app-layout.dark .app-topbar-custom-tag { background: rgba(255, 255, 255, 0.08); color: #C4C9D2; }
-.app-layout.dark .app-topbar-custom-toggle-track { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.1); }
-.app-layout.dark .app-topbar-custom-footer { border-top-color: rgba(255, 255, 255, 0.08); }
-.app-layout.dark .app-topbar-custom-reset { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.1); color: #C4C9D2; }
+/* No manual "Dark mode" block. Every property above is now a token
+   (var(--bg-surface), var(--border), var(--text-secondary), etc.), and
+   ds.tokens.css already redefines all of those on `.app-layout.dark` — that's
+   the one and only place dark-mode colour should be declared. The ~26 lines
+   this file used to carry here were re-deriving what the tokens already give
+   for free, and in three places didn't even get there:
+     - the dialog surface was a bespoke 85%-translucent panel where every
+       other dark surface in the app is opaque var(--bg-surface);
+     - .app-topbar-custom-title svg's dark value (#9BA1AC) is, digit for
+       digit, var(--text-secondary)'s actual dark value — proof this was
+       hand-copied from the token instead of referencing it;
+     - the intro/row-desc/hint trio was flattened to one shared grey
+       (rgba(255,255,255,.55)) in dark mode, even though light mode already
+       kept intro (secondary) one shade darker than row-desc/hint (tertiary) —
+       a dark-mode-only inconsistency this deletion also fixes. */

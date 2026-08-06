@@ -23,11 +23,11 @@
    ───────────────────────────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border, #e2e5ea) transparent;
+  scrollbar-color: var(--border) transparent;
 }
 *::-webkit-scrollbar { width: 4px; height: 4px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: var(--border, #e2e5ea); border-radius: 999px; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
 html, body {
   /* Guard against off-canvas `position:fixed` panels (LucienPanel.css) creating
@@ -105,8 +105,8 @@ var {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border-top: 1px solid var(--border, #EBEDF1);
-  background: var(--bg-surface, #fff);
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
   flex-shrink: 0;
 }
 
@@ -124,34 +124,34 @@ var {
   height: 28px;
   min-width: 28px;
   padding: 0 8px;
-  border: 1px solid var(--border, #EBEDF1);
-  border-radius: var(--radius-sm, 9px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text-secondary, #475467);
+  color: var(--text-secondary);
   font-family: var(--sans);
   font-size: 12px;
   font-weight: 550;
   cursor: pointer;
-  transition: background var(--dur-fast, 140ms), border-color var(--dur-fast, 140ms), color var(--dur-fast, 140ms);
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
 }
 
 .up-page-btn:hover:not(:disabled) {
-  background: var(--bg-hover, #E8EBF0);
-  border-color: var(--border-strong, #D6DAE1);
-  color: var(--text-primary, #101828);
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 .up-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .up-page-btn.is-active {
-  background: var(--ink-solid, #0AA550);
-  border-color: var(--ink-solid, #0AA550);
-  color: var(--text-on-solid, #fff);
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+  color: var(--text-on-solid);
 }
 .up-page-btn.is-active:hover:not(:disabled) {
-  background: var(--ink-solid-hover, #088A42);
-  border-color: var(--ink-solid-hover, #088A42);
-  color: var(--text-on-solid, #fff);
+  background: var(--ink-solid-hover);
+  border-color: var(--ink-solid-hover);
+  color: var(--text-on-solid);
 }
 
 .up-page-numbers {
@@ -164,9 +164,9 @@ var {
   font-family: var(--mono);
   font-size: 11.5px;
   font-weight: 450;
-  color: var(--text-tertiary, #667085);
+  color: var(--text-tertiary);
   padding: 0 6px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.up-page-meta strong { color: var(--text-primary, #101828); font-weight: 600; }
+.up-page-meta strong { color: var(--text-primary); font-weight: 600; }

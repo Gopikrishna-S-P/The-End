@@ -84,7 +84,7 @@
   align-items: center;
   padding: 4px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -199,7 +199,7 @@
   border-radius: var(--ds-radius);
   box-shadow: var(--ds-shadow-float);
   padding: 4px;
-  z-index: var(--z-dropdown, 200);
+  z-index: var(--z-dropdown);
   display: flex;
   flex-direction: column;
 }

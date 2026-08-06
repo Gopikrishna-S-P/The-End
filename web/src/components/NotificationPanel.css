@@ -4,14 +4,25 @@
 .app-notif-panel {
   --np-bg:         transparent;
   --np-canvas:     transparent;
-  --np-subtle:     var(--bg-subtle,  #F5F5F4);
-  --np-border:     var(--border,     #E7E5E4);
-  --np-border-s:   var(--border-strong, #D6D3D1);
-  --np-ink:        var(--ink-primary,   #0C0A09);
-  --np-ink-2:      var(--ink-secondary, #57534E);
-  --np-ink-3:      var(--ink-tertiary,  #A8A29E);
-  --np-error:      var(--error,         #B91C1C);
-  --np-error-s:    var(--error-subtle,  #FEF2F2);
+  /* Fallbacks removed — every one was dead (ds.tokens.css is loaded by the
+     time this panel can render: AppPage.css unconditionally @imports
+     ds/ds.css, and AppPage.css itself is imported by 53 page files; the
+     notification bell is only reachable from an authenticated page, which
+     is always AppPage-wrapped) AND wrong — each hardcoded value is a
+     Tailwind default-palette colour (stone-950/600/400, red-700) rather than
+     this app's actual tokens, e.g. --np-border-s's #D6D3D1 vs
+     --border-strong's real #D6DAE1. Evidence this component was ported from
+     an earlier Tailwind-stone prototype and never fully re-pointed at the
+     app's own cool-grey scale; harmless only because the fallback never
+     actually activates. */
+  --np-subtle:     var(--bg-subtle);
+  --np-border:     var(--border);
+  --np-border-s:   var(--border-strong);
+  --np-ink:        var(--ink-primary);
+  --np-ink-2:      var(--ink-secondary);
+  --np-ink-3:      var(--ink-tertiary);
+  --np-error:      var(--error);
+  --np-error-s:    var(--error-subtle);
   --np-sans:       var(--font-sans);
   --np-mono:       var(--font-mono);
   --np-ease:       var(--ease-out);
@@ -79,7 +90,7 @@
   padding: 5px 10px;
   background: transparent;
   border: 1px solid var(--np-border);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--np-ink-2);
   font-family: var(--np-sans);
   font-size: 11px;
@@ -170,7 +181,7 @@
   text-transform: uppercase;
   color: var(--np-ink-3);
   background: var(--np-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   border: 1px solid var(--np-border);
 }
 
@@ -199,7 +210,7 @@
   align-items: flex-start;
   gap: 11px;
   padding: 14px 14px 12px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--np-bg);
   border: 1px solid var(--np-border);
   transition: border-color 150ms var(--np-ease), box-shadow 150ms var(--np-ease), background 150ms;
@@ -229,7 +240,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
   background: var(--np-subtle);
   color: var(--np-ink-3);
@@ -297,7 +308,7 @@
   background: var(--np-subtle);
   color: var(--np-ink-2);
   border: 1px solid var(--np-border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-family: var(--np-sans);
   font-size: 11px;
   font-weight: 500;
@@ -329,7 +340,7 @@
   border: none;
   background: transparent;
   color: var(--np-ink-3);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -349,7 +360,7 @@
   padding: 5px;
   background: var(--np-bg);
   border: 1px solid var(--np-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   z-index: 10;
   animation: np-pop 160ms var(--np-ease) both;
@@ -363,7 +374,7 @@
   padding: 5px 10px;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-family: var(--np-sans);
   font-size: 11px;
   font-weight: 500;
@@ -391,7 +402,7 @@
   padding: 5px 6px;
   background: var(--np-bg);
   border: 1px solid var(--np-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   z-index: 10;
   animation: np-pop 160ms var(--np-ease) both;
@@ -402,7 +413,7 @@
   padding: 4px 8px;
   background: var(--np-subtle);
   border: 1px solid var(--np-border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   color: var(--np-ink);
   outline: none;
   transition: border-color 120ms, box-shadow 120ms;
@@ -416,7 +427,7 @@
   padding: 4px 10px;
   background: transparent;
   border: 1px solid var(--np-border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-family: var(--np-sans);
   font-size: 11px;
   font-weight: 500;
@@ -426,7 +437,7 @@
 }
 .app-notif-snooze-set {
   background: var(--np-ink);
-  color: var(--text-on-solid, #fff);
+  color: var(--text-on-solid);
   border-color: var(--np-ink);
 }
 .app-notif-snooze-set:hover:not(:disabled) { opacity: 0.85; }
@@ -474,7 +485,7 @@
   padding: 6px 14px;
   background: transparent;
   border: 1px dashed var(--np-border-s);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-family: var(--np-sans);
   font-size: 11.5px;
   font-weight: 500;
@@ -505,7 +516,7 @@
   padding: 4px 10px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-family: var(--np-sans);
   font-size: 11.5px;
   font-weight: 500;

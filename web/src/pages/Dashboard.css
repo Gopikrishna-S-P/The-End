@@ -1391,7 +1391,7 @@ button.db-legend-row { cursor: pointer; }
   flex-shrink: 0;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 5px;
 }
 
 .db-kpi-toggle-btn {

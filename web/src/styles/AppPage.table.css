@@ -93,7 +93,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: none;
   border: none;
   cursor: pointer;
@@ -139,7 +139,7 @@
 .app-page-table-empty-icon {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   color: var(--ink-tertiary);
@@ -196,7 +196,7 @@
 .app-page-skel {
   background: linear-gradient(90deg, var(--bg-subtle) 0%, var(--border) 50%, var(--bg-subtle) 100%);
   background-size: 200% 100%;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   animation: app-page-skel 1.4s ease-in-out infinite;
 }
 @keyframes app-page-skel {
@@ -209,15 +209,17 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* Was rgba(21,128,61,X) — Tailwind green-700, not this app's --success
+   (#067647). */
 @keyframes app-page-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4); }
-  50%      { box-shadow: 0 0 0 4px rgba(21, 128, 61, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 40%, transparent); }
+  50%      { box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 0%, transparent); }
 }
 
 .app-page :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Responsive ──────────────────────────────────────── */

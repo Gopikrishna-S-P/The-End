@@ -76,7 +76,7 @@ export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, o
                 >
                   <span
                     className="dd-fo-avatar"
-                    style={{ background: hashColor(`${f.firstName}${f.lastName}`), color: '#fff', border: 'none' }}
+                    style={{ background: hashColor(`${f.firstName}${f.lastName}`), color: 'var(--text-on-solid)', border: 'none' }}
                   >
                     {initials(f)}
                   </span>

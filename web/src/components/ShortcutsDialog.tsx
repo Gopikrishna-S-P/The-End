@@ -88,7 +88,7 @@ export default function ShortcutsDialog({ open, onClose }: ShortcutsDialogProps)
         </header>
 
         <p className="app-topbar-custom-intro">
-          Click a binding to rebind it. Press <span style={{ fontSize: '10px', fontWeight: 600, background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px', color: '#111', fontFamily: 'monospace' }}>Esc</span> mid-capture to cancel.
+          Click a binding to rebind it. Press <span style={{ fontSize: '10px', fontWeight: 600, background: 'color-mix(in srgb, var(--text-primary) 5%, transparent)', padding: '2px 6px', borderRadius: 'var(--radius-xs)', color: 'var(--ink-primary)', fontFamily: 'monospace' }}>Esc</span> mid-capture to cancel.
         </p>
 
         <div className="app-topbar-custom-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
@@ -126,8 +126,8 @@ function ShortcutRow({
 }: ShortcutRowProps) {
   return (
     <div className="app-topbar-custom-row" style={{ alignItems: 'flex-start' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px', marginTop: '2px' }}>
-        <Command size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '4px', marginTop: '2px' }}>
+        <Command size={14} aria-hidden="true" style={{ color: 'var(--ink-secondary)' }} />
       </div>
       <div className="app-topbar-custom-row-body">
         <span className="app-topbar-custom-row-label">{action.label}</span>
@@ -142,14 +142,14 @@ function ShortcutRow({
           style={{
             fontSize: '11px',
             fontWeight: 600,
-            background: isCapturing ? '#0AA550' : 'rgba(0,0,0,0.05)',
-            color: isCapturing ? '#fff' : (action.rebindable ? '#111' : 'rgba(0,0,0,0.3)'),
+            background: isCapturing ? 'var(--ink-solid)' : 'color-mix(in srgb, var(--text-primary) 5%, transparent)',
+            color: isCapturing ? 'var(--text-on-solid)' : (action.rebindable ? 'var(--ink-primary)' : 'color-mix(in srgb, var(--text-primary) 30%, transparent)'),
             padding: '4px 10px',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-xs)',
             border: 'none',
             fontFamily: 'monospace',
             cursor: action.rebindable ? 'pointer' : 'default',
-            outline: isCapturing ? '2px solid rgba(10, 165, 80, 0.4)' : 'none',
+            outline: isCapturing ? '2px solid color-mix(in srgb, var(--brand) 40%, transparent)' : 'none',
             outlineOffset: '2px',
           }}
         >
@@ -177,9 +177,9 @@ function ShortcutRow({
                 onClick={onUnbind}
                 title="Unbind (removes the shortcut entirely)"
                 aria-label={`Unbind ${action.label}`}
-                style={{ 
-                  padding: '4px 6px', height: 'auto', borderRadius: '6px',
-                  background: 'transparent', border: '1px solid rgba(220, 38, 38, 0.2)', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center'
+                style={{
+                  padding: '4px 6px', height: 'auto', borderRadius: 'var(--radius-xs)',
+                  background: 'transparent', border: '1px solid color-mix(in srgb, var(--danger) 20%, transparent)', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center'
                 }}
               >
                 <Trash2 size={12} aria-hidden="true" />

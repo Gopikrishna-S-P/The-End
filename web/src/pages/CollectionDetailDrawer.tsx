@@ -236,7 +236,7 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
                   onClick={() => { setAction('REJECT'); handleApproval('REJECT'); }}
                   disabled={!!submitting}
                   className="ds-btn is-primary"
-                  style={{ flex: 1, background: 'var(--danger)', border: 'none', color: '#fff' }}
+                  style={{ flex: 1, background: 'var(--danger)', border: 'none', color: 'var(--text-on-solid)' }}
                 >
                   {submitting === 'REJECT' ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <ThumbsDown size={14} style={{ marginRight: 6 }} />}
                   Reject
@@ -246,7 +246,7 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
                   onClick={() => { setAction('APPROVE'); handleApproval('APPROVE'); }}
                   disabled={!!submitting}
                   className="ds-btn is-primary"
-                  style={{ flex: 2, background: 'var(--success)', border: 'none', color: '#fff' }}
+                  style={{ flex: 2, background: 'var(--success)', border: 'none', color: 'var(--text-on-solid)' }}
                 >
                   {submitting === 'APPROVE' ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <ThumbsUp size={14} style={{ marginRight: 6 }} />}
                   Approve
@@ -270,7 +270,7 @@ export default function CollectionDetailDrawer({ collection, onClose, onChanged 
                 onClick={handleDeposit}
                 disabled={depositLoading}
                 className="ds-btn is-primary"
-                style={{ width: '100%', background: 'var(--info)', border: 'none', color: '#fff' }}
+                style={{ width: '100%', background: 'var(--info)', border: 'none', color: 'var(--text-on-solid)' }}
               >
                 {depositLoading ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Banknote size={14} style={{ marginRight: 6 }} />}
                 Mark as deposited

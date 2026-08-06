@@ -108,10 +108,10 @@ export default function GlobalSearchModal({ open, onClose }: { open: boolean; on
     <div className="app-topbar-custom-backdrop" role="dialog" aria-modal="true" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="app-topbar-custom-dialog" ref={dialogRef} tabIndex={-1} style={{ outline: 'none', padding: '0', overflow: 'hidden' }}>
 
-        <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
           {loading
-            ? <Loader2 size={18} className="ds-spin" style={{ color: 'rgba(0,0,0,0.4)', marginRight: '12px', flexShrink: 0 }} />
-            : <Search size={18} style={{ color: 'rgba(0,0,0,0.4)', marginRight: '12px', flexShrink: 0 }} />}
+            ? <Loader2 size={18} className="ds-spin" style={{ color: 'var(--ink-tertiary)', marginRight: '12px', flexShrink: 0 }} />
+            : <Search size={18} style={{ color: 'var(--ink-tertiary)', marginRight: '12px', flexShrink: 0 }} />}
           <input
             ref={inputRef}
             type="text"
@@ -124,7 +124,7 @@ export default function GlobalSearchModal({ open, onClose }: { open: boolean; on
               background: 'transparent',
               outline: 'none',
               fontSize: '15px',
-              color: '#111',
+              color: 'var(--ink-primary)',
               fontWeight: 500
             }}
           />
@@ -141,8 +141,8 @@ export default function GlobalSearchModal({ open, onClose }: { open: boolean; on
               </div>
               {itemsToRender.map((a) => (
                 <button key={a.id} className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer' }} onClick={() => goToAllocation(a)}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '12px' }}>
-                    <User size={14} style={{ color: 'rgba(0,0,0,0.6)' }} />
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '12px' }}>
+                    <User size={14} style={{ color: 'var(--ink-secondary)' }} />
                   </div>
                   <div className="app-topbar-custom-row-body">
                     <span className="app-topbar-custom-row-label">{a.borrowerName || 'Unknown borrower'}</span>
@@ -153,7 +153,7 @@ export default function GlobalSearchModal({ open, onClose }: { open: boolean; on
                 </button>
               ))}
               {!loading && itemsToRender.length === 0 && (
-                <div style={{ padding: '20px 12px', fontSize: 13, color: 'rgba(0,0,0,0.45)', textAlign: 'center' }}>
+                <div style={{ padding: '20px 12px', fontSize: 13, color: 'var(--ink-tertiary)', textAlign: 'center' }}>
                   No borrowers or loans match "{query.trim()}".
                 </div>
               )}
@@ -164,14 +164,14 @@ export default function GlobalSearchModal({ open, onClose }: { open: boolean; on
                 Recent Searches
               </div>
               {recent.length === 0 && (
-                <div style={{ padding: '20px 12px', fontSize: 13, color: 'rgba(0,0,0,0.45)', textAlign: 'center' }}>
+                <div style={{ padding: '20px 12px', fontSize: 13, color: 'var(--ink-tertiary)', textAlign: 'center' }}>
                   Search by borrower name or loan account number.
                 </div>
               )}
               {recent.map((r) => (
                 <button key={r.id} className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer' }} onClick={() => goToRecent(r)}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '12px' }}>
-                    <User size={14} style={{ color: 'rgba(0,0,0,0.6)' }} />
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '12px' }}>
+                    <User size={14} style={{ color: 'var(--ink-secondary)' }} />
                   </div>
                   <div className="app-topbar-custom-row-body">
                     <span className="app-topbar-custom-row-label">{r.title}</span>

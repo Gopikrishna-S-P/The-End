@@ -208,7 +208,7 @@ export default function DispatchAgentPanel(p: Props) {
               >
                 <span
                   className="dd-fo-avatar"
-                  style={{ background: hashColor(`${a.firstName}${a.lastName}`), color: '#fff', border: 'none' }}
+                  style={{ background: hashColor(`${a.firstName}${a.lastName}`), color: 'var(--text-on-solid)', border: 'none' }}
                 >
                   {p.initials(a)}
                 </span>

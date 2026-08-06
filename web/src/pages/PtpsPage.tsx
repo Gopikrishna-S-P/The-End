@@ -471,7 +471,7 @@ export default function PtpsPage() {
                     key={opt.value}
                     type="button"
                     className={`ds-btn is-sm ${filterStatus === opt.value ? 'is-primary' : 'is-secondary'}`}
-                    style={filterStatus === opt.value ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}}
+                    style={filterStatus === opt.value ? { background: 'var(--ink-solid)', color: 'var(--text-on-solid)' } : {}}
                     onClick={() => { setFilterStatus(opt.value as PtpStatus | ''); setPage(0); }}
                   >
                     {opt.label}

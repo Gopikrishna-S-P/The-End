@@ -4,6 +4,7 @@ import { Bell, X, CheckCheck, Inbox } from 'lucide-react';
 import { notifications, useNotifications } from '../utils/notifications';
 import { confetti } from '../utils/confetti';
 import { NotifItem } from './NotifItem';
+import { Logo } from './Logo';
 import './TopbarCustomizeDialog.css';
 import './NotificationPanel.css';
 
@@ -32,7 +33,7 @@ export default function NotificationPanel({ onClose, onNavigate }: NotificationP
             <span id="rp-topbar-custom-title">Notifications</span>
             {unreadCount > 0 && (
               <span style={{
-                background: 'rgba(0,0,0,0.08)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold', color: '#111'
+                background: 'color-mix(in srgb, var(--text-primary) 8%, transparent)', padding: '2px 6px', borderRadius: 'var(--radius-full)', fontSize: '10px', fontWeight: 'bold', color: 'var(--ink-primary)'
               }}>
                 {unreadCount}
               </span>
@@ -57,10 +58,10 @@ export default function NotificationPanel({ onClose, onNavigate }: NotificationP
 
         <div className="app-topbar-custom-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           {visible.length === 0 ? (
-            <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: '#666' }}>
+            <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: 'var(--ink-tertiary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0 }}>
-                  <Inbox size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0 }}>
+                  <Inbox size={14} aria-hidden="true" style={{ color: 'var(--ink-secondary)' }} />
                 </div>
                 <span className="app-topbar-custom-row-label">All caught up</span>
               </div>
@@ -81,14 +82,15 @@ export default function NotificationPanel({ onClose, onNavigate }: NotificationP
           )}
         </div>
 
-        {onNavigate && (
-          <div className="app-topbar-custom-footer">
-            <button type="button" className="app-topbar-custom-reset" style={{ width: '100%', justifyContent: 'center' }}
+        <div className="app-topbar-custom-footer">
+          <Logo height={18} className="app-topbar-custom-footer-logo" />
+          {onNavigate && (
+            <button type="button" className="app-topbar-custom-reset"
               onClick={() => onNavigate('/app/notifications')}>
               View all notifications
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>,
     document.body,

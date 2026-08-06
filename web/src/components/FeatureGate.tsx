@@ -15,6 +15,12 @@ const FEATURE_LABELS: Record<string, string> = {
   CUSTOM_INTEGRATIONS: 'Custom Integrations',
 };
 
+// The paywall card/modal below is deliberately always-dark (#1a1a1a + white
+// var(--text-on-solid) text + white-alpha chrome), independent of the app's
+// light/dark toggle — not left over from a token-mapping pass. Only the one
+// dead-and-wrong `var(--border, #333)` fallback was fixed; the rest of the
+// fixed-dark palette (#1a1a1a, rgba(255,255,255,X), and the #777/#888/#aaa
+// greys) is untouched.
 export function FeatureGate({ flagKey, children, hardBlock = false }: FeatureGateProps) {
   const { isEnabled, requiredPlan } = useFeatureFlags();
   const navigate = useNavigate();
@@ -115,7 +121,7 @@ export function FeatureGate({ flagKey, children, hardBlock = false }: FeatureGat
                 onClick={() => setShowModal(false)}
                 style={{
                   flex: 1, background: 'transparent',
-                  border: '1px solid var(--border, #333)', borderRadius: '8px',
+                  border: '1px solid var(--border)', borderRadius: '8px',
                   padding: '9px', cursor: 'pointer', fontSize: '13px', color: 'inherit'
                 }}
               >

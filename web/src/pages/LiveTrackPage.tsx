@@ -11,9 +11,9 @@ declare const L: any;
 // ── helpers ───────────────────────────────────────────────────────────────
 
 function dotColor(a: AgentDot): string {
-  if (!a.online)        return '#9ca3af'; // grey  — offline
-  if (a.visitSessionId) return '#22c55e'; // green — active visit
-  return '#3b82f6';                       // blue  — on shift, no visit
+  if (!a.online)        return 'var(--text-tertiary)'; // grey  — offline
+  if (a.visitSessionId) return 'var(--success)';        // green — active visit
+  return 'var(--info)';                                 // blue  — on shift, no visit
 }
 
 function timeAgo(ts: number): string {
@@ -26,11 +26,17 @@ function timeAgo(ts: number): string {
 function makeIcon(agent: AgentDot) {
   const color   = dotColor(agent);
   const opacity = agent.online ? 1 : 0.4;
+  // The white ring/arrow-glow/shadow on the marker itself stay raw white/black
+  // (not tokens) — same reasoning as FieldOpsMap.css's .fo-dot: they need to
+  // read consistently against whatever the Leaflet tile layer is rendering,
+  // not against --bg-surface. The MOCK GPS badge is a floating label above
+  // the marker (not the tile-contrast ring), so it gets the real --danger-solid
+  // token like FieldOpsMap's other floating badges.
   const arrow   = agent.heading != null
     ? `<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(${agent.heading}deg);color:${color};font-size:14px;line-height:1;filter:drop-shadow(0 0 2px #fff);">▲</div>`
     : '';
   const mock = agent.mockDetected
-    ? `<div style="position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;pointer-events:none;">MOCK GPS</div>`
+    ? `<div style="position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:var(--danger-solid);color:var(--text-on-solid);font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;pointer-events:none;">MOCK GPS</div>`
     : '';
   return L.divIcon({
     className: '',
@@ -244,7 +250,7 @@ export default function LiveTrackPage() {
               <div className="lt-detail-row">
                 <span className="lt-detail-label">Battery</span>
                 <span style={{
-                  color: selected.batteryLevel < 0.2 ? '#ef4444' : undefined,
+                  color: selected.batteryLevel < 0.2 ? 'var(--danger)' : undefined,
                   fontWeight: selected.batteryLevel < 0.2 ? 600 : 400,
                 }}>
                   {Math.round(selected.batteryLevel * 100)}%

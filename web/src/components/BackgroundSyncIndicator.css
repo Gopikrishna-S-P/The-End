@@ -7,7 +7,7 @@
   padding: 0 9px;
   background: color-mix(in srgb, var(--ink-solid) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink-solid) 28%, transparent);
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   color: var(--ink-solid);
   font-family: var(--sans);
   font-size: 11px;
@@ -59,7 +59,7 @@
   height: 16px;
   padding: 0 4px;
   background: var(--ink-solid);
-  color: #fff;
+  color: var(--text-on-solid);
   border-radius: 999px;
   font-family: var(--mono);
   font-size: 9px;

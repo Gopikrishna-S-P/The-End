@@ -56,7 +56,7 @@
   min-width: 36px;
   min-height: 36px;
   border: none;
-  border-radius: 8px; /* Match help window icon box */
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
   display: flex;
@@ -92,9 +92,9 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 999px;
-  background: #0AA550; /* Brand green */
-  color: #fff;
+  border-radius: var(--radius-full);
+  background: var(--brand);
+  color: var(--text-on-solid);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -104,7 +104,10 @@
   font-feature-settings: 'tnum';
   letter-spacing: 0.02em;
   line-height: 1;
-  border: 1.5px solid #fff;
+  /* Matches the topbar's own background so the ring reads as a cutout
+     around the badge, same pattern as .asb-badge's border in AppSidebar.css
+     (var(--asb-bg)) — was raw white, invisible against a dark topbar. */
+  border: 1.5px solid var(--tb-bg);
   animation: app-notif-badge-pop 180ms var(--ease) both;
 }
 @keyframes app-notif-badge-pop {
@@ -123,8 +126,13 @@
 .app-notif-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
-  background: rgba(12, 10, 9, 0.4);
+  z-index: var(--z-modal);
+  /* Was rgba(12,10,9,.4) — Tailwind stone-950 at a much stronger opacity
+     than every sibling overlay (TopbarCustomizeDialog, MfaGate, etc. all
+     use --shadow-overlay-scrim, .02 alpha) — a divergence, not a deliberate
+     stronger dim, given this panel pairs with the exact same glass-card
+     recipe as those. */
+  background: var(--shadow-overlay-scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,8 +144,8 @@
   max-width: 520px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: mfag-card-in 260ms cubic-bezier(0.34, 1.15, 0.64, 1) both;
 }
@@ -151,7 +159,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   transition: background var(--transition), color var(--transition);
 }
 .app-notif-close-btn:hover {
@@ -167,7 +175,7 @@
   height: 36px;
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--bg-hover);
   color: var(--text-primary);
   font-family: var(--sans);
@@ -178,9 +186,9 @@
   transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease, transform .18s ease;
 }
 .app-topbar-cta:hover {
-  background: rgba(10, 165, 80, 0.1);
-  border-color: #0AA550;
-  color: #0AA550;
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border-color: var(--brand);
+  color: var(--brand);
 }
 .app-topbar-cta:active { transform: scale(0.97); }
 
@@ -206,26 +214,37 @@
 .app-topbar-avatar:hover { opacity: 0.88; box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 15%, transparent); }
 
 /* ── Palette trigger — widened, stronger visual (GitHub-style) ─────────────── */
+/* A recessed well in the raised bar. It was hardcoded #fff, which was invisible
+   against a white topbar and stayed white in dark mode; --bg-subtle sinks it
+   into the chrome the way the dashboard sinks its own inputs and table headers.
+   Height and radius now come off the control tokens (--ds-ctl-h / --radius-sm)
+   instead of the one-off 38px/10px that matched nothing else in the app. */
 .app-search-trigger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
+  height: var(--ds-ctl-h);
   padding: 0 10px 0 12px;
-  background: #fff;
+  background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: background 150ms var(--ease), border-color 150ms var(--ease), box-shadow 150ms var(--ease);
-  width: 300px;
-  flex-shrink: 0;
+  /* Fluid within a floor/ceiling. It was a flat width: 300px, which also made
+     the tablet breakpoint's `min-width: 160px` inert — min-width can only raise
+     a floor, so an explicit width always won and the field stayed 300px right
+     down to the 640px mobile cutoff where it's hidden outright. */
+  width: clamp(180px, 20vw, 300px);
+  flex-shrink: 1;
+  min-width: 0;
 }
 .app-search-trigger:hover {
   background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 .app-search-trigger:focus-visible {
   border-color: var(--text-primary);
@@ -241,7 +260,7 @@
   display: inline-flex;
   align-items: center;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: var(--bg-hover);
   border: none;
   font-size: 10px;

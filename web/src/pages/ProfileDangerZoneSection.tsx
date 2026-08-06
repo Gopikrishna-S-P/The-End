@@ -14,7 +14,7 @@ export function ProfileDangerZoneSection({ onRequestLogout }: Props) {
             <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>You'll need to sign in again to access Recoverpro.</span>
           </div>
           <button type="button" onClick={onRequestLogout}
-            className="ds-btn is-primary" style={{ background: 'var(--danger)', color: '#fff', border: 'none', flexShrink: 0 }}>
+            className="ds-btn is-primary" style={{ background: 'var(--danger)', color: 'var(--text-on-solid)', border: 'none', flexShrink: 0 }}>
             <LogOut size={14} /> Sign out
           </button>
         </div>

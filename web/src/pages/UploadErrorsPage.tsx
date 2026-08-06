@@ -134,13 +134,13 @@ export default function UploadErrorsPage() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   <button type="button" onClick={() => setColumnFilter('ALL')}
                     className={`ds-btn is-sm ${columnFilter === 'ALL' ? 'is-primary' : 'is-secondary'}`}
-                    style={columnFilter === 'ALL' ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}}>
-                    All Columns <span className="ds-pill is-neutral" style={columnFilter === 'ALL' ? { background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none' } : {}}>{errors.length}</span>
+                    style={columnFilter === 'ALL' ? { background: 'var(--ink-solid)', color: 'var(--text-on-solid)' } : {}}>
+                    All Columns <span className="ds-pill is-neutral" style={columnFilter === 'ALL' ? { background: 'color-mix(in srgb, var(--text-on-solid) 20%, transparent)', color: 'var(--text-on-solid)', border: 'none' } : {}}>{errors.length}</span>
                   </button>
                   {allColumns.map((col) => (
                     <button key={col} type="button" onClick={() => setColumnFilter(col)}
                       className={`ds-btn is-sm ${columnFilter === col ? 'is-primary' : 'is-secondary'}`}
-                      style={{ fontFamily: 'var(--font-mono)', ...(columnFilter === col ? { background: 'var(--ink-solid)', color: 'var(--bg-surface)' } : {}) }}>
+                      style={{ fontFamily: 'var(--font-mono)', ...(columnFilter === col ? { background: 'var(--ink-solid)', color: 'var(--text-on-solid)' } : {}) }}>
                       {col}
                     </button>
                   ))}

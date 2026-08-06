@@ -3,7 +3,7 @@
 .ds-drawer-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
+  z-index: var(--z-modal);
   background: transparent;
   animation: ds-overlay-in var(--dur-fast) var(--ease-standard) both;
 }
@@ -13,7 +13,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  z-index: calc(var(--z-modal, 500) + 1);
+  z-index: calc(var(--z-modal) + 1);
   width: min(560px, 100vw);
   background: var(--bg-surface);
   border-left: 1px solid var(--border);

@@ -47,17 +47,17 @@ export function NotifItem({ notif, onClose, onNavigate }: NotifItemProps) {
   return (
     <div className={`app-topbar-custom-row${notif.read ? '' : ' is-unread'}`} style={{ alignItems: 'flex-start', position: 'relative' }}>
       {!notif.read && (
-        <div style={{ position: 'absolute', top: '18px', left: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: '#0AA550' }} />
+        <div style={{ position: 'absolute', top: '18px', left: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--ink-solid)' }} />
       )}
       
-      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px' }}>
-        <Icon size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '4px' }}>
+        <Icon size={14} aria-hidden="true" style={{ color: 'var(--ink-secondary)' }} />
       </div>
       
       <div className="app-topbar-custom-row-body">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
           <span className="app-topbar-custom-row-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{notif.title}</span>
-          <span style={{ fontSize: '11px', color: 'rgba(0,0,0,0.4)', whiteSpace: 'nowrap' }}>{timeAgo(notif.createdAt)}</span>
+          <span style={{ fontSize: '11px', color: 'var(--ink-tertiary)', whiteSpace: 'nowrap' }}>{timeAgo(notif.createdAt)}</span>
         </div>
         
         {notif.body && <span className="app-topbar-custom-row-desc" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{notif.body}</span>}

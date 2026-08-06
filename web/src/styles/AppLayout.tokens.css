@@ -42,8 +42,12 @@
   --elevation-3: var(--shadow-md);
   --elevation-4: 0 24px 48px -12px rgba(16,24,40,0.18), 0 8px 16px -6px rgba(16,24,40,0.08);
 
-  /* Topbar chrome — matches the content-area canvas, not the raised card surface */
-  --tb-bg:     var(--bg-canvas);
+  /* Topbar chrome — the shell frame (topbar + sidebar) is one continuous raised
+     surface; --bg-canvas is reserved for the content well the cards float in.
+     It used to be --bg-canvas, which made the bar the exact same colour as the
+     page behind it, so it read as empty space rather than chrome — and left the
+     sidebar (white) and topbar (grey) as two different surfaces. */
+  --tb-bg:     var(--bg-surface);
   --tb-border: var(--border);
 
   display: flex;
@@ -150,7 +154,6 @@
 }
 .app-layout.high-contrast ~ .app-noise,
 .high-contrast .app-noise { display: none; }
-.app-layout.high-contrast .app-main { background-image: none; }
 .app-layout.high-contrast .app-topbar,
 .app-layout.high-contrast .asb-root { border-color: var(--border); }
 .app-layout.high-contrast .app-topbar { border-bottom-width: 2px; }

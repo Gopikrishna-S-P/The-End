@@ -47,7 +47,7 @@ export function FormSection({ title, children }: { title: string; children: Reac
     <div style={{ marginBottom: 14 }}>
       <p style={{
         fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
-        textTransform: 'uppercase', color: '#98A2B3', marginBottom: 10,
+        textTransform: 'uppercase', color: 'var(--text-placeholder)', marginBottom: 10,
         display: 'inline-flex', alignItems: 'center', gap: 6,
       }}>
         <ShieldCheck size={11} />{title}

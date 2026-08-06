@@ -95,7 +95,7 @@
   width: 260px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   box-shadow: var(--elevation-3);
   overflow: hidden;
   z-index: 300;
@@ -180,7 +180,7 @@
   gap: 10px;
   width: 100%;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   border: none;
   font-size: 13px;

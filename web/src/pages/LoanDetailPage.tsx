@@ -272,7 +272,7 @@ export default function LoanDetailPage() {
               </div>
               <div className="ds-modal-actions" style={{ display: 'flex', gap: 8, padding: '16px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
                 <button ref={confirmCancelRef} type="button" onClick={() => setConfirming(null)} className="ds-btn is-secondary" style={{ flex: 1 }}>Cancel</button>
-                <button type="button" onClick={() => commitStatus('CLOSED')} disabled={statusUpdating} className="ds-btn is-primary" style={{ flex: 1, background: 'var(--success)', border: 'none', color: '#fff' }}>
+                <button type="button" onClick={() => commitStatus('CLOSED')} disabled={statusUpdating} className="ds-btn is-primary" style={{ flex: 1, background: 'var(--success)', border: 'none', color: 'var(--text-on-solid)' }}>
                   {statusUpdating ? <RefreshCw size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <CheckCircle2 size={14} style={{ marginRight: 6 }} />}
                   Close case
                 </button>

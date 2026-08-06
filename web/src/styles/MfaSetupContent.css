@@ -41,7 +41,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   line-height: 1.5;
   margin-bottom: 20px;
@@ -77,7 +77,7 @@
 }
 .mfa-qr-inner {
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 2px dashed var(--border-strong);
   background: #fff; /* intentional: QR scanners need a white background */
 }
@@ -90,7 +90,7 @@
   justify-content: center;
   gap: 8px;
   background: var(--bg-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--ink-tertiary);
 }
 
@@ -109,7 +109,7 @@
   gap: 10px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-canvas);
 }
 .mfa-secret-code {
@@ -130,7 +130,7 @@
   padding: 4px;
   display: flex;
   align-items: center;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: color 150ms var(--ease);
 }
 .mfa-icon-btn:hover { color: var(--ink-solid); }
@@ -152,7 +152,7 @@
 .mfa-code-cell {
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-canvas);
   font-family: var(--mono);
   font-size: 13px;
@@ -178,7 +178,7 @@
   height: 44px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
@@ -203,7 +203,7 @@
   gap: 10px;
   cursor: pointer;
   padding: 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-subtle);
   margin-bottom: 18px;
 }
@@ -223,7 +223,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 20px;
   border: 1px solid;
   font-size: 13px;
@@ -261,7 +261,7 @@
   padding: 0 16px;
   background: color-mix(in srgb, var(--error) 6%, transparent);
   border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -291,7 +291,7 @@
   position: relative;
   width: 64px;
   height: 64px;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
   color: var(--ink-solid);
   display: flex;
@@ -378,7 +378,7 @@
   height: 44px;
   flex: 0 0 44px;
   border: 1.5px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-surface);
   text-align: center;
   font-size: 18px;

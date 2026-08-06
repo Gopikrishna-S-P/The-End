@@ -45,7 +45,7 @@
   gap: 10px;
   padding: 10px 16px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-subtle, rgba(0,0,0,0.04));
+  border-bottom: 1px solid var(--border-subtle);
   transition: background 0.12s;
 }
 .lt-agent-row:hover  { background: var(--bg-hover); }
@@ -86,16 +86,19 @@
   gap: 6px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--text-primary) 10%, transparent);
   pointer-events: none;
 }
 .lt-ws-dot { width: 7px; height: 7px; border-radius: 50%; }
-.lt-ws-dot.live { background: #22c55e; animation: lt-pulse 1.6s infinite; }
-.lt-ws-dot.dead { background: #ef4444; }
+/* live/dead were raw Tailwind green-500/red-500; --success/--danger are this
+   app's actual tokens for the same "healthy / broken" semantics (a visibly
+   more muted green than the previous neon one, but now theme-consistent). */
+.lt-ws-dot.live { background: var(--success); animation: lt-pulse 1.6s infinite; }
+.lt-ws-dot.dead { background: var(--danger); }
 @keyframes lt-pulse {
   0%,100% { opacity: 1; transform: scale(1); }
   50%     { opacity: 0.55; transform: scale(1.4); }
@@ -134,7 +137,7 @@
   background: var(--danger-subtle);
   color: var(--danger);
   border: 1px solid var(--danger-border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;

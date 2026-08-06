@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--shadow-overlay-scrim);
   animation: ps-dialog-fade var(--dur-base) var(--ease-out) both;
 }
 
@@ -26,10 +26,8 @@
   flex-direction: row; /* Changed to row so sidebar is full height */
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: ps-dialog-rise var(--dur-slow) var(--ease-out) both;
 }
@@ -52,7 +50,7 @@
   justify-content: space-between;
   padding: 14px 24px;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--border);
 }
 
 .ps-dialog-title {
@@ -70,7 +68,7 @@
   border: none;
   background: transparent;
   color: var(--ink-tertiary);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -96,8 +94,13 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
+}
+
+.ps-sidebar-logo {
+  padding: 4px 12px 12px;
+  margin-bottom: 4px;
 }
 
 .ps-sidebar-item {
@@ -106,7 +109,7 @@
   gap: 10px;
   padding: 9px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--ink-secondary);
   font-family: var(--font-sans);
@@ -146,7 +149,10 @@
 /* ── Section chrome — used by every section inside the dialog body ── */
 
 .ps-section {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  /* --border-subtle ("faintest internal divider") — a step lighter than
+     .ps-dialog-header's --border, which .04 vs .08 was already reaching for
+     without the token. */
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .ps-section:last-child {
@@ -163,7 +169,7 @@
 .ps-section-icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -211,21 +217,13 @@
   }
 }
 
-/* ── Dark mode ────────────────────────────────────────────────────────────── */
-.app-layout.dark .ps-dialog {
-  background: rgba(21, 23, 28, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.app-layout.dark .ps-dialog-header,
-.app-layout.dark .ps-sidebar,
-.app-layout.dark .ps-section { border-color: rgba(255, 255, 255, 0.08); }
-.app-layout.dark .ps-dialog-close:hover { background: rgba(255, 255, 255, 0.06); color: #E8EAED; }
-.app-layout.dark .ps-sidebar-item:hover,
-.app-layout.dark .ps-sidebar-item.is-active { background: rgba(255, 255, 255, 0.06); }
-.app-layout.dark .ps-section-icon { background: rgba(255, 255, 255, 0.06); }
+/* No manual "Dark mode" block. Every rule above is now a token, and
+   ds.tokens.css's .app-layout.dark already re-themes all of them — same
+   pattern as TopbarCustomizeDialog/PlatformSetupPage/MfaGate. Worth noting:
+   this block used to apply the SAME rgba(255,255,255,.08) to .ps-dialog-header,
+   .ps-sidebar AND .ps-section alike, flattening --border and --border-subtle's
+   distinct light-mode roles into one shared dark value — a dark-mode-only
+   inconsistency the token fix above also repairs, not just cleans up. */
 
 @media (max-width: 640px) {
   .ps-dialog {
@@ -240,7 +238,7 @@
     overflow-y: visible;
     padding: 8px 16px;
     border-right: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--border);
   }
 
   .ps-sidebar-item {

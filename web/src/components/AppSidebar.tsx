@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as RMouseEvent } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Lock, LogOut, X as XIcon, PanelLeft } from 'lucide-react';
 import { Logo } from './Logo';
 import { prefetchRoute } from '../utils/routePrefetch';
@@ -48,7 +48,7 @@ export default function AppSidebar({
   onLogout,
   user,
   roleLabel,
-  avatarColor = '#0AA550',
+  avatarColor = 'var(--brand)',
 }: AppSidebarProps) {
   const location = useLocation();
   const t = useT();
@@ -122,9 +122,9 @@ export default function AppSidebar({
       <div className="asb-header">
         {expanded ? (
           <>
-            <Link to="/app/dashboard" className="asb-header-logo--btn" aria-label="Recoverpro — Dashboard">
+            <span className="asb-header-logo--btn" aria-label="Recoverpro">
               <Logo height={34} />
-            </Link>
+            </span>
             {onToggleCollapse && (
               <button
                 type="button"

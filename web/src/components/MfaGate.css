@@ -3,7 +3,7 @@
 .mfag-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
+  z-index: var(--z-modal);
   background: var(--shadow-overlay-scrim);
   display: flex;
   align-items: center;
@@ -17,18 +17,16 @@
   to   { opacity: 1; }
 }
 
-/* ── Card — matches TopbarCustomizeDialog's glass card ────────────────────── */
+/* ── Card ─────────────────────────────────────────────────────────────────── */
 .mfag-card {
   position: relative;
   width: 100%;
   max-width: 380px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 28px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-lg);
   animation: mfag-card-in 260ms cubic-bezier(0.34, 1.15, 0.64, 1) both;
 }
 
@@ -88,7 +86,7 @@
   font-family: var(--sans);
 }
 
-.mfag-checks svg { color: #0AA550; flex-shrink: 0; }
+.mfag-checks svg { color: var(--brand); flex-shrink: 0; }
 
 /* ── Actions ── */
 .mfag-actions {
@@ -100,16 +98,16 @@
   flex: 1;
   height: 40px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-hover);
-  color: #333;
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   font-family: var(--sans);
   cursor: pointer;
   transition: background 150ms var(--ease);
 }
-.mfag-btn-cancel:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); }
+.mfag-btn-cancel:hover:not(:disabled) { background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
 .mfag-btn-cancel:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -124,8 +122,8 @@
   justify-content: center;
   height: 40px;
   border: none;
-  border-radius: 8px;
-  background: #0AA550;
+  border-radius: var(--radius-sm);
+  background: var(--ink-solid);
   color: var(--text-on-solid);
   font-size: 13px;
   font-weight: 600;
@@ -134,25 +132,14 @@
   outline: none;
   transition: background 150ms var(--ease);
 }
-.mfag-btn-primary:hover { background: #088a42; }
+.mfag-btn-primary:hover { background: var(--ink-solid-hover); }
 
-/* ── Dark mode ────────────────────────────────────────────────────────────── */
-.app-layout.dark .mfag-card {
-  background: rgba(21, 23, 28, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.app-layout.dark .mfag-title { color: #E8EAED; }
-.app-layout.dark .mfag-sub,
-.app-layout.dark .mfag-checks span { color: rgba(255, 255, 255, 0.6); }
-.app-layout.dark .mfag-btn-cancel {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: #C4C9D2;
-}
-.app-layout.dark .mfag-btn-cancel:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); }
+/* No manual "Dark mode" block — every rule above is now a token or a
+   color-mix() built from one, and ds.tokens.css's .app-layout.dark already
+   re-themes all of them. Same pattern as TopbarCustomizeDialog/
+   PlatformSetupPage: the card override alone hand-carried a bespoke
+   85%-translucent dark surface where every other dark surface in the app is
+   opaque var(--bg-surface). */
 
 /* ── Ripple ── */
 .mfag-ripple {

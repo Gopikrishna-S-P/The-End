@@ -4,7 +4,7 @@
   position: fixed;
   top: 8px;
   left: 50%;
-  z-index: var(--z-elevated, 300);
+  z-index: var(--z-elevated);
   pointer-events: none;
   transition: opacity var(--dur-base) var(--ease-out);
 }

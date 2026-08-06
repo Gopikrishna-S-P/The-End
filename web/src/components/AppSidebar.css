@@ -26,10 +26,13 @@
   overflow: hidden;
   flex-shrink: 0;
   transition: width var(--dur-slow) var(--ease-out);
-  z-index: var(--z-sidebar, 90);
+  z-index: var(--z-sidebar);
   contain: paint;
+  /* Matches the topbar's treatment exactly (hairline, no shadow) so the two
+     halves of the shell frame read as one surface. The old rule stacked a
+     hardcoded rgba(16,24,40,0.02) vertical line on top of the border for a
+     doubled edge that stayed light-mode blue-black in dark mode. */
   border-right: 1px solid var(--border);
-  box-shadow: 1px 0 0 rgba(16,24,40,0.02), var(--shadow-xs);
 }
 
 .asb-root * {
@@ -78,7 +81,7 @@
   background: none;
   border: none;
   padding: 0;
-  cursor: pointer;
+  cursor: default;
 }
 
 .asb-root .asb-collapse-toggle {
@@ -90,14 +93,14 @@
   flex-shrink: 0;
   background: none;
   border: none;
-  border-radius: var(--radius-sm, 6px);
-  color: var(--text-tertiary, #667085);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
 }
 .asb-root .asb-collapse-toggle:hover {
-  background: var(--bg-hover, #E8EBF0);
-  color: var(--text-primary, #101828);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 .asb-root.is-collapsed .asb-collapse-toggle {
   margin: 0 auto;
@@ -117,9 +120,12 @@
   z-index: 5;
 }
 
+/* Opacity only. The transform was never listed in the transition above
+   (opacity/top/height), so the indicator snapped 2px sideways the instant the
+   pointer touched the rail while its opacity eased in — a hard jump against a
+   smooth fade, on the widest hover target in the sidebar. */
 .asb-root:hover .asb-scroll-map {
   opacity: .18;
-  transform: translateX(2px);
 }
 
 /* ── Nav list ─────────────────────────────────────────────────────────────── */
@@ -157,14 +163,19 @@
   /* remove accordion interaction */
 }
 
-/* Section label — 11px uppercase tertiary */
+/* Section label — the same eyebrow the dashboard uses everywhere (.db-kpi-label,
+   .db-page-title) and that .asb-org-anchor-name below already used: mono, caps,
+   0.06em. This rule was the odd one out in its own file, styling an identical
+   role in sans. Colour is --text-placeholder, which is exactly the #98A2B3 that
+   was hardcoded here (and 3 more times in this file) despite the header comment
+   promising no raw hex — hardcoding it also meant it never re-themed in dark. */
 .asb-root .asb-section-label {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: .06em;
   text-transform: uppercase;
-  color: #98A2B3;
+  color: var(--text-placeholder);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -184,6 +195,15 @@
   padding: 0 8px 0 10px;
   overflow: hidden;
   min-height: 0;
+}
+
+/* Collapsed: no side padding, so the 40px item centres on the rail's true
+   centre line. The expanded 10px/8px above is deliberately asymmetric, which
+   is invisible behind a full-width label but left every rail icon sitting 1px
+   left of centre — the kind of misalignment that reads as blurry rather than
+   as an obvious bug. */
+.asb-root.is-collapsed .asb-section-wrap>ul {
+  padding: 0;
 }
 
 .asb-root .asb-section+.asb-section {
@@ -207,20 +227,25 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
-  margin: 2px 0;
-  min-height: 44px;
-  padding: 10px 14px;
+  margin: 1px 0;
+  min-height: 38px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: transparent;
 
-  /* Font style matching help & resources row labels */
+  /* Console density, not consumer-app. 14px/600 on a 44px row made every item
+     shout equally, so the active state had nothing left to distinguish it and
+     the rail ate vertical space the dashboard spends on data. 13px/500 resting
+     leaves 600 free to actually mark the active row. Radius comes off the token
+     scale — 12px was a fifth unrelated radius in a shell that already had
+     8/10/14/16. */
   font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
 
   transition:
     background-color .18s ease,
@@ -236,32 +261,34 @@
   color: var(--text-primary);
 }
 
-/* Collapsed: a true square chip (equal width/height), sized to whatever the
-   rail actually leaves available — width: 100% of the fixed-width <li>, with
-   aspect-ratio locking the height to match, rather than a guessed pixel value
-   (46px available, 44px assumed) that clips the moment the real render
-   doesn't match the guess. This is mathematically overflow-proof: the square
-   IS the available space, so it can never exceed it.
+/* Collapsed: an explicit 40px square, centred in the rail by auto margins.
+   The previous rule sized the square as `width: 100%` + `aspect-ratio: 1/1`,
+   described as "mathematically overflow-proof" because the square IS the
+   available space. It wasn't — it only bounded the ROW, never the icon inside
+   it. The available space is 22px (64px rail − 2×12px .asb-nav padding − the
+   ul's 18px), so the row resolved to a 22px square holding a 28px icon with
+   `flex-shrink: 0`: a 3px-per-side overflow that the root's `overflow: hidden`
+   then sliced off. Hence the clipped, ragged glyphs.
 
-   No bg, no border, no hover state, no active state — every listed selector
-   is pinned to the exact same blank appearance. It's still necessary to name
-   each state explicitly and override it: the base rules further down (row
-   hover → --bg-hover, active → --brand-subtle) still match a collapsed item
-   by class, so without these overrides they'd repaint it regardless of
-   collapse. Only the icon glyph itself (rendered plain, see .asb-nav-icon
-   below) shows at all; the row is otherwise fully inert visually. */
-.asb-root.is-collapsed .asb-nav-item,
-.asb-root.is-collapsed .asb-nav-item:hover,
-.asb-root.is-collapsed .asb-nav-item.is-active,
-.asb-root.is-collapsed .asb-nav-item.is-active:hover {
+   Fixed dimensions instead, chosen against the real numbers rather than
+   inherited from them: 40px square (fits the 40px content box exactly), 20px
+   glyph, 10px of breathing room per side. The 16px badge at right:-7px now
+   lands at 37px of 40px, so it clears the ul's `overflow: hidden` too — it
+   used to be cut off in this state as well.
+
+   Geometry only: no background, border or state of its own, so the hover and
+   active rules below apply to the rail exactly as they do to the expanded
+   list. The old version instead pinned every collapsed state (:hover,
+   .is-active, .is-active:hover) to one blank appearance, which left the rail
+   with no hover feedback and no way to see which page you were on. Collapsing
+   should change the sidebar's width, not its visual grammar. */
+.asb-root.is-collapsed .asb-nav-item {
   justify-content: center;
   padding: 0;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  height: auto;
+  width: 40px;
+  height: 40px;
   min-height: 0;
-  margin: 2px 0;
-  background: transparent;
+  margin: 2px auto;
   border: none;
   box-shadow: none;
   transform: none;
@@ -277,45 +304,33 @@
 }
 
 /* ── Nav icon + badge ─────────────────────────────────────────────────────── */
+/* A plain glyph, not a chip. The icon used to carry a filled --bg-hover box at
+   rest that turned white + --shadow-sm on hover and white + green when active —
+   a per-row chip the dashboard uses nowhere (compare .db-date-range-btn, which
+   moves colour and weight only). It also read as a second, competing hover:
+   the row cross-faded its background over .18s while the chip bloomed its own
+   background AND shadow over .2s, so two surfaces animated out of step on one
+   pointer event. Now the icon only inherits the row's colour, on the row's own
+   timing, and the row's background is the single thing that moves. The 20px box
+   is alignment scaffolding for the 14px glyph, nothing visual. */
 .asb-nav-icon {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-hover);
+  width: 20px;
+  height: 20px;
+  background: transparent;
   color: var(--text-secondary);
   flex-shrink: 0;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: color .18s ease;
 }
 
 .asb-root .asb-nav-item:hover .asb-nav-icon {
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
   color: var(--text-primary);
 }
 
-/* Collapsed: the icon renders as a plain glyph in every state — no chip
-   background, no shadow, no colour shift on hover or active (the base rules
-   further down set bg-surface+shadow on hover and brand green on active;
-   overridden back to nothing here, same reasoning as the row above). Size
-   stays fixed so nothing can bloom into a "bigger button" illusion either. */
-.asb-root.is-collapsed .asb-nav-item .asb-nav-icon,
-.asb-root.is-collapsed .asb-nav-item:hover .asb-nav-icon,
-.asb-root.is-collapsed .asb-nav-item.is-active .asb-nav-icon,
-.asb-root.is-collapsed .asb-nav-item.is-active:hover .asb-nav-icon {
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  color: var(--text-secondary);
-  box-shadow: none;
-}
-
 .asb-root .asb-nav-item.is-active .asb-nav-icon {
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
   color: var(--brand);
 }
 
@@ -376,7 +391,6 @@
 .asb-nav-item:hover .asb-nav-count {
   color: var(--asb-ink);
   border-color: var(--asb-border-hi);
-  transform: translateX(2px);
 }
 
 .asb-nav-item.is-active .asb-nav-count {
@@ -404,14 +418,16 @@
   transition: background var(--dur-fast);
 }
 
+/* No translateX on hover. The row shifted 2px and the name inside it shifted
+   another 2px on the same event, so the label drifted 4px while its own row
+   moved 2px — the text visibly slid within the box. Colour alone carries the
+   hover, which is what every other row in this rail does. */
 .asb-org-anchor:hover {
   background: var(--bg-hover);
-  transform: translateX(2px);
 }
 
 .asb-org-anchor:hover .asb-org-anchor-name {
   color: var(--asb-ink);
-  transform: translateX(2px);
 }
 
 .asb-org-anchor-dot {
@@ -524,7 +540,7 @@
   font-family: var(--font-sans);
   font-size: 10px;
   font-weight: 450;
-  color: #98A2B3;
+  color: var(--text-placeholder);
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 1.2;
@@ -532,7 +548,7 @@
 
 .asb-root .asb-footer-sep {
   font-size: 10px;
-  color: #98A2B3;
+  color: var(--text-placeholder);
   flex-shrink: 0;
   line-height: 1;
   user-select: none;
@@ -542,7 +558,7 @@
   font-family: var(--font-sans);
   font-size: 10px;
   font-weight: 450;
-  color: #98A2B3;
+  color: var(--text-placeholder);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -568,11 +584,14 @@
   margin-left: 2px;
 }
 
+/* No translateX — same reasoning as .asb-org-anchor above, which already had
+   this pattern removed. A 32px icon button that slides sideways under the
+   cursor is the one control here most likely to be clicked twice in a row.
+   Colour carries the state, as everywhere else in this rail. */
 .asb-root .asb-footer-logout-icon:hover {
   background: #FEF3F2;
   border-color: #FECACA;
   color: #DC2626;
-  transform: translateX(2px);
 }
 
 .asb-root .asb-footer-logout-icon:focus-visible {
@@ -601,7 +620,7 @@
 .asb-signout-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -684,7 +703,6 @@
 .asb-signout-close:hover {
   background: var(--bg-subtle);
   color: var(--text-primary);
-  transform: translateX(2px);
 }
 
 .asb-signout-body {
@@ -724,7 +742,6 @@
   background: var(--bg-subtle);
   color: var(--text-primary);
   border-color: var(--border-strong);
-  transform: translateX(2px);
 }
 
 .asb-signout-confirm {

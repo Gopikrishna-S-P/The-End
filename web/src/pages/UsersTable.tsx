@@ -101,8 +101,8 @@ export function UsersTable({
                 type="button"
                 style={{ 
                   width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '8px', 
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)', cursor: 'pointer', color: '#4b5563'
+                  backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)'
                 }}
                 onClick={() => setIsSearchOpen(true)}
                 title="Search"
@@ -124,8 +124,8 @@ export function UsersTable({
               <div key={i} className="dd-case-skel">
                 <span className="ds-skel" style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span className="ds-skel" style={{ height: 14, width: '40%', borderRadius: 4 }} />
-                  <span className="ds-skel" style={{ height: 11, width: '25%', borderRadius: 4 }} />
+                  <span className="ds-skel" style={{ height: 14, width: '40%', borderRadius: 'var(--radius-xs)' }} />
+                  <span className="ds-skel" style={{ height: 11, width: '25%', borderRadius: 'var(--radius-xs)' }} />
                 </div>
               </div>
             ))
@@ -187,14 +187,14 @@ export function UsersTable({
                     <div className="dd-case-right" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {canCreate && (
                         <button type="button" onClick={() => onEdit(u)} 
-                          style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer', color: '#4b5563', fontSize: 13, fontWeight: 500 }}>
-                          <SquarePen size={14} color="#4b5563" /> Edit
+                          style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)', fontSize: 13, fontWeight: 500 }}>
+                          <SquarePen size={14} color="var(--ink-secondary)" /> Edit
                         </button>
                       )}
                       {canCreate && (
                         <button type="button" onClick={() => onPermissions(u)} 
-                          style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer', color: '#4b5563', fontSize: 13, fontWeight: 500 }}>
-                          <Lock size={14} color="#4b5563" /> Access
+                          style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)', fontSize: 13, fontWeight: 500 }}>
+                          <Lock size={14} color="var(--ink-secondary)" /> Access
                         </button>
                       )}
                       {canCreate && (
@@ -203,7 +203,7 @@ export function UsersTable({
                             height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, 
                             backgroundColor: u.enabled ? 'var(--danger-subtle)' : 'var(--brand-subtle)', 
                             border: `1px solid ${u.enabled ? 'var(--danger-border)' : 'var(--success-border)'}`, 
-                            borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer', 
+                            borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', 
                             color: u.enabled ? 'var(--danger-solid)' : 'var(--brand)', fontSize: 13, fontWeight: 500 
                           }}>
                           {u.enabled ? <ToggleRight size={16} color="var(--danger-solid)" /> : <ToggleLeft size={16} color="var(--brand)" />}
@@ -215,7 +215,7 @@ export function UsersTable({
                           style={{ 
                             height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, 
                             backgroundColor: 'var(--danger-subtle)', border: '1px solid var(--danger-border)', 
-                            borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer', 
+                            borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', 
                             color: 'var(--danger-solid)', fontSize: 13, fontWeight: 500 
                           }}>
                           <Trash2 size={14} color="var(--danger-solid)" /> Delete
@@ -238,11 +238,11 @@ export function UsersTable({
           </span>
           <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
             <button type="button" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={page === 0} aria-label="Previous page"
-              style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: page === 0 ? 'not-allowed' : 'pointer', color: '#4b5563', opacity: page === 0 ? 0.5 : 1 }}>
+              style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: page === 0 ? 'not-allowed' : 'pointer', color: 'var(--ink-secondary)', opacity: page === 0 ? 0.5 : 1 }}>
               <ChevronLeft size={16} />
             </button>
             <button type="button" onClick={() => onPageChange(Math.min((data?.totalPages ?? 1) - 1, page + 1))} disabled={page >= (data?.totalPages ?? 1) - 1} aria-label="Next page"
-              style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '6px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: page >= (data?.totalPages ?? 1) - 1 ? 'not-allowed' : 'pointer', color: '#4b5563', opacity: page >= (data?.totalPages ?? 1) - 1 ? 0.5 : 1 }}>
+              style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: page >= (data?.totalPages ?? 1) - 1 ? 'not-allowed' : 'pointer', color: 'var(--ink-secondary)', opacity: page >= (data?.totalPages ?? 1) - 1 ? 0.5 : 1 }}>
               <ChevronRight size={16} />
             </button>
           </div>

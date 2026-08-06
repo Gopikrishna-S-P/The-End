@@ -74,7 +74,7 @@
   height: 28px;
   border: none;
   background: transparent;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   color: var(--ink-secondary);
   flex-shrink: 0;
@@ -101,7 +101,7 @@
   cursor: pointer;
   border: none;
   background: transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   box-shadow: none;
   font-weight: 600;
   transition: background 120ms;
@@ -171,9 +171,11 @@
   height: calc(100vh - 220px);
 }
 
-/* Card surface — rounder, softer border to match the topbar customize/help dialog */
+/* Card surface — rounder, softer border to match the topbar customize/help
+   dialog, which itself now uses --radius-lg (20px, not 16px) after its own
+   fix — following suit here to keep the two actually matching. */
 .dd-page .ds-card {
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border-color: var(--border);
 }
 

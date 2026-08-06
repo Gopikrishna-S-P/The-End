@@ -21,7 +21,7 @@
   padding: 24px 24px 40px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 /* ── Page header ─────────────────────────────────────── */

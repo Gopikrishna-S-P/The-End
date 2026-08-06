@@ -2,7 +2,7 @@
 .app-page-drawer-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
+  z-index: var(--z-modal);
   background: var(--shadow-overlay-scrim);
   animation: app-page-fadein 180ms var(--ease);
 }
@@ -11,12 +11,16 @@
   inset: 0 0 0 auto;
   width: 100%;
   max-width: 560px;
-  z-index: calc(var(--z-modal, 500) + 1);
+  z-index: calc(var(--z-modal) + 1);
   background: var(--bg-canvas);
   border-left: 1px solid var(--border);
+  /* Directional (leftward) shadow — no token covers this since every named
+     --shadow-* is a symmetric/downward elevation. Already correctly built on
+     16,24,40 — the same ink hue --shadow-sm/md/lg use (rgba(16,24,40,...))
+     — just not expressed through color-mix, so it wouldn't have re-themed. */
   box-shadow:
-    -24px 0 64px rgba(16,24,40,.10),
-    -4px 0 12px rgba(16,24,40,.05);
+    -24px 0 64px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    -4px 0 12px color-mix(in srgb, var(--text-primary) 5%, transparent);
   display: flex;
   flex-direction: column;
   animation: app-page-drawer-in 240ms var(--ease);
@@ -97,7 +101,7 @@
 .app-page-detail-group-body {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 4px 14px;
 }
 
@@ -106,7 +110,7 @@
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-canvas);
   color: var(--ink-primary);
   font-size: 13px;
@@ -127,7 +131,7 @@
 /* ── Checklist section (form section with OK/Required tag) ─── */
 .app-page-checklist {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--bg-surface);
   padding: 16px;
   margin-bottom: 12px;
@@ -177,16 +181,18 @@
   padding: 14px 28px 18px;
   background: var(--bg-surface);
   border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 20px rgba(12, 10, 9, 0.04);
+  /* Was rgba(12,10,9,X) — Tailwind's stone-950, not this app's ink hue
+     (rgba(16,24,40,X), same family --shadow-* uses). */
+  box-shadow: 0 -4px 20px color-mix(in srgb, var(--text-primary) 4%, transparent);
   z-index: 20;
 }
 .app-page-sticky-action-btn {
   width: 100%;
   height: 48px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   background: var(--ink-solid);
-  color: #fff;
+  color: var(--text-on-solid);
   font-size: 14px;
   font-weight: 600;
   font-family: var(--sans);
@@ -213,7 +219,7 @@
   position: relative;
   width: 80px;
   height: 80px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   overflow: hidden;
   background: var(--bg-subtle);
@@ -223,19 +229,19 @@
   position: absolute;
   top: 2px;
   right: 2px;
-  background: rgba(12, 10, 9, 0.7);
-  color: #fff;
+  background: color-mix(in srgb, var(--text-primary) 70%, transparent);
+  color: var(--text-on-solid);
   border: none;
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background 150ms var(--ease);
 }
-.app-page-photo-thumb-remove:hover { background: rgba(12, 10, 9, 0.9); }
+.app-page-photo-thumb-remove:hover { background: color-mix(in srgb, var(--text-primary) 90%, transparent); }
 
 /* ── Compact form input (used inside checklist sections) ──── */
 .app-page-input {
@@ -243,7 +249,7 @@
   height: 44px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-canvas);
   color: var(--ink-primary);
   font-size: 13.5px;
@@ -270,7 +276,7 @@
   gap: 6px;
   height: 44px;
   padding: 0 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
   font-family: var(--sans);
@@ -281,10 +287,12 @@
     transform .18s ease;
   background: var(--error-subtle);
   color: var(--error);
-  border: 1px solid rgba(185, 28, 28, 0.22);
+  /* Was rgba(185,28,28,X) — Tailwind's red-700, not this app's --danger
+     (#B42318) that the two properties above already correctly use. */
+  border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
 }
 .app-page-btn-soft-error:hover:not(:disabled) {
-  background: rgba(185, 28, 28, 0.12);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
 }
 .app-page-btn-soft-error:disabled { opacity: 0.55; cursor: not-allowed; }
 

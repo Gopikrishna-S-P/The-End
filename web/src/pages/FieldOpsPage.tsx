@@ -255,7 +255,7 @@ export default function FieldOpsPage() {
                     </div>
                   ) : agentList.map(a => (
                     <div key={a.agentId} className="db-att-row" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 20px', borderRadius: 0, background: openAgentIds.has(a.agentId) ? 'var(--danger-subtle)' : 'transparent' }}>
-                      <span className="db-att-chip" style={{ width: 32, height: 32, flexShrink: 0, background: openAgentIds.has(a.agentId) ? 'var(--danger)' : 'var(--bg-subtle)', color: openAgentIds.has(a.agentId) ? '#fff' : 'var(--ink-solid)' }}>
+                      <span className="db-att-chip" style={{ width: 32, height: 32, flexShrink: 0, background: openAgentIds.has(a.agentId) ? 'var(--danger)' : 'var(--bg-subtle)', color: openAgentIds.has(a.agentId) ? 'var(--text-on-solid)' : 'var(--ink-solid)' }}>
                         {`${a.agentName?.[0] ?? '?'}`.toUpperCase()}
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginLeft: 12 }}>

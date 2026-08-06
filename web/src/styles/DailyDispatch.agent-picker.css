@@ -31,7 +31,7 @@
   height: 24px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   color: var(--ink-secondary);
   padding: 0;
@@ -52,7 +52,7 @@
   height: 32px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-surface);
   color: var(--ink-primary);
 }
@@ -90,7 +90,7 @@
   height: 20px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   color: var(--ink-tertiary);
   padding: 0;
@@ -170,7 +170,7 @@
   height: 40px;
   border: none;
   border-bottom: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   cursor: pointer;
   font-family: var(--sans);
@@ -189,7 +189,7 @@
   background: var(--brand-subtle);
   color: var(--text-primary);
   font-weight: 550;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin: 0 4px;
   width: calc(100% - 8px);
   border-bottom: none;

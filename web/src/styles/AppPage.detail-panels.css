@@ -10,7 +10,7 @@
   min-width: 180px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: var(--z-dropdown);
@@ -37,7 +37,7 @@
 .app-page-lightbox {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
+  z-index: var(--z-modal);
   background: var(--shadow-overlay-scrim);
   display: flex;
   align-items: center;
@@ -45,10 +45,15 @@
   padding: 32px;
   animation: app-page-fadein .18s ease;
 }
+/* The white-alpha chrome below (border/close button/× colour) is left as
+   raw white, not tokens — deliberately, same reasoning as FieldOpsMap's
+   marker ring: a photo lightbox needs consistent light-on-dark chrome
+   regardless of --bg-surface's light/dark state, since the viewing context
+   is the photo itself, not the app's normal surface. */
 .app-page-lightbox-img {
   max-height: 90vh;
   max-width: 90vw;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255,255,255,.12);
   box-shadow: var(--elevation-4);
   object-fit: contain;
@@ -59,7 +64,7 @@
   right: 16px;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.16);
   color: #fff;
@@ -81,7 +86,7 @@
 .app-page-photo {
   width: 88px;
   height: 88px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-subtle);
   cursor: pointer;
@@ -128,7 +133,7 @@
   gap: 12px;
   padding: 12px 14px;
   background: var(--error-subtle);
-  border-top: 1px solid rgba(185, 28, 28, 0.20);
+  border-top: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
   font-size: 12.5px;
   color: var(--error);
   font-weight: 500;
@@ -145,7 +150,7 @@
   font-size: 12px;
   margin-top: 8px;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-subtle);
   color: var(--ink-secondary);
   display: inline-flex;
@@ -171,7 +176,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   background: var(--bg-subtle);
   color: var(--ink-tertiary);
 }

@@ -119,7 +119,7 @@ export default function VisitDetailDrawer({ visit, onClose, onChanged, allocatio
       )}
 
       <motion.div className="ds-drawer-overlay" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} />
-      <motion.div className="ds-drawer" style={{ width: '70%', height: '100vh', background: 'var(--bg-canvas)', boxShadow: '-24px 0 48px rgba(0,0,0,0.08)' }} role="dialog" aria-modal="true" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200, mass: 0.8 }}>
+      <motion.div className="ds-drawer" style={{ width: '70%', height: '100vh', background: 'var(--bg-canvas)', boxShadow: '-24px 0 48px color-mix(in srgb, var(--text-primary) 8%, transparent)' }} role="dialog" aria-modal="true" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200, mass: 0.8 }}>
         <div className="ds-drawer-body" style={{ background: 'var(--bg-canvas)' }}>
           <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
             <motion.div variants={fadeUp}>

@@ -198,8 +198,9 @@ export default function PlatformRevenueTrendPage() {
   const cntPath = smoothBezier(raw.map((p, i) => [cx(i), cyCnt(p.count)]));
 
   const lineColor      = isUp || isFlat ? 'var(--success)' : 'var(--danger)';
-  const lineColorDark  = isUp || isFlat ? 'rgba(10,165,80,.15)' : 'rgba(239,68,68,.15)';
-  const lineColorDark2 = isUp || isFlat ? 'rgba(10,165,80,.04)' : 'rgba(239,68,68,.04)';
+  // 10,165,80 = var(--brand); 239,68,68 was Tailwind red-500, not this app's --danger-solid.
+  const lineColorDark  = isUp || isFlat ? 'color-mix(in srgb, var(--brand) 15%, transparent)' : 'color-mix(in srgb, var(--danger-solid) 15%, transparent)';
+  const lineColorDark2 = isUp || isFlat ? 'color-mix(in srgb, var(--brand) 4%, transparent)' : 'color-mix(in srgb, var(--danger-solid) 4%, transparent)';
 
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const svg = svgRef.current;
@@ -418,7 +419,7 @@ export default function PlatformRevenueTrendPage() {
                       <g>
                         <circle cx={cx(peakIdx)} cy={cy(raw[peakIdx].revenue)} r="4" fill={lineColor} opacity="0.9" />
                         <rect x={cx(peakIdx) - 14} y={cy(raw[peakIdx].revenue) - 26} width="28" height="18" rx="4" fill={lineColor} opacity="0.9" />
-                        <text x={cx(peakIdx)} y={cy(raw[peakIdx].revenue) - 17} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="7" fontWeight="700" fontFamily="var(--font-sans)">PEAK</text>
+                        <text x={cx(peakIdx)} y={cy(raw[peakIdx].revenue) - 17} textAnchor="middle" dominantBaseline="middle" fill="var(--text-on-solid)" fontSize="7" fontWeight="700" fontFamily="var(--font-sans)">PEAK</text>
                       </g>
                     )}
 
@@ -451,7 +452,7 @@ export default function PlatformRevenueTrendPage() {
                         style={{
                           position: 'absolute', top: 0, left: `${(cx(hovIdx) / W) * 100}%`,
                           transform: `translate(-50%, -100%)`, zIndex: 10,
-                          background: 'var(--ink-solid)', color: 'var(--bg-surface)',
+                          background: 'var(--ink-solid)', color: 'var(--text-on-solid)',
                           padding: '6px 10px', borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', pointerEvents: 'none', boxShadow: 'var(--shadow-md)'
                         }}
                       >

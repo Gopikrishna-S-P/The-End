@@ -224,7 +224,7 @@ export default function UploadsPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                  <ShieldAlert size={15} style={{ color: 'var(--warning-solid, #d97706)' }} />
+                                  <ShieldAlert size={15} style={{ color: 'var(--warning)' }} />
                                   <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
                                 </div>
                                 <p style={{ fontSize: 12, color: 'var(--ink-secondary)', margin: 0 }}>
@@ -251,7 +251,7 @@ export default function UploadsPage() {
                               </form>
                             </div>
                           ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--success, #10b981)', fontSize: 13, fontWeight: 500, paddingRight: 4, flex: 1, height: 32 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--success)', fontSize: 13, fontWeight: 500, paddingRight: 4, flex: 1, height: 32 }}>
                               <ShieldAlert size={15} /> Access Confirmed
                             </div>
                           )}
@@ -381,8 +381,8 @@ export default function UploadsPage() {
             position: 'fixed', bottom: 28, right: 32, zIndex: 50,
             width: 56, height: 56, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--brand)', border: 'none', color: '#fff', cursor: 'pointer',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.14)',
+            background: 'var(--brand)', border: 'none', color: 'var(--text-on-solid)', cursor: 'pointer',
+            boxShadow: '0 8px 20px color-mix(in srgb, var(--text-primary) 22%, transparent), 0 2px 6px color-mix(in srgb, var(--text-primary) 14%, transparent)',
             transition: 'transform 120ms ease, box-shadow 120ms ease',
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)'; }}

@@ -216,23 +216,24 @@
   background: var(--bg-hover);
 }
 
-/* ── Modals — same glass/blur recipe as the topbar customize/help dialog.
-   Portaled to document.body (like TopbarCustomizeDialog), so these can't be
-   scoped under .db-root — targeted via their own ps-modal-* class instead. ── */
-
-.ps-modal-overlay {
-  background: rgba(255, 255, 255, 0.02);
-}
+/* ── Modals ────────────────────────────────────────────────────────────────
+   `Modal` in PlatformSetupShared.tsx renders `ds-modal-overlay ps-modal-overlay`
+   and `ds-modal ps-modal` — these classes sit ON TOP of the shared .ds-modal
+   primitive (ds.modal.css), imported by 10 pages (Collections, Loans, Feature
+   Flags, Subscriptions, RAG Documents, System Prompt Admin, and others), not
+   only Platform Setup. .ds-modal already gets --shadow-overlay-scrim,
+   --radius-lg and --shadow-lg correct; this block used to re-declare all
+   three with hardcoded, worse values (a 16px radius, and the same glass-gloss
+   inset-highlight shadow found in TopbarCustomizeDialog) instead of just
+   inheriting them. Portaled to document.body, so this can't be scoped under
+   .db-root — targeted via its own ps-modal-* class instead. ── */
 
 .ps-modal {
+  /* The one genuine delta: .ds-modal defaults to 420px (max) / 24px flat
+     padding. This modal is wider and manages padding per-section
+     (header/body/actions) instead of one flat inset — both real structural
+     choices, kept. */
   max-width: 520px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  /* Popup manages padding per-section (header/body/actions), not one flat inset */
   padding: 0;
   overflow: hidden;
   max-height: 85vh;
@@ -246,13 +247,13 @@
   flex-shrink: 0;
 }
 
+/* .ds-modal-title's base (16px / var(--text-primary)) already matches; the
+   only real delta this modal wants is a bolder weight. The gradient-text-clip
+   (#111→#444, plus a separate hardcoded dark-mode copy below) that used to
+   ride along with it is the same dead flourish removed from
+   TopbarCustomizeDialog's title — no other modal in the app does this. */
 .ps-modal .ds-modal-title {
-  font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
-  background: linear-gradient(135deg, #111, #444);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .ps-modal .ds-modal-sub {
@@ -263,16 +264,11 @@
   margin-top: 4px;
 }
 
-.ps-modal .ds-modal-close {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  color: var(--ink-tertiary);
-}
-.ps-modal .ds-modal-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
+/* No .ds-modal-close override — the base's 28px / --radius-xs / --bg-subtle
+   hover is already what every other modal in the app uses. This used to
+   override to 34px / 10px / --bg-hover, the exact same numbers
+   TopbarCustomizeDialog's unrelated close button carried before its own fix —
+   a copy-paste artifact, not a deliberate size for this modal specifically. */
 
 .ps-modal .ds-modal-body {
   padding: 0 24px 20px;
@@ -284,7 +280,7 @@
   padding: 20px 24px;
   margin-top: 0;
   gap: 14px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -293,69 +289,34 @@
   font-size: 14px;
 }
 
-.ps-modal .ds-label {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--text-primary);
-}
+/* No .ds-label / .ds-input / .ds-select / .ds-textarea overrides.
+   .ds-label's base is a mono, uppercase, letter-spaced eyebrow (10.5px/600/
+   .06em/--text-tertiary) — the same convention as .db-kpi-label and
+   .asb-section-label. This used to flatten it to a plain 12px sans label in
+   --text-primary, for no stated reason, making every form label inside this
+   modal look unlike a form label anywhere else that uses .ds-label — and
+   this Modal is shared by 10 pages (Collections, Loans, Feature Flags,
+   Subscriptions, RAG Documents, System Prompt Admin, and others), so the
+   inconsistency wasn't scoped to Platform Setup alone.
 
-.ps-modal .ds-input,
-.ps-modal .ds-select,
-.ps-modal .ds-textarea {
-  height: 42px;
-  background: #f7f7f7;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 10px;
-  padding: 0 16px;
-}
-.ps-modal .ds-input:hover,
-.ps-modal .ds-select:hover,
-.ps-modal .ds-textarea:hover {
-  border-color: rgba(0, 0, 0, 0.22);
-}
-.ps-modal .ds-input:focus-visible,
-.ps-modal .ds-select:focus-visible,
-.ps-modal .ds-textarea:focus-visible {
-  outline: none;
-  border-color: rgba(0, 0, 0, 0.22);
-  box-shadow: none;
-}
+   The .ds-input/.ds-select/.ds-textarea override was worse than cosmetic: it
+   replaced --bg-surface/--border/--radius-sm with a raw #f7f7f7 fill and
+   black-alpha borders no other input in the app uses, and its
+   :focus-visible rule set `outline: none; box-shadow: none;` with nothing to
+   replace them — every other .ds-input shows a visible focus ring
+   (box-shadow: 0 0 0 3px color-mix(...--focus-ring...)); every keyboard user
+   in these 10 pages' forms was landing on fields with zero visible focus
+   indicator. Removing the override restores it. */
 
-/* ── Dark mode ────────────────────────────────────────────────────────────── */
-.app-layout.dark .ps-modal {
-  background: rgba(21, 23, 28, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.app-layout.dark .ps-modal .ds-modal-title,
-.app-layout.dark .ps-modal .ds-label { color: #E8EAED; }
-.app-layout.dark .ps-modal .ds-modal-title {
-  background: linear-gradient(135deg, #E8EAED, #9BA1AC);
-  -webkit-background-clip: text;
-}
-.app-layout.dark .ps-modal .ds-modal-sub { color: rgba(255, 255, 255, 0.55); }
-.app-layout.dark .ps-modal .ds-modal-close:hover { background: rgba(255, 255, 255, 0.06); color: #E8EAED; }
-.app-layout.dark .ps-modal .ds-modal-actions { border-top-color: rgba(255, 255, 255, 0.08); }
-.app-layout.dark .ps-modal .ds-input,
-.app-layout.dark .ps-modal .ds-select,
-.app-layout.dark .ps-modal .ds-textarea {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #E8EAED;
-}
-.app-layout.dark .ps-modal .ds-input:hover,
-.app-layout.dark .ps-modal .ds-select:hover,
-.app-layout.dark .ps-modal .ds-textarea:hover,
-.app-layout.dark .ps-modal .ds-input:focus-visible,
-.app-layout.dark .ps-modal .ds-select:focus-visible,
-.app-layout.dark .ps-modal .ds-textarea:focus-visible {
-  border-color: rgba(255, 255, 255, 0.22);
-}
+/* No manual "Dark mode" block. Every remaining .ps-modal declaration is
+   either a token (which ds.tokens.css's .app-layout.dark already re-themes)
+   or a non-colour structural value (max-width, padding, gap, font-weight),
+   now that the overrides above are gone. The ~30 lines this used to carry
+   here were the same pattern as TopbarCustomizeDialog's deleted dark block:
+   re-deriving, by hand, what .ds-modal / .ds-label / .ds-input already give
+   every one of this Modal's 10 consuming pages for free — plus, in the
+   .ds-input case, hand-carrying a translucent-white dark fill for a
+   light-mode override that itself needs to not exist. */
 
 /* ── Table header — a little more breathing room above the column labels ── */
 .ps-table th {

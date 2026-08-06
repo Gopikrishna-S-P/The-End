@@ -5,7 +5,7 @@
   --np-surface:   var(--bg-surface);
   --np-subtle:    var(--bg-subtle);
   --np-border:    var(--border);
-  --np-border-s:  var(--border-strong, color-mix(in srgb, var(--border) 180%, transparent));
+  --np-border-s:  var(--border-strong);
   --np-ink:       var(--ink-primary);
   --np-ink-2:     var(--ink-secondary);
   --np-ink-3:     var(--ink-tertiary);
@@ -26,21 +26,17 @@
   
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 
   -webkit-font-smoothing: antialiased;
 }
 
-.app-layout.dark .np-root {
-  background: rgba(21, 23, 28, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
+/* No manual "Dark mode" block — background/border/shadow above are now
+   tokens, and ds.tokens.css's .app-layout.dark already re-themes them. Same
+   pattern as TopbarCustomizeDialog/PlatformSetupPage/MfaGate/AccessDenied/
+   ProfileSettingsDialog: the override alone hand-carried a bespoke
+   85%-translucent dark surface where every other dark surface is opaque. */
 
 /* ── Toolbar: tabs + actions ── */
 .np-toolbar {

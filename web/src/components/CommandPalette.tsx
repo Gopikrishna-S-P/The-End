@@ -130,8 +130,8 @@ export default function CommandPalette({
 
         {scope ? (
           <div style={{ padding: '0 24px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', height: 38, border: '1px solid var(--border, rgba(0,0,0,0.12))', borderRadius: 8 }}>
-              <Search size={14} aria-hidden="true" style={{ color: 'var(--ink-tertiary, rgba(0,0,0,0.4))', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', height: 38, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
+              <Search size={14} aria-hidden="true" style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
               <input
                 ref={inputRef}
                 value={query}
@@ -144,7 +144,7 @@ export default function CommandPalette({
               />
               <button type="button" onClick={() => setScopeMode(m => m === 'all' ? 'page' : 'all')}
                 title="Toggle search scope (Tab)"
-                style={{ flexShrink: 0, border: 'none', background: 'rgba(0,0,0,0.05)', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', cursor: 'pointer', color: 'inherit' }}>
+                style={{ flexShrink: 0, border: 'none', background: 'color-mix(in srgb, var(--text-primary) 5%, transparent)', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', cursor: 'pointer', color: 'inherit' }}>
                 {scopeMode === 'all' ? 'Everywhere' : 'This page'}
               </button>
             </div>
@@ -165,7 +165,7 @@ export default function CommandPalette({
           onKeyDown={scope ? undefined : onKeyDown}
         >
           {recentItems && (
-            <div style={{ padding: '4px 6px 2px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-tertiary, rgba(0,0,0,0.4))' }}>
+            <div style={{ padding: '4px 6px 2px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-tertiary)' }}>
               Recent
             </div>
           )}
@@ -175,12 +175,12 @@ export default function CommandPalette({
             return (
               <button key={item.id} type="button" id={`rp-palette-item-${idx}`} data-idx={idx}
                 className={`app-topbar-custom-row${isActive ? ' is-active' : ''}`}
-                style={{ width: '100%', textAlign: 'left', border: 'none', background: isActive ? 'rgba(0,0,0,0.05)' : 'transparent', cursor: 'pointer', alignItems: 'center' }}
+                style={{ width: '100%', textAlign: 'left', border: 'none', background: isActive ? 'color-mix(in srgb, var(--text-primary) 5%, transparent)' : 'transparent', cursor: 'pointer', alignItems: 'center' }}
                 role="option" aria-selected={isActive}
                 onMouseEnter={() => setActiveIdx(idx)} onClick={() => activate(item)}>
 
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(0,0,0,0.04)', flexShrink: 0, marginRight: '4px' }}>
-                  <Icon size={14} aria-hidden="true" style={{ color: 'rgba(0,0,0,0.6)' }} />
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-xs)', background: 'color-mix(in srgb, var(--text-primary) 4%, transparent)', flexShrink: 0, marginRight: '4px' }}>
+                  <Icon size={14} aria-hidden="true" style={{ color: 'var(--ink-secondary)' }} />
                 </div>
 
                 <div className="app-topbar-custom-row-body">
@@ -188,7 +188,7 @@ export default function CommandPalette({
                   <span className="app-topbar-custom-row-desc">{item.category}</span>
                 </div>
 
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '6px', background: isActive ? '#0AA550' : 'transparent', color: isActive ? '#fff' : 'rgba(0,0,0,0.2)', transition: 'all 0.2s', flexShrink: 0 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: isActive ? 'var(--ink-solid)' : 'transparent', color: isActive ? 'var(--text-on-solid)' : 'color-mix(in srgb, var(--text-primary) 20%, transparent)', transition: 'all 0.2s', flexShrink: 0 }}>
                   <ArrowRight size={12} aria-hidden="true" />
                 </div>
               </button>
@@ -206,7 +206,7 @@ export default function CommandPalette({
           )}
 
           {flat.length === 0 && !typoSuggestion && (
-            <div style={{ padding: '24px 6px', textAlign: 'center', fontSize: 12.5, color: 'var(--ink-tertiary, rgba(0,0,0,0.4))' }}>
+            <div style={{ padding: '24px 6px', textAlign: 'center', fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
               No matches{parsed.text ? ` for "${parsed.text}"` : ''}.
             </div>
           )}

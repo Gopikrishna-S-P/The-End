@@ -1,4 +1,9 @@
 /* â”€â”€ LEFT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* #ffffff/#D1D5DB left as raw values — the entire signin-page family (this
+   file, LoginBase/LoginFormFields/LoginFormActions/LoginMisc) has zero
+   .app-layout.dark coverage anywhere, and the login page renders outside
+   .app-layout entirely, so dark mode structurally can't reach it. A
+   deliberate, consistent light-only design, not a gap. */
 .signin-page .left {
   background-color: #ffffff;
   background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
@@ -19,7 +24,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(10,165,80,.04) 0%, transparent 60%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 4%, transparent) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }

@@ -27,9 +27,12 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Flat canvas. The 28px radial dot-grid that used to sit here was drawn in
+     --border-strong, the same value as the card borders it sat behind, so every
+     card's soft --shadow-sm landed on texture instead of a clean plane and the
+     lift the dashboard is built around got visually cancelled. The dashboard's
+     depth comes from elevation on a flat ground, not from a patterned one. */
   background-color: var(--bg-canvas);
-  background-image: radial-gradient(circle, var(--border-strong) 1px, transparent 1px);
-  background-size: 28px 28px;
   scroll-behavior: smooth;
   min-width: 0;
   position: relative;
@@ -72,7 +75,7 @@
 .app-skel {
   background: linear-gradient(90deg, var(--bg-subtle) 0%, var(--border) 50%, var(--bg-subtle) 100%);
   background-size: 200% 100%;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   animation: app-skel-shimmer 1.4s ease-in-out infinite;
 }
 @keyframes app-skel-shimmer {
@@ -121,7 +124,7 @@
 .app-help-modal {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--elevation-4);
   width: 100%;
   max-width: 460px;
@@ -148,7 +151,7 @@
 }
 .app-help-close-btn {
   width: 28px; height: 28px;
-  border: none; border-radius: 6px;
+  border: none; border-radius: var(--radius-xs);
   background: none; cursor: pointer;
   color: var(--ink-tertiary);
   display: flex; align-items: center; justify-content: center;
@@ -182,7 +185,7 @@
   font-weight: 600;
   cursor: pointer;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   transition: background 140ms, color 140ms;
 }
 .app-help-customize:hover {
@@ -195,7 +198,7 @@
   display: inline-flex; align-items: center;
   padding: 2px 6px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-family: var(--mono); font-size: 10px;
   color: var(--ink-tertiary); background: var(--bg-subtle);
   line-height: 1.6;
@@ -257,7 +260,7 @@
   height: 30px;
   padding: 0 10px 0 12px;
   border-radius: 999px;
-  background: var(--rp-bg-glass, var(--tb-bg));
+  background: var(--rp-bg-glass);
   border: 1px solid var(--border);
   color: var(--ink-secondary);
   font-family: var(--sans);
@@ -278,7 +281,7 @@
   align-items: center;
   padding: 1px 6px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-family: var(--mono);
   font-size: 10px;
   color: var(--ink-tertiary);

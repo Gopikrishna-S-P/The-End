@@ -148,9 +148,9 @@ export default function ActiveVisitCard({ onClosed }: Props) {
     : session.startedAt;
 
   const statusColor =
-    session.status === 'REACHED' ? '#22c55e'
-    : session.status === 'WAITING' ? '#f59e0b'
-    : '#3b82f6'; // STARTED
+    session.status === 'REACHED' ? 'var(--success)'
+    : session.status === 'WAITING' ? 'var(--warning)'
+    : 'var(--info)'; // STARTED
 
   return (
     <div className="ds-card" style={{ borderLeft: `4px solid ${statusColor}`, marginBottom: 16 }}>

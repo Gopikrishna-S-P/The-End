@@ -371,7 +371,7 @@ export default function DispatchCasePanel(p: Props) {
               <div className="dd-send-bar-agent">
                 <div
                   className="dd-send-bar-avatar"
-                  style={{ background: hashColor(`${p.agentObj.firstName}${p.agentObj.lastName}`), color: '#fff', border: 'none' }}
+                  style={{ background: hashColor(`${p.agentObj.firstName}${p.agentObj.lastName}`), color: 'var(--text-on-solid)', border: 'none' }}
                 >
                   {p.initials(p.agentObj)}
                 </div>
@@ -429,17 +429,17 @@ export default function DispatchCasePanel(p: Props) {
           onClose={() => setShowConfirm(false)}>
           <div className="ps-section-row" style={{ padding: '4px 0 16px', justifyContent: 'flex-start', gap: 24 }}>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#98A2B3', marginBottom: 4 }}>Officer</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{agentFullName || '—'}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-placeholder)', marginBottom: 4 }}>Officer</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>{agentFullName || '—'}</div>
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#98A2B3', marginBottom: 4 }}>Cases</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.picked.size}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-placeholder)', marginBottom: 4 }}>Cases</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>{p.picked.size}</div>
             </div>
             {p.selectedTotal > 0 && (
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#98A2B3', marginBottom: 4 }}>Total</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.fmtINR(p.selectedTotal)}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-placeholder)', marginBottom: 4 }}>Total</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>{p.fmtINR(p.selectedTotal)}</div>
               </div>
             )}
           </div>

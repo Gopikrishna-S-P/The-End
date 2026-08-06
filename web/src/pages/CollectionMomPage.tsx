@@ -189,8 +189,9 @@ export default function CollectionMomPage() {
     setHovIdx(nearest);
   }, [n, cx, W]);
 
-  const lineColorDark = isUp || isFlat ? 'rgba(10,165,80,.15)' : 'rgba(239,68,68,.15)';
-  const lineColorDark2 = isUp || isFlat ? 'rgba(10,165,80,.04)' : 'rgba(239,68,68,.04)';
+  // 10,165,80 = var(--brand); 239,68,68 was Tailwind red-500, not this app's --danger-solid.
+  const lineColorDark = isUp || isFlat ? 'color-mix(in srgb, var(--brand) 15%, transparent)' : 'color-mix(in srgb, var(--danger-solid) 15%, transparent)';
+  const lineColorDark2 = isUp || isFlat ? 'color-mix(in srgb, var(--brand) 4%, transparent)' : 'color-mix(in srgb, var(--danger-solid) 4%, transparent)';
 
   return (
     <div className="db-root">
@@ -355,7 +356,7 @@ export default function CollectionMomPage() {
                     <g>
                       <circle cx={cx(peakIdx)} cy={cy(sorted[peakIdx].totalAmount)} r="4" fill={lineColor} opacity="0.9" />
                       <rect x={cx(peakIdx) - 14} y={cy(sorted[peakIdx].totalAmount) - 26} width="28" height="18" rx="4" fill={lineColor} opacity="0.9" />
-                      <text x={cx(peakIdx)} y={cy(sorted[peakIdx].totalAmount) - 17} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="7" fontWeight="700" fontFamily="var(--font-sans)">PEAK</text>
+                      <text x={cx(peakIdx)} y={cy(sorted[peakIdx].totalAmount) - 17} textAnchor="middle" dominantBaseline="middle" fill="var(--text-on-solid)" fontSize="7" fontWeight="700" fontFamily="var(--font-sans)">PEAK</text>
                     </g>
 
                     {/* Last point dot */}
@@ -385,7 +386,7 @@ export default function CollectionMomPage() {
                         style={{
                           position: 'absolute', top: 0, left: `${(cx(hovIdx) / W) * 100}%`,
                           transform: `translate(-50%, -100%)`, zIndex: 10,
-                          background: 'var(--ink-solid)', color: 'var(--bg-surface)',
+                          background: 'var(--ink-solid)', color: 'var(--text-on-solid)',
                           padding: '6px 10px', borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', pointerEvents: 'none', boxShadow: 'var(--shadow-md)'
                         }}
                       >

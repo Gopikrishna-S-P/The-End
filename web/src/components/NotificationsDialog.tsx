@@ -13,6 +13,7 @@ import { getDesktopPermission, requestDesktopPermission } from '../utils/notific
 import { TYPE_ICON, timeAgo } from './NotifItem';
 import { notificationsDialog, useNotificationsDialogOpen } from '../utils/notificationsDialog';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { Logo } from './Logo';
 import '../pages/Dashboard.css';
 import './ProfileSettingsDialog.css';
 
@@ -71,6 +72,9 @@ export default function NotificationsDialog() {
       <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Notifications">
         
         <nav className="ps-sidebar" aria-label="Notification sections">
+          <div className="ps-sidebar-logo">
+            <Logo height={28} />
+          </div>
           {NAV_ITEMS.map(item => {
             const count = item.key === 'unread' ? unreadCount
               : item.key === 'all' || item.key === 'preferences' ? undefined

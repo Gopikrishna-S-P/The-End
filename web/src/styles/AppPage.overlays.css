@@ -2,7 +2,7 @@
 .app-page-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 500);
+  z-index: var(--z-modal);
   background: var(--shadow-overlay-scrim);
   display: flex;
   align-items: center;
@@ -15,8 +15,13 @@
   max-width: 480px;
   background: var(--bg-surface);
   border: 1px solid var(--border-strong);
-  border-radius: 24px;
-  box-shadow: 0 32px 80px rgba(0,0,0,.24), 0 8px 28px rgba(0,0,0,.12);
+  border-radius: var(--radius-lg);
+  /* A deliberately bigger/more dramatic elevation than --shadow-lg (which
+     tops out at 0 24px 48px) — kept the distinct shape, just re-derived the
+     colour from the app's ink hue instead of raw black so it re-themes. */
+  box-shadow:
+    0 32px 80px color-mix(in srgb, var(--text-primary) 24%, transparent),
+    0 8px 28px color-mix(in srgb, var(--text-primary) 12%, transparent);
   overflow: hidden;
   animation: app-page-modalin .18s ease;
 }
@@ -31,7 +36,7 @@
 .app-page-modal-header-icon {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
   color: var(--ink-solid);
   display: flex;
@@ -62,7 +67,7 @@
   justify-content: center;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--ink-secondary);
   transition: background-color .18s ease, color .18s ease, border-color .18s ease;
@@ -98,7 +103,7 @@
 /* ── Dropzone ────────────────────────────────────────── */
 .app-page-dropzone {
   border: 2px dashed var(--border-strong);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 40px 24px;
   text-align: center;
   cursor: pointer;
@@ -151,7 +156,7 @@
   color: var(--ink-tertiary);
   background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 2px 6px;
 }
 .app-page-dropzone-filename {
@@ -173,7 +178,7 @@
   gap: 4px;
   background: none;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
@@ -182,7 +187,7 @@
   padding: 4px 10px;
   transition: background-color .18s ease, border-color .18s ease;
 }
-.app-page-dropzone-clear:hover { background: var(--error-subtle, rgba(220,38,38,.08)); border-color: var(--error); }
+.app-page-dropzone-clear:hover { background: var(--error-subtle); border-color: var(--error); }
 
 /* ── Progress bar ────────────────────────────────────── */
 .app-page-progress {
@@ -199,6 +204,10 @@
 }
 .app-page-progress-fill {
   height: 100%;
+  /* #14b8a6 (teal) has no design token — same value public-motion.css uses
+     as its `--rp-teal` fallback, and that "token" isn't defined anywhere
+     either. Deliberate shimmer accent, not a stray hex; flagging rather than
+     inventing a token for a single decorative gradient stop. */
   background: linear-gradient(90deg, var(--ink-solid) 0%, #14b8a6 60%, var(--ink-solid) 100%);
   background-size: 200% 100%;
   border-radius: 999px;
@@ -226,7 +235,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--warning-subtle);
   border: 1px solid var(--warning-border);
   margin-bottom: 16px;
@@ -250,7 +259,7 @@
   height: 32px;
   padding: 0 12px;
   border: 1px solid var(--warning-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--bg-surface);
   color: var(--ink-primary);
   font-size: 13px;

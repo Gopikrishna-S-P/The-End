@@ -4,7 +4,7 @@
   position: fixed;
   top: 16px;
   right: 24px;
-  z-index: var(--z-toast, 800);
+  z-index: var(--z-toast);
   display: flex;
   align-items: center;
   gap: 8px;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi, clearAllAuthStorage } from '../api';
+import { Logo } from './Logo';
 import { X, Compass, UserRound, CreditCard, KeyRound, ShieldAlert } from 'lucide-react';
 import { type UserProfile, type ChangePasswordValues } from '../pages/ProfileSettingsTypes';
 import { ProfileChangePasswordForm } from '../pages/ProfileChangePasswordForm';
@@ -105,6 +106,9 @@ export default function ProfileSettingsDialog() {
       <div className="ps-dialog" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Profile settings">
         
         <nav className="ps-sidebar" aria-label="Settings sections">
+          <div className="ps-sidebar-logo">
+            <Logo height={28} />
+          </div>
           {NAV_ITEMS.map(item => (
             <button
               key={item.key}

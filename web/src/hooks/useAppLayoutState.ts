@@ -31,7 +31,7 @@ export function useAppLayoutState() {
   const [highContrast,     setHighContrast]     = useState(() => localStorage.getItem('rp-theme-hc') === 'true');
   const [scrolledDown,     setScrolledDown]     = useState(false);
   const [lucienOpen,       setLucienOpen]       = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [isPhone,          setIsPhone]          = useState(() => window.matchMedia('(max-width: 639px)').matches);
   const [soundEnabled,     setSoundEnabled]     = useState(() => sounds.isEnabled());
   const [breadcrumbDrop,   setBreadcrumbDrop]   = useState(false);

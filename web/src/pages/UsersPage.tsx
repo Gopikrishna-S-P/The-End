@@ -193,8 +193,8 @@ export default function UsersPage() {
             aria-label="Refresh" title="Refresh"
             style={{ 
               width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backgroundColor: '#ffffff', border: '1px solid #d1d5db', borderRadius: '8px', 
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)', cursor: 'pointer', color: '#4b5563'
+              backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)'
             }}
           >
             <RefreshCw size={16} className={loading ? 'ds-spin' : ''} />
@@ -204,7 +204,7 @@ export default function UsersPage() {
               type="button" onClick={() => setShowCreate(true)}
               className="ds-btn is-primary" 
               style={{ 
-                height: 36, borderRadius: '8px', boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                height: 36, borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)',
                 display: 'flex', alignItems: 'center' 
               }}
             >

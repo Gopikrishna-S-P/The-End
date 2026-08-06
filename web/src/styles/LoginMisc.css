@@ -101,7 +101,7 @@
   cursor: pointer;
   color: var(--ink-tertiary);
   padding: 4px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,7 +177,7 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--ink-secondary);
   transition: color 150ms, background 150ms;
 }

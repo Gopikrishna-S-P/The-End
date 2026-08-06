@@ -193,7 +193,7 @@ export default function ShiftSosCard() {
   const onShift = shift?.status === 'ACTIVE';
 
   return (
-    <div className="ds-card" style={{ borderLeft: `4px solid ${activeIncidentId ? '#ef4444' : onShift ? '#22c55e' : 'var(--border)'}`, marginBottom: 16 }}>
+    <div className="ds-card" style={{ borderLeft: `4px solid ${activeIncidentId ? 'var(--danger)' : onShift ? 'var(--success)' : 'var(--border)'}`, marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: 15 }}>
@@ -221,12 +221,12 @@ export default function ShiftSosCard() {
                 <>
                   <button type="button" className="ds-btn is-secondary" disabled={uploadingAudio}
                     onClick={recordingAudio ? handleStopVoiceNote : handleRecordVoiceNote}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, color: recordingAudio ? '#ef4444' : undefined }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, color: recordingAudio ? 'var(--danger)' : undefined }}>
                     {uploadingAudio ? <Loader2 size={14} className="ds-spin" /> : <Mic size={14} />}
                     {uploadingAudio ? 'Uploading…' : recordingAudio ? 'Stop recording' : 'Voice note'}
                   </button>
                   <button type="button" className="ds-btn is-secondary" disabled={busy} onClick={handleCancelSos}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--danger)' }}>
                     {busy ? <Loader2 size={14} className="ds-spin" /> : <ShieldCheck size={14} />} Cancel SOS
                   </button>
                 </>
