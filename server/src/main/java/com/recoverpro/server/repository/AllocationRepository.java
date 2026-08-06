@@ -138,6 +138,9 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
     @Query("SELECT a FROM Allocation a WHERE a.organization.id = :orgId AND a.isDeleted = false")
     List<Allocation> findByOrganizationIdAndIsDeletedFalse(@Param("orgId") UUID orgId);
 
+    @Query("SELECT a FROM Allocation a WHERE a.organization.id = :orgId AND a.isDeleted = false ORDER BY a.createdAt ASC")
+    org.springframework.data.domain.Slice<Allocation> findAllByOrganizationIdPaged(@Param("orgId") UUID orgId, Pageable pageable);
+
     @Query("SELECT COALESCE(SUM(a.outstandingAmount), 0) FROM Allocation a WHERE a.assignedToUserId = :agentId AND a.isDeleted = false")
     java.math.BigDecimal sumOutstandingByAgentId(@Param("agentId") UUID agentId);
 
