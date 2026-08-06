@@ -51,7 +51,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Reports',        to: '/app/reports',     icon: LineChart, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
       // Ground truth: UploadsPage.tsx self-gates on UPLOAD_READER_ROLES =
       // [PLATFORM_ADMIN, ORG_ADMIN, MANAGER, TL], and ORG_ADMIN's seeded
-      // permission set (DataSeeder.java) includes FILE_UPLOAD/FILE_VIEW/FILE_DELETE
+      // permission set (V017__bootstrap_data.sql) includes FILE_UPLOAD/FILE_VIEW/FILE_DELETE
       // outright — the page was fully built for these roles but had no sidebar
       // link, so only PLATFORM_ADMIN could ever discover it.
       { label: 'File Uploads',  to: '/app/uploads',     icon: Upload,    alwaysFor: ['ORG_ADMIN'] },

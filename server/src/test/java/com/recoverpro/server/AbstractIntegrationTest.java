@@ -65,7 +65,7 @@ public abstract class AbstractIntegrationTest {
      * org == null produces a platform-admin-style user with no tenant org.
      * A DB trigger (fn_enforce_single_platform_admin) permits only one
      * ROLE_PLATFORM_ADMIN user system-wide, so requesting that role reuses
-     * the DataSeeder-created bootstrap admin instead of inserting a new one
+     * the V017-migration-seeded bootstrap admin instead of inserting a new one
      * — it is never added to createdUserIds and is never cleaned up.
      */
     protected String tokenFor(Organization org, String... roleNames) {
