@@ -30,8 +30,8 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
             "AND (:statusStr IS NULL OR CAST(a.status AS String) = :statusStr) " +
             "AND (:fileUploadId IS NULL OR a.fileUpload.id = :fileUploadId) " +
             "AND (:assignedToUserId IS NULL OR a.assignedToUserId = :assignedToUserId) " +
-            "AND (:searchTerm IS NULL " +
-            "     OR LOWER(a.loanNumber) LIKE LOWER(CONCAT(:searchTerm, '%')) " +
+            "AND (:searchPattern IS NULL " +
+            "     OR LOWER(a.loanNumber) LIKE :searchPattern " +
             "     OR a.id IN (SELECT t.allocationId FROM AllocationNameSearchToken t WHERE t.tokenHash = :searchTermHash))",
            countQuery =
             "SELECT COUNT(a) FROM Allocation a " +
@@ -40,15 +40,15 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
             "AND (:statusStr IS NULL OR CAST(a.status AS String) = :statusStr) " +
             "AND (:fileUploadId IS NULL OR a.fileUpload.id = :fileUploadId) " +
             "AND (:assignedToUserId IS NULL OR a.assignedToUserId = :assignedToUserId) " +
-            "AND (:searchTerm IS NULL " +
-            "     OR LOWER(a.loanNumber) LIKE LOWER(CONCAT(:searchTerm, '%')) " +
+            "AND (:searchPattern IS NULL " +
+            "     OR LOWER(a.loanNumber) LIKE :searchPattern " +
             "     OR a.id IN (SELECT t.allocationId FROM AllocationNameSearchToken t WHERE t.tokenHash = :searchTermHash))")
     Page<Allocation> findAllWithFilters(
             @Param("organizationId") UUID organizationId,
             @Param("statusStr") String statusStr,
             @Param("fileUploadId") UUID fileUploadId,
             @Param("assignedToUserId") UUID assignedToUserId,
-            @Param("searchTerm") String searchTerm,
+            @Param("searchPattern") String searchPattern,
             @Param("searchTermHash") String searchTermHash,
             Pageable pageable);
 

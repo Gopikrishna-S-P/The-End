@@ -74,6 +74,8 @@ public class AllocationServiceImpl implements AllocationService {
                 ? filterRequest.getSearchTerm().trim() : null;
         String searchTermHash = (normalizedSearch != null && normalizedSearch.length() >= 2)
                 ? lookupHashService.hash(normalizedSearch) : null;
+        String searchPattern = normalizedSearch != null
+                ? normalizedSearch.toLowerCase(Locale.ROOT) + "%" : null;
 
         UUID fileUploadId = filterRequest.getFileUploadId();
         if (fileUploadId == null) {
@@ -83,7 +85,7 @@ public class AllocationServiceImpl implements AllocationService {
 
         Page<Allocation> page = allocationRepository.findAllWithFilters(
                 filterRequest.getOrganizationId(), statusStr, fileUploadId,
-                filterRequest.getAssignedToUserId(), normalizedSearch, searchTermHash, pageable);
+                filterRequest.getAssignedToUserId(), searchPattern, searchTermHash, pageable);
 
         Page<AllocationResponse> responsePage = page.map(allocationMapper::toResponse);
         List<AllocationResponse> content = new ArrayList<>(responsePage.getContent());
