@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as RMouseEvent } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Lock, LogOut, X as XIcon, PanelLeft } from 'lucide-react';
+import { Lock, LogOut, X as XIcon, PanelLeft, ChevronDown, ShieldCheck, Building2, FileClock, MessageSquareText, MessageSquareWarning, UserPlus } from 'lucide-react';
 import { Logo } from './Logo';
 import { prefetchRoute } from '../utils/routePrefetch';
 import { useT } from '../utils/i18n';
@@ -59,6 +59,15 @@ export default function AppSidebar({
   const [pendingTo,           setPendingTo]           = useState<string | null>(null);
   const [scrollMap,           setScrollMap]           = useState({ visible: false, top: 0, height: 0 });
   const [tip,                 setTip]                 = useState<TipState | null>(null);
+
+  const isSubActive = location.pathname === '/app/settings/roles' || location.pathname === '/app/settings/organization' || location.pathname === '/app/audit' || location.pathname === '/app/settings/message-templates' || location.pathname === '/app/settings/grievance-officer' || location.pathname === '/app/users/requests';
+  const [userSetupExpanded, setUserSetupExpanded] = useState(location.pathname === '/app/users' || isSubActive);
+
+  useEffect(() => {
+    if (location.pathname === '/app/users' || isSubActive) {
+      setUserSetupExpanded(true);
+    }
+  }, [location.pathname, isSubActive]);
 
   const rippleConfirm = useRipple<HTMLButtonElement>();
   const rippleCancel  = useRipple<HTMLButtonElement>();
@@ -192,24 +201,30 @@ export default function AppSidebar({
                     const label = t(item.label);
 
                     return (
-                      <li key={item.to}>
+                      <li key={item.to} style={{ position: 'relative' }}>
                         <NavLink
                           to={item.to}
                           className={`asb-nav-item${isActive ? ' is-active' : ''}`}
                           aria-current={isActive ? 'page' : undefined}
                           aria-label={collapsed ? label : undefined}
-                          onClick={() => setPendingTo(item.to)}
+                          onClick={() => {
+                            setPendingTo(item.to);
+                            if (item.label === 'User Setup') {
+                              setUserSetupExpanded(prev => !prev);
+                            }
+                          }}
                           onMouseEnter={(e) => { prefetchRoute(item.to); if (collapsed) showTip(e, label); }}
                           onMouseLeave={hideTip}
                           onFocus={() => prefetchRoute(item.to)}
+                          style={item.label === 'User Setup' && expanded ? { paddingRight: 40 } : undefined}
                         >
                            <span className="asb-nav-icon">
                              <item.icon size={14} aria-hidden="true" />
                             {!!item.badge && item.badge > 0 && (
                               <span className="asb-badge" aria-label={`${item.badge} new`}>{item.badge}</span>
                             )}
-                          </span>
-                          {expanded && (
+                           </span>
+                           {expanded && (
                             <>
                               <span className="asb-nav-label">{label}</span>
                               {!!item.count && item.count > 0 && (
@@ -221,8 +236,73 @@ export default function AppSidebar({
                                 <Lock size={10} style={{ marginLeft: 'auto', color: 'var(--text-tertiary)', opacity: 0.7 }} aria-label="Feature locked" />
                               )}
                             </>
-                          )}
+                           )}
                         </NavLink>
+                        {item.label === 'User Setup' && expanded && (
+                          <button
+                            type="button"
+                            className="asb-chevron-btn"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setUserSetupExpanded(!userSetupExpanded);
+                            }}
+                          >
+                            <ChevronDown size={14} style={{ transform: userSetupExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                          </button>
+                        )}
+                        {item.label === 'User Setup' && expanded && userSetupExpanded && (
+                          <ul className="asb-submenu">
+                            <li>
+                              <NavLink to="/app/settings/roles" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <ShieldCheck size={12} />
+                                </span>
+                                <span className="asb-nav-label">Manage roles</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/settings/organization" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <Building2 size={12} />
+                                </span>
+                                <span className="asb-nav-label">Organisation</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/audit" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <FileClock size={12} />
+                                </span>
+                                <span className="asb-nav-label">Audit logs</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/settings/message-templates" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <MessageSquareText size={12} />
+                                </span>
+                                <span className="asb-nav-label">Message templates</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/settings/grievance-officer" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <MessageSquareWarning size={12} />
+                                </span>
+                                <span className="asb-nav-label">Grievance officer</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/users/requests" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <UserPlus size={12} />
+                                </span>
+                                <span className="asb-nav-label">Pending requests</span>
+                              </NavLink>
+                            </li>
+                          </ul>
+                        )}
                       </li>
                     );
                   })}

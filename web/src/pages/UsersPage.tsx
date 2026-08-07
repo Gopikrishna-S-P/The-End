@@ -146,48 +146,11 @@ export default function UsersPage() {
     <div className="dd-page">
       <div className="dd-page-header">
         <div className="dd-page-titles">
-          <h1 className="dd-page-title">User Setup</h1>
           <span className="dd-page-context">
             {!loading && data && `${totalUsers.toLocaleString('en-IN')} total users`}
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button" onClick={() => navigate('/app/settings/roles')}
-            className="ds-btn is-ghost"
-          >
-            <ShieldCheck size={14} /> Manage roles
-          </button>
-          <button
-            type="button" onClick={() => navigate('/app/settings/organization')}
-            className="ds-btn is-ghost"
-          >
-            <Building2 size={14} /> Organization
-          </button>
-          <button
-            type="button" onClick={() => navigate('/app/audit')}
-            className="ds-btn is-ghost"
-          >
-            <FileClock size={14} /> Audit logs
-          </button>
-          <button
-            type="button" onClick={() => navigate('/app/settings/message-templates')}
-            className="ds-btn is-ghost"
-          >
-            <MessageSquareText size={14} /> Message templates
-          </button>
-          <button
-            type="button" onClick={() => navigate('/app/settings/grievance-officer')}
-            className="ds-btn is-ghost"
-          >
-            <MessageSquareWarning size={14} /> Grievance officer
-          </button>
-          <button
-            type="button" onClick={() => navigate('/app/users/requests')}
-            className="ds-btn is-ghost"
-          >
-            <UserPlus size={14} /> Pending requests
-          </button>
           <button
             type="button" onClick={load} disabled={loading}
             aria-label="Refresh" title="Refresh"

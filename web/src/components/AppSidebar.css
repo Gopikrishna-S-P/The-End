@@ -840,3 +840,46 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── User Setup Submenu & Chevron Styles ── */
+.asb-chevron-btn {
+  position: absolute;
+  right: 8px;
+  top: 7px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  z-index: 3;
+  transition: background 120ms ease, color 120ms ease;
+}
+.asb-chevron-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.asb-submenu {
+  list-style: none;
+  padding-left: 20px;
+  margin: 4px 0 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.asb-sub-item.asb-nav-item {
+  min-height: 28px;
+  height: 28px;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+.asb-sub-item .asb-nav-icon {
+  margin-right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
