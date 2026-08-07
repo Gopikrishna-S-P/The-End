@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   platformApi,
   type OrganizationSummary,
   type CreateOrganizationRequest,
   type UpdateOrganizationRequest,
-  type UpdateOrgAdminRequest,
 } from '../api/platformApi';
 import { toastBus } from '../utils/toastBus';
-import { AlertCircle, Trash2, Loader2, UserPlus } from 'lucide-react';
+import { AlertCircle, Trash2, Loader2 } from 'lucide-react';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 
 export function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated: (org: OrganizationSummary) => void }) {
@@ -132,35 +131,16 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
   org: OrganizationSummary; onClose: () => void; onUpdated: (updated: OrganizationSummary) => void;
 }) {
   const [orgForm, setOrgForm] = useState<UpdateOrganizationRequest>({ name: org.name, code: org.code });
-  const [adminForm, setAdminForm] = useState<UpdateOrgAdminRequest>({ firstName: '', lastName: '', email: org.orgAdminEmail ?? '' });
-  const [adminLoaded, setAdminLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
 
-  // The org list endpoint only returns the admin's email (kept cheap for the table);
-  // fetch the org's users here to get the admin's actual first/last name for editing.
-  useEffect(() => {
-    if (!org.orgAdminEmail) { setAdminLoaded(true); return; }
-    let alive = true;
-    platformApi.getOrganizationUsers(org.id).then(users => {
-      if (!alive) return;
-      const admin = users.find(u => u.roles?.some(r => r.name === 'ROLE_ORG_ADMIN'));
-      if (admin) setAdminForm({ firstName: admin.firstName, lastName: admin.lastName, email: admin.email });
-    }).finally(() => { if (alive) setAdminLoaded(true); });
-    return () => { alive = false; };
-  }, [org.id, org.orgAdminEmail]);
-
   const setOrg = (k: keyof UpdateOrganizationRequest, v: string) => setOrgForm(p => ({ ...p, [k]: v }));
-  const setAdmin = (k: keyof UpdateOrgAdminRequest, v: string) => setAdminForm(p => ({ ...p, [k]: v }));
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!orgForm.name.trim()) e.name = 'Required';
     if (!/^[A-Z0-9_-]+$/.test(orgForm.code.trim())) e.code = 'Uppercase letters, digits, underscore or hyphen only';
-    if (adminForm.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(adminForm.email.trim())) e.adminEmail = 'Invalid email';
-    if (org.orgAdminEmail && !adminForm.firstName.trim()) e.adminFirstName = 'Required';
-    if (org.orgAdminEmail && !adminForm.lastName.trim()) e.adminLastName = 'Required';
     setFieldErr(e); return Object.keys(e).length === 0;
   };
 
@@ -168,16 +148,9 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
     if (!validate()) return;
     setSubmitting(true); setError(null);
     try {
-      let updated = await platformApi.updateOrganization(org.id, {
+      const updated = await platformApi.updateOrganization(org.id, {
         name: orgForm.name.trim(), code: orgForm.code.trim().toUpperCase(),
       });
-      if (org.orgAdminEmail) {
-        updated = await platformApi.updateOrgAdmin(org.id, {
-          firstName: adminForm.firstName.trim(),
-          lastName:  adminForm.lastName.trim(),
-          email:     adminForm.email.toLowerCase().trim(),
-        });
-      }
       onUpdated(updated);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Failed to update organization');
@@ -190,29 +163,12 @@ export function EditOrgModal({ org, onClose, onUpdated }: {
         <Input label="Name" value={orgForm.name} onChange={v => setOrg('name', v)} error={fieldErr.name} required />
         <Input label="Code" value={orgForm.code} onChange={v => setOrg('code', v.toUpperCase())} error={fieldErr.code} hint="Uppercase, no spaces." required />
       </FormSection>
-      <FormSection title="Org admin">
-        {org.orgAdminEmail ? (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <Input label="First name" value={adminForm.firstName} onChange={v => setAdmin('firstName', v)} error={fieldErr.adminFirstName} disabled={!adminLoaded} />
-              <Input label="Last name" value={adminForm.lastName} onChange={v => setAdmin('lastName', v)} error={fieldErr.adminLastName} disabled={!adminLoaded} />
-            </div>
-            <Input label="Email" type="email" value={adminForm.email} onChange={v => setAdmin('email', v)} error={fieldErr.adminEmail} disabled={!adminLoaded} />
-            {fieldErr.adminGeneral && <p style={{ color: 'var(--error)', fontSize: 11, marginTop: 2 }}>{fieldErr.adminGeneral}</p>}
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'var(--bg-subtle)', borderRadius: 6, fontSize: 12.5, color: 'var(--ink-tertiary)' }}>
-            <UserPlus size={13} />
-            No admin assigned — use the <strong style={{ color: 'var(--ink-solid)', marginLeft: 2 }}>Assign admin</strong> action from the organizations table.
-          </div>
-        )}
-      </FormSection>
       {error && (
         <div className="ps-banner is-error" style={{ margin: 0 }}>
           <AlertCircle size={14} /><span className="ps-banner-content">{error}</span>
         </div>
       )}
-      <ModalFooter onClose={onClose} submitting={submitting || !adminLoaded} onSubmit={submit} label="Save changes" />
+      <ModalFooter onClose={onClose} submitting={submitting} onSubmit={submit} label="Save changes" />
     </Modal>
   );
 }

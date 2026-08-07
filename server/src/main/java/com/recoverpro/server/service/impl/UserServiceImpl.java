@@ -231,6 +231,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void disableUser(UUID callerOrgId, UUID targetUserId) {
         User user = requireSameOrg(callerOrgId, targetUserId);
+        requireNotSelf(targetUserId, "deactivate");
+        requireNotLastPlatformAdmin(user, "deactivate");
         user.setEnabled(false);
         userRepository.save(user);
         auditLogService.logUserAction(callerId(), "USER_DISABLED", "Disabled user id=" + targetUserId);
@@ -239,6 +241,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(UUID callerOrgId, UUID targetUserId) {
         User user = requireSameOrg(callerOrgId, targetUserId);
+        requireNotSelf(targetUserId, "delete");
+        requireNotLastPlatformAdmin(user, "delete");
         user.setEmail("deleted-" + user.getId() + "@recoverpro.internal");
         user.setFirstName("[Deleted]");
         user.setLastName("[User]");
@@ -392,5 +396,18 @@ public class UserServiceImpl implements UserService {
     private boolean isPlatformAdmin(User user) {
         return user.getRoles().stream()
                 .anyMatch(r -> PlatformConstants.ROLE_PLATFORM_ADMIN.equals(r.getName()));
+    }
+
+    private void requireNotSelf(UUID targetUserId, String action) {
+        if (targetUserId.equals(callerId())) {
+            throw new BusinessException("You cannot " + action + " your own account");
+        }
+    }
+
+    private void requireNotLastPlatformAdmin(User target, String action) {
+        if (isPlatformAdmin(target)
+                && userRepository.countByRoleNameAndEnabledTrue(PlatformConstants.ROLE_PLATFORM_ADMIN) <= 1) {
+            throw new BusinessException("Cannot " + action + " the last active platform admin");
+        }
     }
 }

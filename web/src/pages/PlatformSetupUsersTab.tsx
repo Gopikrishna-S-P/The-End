@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi } from '../api/platformApi';
 import type { OrganizationSummary } from '../api/platformApi';
+import { usersApi } from '../api/usersApi';
 import type { UserResponse } from '../types';
+import { useAuth } from '../AuthContext';
 import {
-  Building2, AlertCircle, Users, Shield, ChevronDown,
+  Building2, AlertCircle, Users, Shield, ChevronDown, ToggleLeft, ToggleRight, SquarePen, Trash2,
 } from 'lucide-react';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
+import { UsersEditModal } from './UsersEditModal';
+import { DeleteUserModal } from './PlatformSetupUserModals';
 import { toastBus } from '../utils/toastBus';
 
 function CreateAdminUserModal({ orgs, onClose, onCreated }: {
@@ -103,9 +107,12 @@ interface UsersTabProps {
 }
 
 export function UsersTab({ orgs, showCreate, setShowCreate }: UsersTabProps) {
-  const [users,    setUsers]    = useState<UserResponse[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState<string | null>(null);
+  const { user: currentUser } = useAuth();
+  const [users,       setUsers]       = useState<UserResponse[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<UserResponse | null>(null);
+  const [deletingUser, setDeletingUser] = useState<UserResponse | null>(null);
 
   const orgMap = Object.fromEntries(orgs.map(o => [o.id, o.name]));
 
@@ -122,6 +129,13 @@ export function UsersTab({ orgs, showCreate, setShowCreate }: UsersTabProps) {
 
   useEffect(() => { load(); }, [load]);
 
+  const toggleEnabled = async (u: UserResponse) => {
+    try {
+      if (u.enabled) await usersApi.disableUser(u.id); else await usersApi.enableUser(u.id);
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, enabled: !u.enabled } : x));
+    } catch { /* interceptor shows toast */ }
+  };
+
   return (
     <>
       {error && (
@@ -135,20 +149,23 @@ export function UsersTab({ orgs, showCreate, setShowCreate }: UsersTabProps) {
         <div className="ds-table-wrap">
           <table className="ds-table is-no-row-hover ps-table">
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Role</th><th>Organization</th><th>Status</th></tr>
+              <tr>
+                <th>Name</th><th>Email</th><th>Role</th><th>Organization</th><th>Status</th>
+                <th className="is-right">Actions</th>
+              </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} style={{ opacity: 1 - i * 0.08 }}>
-                    {Array.from({ length: 5 }).map((__, j) => (
+                    {Array.from({ length: 6 }).map((__, j) => (
                       <td key={j}><div className="ds-skel" style={{ height: 14, width: '75%' }} /></td>
                     ))}
                   </tr>
                 ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="ds-empty">
                       <span className="ds-empty-icon"><Users size={20} /></span>
                       <span className="ds-empty-title">No admin users yet</span>
@@ -191,6 +208,30 @@ export function UsersTab({ orgs, showCreate, setShowCreate }: UsersTabProps) {
                           {u.enabled ? 'Active' : 'Disabled'}
                         </span>
                       </td>
+                      <td className="is-right">
+                        {(() => {
+                          const isSelf = u.id === currentUser?.id;
+                          return (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                              <button type="button" onClick={() => toggleEnabled(u)} disabled={isSelf}
+                                className="ds-table-row-action"
+                                title={isSelf ? "You can't deactivate your own account" : (u.enabled ? 'Deactivate' : 'Activate')}>
+                                {u.enabled
+                                  ? <ToggleRight size={16} style={{ color: 'var(--success)' }} />
+                                  : <ToggleLeft  size={16} />}
+                              </button>
+                              <button type="button" onClick={() => setEditingUser(u)} className="ds-table-row-action" title="Edit">
+                                <SquarePen size={14} />
+                              </button>
+                              <button type="button" onClick={() => setDeletingUser(u)} disabled={isSelf}
+                                className="ds-table-row-action is-danger"
+                                title={isSelf ? "You can't delete your own account" : 'Delete'}>
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          );
+                        })()}
+                      </td>
                     </tr>
                   );
                 })
@@ -205,6 +246,20 @@ export function UsersTab({ orgs, showCreate, setShowCreate }: UsersTabProps) {
           orgs={orgs}
           onClose={() => setShowCreate(false)}
           onCreated={u => { setUsers(prev => [u, ...prev]); setShowCreate(false); }}
+        />
+      )}
+      {editingUser && (
+        <UsersEditModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSaved={() => { setEditingUser(null); load(); }}
+        />
+      )}
+      {deletingUser && (
+        <DeleteUserModal
+          user={deletingUser}
+          onClose={() => setDeletingUser(null)}
+          onDeleted={id => { setUsers(prev => prev.filter(u => u.id !== id)); setDeletingUser(null); }}
         />
       )}
     </>
