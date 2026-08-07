@@ -18,36 +18,55 @@ function computeTooltipPosition(rect: Rect | null, placement: TourPlacement): Re
   if (!rect) {
     return { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
   }
-  const gap = 16;
-  switch (placement) {
-    case 'top':
-      return {
-        left: rect.left + rect.width / 2,
-        top: rect.top - gap,
-        transform: 'translate(-50%, -100%)',
-      };
-    case 'bottom':
-      return {
-        left: rect.left + rect.width / 2,
-        top: rect.top + rect.height + gap,
-        transform: 'translateX(-50%)',
-      };
-    case 'left':
-      return {
-        left: rect.left - gap,
-        top: rect.top + rect.height / 2,
-        transform: 'translate(-100%, -50%)',
-      };
-    case 'right':
-      return {
-        left: rect.left + rect.width + gap,
-        top: rect.top + rect.height / 2,
-        transform: 'translateY(-50%)',
-      };
-    case 'center':
-    default:
-      return { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
+  const gap = 12;
+  const cardW = 400; // matches min(400px, 90vw) in CSS exactly
+  const cardH = 280; // safe max height for content blocks
+  
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+
+  let left = rect.left + rect.width / 2 - cardW / 2;
+  let top = rect.top + rect.height + gap;
+
+  // Vertical placement adjustments
+  if (placement === 'top') {
+    top = rect.top - cardH - gap;
+    if (top < 16) {
+      top = rect.top + rect.height + gap; // fallback to bottom
+    }
+  } else if (placement === 'bottom') {
+    if (top + cardH > vh - 16) {
+      top = rect.top - cardH - gap; // fallback to top
+    }
+  } else if (placement === 'left') {
+    left = rect.left - cardW - gap;
+    top = rect.top + rect.height / 2 - cardH / 2;
+    if (left < 16) {
+      left = rect.left + rect.width + gap; // fallback to right
+    }
+  } else if (placement === 'right') {
+    left = rect.left + rect.width + gap;
+    top = rect.top + rect.height / 2 - cardH / 2;
+    if (left + cardW > vw - 16) {
+      left = rect.left - cardW - gap; // fallback to left
+    }
   }
+
+  // Handle center fallback
+  if (placement === 'center') {
+    return { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
+  }
+
+  // Securely clamp the card to screen boundaries with a 16px safety margin
+  const safeLeft = Math.max(16, Math.min(left, vw - cardW - 16));
+  const safeTop = Math.max(16, Math.min(top, vh - cardH - 16));
+
+  return {
+    position: 'fixed',
+    left: `${safeLeft}px`,
+    top: `${safeTop}px`,
+    transform: 'none',
+  };
 }
 
 export default function TourOverlay() {

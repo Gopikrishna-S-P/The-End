@@ -12,7 +12,7 @@ import '../components/TopbarCustomizeDialog.css';
 
 function Toggle({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
   return (
-    <label className={`app-topbar-custom-toggle${checked ? ' is-on' : ''}${disabled ? ' is-protected' : ''}`} aria-label={label}>
+    <label className={`app-topbar-custom-toggle${checked ? ' is-on' : ''}${disabled ? ' is-protected' : ''}`} aria-label={label} style={{ pointerEvents: 'none' }}>
       <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
       <span className="app-topbar-custom-toggle-track" aria-hidden="true">
         <span className="app-topbar-custom-toggle-knob" />
@@ -21,9 +21,22 @@ function Toggle({ checked, onChange, disabled, label }: { checked: boolean; onCh
   );
 }
 
-function Row({ children }: { children: React.ReactNode }) {
+function Row({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 16px', border: '1px solid var(--border-subtle)', borderRadius: 10 }}>
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        padding: '12px 16px',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 10,
+        cursor: onClick ? 'pointer' : 'default',
+        userSelect: 'none'
+      }}
+    >
       {children}
     </div>
   );
@@ -42,8 +55,7 @@ export function ProfileGeneralSection({ onClose }: Props) {
 
   async function toggleDarkMode(next: boolean) {
     const mode = next ? 'dark' : 'light';
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('rp-theme', mode);
+    window.dispatchEvent(new CustomEvent('rp-set-theme', { detail: mode }));
     sounds.play('toggle');
     try {
       await apiClient.patch('/api/v1/users/me/preferences', { theme: mode });
@@ -70,45 +82,13 @@ export function ProfileGeneralSection({ onClose }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span className="ps-section-sub" style={{ marginTop: 0 }}>Appearance</span>
 
-          <Row>
+          <Row onClick={() => toggleDarkMode(!isDark)}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
               {isDark ? <Moon size={15} /> : <Sun size={15} />} Dark mode
             </span>
             <Toggle checked={isDark} onChange={toggleDarkMode} label="Dark mode" />
           </Row>
 
-          <Row>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
-              {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} />} Interaction sound
-            </span>
-            <Toggle checked={soundOn} onChange={toggleSound} label="Interaction sound" />
-          </Row>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="ps-section-sub" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}><LayoutGrid size={12} /> Topbar buttons</span>
-            <button type="button" onClick={() => topbarPrefs.reset()} className="ds-btn is-secondary" style={{ height: 26, padding: '0 10px', fontSize: 11.5 }}>
-              <RotateCcw size={11} /> Reset
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {TOPBAR_BUTTONS.map(b => {
-              const isHidden = topbarHidden.has(b.id);
-              return (
-                <Row key={b.id}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
-                      {b.label}
-                      {b.alwaysVisible && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: 'var(--ink-tertiary)', textTransform: 'uppercase' }}>Always on</span>}
-                    </span>
-                    <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)' }}>{b.description}</span>
-                  </div>
-                  <Toggle checked={!isHidden} disabled={!!b.alwaysVisible} onChange={(on) => topbarPrefs.setHidden(b.id, !on)} label={`${b.label} visibility`} />
-                </Row>
-              );
-            })}
-          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -141,6 +121,48 @@ export function ProfileGeneralSection({ onClose }: Props) {
             Restart tour
           </button>
         </Row>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          <span className="ps-section-sub" style={{ marginTop: 0 }}>Support</span>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            padding: '16px',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 10,
+            background: 'var(--bg-subtle)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                <Compass size={15} /> support@recoverpro.in
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="ds-btn is-secondary"
+                  style={{ height: 30, fontSize: '11.5px', padding: '0 10px' }}
+                  onClick={() => {
+                    navigator.clipboard.writeText('support@recoverpro.in');
+                    alert('Email copied to clipboard!');
+                  }}
+                >
+                  Copy Email
+                </button>
+                <button
+                  type="button"
+                  className="ds-btn"
+                  style={{ height: 30, fontSize: '11.5px', background: 'var(--ink-solid)', color: 'var(--text-on-solid)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '0 12px', cursor: 'pointer', fontWeight: 600 }}
+                  onClick={() => {
+                    window.open('mailto:support@recoverpro.in');
+                  }}
+                >
+                  Send Email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
     </section>

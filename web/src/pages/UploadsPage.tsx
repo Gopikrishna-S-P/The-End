@@ -221,9 +221,9 @@ export default function UploadsPage() {
           {/* ── Uploads List ── */}
           <div className="db-grid">
             <div className="db-span-12">
-              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', paddingTop: 16 }}>
                 {(isPlatformAdmin || (totalPages > 1 && !loading)) && (
-                  <header className="db-card-head" style={{ alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '12px 0', flexWrap: 'wrap', gap: 16 }}>
+                  <header className="db-card-head" style={{ alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '6px 0 12px 0', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ flex: 1, display: 'flex' }}>
                       {isPlatformAdmin && (
                         <div style={{ display: 'flex', gap: 16, flex: 1, alignItems: 'flex-start' }}>

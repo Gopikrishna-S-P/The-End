@@ -4,6 +4,8 @@
   inset: 0;
   z-index: var(--z-modal);
   background: var(--shadow-overlay-scrim);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;

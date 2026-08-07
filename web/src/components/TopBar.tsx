@@ -1,11 +1,8 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import {
   ChevronLeft, ChevronRight, ChevronDown, X,
-  Search, Bell, HelpCircle, Settings, ArrowRight,
-  Keyboard, BookOpen, Compass, MessageSquare, ExternalLink,
+  Search, Bell, Settings,
 } from 'lucide-react';
-import { tour } from '../utils/tour';
 import { profileSettings } from '../utils/profileSettings';
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
@@ -84,19 +81,7 @@ export default function TopBar(props: TopBarProps) {
   const topbarCls = ['app-topbar', scrolledDown ? 'is-elevated' : ''].filter(Boolean).join(' ');
   const backTooltip = previousPathLabel ? `Back to ${previousPathLabel} (Alt+←)` : 'Back (Alt+←)';
 
-  const [helpMenuOpen, setHelpMenuOpen] = React.useState(false);
-  const helpMenuRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    if (!helpMenuOpen) return;
-    function onDown(e: MouseEvent) {
-      if (helpMenuRef.current && !helpMenuRef.current.contains(e.target as Node)) setHelpMenuOpen(false);
-    }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setHelpMenuOpen(false); }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [helpMenuOpen]);
 
   return (
     <header className={topbarCls} aria-label="Main navigation">
@@ -215,98 +200,6 @@ export default function TopBar(props: TopBarProps) {
           <Search size={16} aria-hidden="true" className="app-search-trigger-icon" />
           <span className="app-search-trigger-text">{t('Search')}</span>
         </button>
-
-        {/* Help menu */}
-        <div className="app-help-menu-wrap" ref={helpMenuRef}>
-          <button
-            type="button"
-            className={`app-icon-btn${helpMenuOpen ? ' is-active' : ''}`}
-            onClick={() => setHelpMenuOpen(o => !o)}
-            aria-label="Help"
-            aria-expanded={helpMenuOpen}
-            aria-haspopup="menu"
-            data-tooltip="Help & resources"
-          >
-            <HelpCircle size={18} aria-hidden="true" />
-          </button>
-
-          {helpMenuOpen && createPortal(
-            <div className="app-topbar-custom-backdrop" role="dialog" aria-modal="true" aria-label="Help and resources" onMouseDown={(e) => { if (e.target === e.currentTarget) setHelpMenuOpen(false); }}>
-              <div className="app-topbar-custom-dialog" tabIndex={0} style={{ outline: 'none' }}>
-                <div className="app-topbar-custom-header">
-                  <div className="app-topbar-custom-title">
-                    <HelpCircle size={14} aria-hidden="true" />
-                    <span>Help &amp; resources</span>
-                  </div>
-                  <button type="button" className="app-topbar-custom-close" onClick={() => setHelpMenuOpen(false)} aria-label="Close">
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                </div>
-
-                <p className="app-topbar-custom-intro">
-                  Access keyboard shortcuts, view the page guide, restart the product tour, or contact our support team.
-                </p>
-
-                <div className="app-topbar-custom-list">
-                  <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); onOpenShortcuts(); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
-                      <Keyboard size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
-                    </div>
-                    <div className="app-topbar-custom-row-body">
-                      <span className="app-topbar-custom-row-label">Keyboard shortcuts</span>
-                      <span className="app-topbar-custom-row-desc">View all global hotkeys</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 600, background: 'var(--bg-hover)', padding: '2px 6px', borderRadius: 'var(--radius-xs)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>?</span>
-                    </div>
-                  </button>
-
-                  <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); onOpenPageHelp(); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
-                      <BookOpen size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
-                    </div>
-                    <div className="app-topbar-custom-row-body">
-                      <span className="app-topbar-custom-row-label">Page guide</span>
-                      <span className="app-topbar-custom-row-desc">Tips &amp; links for this screen</span>
-                    </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: 'transparent', color: 'var(--text-placeholder)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
-                      <ArrowRight size={12} aria-hidden="true" />
-                    </div>
-                  </button>
-
-                  <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); tour.start(); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
-                      <Compass size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
-                    </div>
-                    <div className="app-topbar-custom-row-body">
-                      <span className="app-topbar-custom-row-label">Product tour</span>
-                      <span className="app-topbar-custom-row-desc">Restart the onboarding walkthrough</span>
-                    </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: 'transparent', color: 'var(--text-placeholder)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
-                      <ArrowRight size={12} aria-hidden="true" />
-                    </div>
-                  </button>
-
-                  <div className="app-topbar-custom-row-desc" style={{ padding: '8px 12px 0', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em', marginTop: '4px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>Support</div>
-
-                  <button role="menuitem" className="app-topbar-custom-row" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', alignItems: 'center' }} onClick={() => { setHelpMenuOpen(false); window.open('mailto:support@recoverpro.in'); }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-hover)', flexShrink: 0, marginRight: '4px' }}>
-                      <MessageSquare size={14} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
-                    </div>
-                    <div className="app-topbar-custom-row-body">
-                      <span className="app-topbar-custom-row-label">Contact support</span>
-                      <span className="app-topbar-custom-row-desc">Email the RecoverPro team</span>
-                    </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', background: 'transparent', color: 'var(--text-placeholder)', transition: 'all 0.2s', flexShrink: 0 }} className="app-topbar-action-icon">
-                      <ExternalLink size={12} aria-hidden="true" />
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body
-          )}
-        </div>
 
         <button
           type="button"

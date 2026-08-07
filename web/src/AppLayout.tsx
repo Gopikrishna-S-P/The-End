@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sun, Moon, HelpCircle, Settings, LogOut, Volume2, VolumeX, X, LayoutGrid, User } from 'lucide-react';
 import AppSidebar from './components/AppSidebar';
@@ -39,6 +39,7 @@ function fmtINR(n?: number) {
 export default function AppLayout() {
   const navigate  = useNavigate();
   const location  = useLocation();
+  const [bookletPage, setBookletPage] = useState<'nav' | 'actions' | 'inputs'>('nav');
 
   // Hide the login-flow splash (shown by LoginPage) once the app shell mounts.
   useEffect(() => { loadingSplash.hideAfterMin(2000); }, []);
@@ -182,7 +183,7 @@ export default function AppLayout() {
           notifOpen={notifDialogOpen}
           onBellClick={() => { notificationsDialog.show(); s.play(); }}
           topbarHidden={s.topbarHidden}
-          onOpenShortcuts={() => { s.setHelpOpen(true); s.play(); }}
+          onOpenShortcuts={() => { s.setShortcutsOpen(true); s.play(); }}
           onLogout={s.handleLogout}
           onExtend={() => { proactiveRefresh().catch(() => {}); }}
           user={s.user}
@@ -219,15 +220,42 @@ export default function AppLayout() {
             onClick={e => { if (e.target === e.currentTarget) s.setHelpOpen(false); }}>
             <div className="app-help-modal" ref={s.helpModalRef} tabIndex={-1}>
               <div className="app-help-modal-header">
-                <span className="app-help-modal-title">Keyboard shortcuts</span>
+                <span className="app-help-modal-title">Shortcuts Booklet</span>
                 <button type="button" className="app-help-close-btn" onClick={() => s.setHelpOpen(false)} aria-label="Close">
                   <X size={15} />
                 </button>
               </div>
+              <div className="app-booklet-tabs">
+                <button type="button" className={`app-booklet-tab${bookletPage === 'nav' ? ' is-active' : ''}`} onClick={() => setBookletPage('nav')}>
+                  Navigation
+                </button>
+                <button type="button" className={`app-booklet-tab${bookletPage === 'actions' ? ' is-active' : ''}`} onClick={() => setBookletPage('actions')}>
+                  Actions
+                </button>
+                <button type="button" className={`app-booklet-tab${bookletPage === 'inputs' ? ' is-active' : ''}`} onClick={() => setBookletPage('inputs')}>
+                  Inputs
+                </button>
+              </div>
               <div className="app-help-modal-body">
-                {SHORTCUTS.map(sc => (
+                {[
+                  { desc: 'Jump to nav item 1–9', keys: ['Alt', '1–9'], cat: 'nav' },
+                  { desc: 'Back / forward page', keys: ['Alt', '← / →'], cat: 'nav' },
+                  { desc: 'Toggle fullscreen Zen mode', keys: ['⌘', '⇧', 'F'], cat: 'nav' },
+                  { desc: 'Close overlays / exit Zen mode', keys: ['Esc'], cat: 'nav' },
+                  { desc: 'Open command palette', keys: ['⌘', 'K'], cat: 'actions' },
+                  { desc: 'Cycle layout theme', keys: ['⌘', '⇧', 'L'], cat: 'actions' },
+                  { desc: 'Toggle shortcuts booklet', keys: ['?'], cat: 'actions' },
+                  { desc: 'Toggle search scope', keys: ['Tab'], cat: 'actions', hint: 'Inside search input' },
+                  { desc: 'Open slash commands', keys: ['/'], cat: 'inputs', hint: 'Inside text fields' },
+                  { desc: 'Next tour step', keys: ['Enter', '→'], cat: 'inputs', hint: 'Inside product tour' },
+                  { desc: 'Previous tour step', keys: ['←'], cat: 'inputs', hint: 'Inside product tour' },
+                  { desc: 'Skip / exit tour', keys: ['Esc'], cat: 'inputs', hint: 'Inside product tour' },
+                ].filter(item => item.cat === bookletPage).map(sc => (
                   <div key={sc.desc} className="app-help-row">
-                    <span className="app-help-desc">{sc.desc}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className="app-help-desc">{sc.desc}</span>
+                      {sc.hint && <span style={{ fontSize: '10.5px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{sc.hint}</span>}
+                    </div>
                     <span className="app-help-keys">
                       {sc.keys.map((k, i) => (
                         <React.Fragment key={k}>

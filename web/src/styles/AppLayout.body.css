@@ -110,6 +110,8 @@
   position: fixed;
   inset: 0;
   background: var(--shadow-overlay-scrim);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: var(--z-modal);
   display: flex;
   align-items: center;
@@ -309,4 +311,49 @@
   from { opacity: 1; transform: scale(1); }
   to   { opacity: 0; transform: scale(0.95) translateY(-6px); }
 }
+
+/* ── Shortcuts Booklet Styling ── */
+.app-help-modal {
+  max-width: 540px !important;
+  position: relative;
+  border-right: 4px solid var(--border-strong);
+  border-bottom: 4px solid var(--border-strong);
+  background: linear-gradient(to right, var(--bg-surface) 0%, var(--bg-surface) 49%, var(--border) 50%, var(--bg-surface) 51%, var(--bg-surface) 100%);
+  box-shadow: var(--elevation-4), inset 0 0 10px rgba(0,0,0,0.05);
+}
+.app-booklet-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+}
+.app-booklet-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 150ms var(--ease);
+}
+.app-booklet-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.app-booklet-tab.is-active {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  color: var(--ink-solid);
+  box-shadow: var(--shadow-sm);
+}
+.app-help-modal-body {
+  min-height: 280px;
+  padding: 24px 30px;
+}
+
 

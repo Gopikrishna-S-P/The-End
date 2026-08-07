@@ -10,10 +10,10 @@ interface Props {
 export function ProfileOverviewSection({ profile, isLoading, error }: Props) {
   return (
     <section className="ps-section">
-      <div className="ps-section-body" style={{ paddingTop: 8 }}>
+      <div className="ps-section-body" style={{ paddingTop: 16, paddingBottom: 16, paddingLeft: 4 }}>
         {isLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div className="ds-skel" style={{ width: 56, height: 56, borderRadius: 14 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+            <div className="ds-skel" style={{ width: 72, height: 72, borderRadius: '50%', margin: '16px 24px 16px 16px', flexShrink: 0 }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
               <div className="ds-skel" style={{ height: 18, width: 160 }} />
               <div className="ds-skel" style={{ height: 14, width: 220 }} />
@@ -28,9 +28,9 @@ export function ProfileOverviewSection({ profile, isLoading, error }: Props) {
             </div>
           </div>
         ) : profile ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--ink-solid)', color: 'var(--text-on-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 600, fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
-              {profile.avatarUrl ? <img src={profile.avatarUrl} alt={profile.name} style={{ width: '100%', height: '100%', borderRadius: 16, objectFit: 'cover' }} /> : getInitials(profile.name)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--ink-solid)', color: 'var(--text-on-solid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 600, fontFamily: 'var(--font-mono)', flexShrink: 0, margin: '16px 24px 16px 16px' }}>
+              {profile.avatarUrl ? <img src={profile.avatarUrl} alt={profile.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : getInitials(profile.name)}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-primary)' }}>{profile.name || '—'}</span>

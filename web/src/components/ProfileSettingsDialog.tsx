@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { authApi, clearAllAuthStorage } from '../api';
 import { Logo } from './Logo';
-import { X, Compass, UserRound, CreditCard, KeyRound, ShieldAlert } from 'lucide-react';
+import { X, Compass, UserRound, CreditCard, KeyRound, ShieldAlert, MessageSquare } from 'lucide-react';
 import { type UserProfile, type ChangePasswordValues } from '../pages/ProfileSettingsTypes';
 import { ProfileChangePasswordForm } from '../pages/ProfileChangePasswordForm';
 import { ProfileGeneralSection } from '../pages/ProfileGeneralSection';

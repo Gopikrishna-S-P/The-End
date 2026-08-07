@@ -120,7 +120,7 @@ export default function CommandPalette({
   }, [filtered, parsed.text, parsed.filters, recentKey, recentMax, navigate]);
 
   const scored = useMemo(() => {
-    if (!parsed.text) return filtered.map(item => ({ item, match: { score: 0 } }));
+    if (!parsed.text) return [];
     return filtered
       .map(item => ({ item, match: scoreItem(item, parsed.text) }))
       .filter(({ match }) => match.score > 0)

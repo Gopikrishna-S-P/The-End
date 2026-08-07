@@ -49,8 +49,8 @@
   animation: app-tour-tip-in var(--dur-slow) var(--ease-out) both;
 }
 @keyframes app-tour-tip-in {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }
 
 .app-tour-progress {

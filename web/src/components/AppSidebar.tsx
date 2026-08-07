@@ -203,8 +203,8 @@ export default function AppSidebar({
                           onMouseLeave={hideTip}
                           onFocus={() => prefetchRoute(item.to)}
                         >
-                          <span className="asb-nav-icon">
-                            <item.icon size={14} aria-hidden="true" />
+                           <span className="asb-nav-icon">
+                             <item.icon size={14} aria-hidden="true" />
                             {!!item.badge && item.badge > 0 && (
                               <span className="asb-badge" aria-label={`${item.badge} new`}>{item.badge}</span>
                             )}

@@ -89,6 +89,17 @@ export function useAppLayoutState() {
     return () => mq.removeEventListener('change', handler);
   }, [themeMode]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const mode = (e as CustomEvent).detail;
+      if (mode === 'light' || mode === 'dark' || mode === 'system') {
+        setThemeMode(mode);
+      }
+    };
+    window.addEventListener('rp-set-theme', handler);
+    return () => window.removeEventListener('rp-set-theme', handler);
+  }, []);
+
   useEffect(() => { localStorage.setItem('rp-theme-hc', highContrast ? 'true' : 'false'); }, [highContrast]);
 
   useEffect(() => {

@@ -312,4 +312,64 @@
   transform: scale(1.08);
 }
 
+/* ── Help Menu Button Styles ── */
+.app-help-menu-row {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  align-items: center;
+  font-family: inherit;
+  transition: background-color 150ms var(--ease), transform 100ms var(--ease);
+}
+.app-help-menu-row:active {
+  transform: scale(0.99);
+}
+.app-help-menu-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: background-color 150ms var(--ease), color 150ms var(--ease);
+}
+.app-help-menu-row:hover .app-help-menu-icon-wrap {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+.app-help-menu-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--bg-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+.app-topbar-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-placeholder);
+  transition: color 150ms var(--ease), transform 150ms var(--ease);
+  flex-shrink: 0;
+}
+.app-help-menu-row:hover .app-topbar-action-icon {
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+
 

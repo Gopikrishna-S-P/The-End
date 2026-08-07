@@ -5,7 +5,7 @@ import {
   ArrowUpRight, RefreshCw, Download, ExternalLink, X,
   SquarePen, Receipt, Settings2, ChevronDown,
   ToggleLeft, ToggleRight, RotateCcw, FileDown, Users, Search, SlidersHorizontal,
-  Gift, Loader2,
+  Ticket, Loader2,
 } from 'lucide-react';
 import { platformApi, type PlatformSubRow, type InvoiceRow } from '../api/platformApi';
 import { featureFlagsApi, type FeatureFlag } from '../api/featureFlagsApi';
@@ -183,7 +183,7 @@ function SubRow({ row, onInvoices, onOpenFlags, onEditPlan, onComp }: {
           </button>
           <button type="button" onClick={onComp} className="ds-table-row-action"
             title={isCompLive(row) ? 'Edit or remove comp' : 'Grant free access'}>
-            <Gift size={14} />
+            <Ticket size={14} />
           </button>
           <button type="button" onClick={onInvoices} className="ds-table-row-action"
             disabled={!row.stripeCustomerId}
@@ -294,7 +294,7 @@ function CompModal({ row, onClose, onSaved }: {
           </button>
           <button type="button" className="ds-btn is-primary" onClick={save} disabled={busy}
             style={{ flex: 1, justifyContent: 'center' }}>
-            {busy ? <Loader2 size={14} className="ds-spin" /> : <Gift size={14} />}
+            {busy ? <Loader2 size={14} className="ds-spin" /> : <Ticket size={14} />}
             {live ? 'Update comp' : 'Grant access'}
           </button>
         </div>

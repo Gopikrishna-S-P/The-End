@@ -16,7 +16,7 @@ export function ProfileBillingSection() {
 
   const [sub, setSub] = useState<SubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showPlans, setShowPlans] = useState(false);
+  const [showPlans, setShowPlans] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -64,17 +64,17 @@ export function ProfileBillingSection() {
   return (
     <section className="ps-section" aria-label="Billing">
       <SectionHeader icon={<CreditCard size={18} />} title="Billing" sub="Your plan and payment details" />
-      <div className="ps-section-body" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="ps-section-body" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div className="ds-skel" style={{ height: 18, width: 140 }} />
             <div className="ds-skel" style={{ height: 14, width: 200 }} />
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', border: '1px solid var(--border-subtle)', borderRadius: 12, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-primary)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '20px 24px', border: '1px solid var(--border-subtle)', borderRadius: 12, flexWrap: 'wrap', background: 'var(--bg-subtle)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>
                   {plan ? `${plan.name} plan` : 'No active plan'}
                 </span>
                 {plan && !plan.free && (
@@ -99,11 +99,11 @@ export function ProfileBillingSection() {
             </div>
 
             {showPlans && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
                 {PLANS.map(p => {
                   const isCurrent = sub?.plan === p.key;
                   return (
-                    <div key={p.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 16px', border: `1px solid ${isCurrent ? 'var(--ink-solid)' : 'var(--border-subtle)'}`, borderRadius: 10, flexWrap: 'wrap' }}>
+                    <div key={p.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '16px 20px', border: `1px solid ${isCurrent ? 'var(--ink-solid)' : 'var(--border-subtle)'}`, borderRadius: 10, flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
                         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-primary)' }}>{p.name}</span>
                         <span style={{ fontSize: 12, color: 'var(--ink-tertiary)', fontFamily: 'var(--font-mono)' }}>{p.price}{!p.free && `/${p.priceNote.replace('per ', '')}`}</span>
@@ -123,6 +123,62 @@ export function ProfileBillingSection() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Paid Bills History Block */}
+        {!isLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+            <span className="ps-section-sub" style={{ marginTop: 0 }}>Payment History</span>
+            <div style={{
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 12,
+              overflow: 'hidden',
+              background: 'var(--bg-subtle)'
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+                    <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-secondary)' }}>Billing Period</th>
+                    <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-secondary)' }}>Amount</th>
+                    <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-secondary)' }}>Status</th>
+                    <th style={{ padding: '12px 18px', fontWeight: 600, color: 'var(--text-secondary)' }}>Invoice</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { date: '01 Jul 2026', amount: plan?.free ? '₹0' : '₹4,999', status: 'Paid' },
+                    { date: '01 Jun 2026', amount: plan?.free ? '₹0' : '₹4,999', status: 'Paid' },
+                    { date: '01 May 2026', amount: plan?.free ? '₹0' : '₹4,999', status: 'Paid' },
+                  ].map((bill, i) => (
+                    <tr key={i} style={{ borderBottom: i < 2 ? '1px solid var(--border-subtle)' : 'none' }}>
+                      <td style={{ padding: '12px 18px', fontWeight: 500, color: 'var(--text-primary)' }}>{bill.date}</td>
+                      <td style={{ padding: '12px 18px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{bill.amount}</td>
+                      <td style={{ padding: '12px 18px' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          color: 'var(--success)',
+                          background: 'var(--success-subtle)',
+                          padding: '2px 8px',
+                          borderRadius: '999px'
+                        }}>
+                          {bill.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 18px' }}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); alert('Downloading invoice...'); }} style={{ color: 'var(--ink-solid)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          Download <ExternalLink size={10} />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
