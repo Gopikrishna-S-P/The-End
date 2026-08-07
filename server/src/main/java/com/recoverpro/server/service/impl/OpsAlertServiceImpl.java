@@ -1,6 +1,9 @@
 package com.recoverpro.server.service.impl;
 
+import com.recoverpro.server.config.PlatformConstants;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.OpsAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OpsAlertServiceImpl implements OpsAlertService {
 
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Value("${app.alerts.cooldown-minutes:30}")
     private long cooldownMinutes;
@@ -50,5 +54,9 @@ public class OpsAlertServiceImpl implements OpsAlertService {
                                 + cooldownMinutes + " minutes to avoid spamming this inbox."
                         : "");
         emailService.sendOpsAlert(subject, body);
+        notificationService.createForPlatformRole(PlatformConstants.ROLE_PLATFORM_ADMIN,
+                NotificationType.PLATFORM_SYSTEM_OUTAGE, subject,
+                "Background job '" + jobName + "' failed (" + context + "): "
+                        + (cause != null ? cause.getMessage() : "unknown error") + ".");
     }
 }

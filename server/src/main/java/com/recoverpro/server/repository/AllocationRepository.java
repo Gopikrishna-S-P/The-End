@@ -129,6 +129,11 @@ public interface AllocationRepository extends JpaRepository<Allocation, UUID> {
     @Query("SELECT COUNT(a) FROM Allocation a WHERE a.organization.id = :orgId AND a.status = :status AND a.isDeleted = false")
     long countByOrgIdAndStatus(@Param("orgId") UUID orgId, @Param("status") AllocationStatus status);
 
+    @Query("SELECT COUNT(a) FROM Allocation a WHERE a.organization.id = :orgId AND a.status = :status " +
+           "AND a.createdAt < :cutoff AND a.isDeleted = false")
+    long countByOrgIdAndStatusAndCreatedAtBefore(@Param("orgId") UUID orgId,
+            @Param("status") AllocationStatus status, @Param("cutoff") Instant cutoff);
+
     @Query("SELECT COUNT(a) FROM Allocation a WHERE a.organization.id = :orgId AND a.npaFlagged = true AND a.isDeleted = false")
     long countNpaByOrgId(@Param("orgId") UUID orgId);
 

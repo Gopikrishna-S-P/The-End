@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recoverpro.server.dto.response.AuthResponse;
 import com.recoverpro.server.dto.response.MfaEnableResponse;
 import com.recoverpro.server.dto.response.MfaSetupResponse;
+import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.exception.*;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -184,6 +186,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logoutAllDevices(UUID userId, String accessToken) {
         refreshTokenRotationService.logoutAllDevices(userId, accessToken);
+    }
+
+    @Override
+    public List<AuthSessionResponse> listSessions(UUID userId, String currentDeviceId) {
+        return refreshTokenRotationService.listSessions(userId, currentDeviceId);
+    }
+
+    @Override
+    public void revokeSession(UUID userId, UUID sessionId) {
+        refreshTokenRotationService.revokeSession(userId, sessionId);
     }
 
     @Override

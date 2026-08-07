@@ -80,6 +80,18 @@ export interface AuthResponse {
   user: UserResponse;
 }
 
+export interface AuthSessionResponse {
+  id: string;
+  deviceInfo?: string;
+  ipAddress?: string;
+  geoCountry?: string;
+  createdAt: string;
+  expiresAt: string;
+  anomalyFlagged: boolean;
+  anomalyReason?: string;
+  current: boolean;
+}
+
 export interface RegisterRequest {
   email: string;
   password: string;

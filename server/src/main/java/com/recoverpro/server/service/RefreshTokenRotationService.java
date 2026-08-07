@@ -2,9 +2,11 @@ package com.recoverpro.server.service;
 
 import com.recoverpro.server.dto.request.RefreshTokenRequest;
 import com.recoverpro.server.dto.response.AuthResponse;
+import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Session issuance/rotation/revocation (access + refresh tokens), split out of
@@ -23,4 +25,11 @@ public interface RefreshTokenRotationService {
     void logoutAllDevices(UUID userId, String accessToken);
 
     void blacklistToken(String accessToken);
+
+    /** Lists a user's non-revoked, non-expired sessions, newest first. currentDeviceId (may be
+     * null) marks the session matching this request's X-Device-Id as "current". */
+    List<AuthSessionResponse> listSessions(UUID userId, String currentDeviceId);
+
+    /** Revokes one specific session by id. Throws if it doesn't belong to userId. */
+    void revokeSession(UUID userId, UUID sessionId);
 }

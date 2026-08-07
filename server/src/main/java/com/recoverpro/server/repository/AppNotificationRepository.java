@@ -19,20 +19,29 @@ public interface AppNotificationRepository extends JpaRepository<AppNotification
 
     long countByRecipientIdAndReadAtIsNullAndDismissedFalse(UUID recipientId);
 
-    @Query("SELECT n FROM AppNotification n WHERE n.recipientId = :userId AND n.organizationId = :orgId " +
+    /**
+     * :orgId is null for platform admins (they have no organization). A plain
+     * "n.organizationId = :orgId" never matches in that case -- SQL's NULL = NULL is
+     * UNKNOWN, not true -- so platform-scoped notifications (organizationId also null)
+     * would be invisible to them. The explicit null/null branch fixes that.
+     */
+    @Query("SELECT n FROM AppNotification n WHERE n.recipientId = :userId " +
+           "AND ((:orgId IS NULL AND n.organizationId IS NULL) OR n.organizationId = :orgId) " +
            "AND n.readAt IS NULL AND n.dismissed = false " +
            "AND (n.snoozedUntil IS NULL OR n.snoozedUntil <= CURRENT_TIMESTAMP) " +
            "ORDER BY n.createdAt DESC")
     List<AppNotification> findUnreadByUserAndOrg(
             @Param("userId") UUID userId, @Param("orgId") UUID orgId, Pageable pageable);
 
-    @Query("SELECT COUNT(n) FROM AppNotification n WHERE n.recipientId = :userId AND n.organizationId = :orgId " +
+    @Query("SELECT COUNT(n) FROM AppNotification n WHERE n.recipientId = :userId " +
+           "AND ((:orgId IS NULL AND n.organizationId IS NULL) OR n.organizationId = :orgId) " +
            "AND n.readAt IS NULL AND n.dismissed = false " +
            "AND (n.snoozedUntil IS NULL OR n.snoozedUntil <= CURRENT_TIMESTAMP)")
     long countUnreadByUserAndOrg(@Param("userId") UUID userId, @Param("orgId") UUID orgId);
 
     @Modifying
-    @Query("UPDATE AppNotification n SET n.readAt = CURRENT_TIMESTAMP WHERE n.recipientId = :userId AND n.organizationId = :orgId AND n.readAt IS NULL")
+    @Query("UPDATE AppNotification n SET n.readAt = CURRENT_TIMESTAMP WHERE n.recipientId = :userId " +
+           "AND ((:orgId IS NULL AND n.organizationId IS NULL) OR n.organizationId = :orgId) AND n.readAt IS NULL")
     void markAllReadForUser(@Param("userId") UUID userId, @Param("orgId") UUID orgId);
 
     @Modifying

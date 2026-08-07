@@ -36,7 +36,7 @@ public class SendNotificationTool implements LucienTool {
                   "recipientId":{"type":"string","description":"UUID of the recipient user"},
                   "title":{"type":"string","maxLength":200},
                   "body":{"type":"string","maxLength":1000},
-                  "notificationType":{"type":"string","enum":["ALERT","REMINDER","ESCALATION","INFO"]}
+                  "notificationType":{"type":"string","enum":["APPROVAL_DECIDED","REPORT_READY","USER_REQUEST_DECIDED"]}
                 },"required":["recipientId","title","body","notificationType"]}""";
     }
 

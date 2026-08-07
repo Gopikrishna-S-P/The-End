@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
-  X, Bell, Inbox, AtSign, UserCheck, Clock, CheckCheck, Check, ArrowRight,
+  X, Bell, Inbox, UserCheck, Clock, CheckCheck, Check, ArrowRight,
   Clock3, Volume2, Monitor, Mail, RefreshCcw, AlertCircle, CheckCircle2, SlidersHorizontal,
 } from 'lucide-react';
 import {
@@ -22,16 +22,15 @@ const SNOOZE_MS = 3 * 60 * 60 * 1000; // 3h
 type Tab = 'all' | 'unread' | NotifType | 'preferences';
 
 const TYPE_LABEL: Record<NotifType, string> = {
-  system: 'System', mention: 'Mentions', assignment: 'Assignments', deadline: 'Deadlines',
+  system: 'System', assignment: 'Assignments', deadline: 'Deadlines',
 };
 const TYPE_COLOR: Record<NotifType, string> = {
-  system: 'var(--info)', mention: 'var(--brand)', assignment: 'var(--success)', deadline: 'var(--warning)',
+  system: 'var(--info)', assignment: 'var(--success)', deadline: 'var(--warning)',
 };
 
 const NAV_ITEMS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'all',         label: 'All',          icon: <Inbox size={16} /> },
   { key: 'unread',      label: 'Unread',       icon: <Bell size={16} /> },
-  { key: 'mention',     label: 'Mentions',     icon: <AtSign size={16} /> },
   { key: 'assignment',  label: 'Assignments',  icon: <UserCheck size={16} /> },
   { key: 'deadline',    label: 'Deadlines',    icon: <Clock size={16} /> },
   { key: 'system',      label: 'System',       icon: <Bell size={16} /> },
@@ -214,7 +213,6 @@ const CHANNEL_LABELS: Array<{ key: NotifChannel; label: string; icon: React.Elem
 ];
 
 const TYPE_ROWS: Array<{ type: NotifType; label: string; icon: React.ElementType }> = [
-  { type: 'mention',    label: 'Mentions',    icon: AtSign },
   { type: 'assignment', label: 'Assignments', icon: UserCheck },
   { type: 'deadline',   label: 'Deadlines',   icon: Clock },
   { type: 'system',     label: 'System',      icon: Bell },

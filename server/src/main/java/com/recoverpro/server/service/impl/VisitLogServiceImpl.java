@@ -6,12 +6,15 @@ import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.request.VisitApprovalRequest;
 import com.recoverpro.server.dto.request.VisitLogRequest;
 import com.recoverpro.server.dto.response.VisitLogResponse;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.AllocationAuditLog;
+import com.recoverpro.server.entity.User;
 import com.recoverpro.server.entity.VisitImage;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.enums.ApprovalAction;
 import com.recoverpro.server.enums.ApprovalStatus;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.VisitStatus;
 import com.recoverpro.server.mapper.VisitLogMapper;
 import com.recoverpro.server.repository.AllocationAuditLogRepository;
@@ -23,6 +26,7 @@ import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.enums.GuardType;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.CallingHoursGuard;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.VisitLogService;
 import com.recoverpro.server.service.compliance.ComplianceAuditService;
 import com.recoverpro.server.service.storage.StoragePort;
@@ -66,6 +70,7 @@ public class VisitLogServiceImpl implements VisitLogService {
     private final ClamAvScannerClient clamAvScannerClient;
     private final ComplianceAuditService complianceAuditService;
     private final StoragePort storagePort;
+    private final NotificationService notificationService;
 
     @Value("${app.storage.visits-path:./uploads/visits}")
     private String storagePath;
@@ -104,12 +109,17 @@ public class VisitLogServiceImpl implements VisitLogService {
         ZonedDateTime visitMoment = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
         String windowDenial = callingHoursGuard.denialReason(request.getOrganizationId(), visitMoment);
         if (windowDenial != null) {
+            String agentName = userRepository.findById(agentId).map(User::getFirstName).orElse("An agent");
             String override = request.getAfterHoursOverrideReason();
             if (override == null || override.isBlank()) {
                 String reason = "Visit outside RBI calling-hours window (" + windowDenial
                         + "). A supervisor override reason is required to log this visit.";
                 complianceAuditService.record(GuardType.CALLING_HOURS, request.getAllocationId(),
                         request.getOrganizationId(), agentId, "VISIT_LOG_CREATE", reason);
+                notificationService.createForOrgRoleIndependent(request.getOrganizationId(), PlatformConstants.ROLE_ORG_ADMIN,
+                        NotificationType.ORG_CALLING_HOURS_VIOLATION,
+                        "Calling-hours violation blocked",
+                        "Agent " + agentName + " attempted to log a visit outside permitted hours (" + windowDenial + ").");
                 throw new BusinessException(reason);
             }
             String tag = "[after-hours override @" + visitMoment + " | " + windowDenial + "] " + override;
@@ -117,6 +127,11 @@ public class VisitLogServiceImpl implements VisitLogService {
                     request.getInternalRemarks() == null ? tag : tag + "\n" + request.getInternalRemarks());
             log.warn("After-hours visit logged for allocation {} agent {}: {}",
                     request.getAllocationId(), agentId, override);
+            notificationService.createForOrgRole(request.getOrganizationId(), PlatformConstants.ROLE_ORG_ADMIN,
+                    NotificationType.ORG_CALLING_HOURS_VIOLATION,
+                    "Calling-hours violation overridden",
+                    "Agent " + agentName + " logged a visit outside permitted hours (" + windowDenial
+                            + ") using override: " + override);
         }
 
         Allocation allocation = allocationRepository
@@ -246,6 +261,10 @@ public class VisitLogServiceImpl implements VisitLogService {
 
         VisitLog saved = visitLogRepository.save(visitLog);
         log.info("Visit {} {} by {}", visitId, newStatus, approvedBy);
+        notificationService.create(saved.getAgentId(), saved.getOrganizationId(), NotificationType.APPROVAL_DECIDED,
+                "Visit " + newStatus.name().toLowerCase(),
+                "Your visit was " + newStatus.name().toLowerCase()
+                        + (request.getRemarks() != null && !request.getRemarks().isBlank() ? ": " + request.getRemarks() : "") + ".");
         return visitLogMapper.toResponse(saved);
     }
 

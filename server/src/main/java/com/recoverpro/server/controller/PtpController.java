@@ -8,8 +8,10 @@ import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.request.CreatePtpRequest;
 import com.recoverpro.server.dto.request.PtpFilterRequest;
 import com.recoverpro.server.dto.request.UpdatePtpStatusRequest;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.dto.response.*;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.PtpStatus;
 import com.recoverpro.server.exception.IdempotencyKeyConflictException;
 import com.recoverpro.server.repository.UserRepository;
@@ -59,12 +61,16 @@ public class PtpController {
             "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
     private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
+    // Row count above which a CSV export is flagged to platform admins as a mass data export.
+    private static final int MASS_EXPORT_ROW_THRESHOLD = 10_000;
+
     private final PtpService ptpService;
     private final IdempotencyKeyService idempotencyKeyService;
     private final AllocationService allocationService;
     private final com.recoverpro.server.repository.AllocationRepository allocationRepository;
     private final UserRepository userRepository;
     private final PlatformAdminAccessGuard platformAdminAccessGuard;
+    private final NotificationService notificationService;
 
     /**
      * ptp_records' RLS policy (V061) only grants cross-org visibility once
@@ -272,6 +278,13 @@ public class PtpController {
         List<PtpResponse> rows = isPlatformAdmin(principal)
                 ? result.getContent()
                 : scopeToPrincipal(principal, result.getContent());
+
+        if (rows.size() > MASS_EXPORT_ROW_THRESHOLD) {
+            notificationService.createForPlatformRole(PlatformConstants.ROLE_PLATFORM_ADMIN,
+                    NotificationType.PLATFORM_MASS_DATA_EXPORT,
+                    "Large data export performed",
+                    principal.getEmail() + " exported " + rows.size() + " PTP records.");
+        }
 
         StreamingResponseBody body = out -> {
             try (Writer w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {

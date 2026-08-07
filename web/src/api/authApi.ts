@@ -6,6 +6,7 @@ import type {
   AuthResponse, LoginRequest, ForgotPasswordRequest,
   ResetPasswordRequest, ChangePasswordRequest, EnableMfaRequest,
   MfaSetupResponse, MfaEnableResponse, ApiResponse, UserResponse,
+  AuthSessionResponse,
 } from '../types';
 
 export const authApi = {
@@ -53,6 +54,15 @@ export const authApi = {
 
   logoutAll: async (): Promise<void> => {
     await axiosInstance.post('/api/v1/auth/logout-all');
+  },
+
+  listSessions: async (): Promise<AuthSessionResponse[]> => {
+    const response = await axiosInstance.get<ApiResponse<AuthSessionResponse[]>>('/api/v1/auth/sessions');
+    return response.data.data;
+  },
+
+  revokeSession: async (id: string): Promise<void> => {
+    await axiosInstance.delete(`/api/v1/auth/sessions/${id}`);
   },
 
   forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {

@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
-import { Bell, AtSign, UserCheck, Clock, Check, ArrowRight, X } from 'lucide-react';
+import { Bell, UserCheck, Clock, Check, ArrowRight, X } from 'lucide-react';
 import { notifications, type Notification, type NotifType } from '../utils/notifications';
 
 export const TYPE_ICON: Record<NotifType, ElementType> = {
   system:     Bell,
-  mention:    AtSign,
   assignment: UserCheck,
   deadline:   Clock,
 };

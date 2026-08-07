@@ -13,6 +13,9 @@ import com.recoverpro.server.dto.response.IncidentReportResponse;
 import com.recoverpro.server.entity.AgentLocationPing;
 import com.recoverpro.server.entity.AgentShift;
 import com.recoverpro.server.entity.IncidentReport;
+import com.recoverpro.server.entity.User;
+import com.recoverpro.server.config.PlatformConstants;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.ShiftStatus;
 import com.recoverpro.server.repository.AgentLocationPingRepository;
 import com.recoverpro.server.repository.AgentShiftRepository;
@@ -21,6 +24,7 @@ import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AgentFieldService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.storage.StoragePort;
 import com.recoverpro.server.websocket.LiveTrackWebSocketHandler;
 import com.recoverpro.server.websocket.SosAudioWebSocketHandler;
@@ -58,6 +62,7 @@ public class AgentFieldServiceImpl implements AgentFieldService {
     private final UserRepository userRepository;
     private final OrgIsolationGuard orgIsolationGuard;
     private final StoragePort storagePort;
+    private final NotificationService notificationService;
 
     @Autowired
     private LiveTrackWebSocketHandler liveTrackWebSocketHandler;
@@ -225,6 +230,14 @@ public class AgentFieldServiceImpl implements AgentFieldService {
         IncidentReport saved = incidentRepository.save(incident);
         log.warn("SOS triggered: agent={}, incident={}, lastKnown=({},{})",
                 agentId, saved.getId(), lat, lng);
+
+        String agentName = userRepository.findById(agentId).map(User::getFirstName).orElse("A field officer");
+        String title = "SOS: " + agentName + " needs help";
+        String body = "Field officer " + agentName + " triggered an SOS during their shift. Last known location: ("
+                + lat + ", " + lng + "). Respond immediately.";
+        notificationService.createForOrgRole(orgId, PlatformConstants.ROLE_TL, NotificationType.TL_TEAM_SOS, title, body);
+        notificationService.createForOrgRole(orgId, PlatformConstants.ROLE_ORG_ADMIN, NotificationType.ORG_SOS_TRIGGERED, title, body);
+
         return toIncidentResponse(saved);
     }
 

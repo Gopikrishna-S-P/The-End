@@ -7,11 +7,13 @@ import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.DailyVisitList;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.mapper.AllocationMapper;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.DailyVisitListRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.DailyDispatchService;
+import com.recoverpro.server.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class DailyDispatchServiceImpl implements DailyDispatchService {
     private final AllocationRepository allocationRepo;
     private final AllocationMapper allocationMapper;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -80,6 +83,10 @@ public class DailyDispatchServiceImpl implements DailyDispatchService {
 
         log.info("Daily dispatch: created list of {} cases for agent {} on {} (org {})",
                 request.getCaseIds().size(), request.getAgentId(), request.getDate(), orgId);
+
+        notificationService.create(request.getAgentId(), orgId, NotificationType.FO_DISPATCH_READY,
+                "Your dispatch for " + request.getDate() + " is ready",
+                request.getCaseIds().size() + " cases queued for " + request.getDate() + ".");
 
         // Return the full case payload so the TL UI can show what was dispatched.
         return cases.stream()

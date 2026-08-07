@@ -4,9 +4,11 @@ import com.recoverpro.server.dto.request.*;
 import com.recoverpro.server.dto.response.AuthResponse;
 import com.recoverpro.server.dto.response.MfaEnableResponse;
 import com.recoverpro.server.dto.response.MfaSetupResponse;
+import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AuthService {
@@ -20,6 +22,10 @@ public interface AuthService {
     void logout(String accessToken, UUID userId, String refreshToken);
 
     void logoutAllDevices(UUID userId, String accessToken);
+
+    List<AuthSessionResponse> listSessions(UUID userId, String currentDeviceId);
+
+    void revokeSession(UUID userId, UUID sessionId);
 
     void forgotPassword(ForgotPasswordRequest request);
 

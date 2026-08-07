@@ -13,6 +13,7 @@ import com.recoverpro.server.entity.User;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.enums.ApprovalAction;
 import com.recoverpro.server.enums.CollectionStatus;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.PaymentMode;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.CollectionLedgerService;
 import com.recoverpro.server.service.CollectionService;
 import com.recoverpro.server.service.DocumentService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.ReceiptNumberGenerator;
 import com.recoverpro.server.service.VisitLogService;
 import com.recoverpro.server.service.compliance.CashHandlingGuard;
@@ -66,6 +68,7 @@ public class CollectionServiceImpl implements CollectionService {
     private final OrgIsolationGuard orgIsolationGuard;
     private final BusinessMetrics metrics;
     private final CollectionLedgerService collectionLedgerService;
+    private final NotificationService notificationService;
 
     @Override
     public CollectionResponse submit(SubmitCollectionRequest request, UUID submittedBy) {
@@ -153,6 +156,10 @@ public class CollectionServiceImpl implements CollectionService {
         }
 
         log.info("Collection submitted: id={}", saved.getId());
+        notificationService.create(submittedBy, saved.getOrganizationId(), NotificationType.FO_COLLECTION_RECORDED,
+                "Collection recorded: " + saved.getAmount(),
+                "Your " + saved.getAmount() + " " + saved.getPaymentMode() + " collection for loan "
+                        + saved.getLoanNumber() + " is pending approval.");
         return buildResponse(saved);
     }
 
@@ -197,7 +204,12 @@ public class CollectionServiceImpl implements CollectionService {
             log.info("Collection rejected: id={}, reason={}", collectionId, request.getRemarks());
         }
 
-        return buildResponse(collectionRepository.save(collection));
+        Collection saved = collectionRepository.save(collection);
+        String receiptSuffix = saved.getReceiptNumber() != null ? " (receipt " + saved.getReceiptNumber() + ")" : "";
+        notificationService.create(saved.getSubmittedBy(), saved.getOrganizationId(), NotificationType.APPROVAL_DECIDED,
+                "Collection " + saved.getStatus().name().toLowerCase(),
+                "Your collection submission" + receiptSuffix + " was " + saved.getStatus().name().toLowerCase() + ".");
+        return buildResponse(saved);
     }
 
     @Override

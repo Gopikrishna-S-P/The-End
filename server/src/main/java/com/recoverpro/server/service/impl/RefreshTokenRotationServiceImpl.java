@@ -1,18 +1,24 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.config.AppProperties;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.dto.request.RefreshTokenRequest;
 import com.recoverpro.server.dto.response.AuthResponse;
+import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.entity.RefreshToken;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.NotificationType;
+import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.exception.AccountDisabledException;
 import com.recoverpro.server.exception.AccountLockedException;
 import com.recoverpro.server.exception.InvalidTokenException;
 import com.recoverpro.server.mapper.UserMapper;
 import com.recoverpro.server.observability.BusinessMetrics;
 import com.recoverpro.server.repository.RefreshTokenRepository;
+import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtTokenProvider;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.RefreshTokenRotationService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.security.SessionAnomalyDetector;
@@ -27,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +52,7 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
     private final StringRedisTemplate redisTemplate;
     private final UserActionAuditService auditLogService;
     private final BusinessMetrics metrics;
+    private final NotificationService notificationService;
 
     private static final String JWT_BLACKLIST_PREFIX = "jwt:blacklist:";
     private static final String USER_PROFILE_CACHE_PREFIX = "user:profile:";
@@ -73,6 +82,33 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
 
         sessionAnomalyDetector.inspect(refreshToken, user.getId(), clientIp, userAgent, deviceId);
         refreshTokenRepository.save(refreshToken);
+
+        if (refreshToken.isAnomalyFlagged()) {
+            String title = "Suspicious login detected";
+            String body = "Login for " + user.getEmail() + " flagged: " + refreshToken.getAnomalyReason()
+                    + (clientIp != null ? " (IP " + clientIp + ")" : "") + ".";
+            // organization_id IS NULL here, so app_notifications' RLS WITH CHECK allows it
+            // unconditionally (see V082) regardless of this connection's current_org_id().
+            notificationService.createForPlatformRole(PlatformConstants.ROLE_PLATFORM_ADMIN,
+                    NotificationType.PLATFORM_SUSPICIOUS_LOGIN, title, body);
+
+            // This one inserts organization_id = user.getOrganizationId() (non-null for a
+            // regular user), which RLS checks against current_org_id() -- but this whole
+            // @Transactional method joins login()'s already-open transaction, whose connection
+            // was checked out (and its current_org_id GUC stamped, from RlsOrgIdHolder at that
+            // earlier moment -- unset, since no JWT exists yet for login/refresh) back at
+            // AuthServiceImpl.login()'s very first query. Setting RlsOrgIdHolder now doesn't
+            // change an already-checked-out connection's GUC, so route this one insert through
+            // createIndependent (REQUIRES_NEW): a fresh connection checkout picks up the value
+            // we set right here, correctly scoped to this user's own org.
+            RlsOrgIdHolder.set(user.getOrganizationId());
+            try {
+                notificationService.createIndependent(user.getId(), user.getOrganizationId(),
+                        NotificationType.PLATFORM_SUSPICIOUS_LOGIN, title, body);
+            } finally {
+                RlsOrgIdHolder.clear();
+            }
+        }
 
         long expiresIn = appProperties.getJwt().getAccessTokenExpiryMs() / 1000;
         return AuthResponse.builder()
@@ -172,6 +208,44 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
                 }
             }
         } catch (Exception ignored) {}
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AuthSessionResponse> listSessions(UUID userId, String currentDeviceId) {
+        return refreshTokenRepository.findByUser_IdAndRevokedFalse(userId).stream()
+                .filter(rt -> !rt.isExpired())
+                .sorted(Comparator.comparing(RefreshToken::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .map(rt -> AuthSessionResponse.builder()
+                        .id(rt.getId())
+                        .deviceInfo(rt.getUserAgent() != null ? rt.getUserAgent() : rt.getDeviceInfo())
+                        .ipAddress(rt.getIpAddress())
+                        .geoCountry(rt.getGeoCountry())
+                        .createdAt(rt.getCreatedAt())
+                        .expiresAt(rt.getExpiresAt())
+                        .anomalyFlagged(rt.isAnomalyFlagged())
+                        .anomalyReason(rt.getAnomalyReason())
+                        .current(currentDeviceId != null && currentDeviceId.equals(rt.getDeviceId()))
+                        .build())
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void revokeSession(UUID userId, UUID sessionId) {
+        RefreshToken token = refreshTokenRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
+        if (!token.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Session not found: " + sessionId);
+        }
+        if (!token.isRevoked()) {
+            token.setRevoked(true);
+            token.setRevokedAt(Instant.now());
+            refreshTokenRepository.save(token);
+            evictUserProfileCache(userId);
+            auditLogService.logUserAction(userId, "SESSION_REVOKED", "Revoked session id=" + sessionId);
+        }
     }
 
     // userId is the caller's own id (from their JWT) -- cross-checked here so logout can only

@@ -10,6 +10,7 @@ import { ProfileOverviewSection } from '../pages/ProfileOverviewSection';
 import { ProfileAccountSection } from '../pages/ProfileAccountSection';
 import { ProfileBillingSection } from '../pages/ProfileBillingSection';
 import { ProfileSecuritySection } from '../pages/ProfileSecuritySection';
+import { ActiveSessionsSection } from '../pages/ActiveSessionsSection';
 import { ProfileDangerZoneSection } from '../pages/ProfileDangerZoneSection';
 import { LogoutConfirmDialog } from '../pages/LogoutConfirmDialog';
 import { ProfileSettingsToast, type ToastState } from '../pages/ProfileSettingsToast';
@@ -150,7 +151,12 @@ export default function ProfileSettingsDialog() {
 
             {activeTab === 'billing' && <ProfileBillingSection />}
 
-            {activeTab === 'security' && <ProfileSecuritySection />}
+            {activeTab === 'security' && (
+              <>
+                <ProfileSecuritySection />
+                <ActiveSessionsSection />
+              </>
+            )}
 
             {activeTab === 'danger' && <ProfileDangerZoneSection onRequestLogout={() => setShowLogoutConfirm(true)} />}
           </div>

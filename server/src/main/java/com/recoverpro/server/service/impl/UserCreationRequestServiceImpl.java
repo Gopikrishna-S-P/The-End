@@ -10,12 +10,14 @@ import com.recoverpro.server.dto.response.UserCreationRequestResponse;
 import com.recoverpro.server.entity.*;
 import com.recoverpro.server.entity.UserCreationRequest.RequestStatus;
 import com.recoverpro.server.entity.UserCreationRequest.RequestedRole;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.exception.AccessDeniedException;
 import com.recoverpro.server.exception.DuplicateResourceException;
 import com.recoverpro.server.exception.EmailAlreadyExistsException;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.UserCreationRequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final AppProperties appProperties;
+    private final NotificationService notificationService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -139,6 +142,7 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
             request.setStatus(RequestStatus.REJECTED);
             requestRepo.save(request);
             log.info("Request {} rejected by {}", requestId, reviewer.getEmail());
+            notifyRequester(request);
             return toResponse(request);
         }
 
@@ -175,7 +179,21 @@ public class UserCreationRequestServiceImpl implements UserCreationRequestServic
         requestRepo.save(request);
 
         log.info("Request {} approved by user {}. Created user: {}", requestId, reviewer.getId(), newUser.getId());
+        notifyRequester(request);
         return toResponse(request);
+    }
+
+    private void notifyRequester(UserCreationRequest request) {
+        User requestedBy = request.getRequestedBy();
+        if (requestedBy == null) return;
+        UUID orgId = request.getOrganization() != null ? request.getOrganization().getId() : null;
+        boolean approved = request.getStatus() == RequestStatus.APPROVED;
+        notificationService.create(requestedBy.getId(), orgId, NotificationType.USER_REQUEST_DECIDED,
+                "User request " + (approved ? "approved" : "rejected"),
+                "Your request to create " + request.getRequestedEmail() + " was "
+                        + request.getStatus().name().toLowerCase()
+                        + (request.getReviewNotes() != null && !request.getReviewNotes().isBlank()
+                                ? ": " + request.getReviewNotes() : "") + ".");
     }
 
     @Override

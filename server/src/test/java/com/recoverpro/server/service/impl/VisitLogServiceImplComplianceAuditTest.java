@@ -13,6 +13,7 @@ import com.recoverpro.server.repository.VisitLogRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.CallingHoursGuard;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.compliance.ComplianceAuditService;
 import com.recoverpro.server.service.storage.StoragePort;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,7 @@ class VisitLogServiceImplComplianceAuditTest {
     @Mock private ClamAvScannerClient clamAvScannerClient;
     @Mock private ComplianceAuditService complianceAuditService;
     @Mock private StoragePort storagePort;
+    @Mock private NotificationService notificationService;
 
     private VisitLogServiceImpl service;
 
@@ -56,7 +58,8 @@ class VisitLogServiceImplComplianceAuditTest {
     void setUp() {
         service = new VisitLogServiceImpl(visitLogRepository, visitLogMapper, allocationRepository,
                 allocationAuditLogRepository, userRepository, visitImageRepository, callingHoursGuard,
-                auditLogService, orgIsolationGuard, clamAvScannerClient, complianceAuditService, storagePort);
+                auditLogService, orgIsolationGuard, clamAvScannerClient, complianceAuditService, storagePort,
+                notificationService);
     }
 
     @Test

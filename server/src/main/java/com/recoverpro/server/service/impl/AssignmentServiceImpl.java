@@ -9,6 +9,7 @@ import com.recoverpro.server.entity.Assignment;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.entity.VisitLog;
 import com.recoverpro.server.enums.AssignmentStatus;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.Priority;
 import com.recoverpro.server.exception.AssignmentCapacityExceededException;
 import com.recoverpro.server.common.exception.BusinessException;
@@ -23,6 +24,7 @@ import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.AssignmentService;
 import com.recoverpro.server.service.AuditLogService;
 import com.recoverpro.server.service.CalendarService;
+import com.recoverpro.server.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,6 +51,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final UserRepository userRepository;
     private final VisitLogRepository visitLogRepository;
     private final OrgIsolationGuard orgIsolationGuard;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -89,6 +92,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .collect(Collectors.toList());
 
         List<AssignmentResponse> successes = new ArrayList<>();
+        List<String> successLoanNumbers = new ArrayList<>();
         List<BulkAssignResponse.AssignmentFailureDetail> failures = new ArrayList<>();
         int nextSequence = assignmentRepository
                 .findMaxSequenceOrderByAgentAndDate(request.getAgentId(), request.getAssignmentDate())
@@ -138,6 +142,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                         request.getAgentId(), performedBy,
                         "priority=" + request.getPriority() + ",date=" + request.getAssignmentDate());
                 successes.add(assignmentMapper.toResponse(saved));
+                successLoanNumbers.add(allocation.getLoanNumber());
 
             } catch (Exception e) {
                 log.error("Failed to assign allocationId={}: {}", allocationId, e.getMessage());
@@ -155,6 +160,11 @@ public class AssignmentServiceImpl implements AssignmentService {
             successes.forEach(a -> assignmentRepository.softDeleteById(a.getId()));
             successes.clear();
             rolledBack = true;
+        } else {
+            successLoanNumbers.forEach(loanNumber -> notificationService.create(
+                    request.getAgentId(), request.getOrganizationId(), NotificationType.FO_VISIT_ASSIGNED,
+                    "Visit scheduled for " + request.getAssignmentDate(),
+                    "You have a field visit for loan " + loanNumber + " on " + request.getAssignmentDate() + "."));
         }
 
         log.info("BulkAssign complete: succeeded={}, failed={}, rolledBack={}",
@@ -217,6 +227,13 @@ public class AssignmentServiceImpl implements AssignmentService {
         Assignment saved = assignmentRepository.save(assignment);
         auditLogService.logReassignment(assignmentId, assignment.getAllocationId(),
                 previousAgentId, request.getNewAgentId(), performedBy, request.getReason());
+
+        Allocation allocation = allocationRepository.findById(saved.getAllocationId()).orElse(null);
+        notificationService.create(request.getNewAgentId(), saved.getOrganizationId(),
+                NotificationType.FO_VISIT_ASSIGNED,
+                "Visit scheduled for " + targetDate,
+                "You have a field visit for loan " + (allocation != null ? allocation.getLoanNumber() : saved.getAllocationId())
+                        + " on " + targetDate + ".");
 
         log.info("Reassignment complete: assignmentId={}, from={} to={}",
                 assignmentId, previousAgentId, request.getNewAgentId());

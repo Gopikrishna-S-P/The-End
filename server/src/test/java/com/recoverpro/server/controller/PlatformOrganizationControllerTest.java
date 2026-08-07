@@ -13,6 +13,7 @@ import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.UserActionAuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,7 @@ class PlatformOrganizationControllerTest {
     @Mock private EmailService emailService;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepo;
     @Mock private UserMapper userMapper;
+    @Mock private NotificationService notificationService;
 
     private AppProperties appProperties;
     private PlatformOrganizationController controller;
@@ -61,7 +63,7 @@ class PlatformOrganizationControllerTest {
         appProperties = new AppProperties();
         controller = new PlatformOrganizationController(
                 orgRepo, userRepo, roleRepo, passwordEncoder, auditLogService,
-                emailService, passwordResetTokenRepo, appProperties, userMapper);
+                emailService, passwordResetTokenRepo, appProperties, userMapper, notificationService);
 
         when(orgRepo.existsByCode(any())).thenReturn(false);
         when(orgRepo.existsByName(any())).thenReturn(false);

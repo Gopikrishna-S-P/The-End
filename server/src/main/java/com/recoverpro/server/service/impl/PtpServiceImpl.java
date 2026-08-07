@@ -201,6 +201,8 @@ public class PtpServiceImpl implements PtpService {
 
         if (newStatus == PtpStatus.BROKEN) {
             ptpEscalationService.onPtpBroken(updated.getAllocationId(), updated.getPromisedAmount());
+            notificationService.notifyAgentPtpBroken(updated);
+            notificationService.notifyOrgHighValuePtpBroken(updated);
         }
         return ptpMapper.toResponse(updated);
     }
@@ -297,6 +299,8 @@ public class PtpServiceImpl implements PtpService {
             recordHistory(ptp, PtpStatus.PENDING, PtpStatus.BROKEN, ptp.getCollectedAmount(),
                     reason, SYSTEM_USER_ID, SYSTEM_USER);
             ptpEscalationService.onPtpBroken(ptp.getAllocationId(), ptp.getPromisedAmount());
+            notificationService.notifyAgentPtpBroken(ptp);
+            notificationService.notifyOrgHighValuePtpBroken(ptp);
         });
 
         log.info("Marked {} PTPs as BROKEN by nightly scheduler.", updated);

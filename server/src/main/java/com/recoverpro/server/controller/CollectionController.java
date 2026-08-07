@@ -11,7 +11,9 @@ import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.dto.response.PagedResponse;
 import com.recoverpro.server.dto.response.CollectionResponse;
 import com.recoverpro.server.dto.response.LedgerBalanceResponse;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.enums.CollectionStatus;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.PaymentMode;
 import com.recoverpro.server.exception.IdempotencyKeyConflictException;
 import com.recoverpro.server.security.UserPrincipal;
@@ -19,6 +21,7 @@ import com.recoverpro.server.service.CollectionLedgerService;
 import com.recoverpro.server.service.CollectionService;
 import com.recoverpro.server.service.IdempotencyKeyService;
 import com.recoverpro.server.service.IdempotencyKeyService.IdempotencyResult;
+import com.recoverpro.server.service.NotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,10 +67,14 @@ public class CollectionController {
 
     private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
+    // Row count above which a CSV export is flagged to platform admins as a mass data export.
+    private static final int MASS_EXPORT_ROW_THRESHOLD = 10_000;
+
     private final CollectionService collectionService;
     private final IdempotencyKeyService idempotencyKeyService;
     private final com.recoverpro.server.service.AllocationService allocationService;
     private final com.recoverpro.server.repository.AllocationRepository allocationRepository;
+    private final NotificationService notificationService;
     private final CollectionLedgerService collectionLedgerService;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -258,6 +265,13 @@ public class CollectionController {
         List<CollectionResponse> rows = collectionService
                 .getCollections(effectiveOrg, effectiveAgent, status, paymentMode, fromDate, toDate, Pageable.unpaged())
                 .getContent();
+
+        if (rows.size() > MASS_EXPORT_ROW_THRESHOLD) {
+            notificationService.createForPlatformRole(PlatformConstants.ROLE_PLATFORM_ADMIN,
+                    NotificationType.PLATFORM_MASS_DATA_EXPORT,
+                    "Large data export performed",
+                    principal.getEmail() + " exported " + rows.size() + " collection records from org " + effectiveOrg + ".");
+        }
 
         StreamingResponseBody body = out -> {
             try (Writer w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {

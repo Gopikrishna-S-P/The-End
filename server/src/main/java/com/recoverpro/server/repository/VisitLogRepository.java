@@ -56,6 +56,9 @@ public interface VisitLogRepository extends JpaRepository<VisitLog, UUID> {
 
     List<VisitLog> findByPtpIdAndIsDeletedFalse(UUID ptpId);
 
+    long countByOrganizationIdAndApprovalStatusAndCreatedAtBeforeAndIsDeletedFalse(
+            UUID organizationId, com.recoverpro.server.enums.ApprovalStatus approvalStatus, java.time.Instant cutoff);
+
     List<VisitLog> findByVisitDateBetweenAndIsDeletedFalse(LocalDate start, LocalDate end);
 
     @Query("SELECT v FROM VisitLog v WHERE v.agentId = :agentId AND v.visitDate = :date AND v.isDeleted = false")

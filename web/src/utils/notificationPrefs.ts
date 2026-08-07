@@ -7,10 +7,9 @@ export type NotifPrefs = Record<NotifType, Record<NotifChannel, boolean>>;
 
 const STORAGE_KEY = 'rp-notification-prefs';
 
-/* Sensible defaults — only Mentions & Deadlines get email by default to avoid spam */
+/* Sensible defaults — only Deadlines get email by default to avoid spam */
 const DEFAULTS: NotifPrefs = {
   system:     { sound: false, desktop: false, email: false },
-  mention:    { sound: true,  desktop: true,  email: true  },
   assignment: { sound: true,  desktop: true,  email: false },
   deadline:   { sound: true,  desktop: true,  email: true  },
 };

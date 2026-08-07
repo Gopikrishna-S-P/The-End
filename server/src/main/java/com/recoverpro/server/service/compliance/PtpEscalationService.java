@@ -19,7 +19,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PtpEscalationService {
 
-    private static final BigDecimal MANDATORY_REVIEW_THRESHOLD = new BigDecimal("50000");
+    /** Also used by PtpNotificationService to decide when a broken PTP is "high value" for ORG_HIGH_VALUE_PTP_BROKEN. */
+    public static final BigDecimal MANDATORY_REVIEW_THRESHOLD = new BigDecimal("50000");
 
     private final PtpRepository ptpRepository;
     private final AssignmentRepository assignmentRepository;

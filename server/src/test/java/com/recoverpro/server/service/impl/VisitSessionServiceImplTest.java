@@ -9,6 +9,7 @@ import com.recoverpro.server.repository.AgentLocationPingRepository;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitSessionRepository;
+import com.recoverpro.server.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,12 +34,13 @@ class VisitSessionServiceImplTest {
     @Mock private AgentLocationPingRepository pingRepo;
     @Mock private UserRepository userRepo;
     @Mock private AllocationRepository allocationRepo;
+    @Mock private NotificationService notificationService;
 
     private VisitSessionServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new VisitSessionServiceImpl(sessionRepo, pingRepo, userRepo, allocationRepo);
+        service = new VisitSessionServiceImpl(sessionRepo, pingRepo, userRepo, allocationRepo, notificationService);
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.recoverpro.server.repository.VisitLogRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.AuditLogService;
 import com.recoverpro.server.service.CalendarService;
+import com.recoverpro.server.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,13 +44,15 @@ class AssignmentServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private VisitLogRepository visitLogRepository;
     @Mock private OrgIsolationGuard orgIsolationGuard;
+    @Mock private NotificationService notificationService;
 
     private AssignmentServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AssignmentServiceImpl(assignmentRepository, calendarService, auditLogService,
-                assignmentMapper, allocationRepository, userRepository, visitLogRepository, orgIsolationGuard);
+                assignmentMapper, allocationRepository, userRepository, visitLogRepository, orgIsolationGuard,
+                notificationService);
     }
 
     @Test

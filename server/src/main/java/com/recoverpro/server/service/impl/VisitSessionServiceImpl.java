@@ -11,13 +11,16 @@ import com.recoverpro.server.dto.response.TeamStatusEntry;
 import com.recoverpro.server.dto.response.VisitSessionResponse;
 import com.recoverpro.server.entity.AgentLocationPing;
 import com.recoverpro.server.entity.Allocation;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.entity.VisitSession;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.VisitSessionStatus;
 import com.recoverpro.server.repository.AgentLocationPingRepository;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.repository.VisitSessionRepository;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.VisitSessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +44,7 @@ public class VisitSessionServiceImpl implements VisitSessionService {
     private final AgentLocationPingRepository pingRepo;
     private final UserRepository userRepo;
     private final AllocationRepository allocationRepo;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -163,7 +167,17 @@ public class VisitSessionServiceImpl implements VisitSessionService {
         }
         session.setStatus(VisitSessionStatus.ABANDONED);
         session.setClosedAt(Instant.now());
-        return toResponse(sessionRepo.save(session));
+        VisitSession saved = sessionRepo.save(session);
+
+        String agentName = userRepo.findById(agentId).map(User::getFirstName).orElse("A field officer");
+        String loanNumber = allocationRepo.findById(session.getAllocationId())
+                .map(Allocation::getLoanNumber).orElse(String.valueOf(session.getAllocationId()));
+        notificationService.createForOrgRole(session.getOrgId(), PlatformConstants.ROLE_TL, NotificationType.TL_VISIT_FAILED,
+                "Visit abandoned: " + agentName,
+                "Field officer " + agentName + " abandoned an in-progress visit for loan " + loanNumber
+                        + " without closing it. Distance travelled: " + Math.round(session.getDistanceMetres()) + "m.");
+
+        return toResponse(saved);
     }
 
     @Override

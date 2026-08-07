@@ -17,6 +17,7 @@ import com.recoverpro.server.repository.UserCreationRequestRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.config.AppProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,10 +59,11 @@ class UserCreationRequestServiceImplTest {
     @Mock private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     @Mock private EmailService emailService;
     @Mock private AppProperties appProperties;
+    @Mock private NotificationService notificationService;
 
     private UserCreationRequestServiceImpl newService() {
         return new UserCreationRequestServiceImpl(requestRepo, userRepo, roleRepo, orgRepo,
-                passwordResetTokenRepo, passwordEncoder, emailService, appProperties);
+                passwordResetTokenRepo, passwordEncoder, emailService, appProperties, notificationService);
     }
 
     @Test

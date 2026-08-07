@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
-  Bell, AtSign, UserCheck, Clock, X, CheckCheck,
+  Bell, UserCheck, Clock, X, CheckCheck,
   Check, Inbox, ArrowRight,
 } from 'lucide-react';
 import {
@@ -18,17 +18,15 @@ type Filter = 'all' | 'unread';
 
 const TYPE_LABEL: Record<NotifType, string> = {
   system:     'System',
-  mention:    'Mentions',
   assignment: 'Assignments',
   deadline:   'Deadlines',
 };
 const TYPE_ICON: Record<NotifType, React.ElementType> = {
   system:     Bell,
-  mention:    AtSign,
   assignment: UserCheck,
   deadline:   Clock,
 };
-const TYPE_ORDER: NotifType[] = ['mention', 'assignment', 'deadline', 'system'];
+const TYPE_ORDER: NotifType[] = ['assignment', 'deadline', 'system'];
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -145,7 +143,6 @@ export default function NotificationsPage() {
                     const GroupIcon = TYPE_ICON[group.type];
                     const colorMap: Record<NotifType, string> = {
                       system: 'var(--info)',
-                      mention: 'var(--brand)',
                       assignment: 'var(--success)',
                       deadline: 'var(--warning)',
                     };

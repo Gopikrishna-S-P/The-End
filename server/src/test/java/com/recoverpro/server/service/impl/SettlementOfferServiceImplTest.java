@@ -16,6 +16,7 @@ import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.SettlementAuditLogRepository;
 import com.recoverpro.server.repository.SettlementOfferRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
+import com.recoverpro.server.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,7 @@ class SettlementOfferServiceImplTest {
     @Mock private SettlementAuditLogRepository auditLogRepository;
     @Mock private AllocationRepository allocationRepository;
     @Mock private OrgIsolationGuard orgIsolationGuard;
+    @Mock private NotificationService notificationService;
 
     private SettlementOfferServiceImpl service;
 
@@ -51,7 +53,7 @@ class SettlementOfferServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new SettlementOfferServiceImpl(offerRepository, auditLogRepository, allocationRepository, orgIsolationGuard);
+        service = new SettlementOfferServiceImpl(offerRepository, auditLogRepository, allocationRepository, orgIsolationGuard, notificationService);
         try {
             var field = SettlementOfferServiceImpl.class.getDeclaredField("complianceReviewThresholdPct");
             field.setAccessible(true);

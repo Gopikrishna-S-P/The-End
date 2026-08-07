@@ -16,6 +16,7 @@ import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.CollectionLedgerService;
 import com.recoverpro.server.service.DocumentService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.ReceiptNumberGenerator;
 import com.recoverpro.server.service.VisitLogService;
 import com.recoverpro.server.service.compliance.CashHandlingGuard;
@@ -54,6 +55,7 @@ class CollectionServiceImplTest {
     @Mock private BusinessMetrics metrics;
     @Mock private CollectionLedgerService collectionLedgerService;
     @Mock private ComplianceAuditService complianceAuditService;
+    @Mock private NotificationService notificationService;
 
     private CollectionServiceImpl service;
     private UUID orgId;
@@ -64,7 +66,8 @@ class CollectionServiceImplTest {
         service = new CollectionServiceImpl(
                 collectionRepository, auditLogRepository, collectionMapper, receiptNumberGenerator,
                 documentService, visitLogService, allocationRepository, userRepository,
-                new CashHandlingGuard(complianceAuditService), orgIsolationGuard, metrics, collectionLedgerService);
+                new CashHandlingGuard(complianceAuditService), orgIsolationGuard, metrics, collectionLedgerService,
+                notificationService);
 
         orgId = UUID.randomUUID();
         approverId = UUID.randomUUID();

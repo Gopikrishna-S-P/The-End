@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  X, Bell, AtSign, UserCheck, Clock,
+  X, Bell, UserCheck, Clock,
   Volume2, Monitor, Mail, RefreshCcw, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import { useNotificationPrefs, notificationPrefs, type NotifChannel } from '../utils/notificationPrefs';
@@ -14,7 +14,6 @@ interface NotificationPrefsDialogProps {
 }
 
 const TYPE_LABELS: Array<{ type: NotifType; label: string; icon: React.ElementType }> = [
-  { type: 'mention',    label: 'Mentions',    icon: AtSign     },
   { type: 'assignment', label: 'Assignments', icon: UserCheck  },
   { type: 'deadline',   label: 'Deadlines',   icon: Clock      },
   { type: 'system',     label: 'System',      icon: Bell       },

@@ -7,14 +7,17 @@ import com.recoverpro.server.dto.request.SettlementBorrowerAcceptRequest;
 import com.recoverpro.server.dto.request.SettlementMarkPaidRequest;
 import com.recoverpro.server.dto.request.SettlementRejectRequest;
 import com.recoverpro.server.dto.response.SettlementOfferResponse;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.SettlementAuditLog;
 import com.recoverpro.server.entity.SettlementOffer;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.SettlementOfferStatus;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.SettlementAuditLogRepository;
 import com.recoverpro.server.repository.SettlementOfferRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.SettlementOfferService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +58,7 @@ public class SettlementOfferServiceImpl implements SettlementOfferService {
     private final SettlementAuditLogRepository auditLogRepository;
     private final AllocationRepository allocationRepository;
     private final OrgIsolationGuard orgIsolationGuard;
+    private final NotificationService notificationService;
 
     @Value("${app.settlement.compliance-review-discount-threshold-pct:30}")
     private BigDecimal complianceReviewThresholdPct;
@@ -102,6 +106,14 @@ public class SettlementOfferServiceImpl implements SettlementOfferService {
                 "discount=" + discountPct + "%" + (complianceRequired ? " (compliance review required)" : ""));
         log.info("Settlement offer drafted: id={}, allocation={}, discountPct={}",
                 saved.getId(), allocation.getId(), discountPct);
+
+        String approverRole = complianceRequired ? PlatformConstants.ROLE_ORG_ADMIN : PlatformConstants.ROLE_TL;
+        notificationService.createForOrgRole(saved.getOrganizationId(), approverRole,
+                NotificationType.TL_APPROVAL_REQUESTED,
+                "Settlement offer awaiting your approval",
+                "A settlement offer of " + saved.getOfferedAmount() + " (" + discountPct
+                        + "% discount) for loan " + allocation.getLoanNumber() + " was drafted and needs your approval.");
+
         return toResponse(saved);
     }
 
@@ -125,6 +137,9 @@ public class SettlementOfferServiceImpl implements SettlementOfferService {
         SettlementOffer saved = offerRepository.save(offer);
         writeAudit(saved, "APPROVED", actingUserId, previous, saved.getStatus(), null);
         log.info("Settlement offer approved: id={}, by={}", id, actingUserId);
+        notificationService.create(saved.getDraftedByUserId(), saved.getOrganizationId(), NotificationType.APPROVAL_DECIDED,
+                "Settlement offer approved",
+                "Your settlement offer draft was approved.");
         return toResponse(saved);
     }
 
@@ -141,6 +156,9 @@ public class SettlementOfferServiceImpl implements SettlementOfferService {
         SettlementOffer saved = offerRepository.save(offer);
         writeAudit(saved, "REJECTED", actingUserId, previous, saved.getStatus(), request.getReason());
         log.info("Settlement offer rejected: id={}, by={}, reason={}", id, actingUserId, request.getReason());
+        notificationService.create(saved.getDraftedByUserId(), saved.getOrganizationId(), NotificationType.APPROVAL_DECIDED,
+                "Settlement offer rejected",
+                "Your settlement offer draft was rejected" + (request.getReason() != null ? ": " + request.getReason() : "") + ".");
         return toResponse(saved);
     }
 

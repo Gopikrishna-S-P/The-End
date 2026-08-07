@@ -1,6 +1,7 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,9 +16,10 @@ import static org.mockito.Mockito.verify;
 class OpsAlertServiceImplTest {
 
     @Mock private EmailService emailService;
+    @Mock private NotificationService notificationService;
 
     private OpsAlertServiceImpl newService(long cooldownMinutes) {
-        OpsAlertServiceImpl svc = new OpsAlertServiceImpl(emailService);
+        OpsAlertServiceImpl svc = new OpsAlertServiceImpl(emailService, notificationService);
         try {
             var field = OpsAlertServiceImpl.class.getDeclaredField("cooldownMinutes");
             field.setAccessible(true);

@@ -13,6 +13,7 @@ import com.recoverpro.server.entity.AllocationAuditLog;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.AllocationStatus;
 import com.recoverpro.server.enums.Disp;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.mapper.AllocationMapper;
 import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
@@ -21,6 +22,7 @@ import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.ActiveDatasetResolver;
 import com.recoverpro.server.service.AllocationService;
+import com.recoverpro.server.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -48,6 +50,7 @@ public class AllocationServiceImpl implements AllocationService {
     private final BorrowerRepository borrowerRepository;
     private final OrgIsolationGuard orgIsolationGuard;
     private final ActiveDatasetResolver activeDatasetResolver;
+    private final NotificationService notificationService;
     private final com.recoverpro.server.security.encryption.LookupHashService lookupHashService;
 
     private static final UUID NO_ACTIVE_DATASET =
@@ -137,6 +140,9 @@ public class AllocationServiceImpl implements AllocationService {
             }
             allocation.setAssignedToUserId(request.getAssignedToUserId());
             allocation.setAssignedAt(Instant.now());
+            notificationService.create(assignee.getId(), allocationOrgId, NotificationType.FO_CASE_ASSIGNED,
+                    "New case assigned: " + allocation.getLoanNumber(),
+                    "You've been assigned loan " + allocation.getLoanNumber() + ".");
         } else if (request.getStatus() == AllocationStatus.UNASSIGNED) {
             allocation.setAssignedToUserId(null);
             allocation.setAssignedAt(null);
@@ -215,6 +221,9 @@ public class AllocationServiceImpl implements AllocationService {
             a.setAssignedToUserId(request.getAssignedToUserId());
             a.setAssignedAt(Instant.now());
             results.add(allocationMapper.toResponse(allocationRepository.save(a)));
+            notificationService.create(fo.getId(), callerOrgId, NotificationType.FO_CASE_ASSIGNED,
+                    "New case assigned: " + a.getLoanNumber(),
+                    "You've been assigned loan " + a.getLoanNumber() + ".");
         }
         return results;
     }

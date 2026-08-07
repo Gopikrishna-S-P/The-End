@@ -9,6 +9,7 @@ import com.recoverpro.server.security.PlatformAdminAccessGuard;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AllocationService;
 import com.recoverpro.server.service.IdempotencyKeyService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.PtpService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,10 +50,11 @@ class PtpControllerTest {
     @Mock private AllocationRepository allocationRepository;
     @Mock private UserRepository userRepository;
     @Mock private PlatformAdminAccessGuard platformAdminAccessGuard;
+    @Mock private NotificationService notificationService;
 
     private PtpController newController() {
         return new PtpController(ptpService, idempotencyKeyService, allocationService,
-                allocationRepository, userRepository, platformAdminAccessGuard);
+                allocationRepository, userRepository, platformAdminAccessGuard, notificationService);
     }
 
     private UserPrincipal principalWithRole(String role) {

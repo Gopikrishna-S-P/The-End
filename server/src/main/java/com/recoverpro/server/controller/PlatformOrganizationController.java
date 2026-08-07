@@ -11,11 +11,13 @@ import com.recoverpro.server.dto.request.UpdateOrgAdminRequest;
 import com.recoverpro.server.dto.response.OrganizationSummaryResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import com.recoverpro.server.entity.*;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.OrganizationType;
 import com.recoverpro.server.mapper.UserMapper;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.UserActionAuditService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,7 @@ public class PlatformOrganizationController {
     private final PasswordResetTokenRepository passwordResetTokenRepo;
     private final AppProperties appProperties;
     private final UserMapper userMapper;
+    private final NotificationService notificationService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -127,6 +130,11 @@ public class PlatformOrganizationController {
         auditLogService.logUserAction(caller.getId(), "ORG_CREATED",
                 "Created org: " + org.getName() + " [" + org.getCode() + "] id=" + org.getId());
         log.info("Org created | orgId={} adminEmail={} by={}", org.getId(), admin.getEmail(), caller.getId());
+
+        notificationService.createForPlatformRole(PlatformConstants.ROLE_PLATFORM_ADMIN,
+                NotificationType.PLATFORM_ORG_ONBOARDED,
+                "New organization onboarded: " + org.getName(),
+                "Organization '" + org.getName() + "' [" + org.getCode() + "] was created with admin " + admin.getEmail() + ".");
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.of("Organization created", toSummary(org)));

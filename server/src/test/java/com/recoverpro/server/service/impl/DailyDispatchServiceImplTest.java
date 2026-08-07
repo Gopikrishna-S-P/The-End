@@ -12,6 +12,7 @@ import com.recoverpro.server.mapper.AllocationMapper;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.DailyVisitListRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,7 @@ class DailyDispatchServiceImplTest {
     @Mock private AllocationRepository allocationRepo;
     @Mock private AllocationMapper allocationMapper;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
 
     private DailyDispatchServiceImpl service;
     private UUID orgId;
@@ -49,7 +51,7 @@ class DailyDispatchServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new DailyDispatchServiceImpl(dispatchRepo, allocationRepo, allocationMapper, userRepository);
+        service = new DailyDispatchServiceImpl(dispatchRepo, allocationRepo, allocationMapper, userRepository, notificationService);
         orgId = UUID.randomUUID();
         agentId = UUID.randomUUID();
         actorId = UUID.randomUUID();

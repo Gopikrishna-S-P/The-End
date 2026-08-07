@@ -12,6 +12,7 @@ import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileStorageService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.importer.EntityImportProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,7 @@ class FileProcessingServiceImplTest {
     @Mock private FileParsingService fileParsingService;
     @Mock private FileStorageService fileStorageService;
     @Mock private FileUploadPostProcessingService fileUploadPostProcessingService;
+    @Mock private NotificationService notificationService;
     @Mock private EntityImportProcessor<Object> allocationProcessor;
 
     private FileProcessingServiceImpl service;
@@ -55,7 +57,7 @@ class FileProcessingServiceImplTest {
         service = new FileProcessingServiceImpl(fileUploadRepository, allocationRepository,
                 columnSchemaRepository, fileProcessingErrorRepository, organizationRepository,
                 userRepository, fileParsingService, fileStorageService,
-                fileUploadPostProcessingService, List.of(allocationProcessor));
+                fileUploadPostProcessingService, notificationService, List.of(allocationProcessor));
     }
 
     @Test

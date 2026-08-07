@@ -2,9 +2,11 @@ package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.entity.ReportJob;
 import com.recoverpro.server.enums.ExportFormat;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.ReportStatus;
 import com.recoverpro.server.repository.ReportJobRepository;
 import com.recoverpro.server.service.ExportService;
+import com.recoverpro.server.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -29,6 +31,7 @@ public class ReportJobExecutor {
 
     private final ReportJobRepository reportJobRepository;
     private final ExportService exportService;
+    private final NotificationService notificationService;
 
     @Async("reportingTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -56,6 +59,13 @@ public class ReportJobExecutor {
             job.setCompletedAt(Instant.now());
             reportJobRepository.save(job);
             log.info("Report job completed: id={} file={}", jobId, fileName);
+
+            if (job.getRequestedBy() != null) {
+                notificationService.create(job.getRequestedBy(), job.getOrganizationId(), NotificationType.REPORT_READY,
+                        "Your report is ready: " + job.getReportType(),
+                        "The " + job.getReportType() + " report (" + job.getExportFormat()
+                                + ") you requested has finished generating and is ready to download.");
+            }
 
         } catch (Exception e) {
             log.error("Report job failed: id={} error={}", jobId, e.getMessage(), e);

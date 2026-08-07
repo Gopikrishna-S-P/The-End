@@ -28,7 +28,6 @@ public enum NotificationType {
     FO_SHIFT_STARTING,
     FO_DO_NOT_CONTACT,
 
-    MENTION,
     APPROVAL_DECIDED,
     REPORT_READY,
     USER_REQUEST_DECIDED,

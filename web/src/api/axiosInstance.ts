@@ -2,6 +2,7 @@ import axios from 'axios';
 import { toastBus } from '../utils/toastBus';
 import { extractApiError } from '../utils/extractApiError';
 import { session } from '../utils/session';
+import { getDeviceId } from '../utils/deviceId';
 
 declare module 'axios' {
   interface AxiosRequestConfig {
@@ -123,7 +124,10 @@ export const getUserEtag = (): string | null => readAuthItem(ETAG_KEY);
 function doRefresh(rawRefreshToken: string): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = axios
-      .post('/api/v1/auth/refresh', { refreshToken: rawRefreshToken }, { timeout: 15_000 })
+      .post('/api/v1/auth/refresh', { refreshToken: rawRefreshToken }, {
+        timeout: 15_000,
+        headers: { 'X-Device-Id': getDeviceId() },
+      })
       .then(({ data }) => {
         const authResponse = data.data || data;
         setAccessToken(authResponse.accessToken);
@@ -174,6 +178,7 @@ axiosInstance.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    config.headers['X-Device-Id'] = getDeviceId();
     return config;
   },
   (error) => Promise.reject(error)

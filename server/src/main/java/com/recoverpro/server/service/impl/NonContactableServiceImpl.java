@@ -6,9 +6,11 @@ import com.recoverpro.server.dto.request.CreateNonContactableRequest;
 import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.dto.response.NonContactableResponse;
 import com.recoverpro.server.entity.NonContactable;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.repository.NonContactableRepository;
 import com.recoverpro.server.service.AllocationService;
 import com.recoverpro.server.service.NonContactableService;
+import com.recoverpro.server.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class NonContactableServiceImpl implements NonContactableService {
 
     private final NonContactableRepository repo;
     private final AllocationService allocationService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -49,6 +52,13 @@ public class NonContactableServiceImpl implements NonContactableService {
 
         log.info("Non-contactable recorded: case={} reason={} agent={}",
                 saved.getAllocationId(), saved.getReason(), saved.getAgentId());
+
+        if (alloc.getAssignedToUserId() != null) {
+            notificationService.create(alloc.getAssignedToUserId(), organizationId, NotificationType.FO_DO_NOT_CONTACT,
+                    "Case marked non-contactable: " + alloc.getLoanNumber(),
+                    "Loan " + alloc.getLoanNumber() + " was marked non-contactable (" + saved.getReason()
+                            + "). Field visits should stop.");
+        }
 
         return toResponse(saved);
     }

@@ -6,7 +6,6 @@ let audioCtx: AudioContext | null = null;
 let installed = false;
 
 const TONE: Record<NotifType, { freq: number; durMs: number; gain: number; waveform: OscillatorType }> = {
-  mention:    { freq: 880, durMs: 140, gain: 0.06, waveform: 'sine'     },
   assignment: { freq: 660, durMs: 110, gain: 0.05, waveform: 'triangle' },
   deadline:   { freq: 520, durMs: 180, gain: 0.07, waveform: 'sine'     },
   system:     { freq: 440, durMs: 90,  gain: 0.04, waveform: 'sine'     },
@@ -27,9 +26,6 @@ function playSound(type: NotifType): void {
     const gn  = audioCtx.createGain();
     osc.type = cfg.waveform;
     osc.frequency.setValueAtTime(cfg.freq, t0);
-    if (type === 'mention') {
-      osc.frequency.exponentialRampToValueAtTime(cfg.freq * 1.5, t0 + cfg.durMs / 1000 / 2);
-    }
     gn.gain.setValueAtTime(0.0001, t0);
     gn.gain.exponentialRampToValueAtTime(cfg.gain, t0 + 0.01);
     gn.gain.exponentialRampToValueAtTime(0.0001, t0 + cfg.durMs / 1000);

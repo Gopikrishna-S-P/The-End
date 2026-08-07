@@ -2,13 +2,16 @@ package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.entity.*;
 import com.recoverpro.server.enums.FileUploadStatus;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileProcessingService;
 import com.recoverpro.server.service.FileStorageService;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.importer.EntityImportProcessor;
 import com.recoverpro.server.service.importer.ImportContext;
 import com.recoverpro.server.service.importer.ImportFieldSpec;
@@ -48,6 +51,7 @@ public class FileProcessingServiceImpl implements FileProcessingService {
     private final FileParsingService fileParsingService;
     private final FileStorageService fileStorageService;
     private final FileUploadPostProcessingService fileUploadPostProcessingService;
+    private final NotificationService notificationService;
     private final List<EntityImportProcessor<?>> importProcessors;
 
     private Map<UploadType, EntityImportProcessor<?>> processorsByType;
@@ -129,6 +133,11 @@ public class FileProcessingServiceImpl implements FileProcessingService {
                 fileUploadPostProcessingService.autoAssignFromFile(
                         fileUploadId, organizationId, fileUpload.getUploadedByUserId());
                 fileUploadPostProcessingService.cancelDroppedLoanAssignments(fileUploadId, organizationId);
+                notificationService.createForOrgRole(organizationId, PlatformConstants.ROLE_ORG_ADMIN,
+                        NotificationType.ORG_ALLOCATION_UPLOAD_DONE,
+                        "Allocation upload finished: " + fileUpload.getOriginalFilename(),
+                        fileUpload.getSuccessfulRows() + " of " + fileUpload.getTotalRows()
+                                + " rows imported successfully (" + fileUpload.getFailedRows() + " failed).");
             }
 
             fileStorageService.delete(fileUploadId);

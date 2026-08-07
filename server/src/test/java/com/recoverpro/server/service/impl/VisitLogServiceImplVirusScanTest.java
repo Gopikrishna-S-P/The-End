@@ -11,6 +11,7 @@ import com.recoverpro.server.repository.VisitLogRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.CallingHoursGuard;
+import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.compliance.ComplianceAuditService;
 import com.recoverpro.server.service.storage.S3OrLocalStoragePort;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +52,7 @@ class VisitLogServiceImplVirusScanTest {
     @Mock private OrgIsolationGuard orgIsolationGuard;
     @Mock private ClamAvScannerClient clamAvScannerClient;
     @Mock private ComplianceAuditService complianceAuditService;
+    @Mock private NotificationService notificationService;
 
     private VisitLogServiceImpl service;
 
@@ -62,7 +64,7 @@ class VisitLogServiceImplVirusScanTest {
         service = new VisitLogServiceImpl(visitLogRepository, visitLogMapper, allocationRepository,
                 allocationAuditLogRepository, userRepository, visitImageRepository, callingHoursGuard,
                 auditLogService, orgIsolationGuard, clamAvScannerClient, complianceAuditService,
-                new S3OrLocalStoragePort());
+                new S3OrLocalStoragePort(), notificationService);
         ReflectionTestUtils.setField(service, "storagePath", tempDir.toString());
     }
 

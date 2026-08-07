@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Bell, AtSign, UserCheck, Clock, X, ArrowRight,
+  Bell, UserCheck, Clock, X, ArrowRight,
 } from 'lucide-react';
 import { notifications, type Notification, type NotifType } from '../utils/notifications';
 import { presence } from '../utils/userPresence';
@@ -22,14 +22,12 @@ const STACK_MAX    = 4;
 
 const TYPE_ICON: Record<NotifType, React.ElementType> = {
   system:     Bell,
-  mention:    AtSign,
   assignment: UserCheck,
   deadline:   Clock,
 };
 
 const TYPE_TONE: Record<NotifType, string> = {
   system:     'tone-neutral',
-  mention:    'tone-mention',
   assignment: 'tone-assignment',
   deadline:   'tone-deadline',
 };

@@ -6,6 +6,7 @@ import com.recoverpro.server.dto.request.*;
 import com.recoverpro.server.dto.response.AuthResponse;
 import com.recoverpro.server.dto.response.MfaEnableResponse;
 import com.recoverpro.server.dto.response.MfaSetupResponse;
+import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AuthService;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -83,6 +85,23 @@ public class AuthController {
             HttpServletRequest request) {
         authService.logoutAllDevices(principal.getId(), extractBearerToken(request));
         return ResponseEntity.ok(ApiResponse.of("Logged out from all devices", null));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/sessions")
+    public ResponseEntity<ApiResponse<List<AuthSessionResponse>>> listSessions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader(value = "X-Device-Id", required = false) String deviceId) {
+        return ResponseEntity.ok(ApiResponse.success(authService.listSessions(principal.getId(), deviceId)));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/sessions/{id}")
+    public ResponseEntity<ApiResponse<Void>> revokeSession(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID id) {
+        authService.revokeSession(principal.getId(), id);
+        return ResponseEntity.ok(ApiResponse.of("Session revoked", null));
     }
 
     @PreAuthorize("permitAll()")

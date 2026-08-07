@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { notificationsApi, type ServerNotification, type ServerNotifType } from '../api/notificationsApi';
 
 /** Coarse UI buckets the panel groups by. Maps from server type. */
-export type NotifType = 'system' | 'mention' | 'assignment' | 'deadline';
+export type NotifType = 'system' | 'assignment' | 'deadline';
 
 export interface Notification {
   id: string;
@@ -22,7 +22,6 @@ export interface Notification {
 
 /** Translate server enum → UI bucket. */
 function mapType(t: ServerNotifType): NotifType {
-  if (t === 'MENTION') return 'mention';
   if (
     t.endsWith('_ASSIGNED') ||
     t === 'FO_SHIFT_STARTING' ||
