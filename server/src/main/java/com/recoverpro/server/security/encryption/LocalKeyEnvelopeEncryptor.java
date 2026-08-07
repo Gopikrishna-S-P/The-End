@@ -1,5 +1,8 @@
 package com.recoverpro.server.security.encryption;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
@@ -11,9 +14,19 @@ import java.util.Base64;
 
 public class LocalKeyEnvelopeEncryptor implements EnvelopeEncryptor {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalKeyEnvelopeEncryptor.class);
+
     private static final String TRANSFORM = "AES/GCM/NoPadding";
     private static final int IV_LEN  = 12;
     private static final int TAG_BITS = 128;
+
+    /**
+     * Returned in place of a value whose ciphertext fails to authenticate (wrong key or
+     * tampering) so one corrupted PII field can't take down an entire listing query — the
+     * alternative is letting Hibernate's row hydration throw and turn a single bad row into a
+     * 500 for every other, perfectly readable row in the same page.
+     */
+    static final String DECRYPTION_FAILED_PLACEHOLDER = "[decryption failed]";
 
     private final SecretKey secretKey;
     private final SecureRandom random = new SecureRandom();
@@ -59,10 +72,11 @@ public class LocalKeyEnvelopeEncryptor implements EnvelopeEncryptor {
             Cipher cipher = Cipher.getInstance(TRANSFORM);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_BITS, iv));
             return new String(cipher.doFinal(ct), StandardCharsets.UTF_8);
-        } catch (EncryptionException e) {
-            throw e;
         } catch (Exception e) {
-            throw new EncryptionException("Decryption failed (tampering or wrong key?)", e);
+            // Never log storedValue itself -- it's either ciphertext (useless without the key)
+            // or, if something upstream already mangled it, potentially raw PII.
+            log.error("PII decryption failed (tampering or wrong key?); returning redacted placeholder", e);
+            return DECRYPTION_FAILED_PLACEHOLDER;
         }
     }
 }

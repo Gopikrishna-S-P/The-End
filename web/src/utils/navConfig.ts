@@ -40,7 +40,6 @@ export const NAV_SECTIONS: NavSection[] = [
 
       // Shared daily driver — everyone who touches money sees this.
       { label: 'Dashboard',   to: '/app/dashboard',   icon: BarChart2, alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
-      { label: 'Collections', to: '/app/collections', icon: Receipt,   alwaysFor: ['MANAGER','TL','FO','CALLER','TRACER'] },
 
       // Leads (MANAGER / TL) — oversee the day's work. File Uploads dropped from
       // these two roles to stay within the 5-6 cap; it's a periodic data-setup

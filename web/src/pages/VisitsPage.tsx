@@ -64,7 +64,7 @@ export default function VisitsPage() {
   const [sortDir, setSortDir]             = useState<'asc' | 'desc'>('desc');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [activeTab, setActiveTab]         = useState<'my' | 'all'>('my');
+  const [activeTab, setActiveTab]         = useState<'my' | 'all'>('all');
   const [todayCount, setTodayCount]       = useState(0);
   const [monthCount, setMonthCount]       = useState(0);
 
@@ -245,18 +245,6 @@ export default function VisitsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-subtle)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
                   <button
                     type="button"
-                    onClick={() => { setActiveTab('my'); setPage(0); }}
-                    style={{
-                      background: activeTab === 'my' ? 'var(--bg-surface)' : 'transparent',
-                      color: activeTab === 'my' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                      border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
-                      boxShadow: activeTab === 'my' ? 'var(--shadow-xs)' : 'none'
-                    }}
-                  >
-                    My Visits
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => { setActiveTab('all'); setPage(0); }}
                     style={{
                       background: activeTab === 'all' ? 'var(--bg-surface)' : 'transparent',
@@ -266,6 +254,18 @@ export default function VisitsPage() {
                     }}
                   >
                     All Visits
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('my'); setPage(0); }}
+                    style={{
+                      background: activeTab === 'my' ? 'var(--bg-surface)' : 'transparent',
+                      color: activeTab === 'my' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
+                      boxShadow: activeTab === 'my' ? 'var(--shadow-xs)' : 'none'
+                    }}
+                  >
+                    My Visits
                   </button>
                 </div>
                 <AnimatePresence>

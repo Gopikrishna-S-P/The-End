@@ -89,22 +89,27 @@ export default function SubscriptionBanner() {
   }
 
   if (trialVisible) {
+    const trialEnded = sub!.trialDaysLeft <= 0;
     return (
       <div className="sub-banner is-trial" role="status">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Clock size={16} className="sub-banner-icon" aria-hidden="true" />
-          <span className="sub-banner-text">
-            {sub!.trialDaysLeft <= 0 ? (
-              <>Your free trial has <strong>ended</strong>. Please upgrade your subscription immediately to continue using Recoverpro and keep access to all premium features without interruption.</>
-            ) : (
-              <>Your free trial ends in <strong>{sub!.trialDaysLeft} day{sub!.trialDaysLeft !== 1 ? 's' : ''}</strong>. Upgrade your subscription today to ensure uninterrupted access to all your data and premium features.</>
-            )}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginRight: 24 }}>
-          <button type="button" className="sub-banner-btn" onClick={() => navigate('/app/subscription')}>
-            Upgrade <ArrowUpRight size={11} />
-          </button>
+        <div className="sub-banner-content">
+          <div className="sub-banner-message">
+            <div className="sub-banner-icon-container">
+              <Clock size={16} className="sub-banner-icon" aria-hidden="true" />
+            </div>
+            <span className="sub-banner-text">
+              {trialEnded ? (
+                <>Your free trial has <strong>ended</strong>. Upgrade your subscription immediately to continue using Recoverpro and keep access to all premium features without interruption.</>
+              ) : (
+                <>Your free trial ends in <strong>{sub!.trialDaysLeft} day{sub!.trialDaysLeft !== 1 ? 's' : ''}</strong>. Upgrade your subscription today to ensure uninterrupted access to all your data and premium features.</>
+              )}
+            </span>
+          </div>
+          <div className="sub-banner-actions">
+            <button type="button" className="sub-banner-btn" onClick={() => navigate('/app/subscription')}>
+              Upgrade <ArrowUpRight size={13} className="sub-banner-btn-arrow" />
+            </button>
+          </div>
         </div>
         <button type="button" className="sub-banner-dismiss" onClick={dismissTrial} aria-label="Dismiss">
           <X size={16} />
