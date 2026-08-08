@@ -209,8 +209,7 @@ export default function CommandPalette({
 
         <div className="app-topbar-custom-header">
           <div className="app-topbar-custom-title">
-            <Settings size={14} aria-hidden="true" />
-            <span id="rp-topbar-custom-title">{scope ? 'Search & commands' : 'Settings'}</span>
+            <span id="rp-topbar-custom-title">{scope ? 'Quick Actions' : 'Settings'}</span>
           </div>
           <button type="button" className="app-topbar-custom-close" onClick={onClose} aria-label="Close">
             <X size={14} aria-hidden="true" />

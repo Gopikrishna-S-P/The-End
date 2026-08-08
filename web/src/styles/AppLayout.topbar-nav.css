@@ -234,12 +234,8 @@
   font-weight: 500;
   cursor: pointer;
   transition: background 150ms var(--ease), border-color 150ms var(--ease), box-shadow 150ms var(--ease);
-  /* Fluid within a floor/ceiling. It was a flat width: 300px, which also made
-     the tablet breakpoint's `min-width: 160px` inert — min-width can only raise
-     a floor, so an explicit width always won and the field stayed 300px right
-     down to the 640px mobile cutoff where it's hidden outright. */
-  width: clamp(180px, 20vw, 300px);
-  flex-shrink: 1;
+  width: 100%;
+  flex: 1;
   min-width: 0;
 }
 .app-search-trigger:hover {

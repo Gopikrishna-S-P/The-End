@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ChevronLeft, ChevronRight, ChevronDown, X,
-  Search, Bell, Settings,
+  Search, Bell, Settings, User,
 } from 'lucide-react';
 import { profileSettings } from '../utils/profileSettings';
 import { Link } from 'react-router-dom';
@@ -198,7 +198,7 @@ export default function TopBar(props: TopBarProps) {
           onClick={onOpenSearch || onOpenPalette}
         >
           <Search size={16} aria-hidden="true" className="app-search-trigger-icon" />
-          <span className="app-search-trigger-text">{t('Search')}</span>
+          <span className="app-search-trigger-text">{t('Search anything ...')}</span>
         </button>
 
         <button
@@ -223,10 +223,10 @@ export default function TopBar(props: TopBarProps) {
           type="button"
           className="app-icon-btn"
           onClick={() => profileSettings.show()}
-          aria-label="Settings"
-          data-tooltip="Settings"
+          aria-label="Profile Settings"
+          data-tooltip="Profile Settings"
         >
-          <Settings size={18} aria-hidden="true" />
+          <User size={18} aria-hidden="true" />
         </button>
 
         {showLucien && (

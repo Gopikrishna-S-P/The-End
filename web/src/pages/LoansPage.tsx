@@ -92,16 +92,7 @@ export default function LoansPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.roles?.[0]?.name?.replace('ROLE_', '');
-  // Temporarily hidden from the Loans toolbar — flip to re-enable.
-  const SHOW_LOANS_QUICK_LINKS = false;
-  const canSeeBorrowers = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN');
-  const canSeeFraudCases = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN');
-  const canSeePortfolioRisk = SHOW_LOANS_QUICK_LINKS && (role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL');
-  // Settlement offers / grievances are new, fully built features — deliberately not gated
-  // behind SHOW_LOANS_QUICK_LINKS (that flag hides an unrelated, still-being-revisited set
-  // of links), so these are visible to leads as soon as they ship.
-  const canSeeSettlementOffers = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL';
-  const canSeeGrievances = role === 'PLATFORM_ADMIN' || role === 'ORG_ADMIN' || role === 'MANAGER' || role === 'TL';
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchTerm   = searchParams.get('q')         ?? '';
@@ -224,40 +215,6 @@ export default function LoansPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {canSeeBorrowers && (
-              <button type="button" onClick={() => navigate('/app/borrowers')}
-                className="ds-btn is-secondary" title="Borrowers" aria-label="Borrowers">
-                <Users size={14} />
-              </button>
-            )}
-            {canSeeFraudCases && (
-              <button type="button" onClick={() => navigate('/app/fraud-cases')}
-                className="ds-btn is-secondary" title="Fraud cases" aria-label="Fraud cases">
-                <ShieldAlert size={14} />
-              </button>
-            )}
-            {canSeePortfolioRisk && (
-              <button type="button" onClick={() => navigate('/app/portfolio-risk')}
-                className="ds-btn is-secondary" title="Portfolio risk" aria-label="Portfolio risk">
-                <TrendingDown size={14} />
-              </button>
-            )}
-            <button type="button" onClick={() => navigate('/app/assignments')}
-              className="ds-btn is-ghost">
-              <UserCheck size={14} /> Assignments
-            </button>
-            <button type="button" onClick={() => navigate('/app/visits')}
-              className="ds-btn is-ghost">
-              <MapPin size={14} /> Visit logs
-            </button>
-            <button type="button" onClick={() => navigate('/app/ptps')}
-              className="ds-btn is-ghost">
-              <Handshake size={14} /> PTPs
-            </button>
-            <button type="button" onClick={() => navigate('/app/collections')}
-              className="ds-btn is-ghost">
-              <Receipt size={14} /> Collections
-            </button>
             <button
               type="button"
               onClick={openFilterDialog}
@@ -266,18 +223,6 @@ export default function LoansPage() {
             >
               <SlidersHorizontal size={14} />
             </button>
-            {canSeeSettlementOffers && (
-              <button type="button" onClick={() => navigate('/app/settlement-offers')}
-                className="ds-btn is-secondary" title="Settlement offers" aria-label="Settlement offers">
-                <BadgeIndianRupee size={14} />
-              </button>
-            )}
-            {canSeeGrievances && (
-              <button type="button" onClick={() => navigate('/app/grievances')}
-                className="ds-btn is-secondary" title="Grievances" aria-label="Grievances">
-                <MessageSquareWarning size={14} />
-              </button>
-            )}
           </div>
         </div>
 

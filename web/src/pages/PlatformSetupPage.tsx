@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { platformApi } from '../api/platformApi';
@@ -12,7 +13,8 @@ import './Dashboard.css';
 type Tab = 'orgs' | 'users';
 
 export default function PlatformSetupPage() {
-  const [tab,  setTab]  = useState<Tab>('orgs');
+  const [searchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') as Tab) || 'orgs';
   const [orgs, setOrgs] = useState<OrganizationSummary[]>([]);
   const [showCreateOrg, setShowCreateOrg] = useState(false);
   const [showCreateUser, setShowCreateUser] = useState(false);
@@ -32,18 +34,6 @@ export default function PlatformSetupPage() {
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
               Manage organizations and platform users
             </p>
-            <div className="db-kpi-toggle" role="tablist" aria-label="Platform setup view">
-              <button type="button" onClick={() => setTab('orgs')}
-                className={`db-kpi-toggle-btn${tab === 'orgs' ? ' is-active' : ''}`}
-                role="tab" aria-selected={tab === 'orgs'}>
-                Organizations
-              </button>
-              <button type="button" onClick={() => setTab('users')}
-                className={`db-kpi-toggle-btn${tab === 'users' ? ' is-active' : ''}`}
-                role="tab" aria-selected={tab === 'users'}>
-                Admin Users
-              </button>
-            </div>
           </div>
           <AnimatePresence mode="wait">
             <motion.div

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as RMouseEvent } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Lock, LogOut, X as XIcon, PanelLeft, ChevronDown, ShieldCheck, Building2, FileClock, MessageSquareText, MessageSquareWarning, UserPlus } from 'lucide-react';
+import { Lock, LogOut, X as XIcon, PanelLeft, ChevronDown, ShieldCheck, Building2, FileClock, MessageSquareText, MessageSquareWarning, UserPlus, Users, ClipboardList, CalendarDays, FileText, Handshake } from 'lucide-react';
 import { Logo } from './Logo';
 import { prefetchRoute } from '../utils/routePrefetch';
 import { useT } from '../utils/i18n';
@@ -63,11 +63,28 @@ export default function AppSidebar({
   const isSubActive = location.pathname === '/app/settings/roles' || location.pathname === '/app/settings/organization' || location.pathname === '/app/audit' || location.pathname === '/app/settings/message-templates' || location.pathname === '/app/settings/grievance-officer' || location.pathname === '/app/users/requests';
   const [userSetupExpanded, setUserSetupExpanded] = useState(location.pathname === '/app/users' || isSubActive);
 
+  const isLoanSubActive = location.pathname === '/app/borrowers' || location.pathname === '/app/assignments' || location.pathname === '/app/ptps' || location.pathname === '/app/restructure-proposals' || location.pathname === '/app/settlement-offers';
+  const [loanExpanded, setLoanExpanded] = useState(location.pathname === '/app/allocations' || isLoanSubActive);
+
   useEffect(() => {
     if (location.pathname === '/app/users' || isSubActive) {
       setUserSetupExpanded(true);
     }
   }, [location.pathname, isSubActive]);
+
+  useEffect(() => {
+    if (location.pathname === '/app/allocations' || isLoanSubActive) {
+      setLoanExpanded(true);
+    }
+  }, [location.pathname, isLoanSubActive]);
+
+  const [platformSetupExpanded, setPlatformSetupExpanded] = useState(location.pathname === '/platform/setup');
+
+  useEffect(() => {
+    if (location.pathname === '/platform/setup') {
+      setPlatformSetupExpanded(true);
+    }
+  }, [location.pathname]);
 
   const rippleConfirm = useRipple<HTMLButtonElement>();
   const rippleCancel  = useRipple<HTMLButtonElement>();
@@ -212,11 +229,17 @@ export default function AppSidebar({
                             if (item.label === 'User Setup') {
                               setUserSetupExpanded(prev => !prev);
                             }
+                            if (item.label === 'Loans') {
+                              setLoanExpanded(prev => !prev);
+                            }
+                            if (item.label === 'Platform Setup') {
+                              setPlatformSetupExpanded(prev => !prev);
+                            }
                           }}
                           onMouseEnter={(e) => { prefetchRoute(item.to); if (collapsed) showTip(e, label); }}
                           onMouseLeave={hideTip}
                           onFocus={() => prefetchRoute(item.to)}
-                          style={item.label === 'User Setup' && expanded ? { paddingRight: 40 } : undefined}
+                          style={(item.label === 'User Setup' || item.label === 'Loans' || item.label === 'Platform Setup') && expanded ? { paddingRight: 40 } : undefined}
                         >
                            <span className="asb-nav-icon">
                              <item.icon size={14} aria-hidden="true" />
@@ -238,17 +261,19 @@ export default function AppSidebar({
                             </>
                            )}
                         </NavLink>
-                        {item.label === 'User Setup' && expanded && (
+                        {(item.label === 'User Setup' || item.label === 'Loans' || item.label === 'Platform Setup') && expanded && (
                           <button
                             type="button"
                             className="asb-chevron-btn"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              setUserSetupExpanded(!userSetupExpanded);
+                              if (item.label === 'User Setup') setUserSetupExpanded(!userSetupExpanded);
+                              if (item.label === 'Loans') setLoanExpanded(!loanExpanded);
+                              if (item.label === 'Platform Setup') setPlatformSetupExpanded(!platformSetupExpanded);
                             }}
                           >
-                            <ChevronDown size={14} style={{ transform: userSetupExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                            <ChevronDown size={14} style={{ transform: (item.label === 'User Setup' ? userSetupExpanded : item.label === 'Loans' ? loanExpanded : platformSetupExpanded) ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                           </button>
                         )}
                         {item.label === 'User Setup' && expanded && userSetupExpanded && (
@@ -299,6 +324,70 @@ export default function AppSidebar({
                                   <UserPlus size={12} />
                                 </span>
                                 <span className="asb-nav-label">Pending requests</span>
+                              </NavLink>
+                            </li>
+                          </ul>
+                        )}
+                        {item.label === 'Loans' && expanded && loanExpanded && (
+                          <ul className="asb-submenu">
+                            <li>
+                              <NavLink to="/app/borrowers" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <Users size={12} />
+                                </span>
+                                <span className="asb-nav-label">Borrowers</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/assignments" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <ClipboardList size={12} />
+                                </span>
+                                <span className="asb-nav-label">Assignments</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/ptps" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <CalendarDays size={12} />
+                                </span>
+                                <span className="asb-nav-label">PTPs</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/restructure-proposals" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <FileText size={12} />
+                                </span>
+                                <span className="asb-nav-label">Restructure Proposals</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/settlement-offers" className={({ isActive }) => `asb-nav-item asb-sub-item${isActive ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <Handshake size={12} />
+                                </span>
+                                <span className="asb-nav-label">Settlement Offers</span>
+                              </NavLink>
+                            </li>
+                          </ul>
+                        )}
+                        {item.label === 'Platform Setup' && expanded && platformSetupExpanded && (
+                          <ul className="asb-submenu">
+                            <li>
+                              <NavLink to="/platform/setup" end className={({ isActive }) => `asb-nav-item asb-sub-item${isActive && !location.search.includes('tab=users') ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <Building2 size={12} />
+                                </span>
+                                <span className="asb-nav-label">Organizations</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/platform/setup?tab=users" className={({ isActive }) => `asb-nav-item asb-sub-item${location.search.includes('tab=users') ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <UserPlus size={12} />
+                                </span>
+                                <span className="asb-nav-label">Admin Users</span>
                               </NavLink>
                             </li>
                           </ul>
