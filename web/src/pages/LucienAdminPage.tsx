@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import SystemPromptAdminPage from './SystemPromptAdminPage';
 import RagDocumentsPage from './RagDocumentsPage';
 import './Dashboard.css';
@@ -6,24 +7,10 @@ import './Dashboard.css';
 type Tab = 'prompts' | 'rag';
 
 export default function LucienAdminPage() {
-  const [tab, setTab] = useState<Tab>('prompts');
-
-  const toggle = (
-    <div className="db-kpi-toggle" role="tablist" aria-label="Lucien admin view">
-      <button type="button" onClick={() => setTab('prompts')}
-        className={`db-kpi-toggle-btn${tab === 'prompts' ? ' is-active' : ''}`}
-        role="tab" aria-selected={tab === 'prompts'}>
-        Prompts
-      </button>
-      <button type="button" onClick={() => setTab('rag')}
-        className={`db-kpi-toggle-btn${tab === 'rag' ? ' is-active' : ''}`}
-        role="tab" aria-selected={tab === 'rag'}>
-        Knowledge Base
-      </button>
-    </div>
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') as Tab) || 'prompts';
 
   return tab === 'prompts'
-    ? <SystemPromptAdminPage headerExtra={toggle} />
-    : <RagDocumentsPage headerExtra={toggle} />;
+    ? <SystemPromptAdminPage />
+    : <RagDocumentsPage />;
 }

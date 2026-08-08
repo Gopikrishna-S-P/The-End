@@ -4,7 +4,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   X, AlertCircle, RefreshCw, ChevronRight as ChevronRightIcon,
   SlidersHorizontal, ChevronDown, ShieldAlert, TrendingDown, Users,
-  UserCheck, MapPin, Handshake, Receipt, BadgeIndianRupee, MessageSquareWarning,
+  UserCheck, MapPin, Handshake, Receipt, BadgeIndianRupee, MessageSquareWarning, Search,
 } from 'lucide-react';
 import { allocationsApi } from '../api/allocationsApi';
 import { usersApi } from '../api/usersApi';
@@ -111,6 +111,7 @@ export default function LoansPage() {
   const [filterAgentId, setFilterAgentId] = useState('');
   const [agents,        setAgents]        = useState<UserResponse[]>([]);
   const [filterOpen,    setFilterOpen]    = useState(false);
+  const [isSearchOpen,  setIsSearchOpen]  = useState(searchTerm !== '');
   // Draft copies — the filter dialog edits these; changes only take effect on "Apply".
   const [draftSearch,   setDraftSearch]   = useState(searchTerm);
   const [draftAgentId,  setDraftAgentId]  = useState('');
@@ -205,13 +206,12 @@ export default function LoansPage() {
 
       <div className="db-content">
         <div className="db-page-header">
-          <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Portfolio</h1>
-              {totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} total loans</span>
-              )}
-            </div>
+          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            {!loading && (
+              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+                You have <strong>{totalElements.toLocaleString('en-IN')} total loans</strong> registered on file.
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -228,6 +228,53 @@ export default function LoansPage() {
 
         <div className="dd-shell" style={{ display: 'flex' }}>
           <div className="ds-card is-overflow-hidden db-card" style={{ width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <header className="db-card-head" style={{ borderBottom: 'none', padding: '4px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>Loans</h3>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+                <AnimatePresence initial={false}>
+                  {isSearchOpen ? (
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 220, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden' }}
+                    >
+                      <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                      <input
+                        value={searchTerm}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setUrl(p => { if (val) p.set('q', val); else p.delete('q'); p.delete('page'); });
+                        }}
+                        placeholder="Search borrower or ID…"
+                        style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
+                      />
+                      <button type="button" onClick={() => { setUrl(p => { p.delete('q'); p.delete('page'); }); setIsSearchOpen(false); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex', color: 'var(--ink-tertiary)', flexShrink: 0 }}>
+                        <X size={14} />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      type="button"
+                      style={{ 
+                        width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8,
+                        cursor: 'pointer', color: 'var(--ink-secondary)'
+                      }}
+                      onClick={() => setIsSearchOpen(true)}
+                      title="Search"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <Search size={14} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            </header>
 
 
             {/* ── Active-filter chips ── */}
@@ -342,15 +389,23 @@ export default function LoansPage() {
               )}
             </div>
 
-            {/* ── Pagination ── */}
             {totalPages > 1 && !loading && (
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                totalElements={totalElements}
-                itemLabel="loans"
-              />
+              <footer className="up-pagination" style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                <span className="up-page-meta" style={{ fontSize: 13, color: 'var(--ink-secondary)' }}>
+                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
+                  {' · '}<strong>{totalElements.toLocaleString('en-IN')}</strong> loans
+                </span>
+                <div style={{ marginLeft: 'auto' }}>
+                  <Pagination
+                    embedded
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    totalElements={totalElements}
+                    itemLabel="loans"
+                  />
+                </div>
+              </footer>
             )}
 
           </div>

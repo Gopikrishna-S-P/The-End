@@ -60,10 +60,13 @@ export default function UserRequestsPage() {
   return (
     <div className="dd-page">
       <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <h1 className="dd-page-title">User Requests</h1>
-          <span className="dd-page-context">
-            {pendingCount > 0 ? `${pendingCount} pending requests` : 'Manage user onboarding'}
+        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span className="dd-page-context" style={{ padding: 0 }}>
+            {!loadingPending ? (
+              <>You have <strong>{pendingCount} pending onboarding requests</strong> awaiting review.</>
+            ) : (
+              'Manage user onboarding'
+            )}
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

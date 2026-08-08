@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   ChevronLeft, ChevronRight, ChevronDown, X,
-  Search, Bell, Settings, User,
+  Search, Bell, Settings,
 } from 'lucide-react';
 import { profileSettings } from '../utils/profileSettings';
 import { Link } from 'react-router-dom';
@@ -226,7 +226,7 @@ export default function TopBar(props: TopBarProps) {
           aria-label="Profile Settings"
           data-tooltip="Profile Settings"
         >
-          <User size={18} aria-hidden="true" />
+          <Settings size={18} aria-hidden="true" />
         </button>
 
         {showLucien && (

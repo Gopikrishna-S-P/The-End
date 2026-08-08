@@ -76,28 +76,25 @@ export default function BorrowersPage() {
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
-          <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Borrowers</h1>
-              {!loading && totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
-              )}
-            </div>
+          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            {!loading && (
+              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+                You have <strong>{totalElements.toLocaleString('en-IN')} borrower profiles</strong> registered on file.
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
+              <Plus size={14} /> New borrower
+            </button>
+            <button type="button" onClick={fetchBorrowers} disabled={loading} className="ds-btn is-secondary" style={{ height: 36 }} aria-label="Refresh" title="Refresh">
+              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+            </button>
           </div>
         </div>
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(borrowers.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
-                  <Plus size={14} /> New borrower
-                </button>
-                <button type="button" onClick={fetchBorrowers} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                  <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-                </button>
-              </div>
-            </header>
 
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
               {loadError ? (
@@ -124,9 +121,6 @@ export default function BorrowersPage() {
                   <Users size={32} className="ds-empty-icon" />
                   <span className="ds-empty-title">No borrowers on file</span>
                   <span className="ds-empty-sub">Borrower profiles capture DPDP consent, nominee and risk data separately from loan records. Register the first one to get started.</span>
-                  <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                    <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">New borrower</button>
-                  </div>
                 </motion.div>
               ) : (
                 <motion.div>

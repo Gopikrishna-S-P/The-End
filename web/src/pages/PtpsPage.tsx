@@ -255,30 +255,105 @@ export default function PtpsPage() {
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
-          <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Promise-to-Pay</h1>
-              {!loading && totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} commitments</span>
+          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            {!loading && (
+              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+                You have <strong>{totalElements.toLocaleString('en-IN')} commitments</strong> with <strong>{pendingCount.toLocaleString('en-IN')} pending</strong>, <strong>{fulfilledCount.toLocaleString('en-IN')} fulfilled</strong> and <strong>{brokenCount.toLocaleString('en-IN')} broken</strong>.
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
+              <input
+                ref={inputRef}
+                type="search"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                placeholder="Search loan number or borrower…"
+                autoComplete="off"
+                spellCheck={false}
+                aria-label="Search PTPs"
+                style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 220 }}
+              />
+              <AnimatePresence>
+                {searchInput && (
+                  <motion.button type="button" onClick={() => setSearchInput('')}
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex' }}
+                    initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.12 }}>
+                    <X size={12} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {canUpdate && !isBankView && (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(true)}
+                  className="ds-btn is-primary"
+                  style={{ height: 36 }}
+                >
+                  <Plus size={14} /> New PTP
+                </button>
               )}
+              <div ref={exportMenuRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowExportMenu(v => !v)}
+                  disabled={exporting}
+                  className="ds-btn is-secondary"
+                  style={{ padding: '0 12px', height: 36 }}
+                >
+                  <Download size={14} style={{ marginRight: 6 }} />
+                  {exporting ? 'Exporting…' : 'Export'}
+                </button>
+                <AnimatePresence>
+                  {showExportMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }}
+                      style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, boxShadow: 'var(--shadow-md)', zIndex: 100 }}
+                    >
+                      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Date range</p>
+                      <button type="button" onClick={() => handleExport()} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">All time</button>
+                      <button type="button" onClick={() => handleExport(todayIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">Today</button>
+                      <button type="button" onClick={() => handleExport(monthStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This month</button>
+                      <button type="button" onClick={() => handleExport(yearStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This year</button>
+                      <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0' }} />
+                      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Custom range</p>
+                      <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="ds-input" style={{ width: '100%', marginBottom: 4, height: 32, fontSize: 12 }} />
+                      <input type="date" value={customTo}   onChange={e => setCustomTo(e.target.value)}   className="ds-input" style={{ width: '100%', marginBottom: 8, height: 32, fontSize: 12 }} />
+                      <button type="button" onClick={() => handleExport(customFrom || undefined, customTo || undefined)}
+                        className="ds-btn is-primary is-sm" style={{ width: '100%' }}>
+                        Export custom range
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setFilterOpen(true)}
+                className="ds-btn is-secondary"
+                style={{ background: filterOpen || filterStatus ? 'var(--ink-solid)' : 'transparent', color: filterOpen || filterStatus ? 'var(--bg-surface)' : 'inherit', position: 'relative', height: 36 }}
+              >
+                <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+                Filter
+                {filterStatus && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
+              </button>
+
+              <button type="button" onClick={fetchPtps} disabled={loading}
+                className="ds-btn is-secondary" style={{ height: 36 }} aria-label="Refresh" title="Refresh">
+                <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+              </button>
             </div>
           </div>
         </div>
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          {(!loading && ptps.length > 0) && (
-            <div className="db-kpi-band">
-              <KpiCard label="Pending" value={pendingCount.toLocaleString('en-IN')} warn
-                icon={Clock} footer={<span className="db-kpi2-foot-meta">Awaiting payment</span>}
-                onClick={() => { setFilterStatus('PENDING'); setPage(0); }} />
-              <KpiCard label="Fulfilled" value={fulfilledCount.toLocaleString('en-IN')} accent
-                icon={CheckCircle2} footer={<span className="db-kpi2-foot-meta">Successfully collected</span>}
-                onClick={() => { setFilterStatus('FULFILLED'); setPage(0); }} />
-              <KpiCard label="Broken" value={brokenCount.toLocaleString('en-IN')}
-                icon={AlertTriangle} footer={<span className="db-kpi2-foot-meta">Promises breached</span>}
-                onClick={() => { setFilterStatus('BROKEN'); setPage(0); }} />
-            </div>
-          )}
 
           <AnimatePresence>
             {hasFilters && (
@@ -299,97 +374,6 @@ export default function PtpsPage() {
           </AnimatePresence>
 
           <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visiblePtps.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
-                  <input
-                    ref={inputRef}
-                    type="search"
-                    value={searchInput}
-                    onChange={e => setSearchInput(e.target.value)}
-                    placeholder="Search loan number or borrower…"
-                    autoComplete="off"
-                    spellCheck={false}
-                    aria-label="Search PTPs"
-                    style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 260 }}
-                  />
-                  <AnimatePresence>
-                    {searchInput && (
-                      <motion.button type="button" onClick={() => setSearchInput('')}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex' }}
-                        initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.12 }}>
-                        <X size={12} />
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                  {canUpdate && !isBankView && (
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateModal(true)}
-                      className="ds-btn is-primary"
-                      style={{ height: 36 }}
-                    >
-                      <Plus size={14} /> New PTP
-                    </button>
-                  )}
-                  <div ref={exportMenuRef} style={{ position: 'relative' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowExportMenu(v => !v)}
-                      disabled={exporting}
-                      className="ds-btn is-secondary"
-                      style={{ padding: '0 12px', height: 36 }}
-                    >
-                      <Download size={14} style={{ marginRight: 6 }} />
-                      {exporting ? 'Exporting…' : 'Export'}
-                    </button>
-                    <AnimatePresence>
-                      {showExportMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }}
-                          style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, boxShadow: 'var(--shadow-md)', zIndex: 100 }}
-                        >
-                          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Date range</p>
-                          <button type="button" onClick={() => handleExport()} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">All time</button>
-                          <button type="button" onClick={() => handleExport(todayIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">Today</button>
-                          <button type="button" onClick={() => handleExport(monthStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This month</button>
-                          <button type="button" onClick={() => handleExport(yearStartIso(), todayIso())} style={{ width: '100%', textAlign: 'left', padding: '8px', fontSize: 13, background: 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer' }} className="is-hoverable">This year</button>
-                          <div style={{ height: 1, background: 'var(--border-subtle)', margin: '8px 0' }} />
-                          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 8px 8px' }}>Custom range</p>
-                          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} className="ds-input" style={{ width: '100%', marginBottom: 4, height: 32, fontSize: 12 }} />
-                          <input type="date" value={customTo}   onChange={e => setCustomTo(e.target.value)}   className="ds-input" style={{ width: '100%', marginBottom: 8, height: 32, fontSize: 12 }} />
-                          <button type="button" onClick={() => handleExport(customFrom || undefined, customTo || undefined)}
-                            className="ds-btn is-primary is-sm" style={{ width: '100%' }}>
-                            Export custom range
-                          </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setFilterOpen(true)}
-                    className="ds-btn is-secondary"
-                    style={{ background: filterOpen || filterStatus ? 'var(--ink-solid)' : 'transparent', color: filterOpen || filterStatus ? 'var(--bg-surface)' : 'inherit', position: 'relative' }}
-                  >
-                    <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
-                    Filter
-                    {filterStatus && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
-                  </button>
-
-                  <button type="button" onClick={fetchPtps} disabled={loading}
-                    className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                    <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-                  </button>
-                </div>
-              </div>
-            </header>
 
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
               {loading ? (

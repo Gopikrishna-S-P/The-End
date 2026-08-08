@@ -94,9 +94,14 @@ export default function MessageTemplatesPage() {
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ maxWidth: 1100, margin: '0 auto' }}>
 
           <div className="dd-page-header" style={{ marginBottom: 16 }}>
-            <div className="dd-page-titles">
-              <h1 className="dd-page-title">Message Templates</h1>
-              <span className="dd-page-context">Maker-checker review queue</span>
+            <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+              <span className="dd-page-context" style={{ padding: 0 }}>
+                {!listLoading ? (
+                  <>You have <strong>{templates.length} message templates</strong> configured for custom notifications.</>
+                ) : (
+                  'Maker-checker review queue'
+                )}
+              </span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <select className="ds-input" value={statusFilter} onChange={e => setStatusFilter(e.target.value as MessageTemplateStatus | '')} style={{ height: 32 }}>

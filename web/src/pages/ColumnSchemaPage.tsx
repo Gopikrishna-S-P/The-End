@@ -3,7 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { columnSchemasApi, type ColumnSchemaResponse } from '../api/columnSchemasApi';
-import { Plus, SquarePen, X, AlertCircle, Columns, Check, Trash2, Loader2 } from 'lucide-react';
+import { Plus, SquarePen, X, AlertCircle, Columns, Check, Trash2, Loader2, ChevronDown } from 'lucide-react';
 import { RowForm, type RowFormState, EMPTY_FORM, TYPE_VARIANT } from './ColumnSchemaRowForm';
 import type { UploadType } from '../types/reports';
 import '../styles/AppPage.css';
@@ -44,7 +44,7 @@ export default function ColumnSchemaPage() {
   const orgId = user?.organizationId ?? '';
 
   const [columns, setColumns]       = useState<ColumnSchemaResponse[]>([]);
-  const [entityType, setEntityType] = useState<UploadType>('ALLOCATION');
+  const [entityType, setEntityType] = useState<UploadType | ''>('');
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
   const [adding, setAdding]         = useState(false);
@@ -54,6 +54,7 @@ export default function ColumnSchemaPage() {
 
   const load = useCallback(async () => {
     if (!orgId || !canView) { setLoading(false); return; }
+    if (!entityType) { setColumns([]); setLoading(false); return; }
     setLoading(true); setError(null);
     try {
       const list = await columnSchemasApi.list(orgId, entityType);
@@ -126,7 +127,15 @@ export default function ColumnSchemaPage() {
         <div className="dd-page-titles">
           <h1 className="dd-page-title">Column Schema</h1>
           <span className="dd-page-context">
-            {!loading && columns.length > 0 ? `${columns.length} columns defined` : 'Manage data structure'}
+            {!loading ? (
+              entityType ? (
+                <>You have <strong>{columns.length} custom columns</strong> defined for {entityType.toLowerCase()}s.</>
+              ) : (
+                'Select an entity type to manage its schema.'
+              )
+            ) : (
+              'Manage data structure'
+            )}
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -137,7 +146,7 @@ export default function ColumnSchemaPage() {
               <strong style={{ color: 'var(--text-primary)' }}>{columns.filter((c) => c.isSearchable).length}</strong>&nbsp;searchable
             </span>
           )}
-          {!adding && editingId === null && canCreate && (
+          {!adding && editingId === null && canCreate && entityType !== '' && (
             <button type="button" onClick={() => setAdding(true)} className="ds-btn is-primary" style={{ height: 32 }}>
               <Plus size={14} style={{ marginRight: 6 }} /> Add column
             </button>
@@ -153,27 +162,65 @@ export default function ColumnSchemaPage() {
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Schema Configuration</span>
                 {/* Each entity keeps its own column mapping, so "amount" can mean one thing
                     for collections and another for PTPs. */}
-                <div role="tablist" aria-label="Entity type" style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  {ENTITY_TABS.map((t) => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      role="tab"
-                      aria-selected={entityType === t.value}
-                      disabled={loading}
-                      onClick={() => { setAdding(false); setEditingId(null); setEntityType(t.value); }}
-                      className={`ds-btn ${entityType === t.value ? 'is-primary' : 'is-secondary'}`}
-                      style={{ height: 28, fontSize: 12 }}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                <div style={{ position: 'relative', display: 'inline-block', marginLeft: 'auto' }}>
+                  <select
+                    value={entityType}
+                    disabled={loading}
+                    onChange={(e) => {
+                      setAdding(false);
+                      setEditingId(null);
+                      setEntityType(e.target.value as UploadType);
+                    }}
+                    className="ds-input"
+                    style={{
+                      height: 30,
+                      fontSize: 12.5,
+                      paddingLeft: 12,
+                      paddingRight: 28,
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      cursor: 'pointer',
+                      background: 'var(--bg-subtle)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      fontWeight: 500,
+                      color: 'var(--ink-secondary)',
+                    }}
+                  >
+                    <option value="" disabled hidden>Select</option>
+                    {ENTITY_TABS.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                      color: 'var(--ink-tertiary)',
+                    }}
+                  />
                 </div>
               </div>
 
               <div className="dd-cp-list-wrap">
                 <div className="dd-cp-list">
-                  {adding && (
+                  {entityType === '' ? (
+                    <motion.div className="dd-cp-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '60px 0' }}>
+                      <div className="dd-cp-empty-icon">
+                        <Columns size={20} />
+                      </div>
+                      <span className="dd-cp-empty-title">Select Entity Type</span>
+                      <span className="dd-cp-empty-sub">
+                        Please select an entity type from the dropdown above to view or configure its column schema.
+                      </span>
+                    </motion.div>
+                  ) : adding && (
                     <RowForm
                       initial={{ ...EMPTY_FORM, sortOrder: String(columns.length) }}
                       orgId={orgId}
@@ -182,7 +229,7 @@ export default function ColumnSchemaPage() {
                       onCancel={() => setAdding(false)}
                     />
                   )}
-                  {loading ? (
+                  {entityType !== '' && loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
                       <div key={i} className="dd-case-skel">
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -191,7 +238,7 @@ export default function ColumnSchemaPage() {
                         </div>
                       </div>
                     ))
-                  ) : columns.length === 0 && !adding ? (
+                  ) : entityType !== '' && columns.length === 0 && !adding ? (
                     <motion.div className="dd-cp-empty" variants={fadeIn} initial="hidden" animate="show">
                       <div className="dd-cp-empty-icon">
                         <Columns size={20} />
@@ -201,7 +248,7 @@ export default function ColumnSchemaPage() {
                         Add column names that appear in your CSV/Excel uploads.
                       </span>
                     </motion.div>
-                  ) : (
+                  ) : entityType !== '' && (
                     <AnimatePresence mode="popLayout">
                       {columns.map((col, idx) => (
                         <Fragment key={col.id}>

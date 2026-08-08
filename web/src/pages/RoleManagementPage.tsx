@@ -158,10 +158,13 @@ export default function RoleManagementPage() {
       </AnimatePresence>
 
       <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <h1 className="dd-page-title">Roles & Permissions</h1>
-          <span className="dd-page-context">
-            {!loading && roles.length > 0 ? `${roles.length} roles defined` : 'Manage access control'}
+        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span className="dd-page-context" style={{ padding: 0 }}>
+            {!loading ? (
+              <>You have <strong>{roles.length} roles</strong> defined for access control settings.</>
+            ) : (
+              'Manage access control'
+            )}
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

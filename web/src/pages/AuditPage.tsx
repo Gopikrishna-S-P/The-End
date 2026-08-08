@@ -174,12 +174,13 @@ export default function AuditPage() {
       </AnimatePresence>
 
       <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <h1 className="dd-page-title">Audit Log</h1>
-          <span className="dd-page-context">
-            {!loading && events.length > 0 
-              ? `${events.length.toLocaleString('en-IN')} total events recorded` 
-              : 'System activity trail'}
+        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span className="dd-page-context" style={{ padding: 0 }}>
+            {!loading ? (
+              <>You have <strong>{events.length.toLocaleString('en-IN')} total system events</strong> recorded in the audit trail.</>
+            ) : (
+              'System activity trail'
+            )}
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

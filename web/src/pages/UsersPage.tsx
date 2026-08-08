@@ -145,9 +145,11 @@ export default function UsersPage() {
   return (
     <div className="dd-page">
       <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <span className="dd-page-context">
-            {!loading && data && `${totalUsers.toLocaleString('en-IN')} total users`}
+        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span className="dd-page-context" style={{ padding: 0 }}>
+            {!loading && data && (
+              <>You have <strong>{totalUsers.toLocaleString('en-IN')} registered users</strong> active in the organization.</>
+            )}
           </span>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

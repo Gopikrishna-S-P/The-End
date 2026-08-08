@@ -10,7 +10,7 @@ import {
   File as FileIcon, AlertCircle, Trash2, Upload,
   ChevronRight, ChevronDown, CloudUpload,
   TableProperties, Building2, LayoutGrid,
-  CheckCircle2, Clock, ShieldAlert
+  CheckCircle2, Clock, ShieldAlert, Search, X
 } from 'lucide-react';
 import { UploadsModal, UploadStatusBadge } from './UploadsModal';
 import { Pagination } from '../components/Pagination';
@@ -102,6 +102,8 @@ export default function UploadsPage() {
   const canUpload = hasPermission('FILE_UPLOAD');
   const canView = hasAnyRole(...UPLOAD_READER_ROLES);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const basePath = location.pathname.startsWith('/bank') ? '/bank'
     : location.pathname.startsWith('/admin') ? '/admin' : '/app';
@@ -187,6 +189,17 @@ export default function UploadsPage() {
   const failedAnim = useCountUp(failedRowsCount);
   const filesAnim = useCountUp(totalElements);
 
+  const filteredUploads = useMemo(() => {
+    if (!search.trim()) return uploads;
+    const term = search.toLowerCase();
+    return uploads.filter(u => 
+      u.originalFilename?.toLowerCase().includes(term) ||
+      u.uploadType?.toLowerCase().includes(term)
+    );
+  }, [uploads, search]);
+
+
+
   if (!canView) {
     return (
       <div className="db-root">
@@ -221,76 +234,99 @@ export default function UploadsPage() {
           {/* ── Uploads List ── */}
           <div className="db-grid">
             <div className="db-span-12">
-              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', paddingTop: 16 }}>
-                {(isPlatformAdmin || (totalPages > 1 && !loading)) && (
-                  <header className="db-card-head" style={{ alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '6px 0 12px 0', flexWrap: 'wrap', gap: 16 }}>
-                    <div style={{ flex: 1, display: 'flex' }}>
-                      {isPlatformAdmin && (
-                        <div style={{ display: 'flex', gap: 16, flex: 1, alignItems: 'flex-start' }}>
-                          {!confirmedReason ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                  <ShieldAlert size={15} style={{ color: 'var(--warning)' }} />
-                                  <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
-                                </div>
-                                <p style={{ fontSize: 12, color: 'var(--ink-secondary)', margin: 0 }}>
-                                  All access to tenant data is recorded in the audit trail. Select an organization and reference a ticket or support case.
-                                </p>
-                              </div>
-                              <form
-                                style={{ display: 'flex', gap: 8, alignItems: 'center' }}
-                                onSubmit={e => {
-                                  e.preventDefault();
-                                  setReasonGranted({ orgId: selectedOrgId, text: accessReason.trim() });
-                                }}
-                              >
-                                <input
-                                  className="ds-input"
-                                  style={{ flex: 1, maxWidth: 500, minWidth: 280, height: 32, fontSize: 13 }}
-                                  placeholder="Reason for audit log..."
-                                  value={accessReason}
-                                  onChange={e => setReasonDraft({ orgId: selectedOrgId, text: e.target.value })}
-                                />
-                                <button type="submit" className="ds-btn is-primary" style={{ height: 32, padding: '0 12px', fontSize: 13, flexShrink: 0 }} disabled={!accessReason.trim()}>
-                                  Confirm
-                                </button>
-                              </form>
-                            </div>
-                          ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--success)', fontSize: 13, fontWeight: 500, paddingRight: 4, flex: 1, height: 32 }}>
-                              <ShieldAlert size={15} /> Access Confirmed
-                            </div>
-                          )}
-
-                          <div className="up-org-picker" style={{ margin: 0, height: 32, flexShrink: 0 }}>
-                            <Building2 size={13} className="up-org-icon" />
-                            <select
-                              value={selectedOrgId}
-                              onChange={e => setSelectedOrgId(e.target.value)}
-                              disabled={orgsLoading}
-                              className="up-org-select"
-                              style={{ height: '100%', minWidth: 160, fontSize: 13 }}
-                            >
-                              {orgsLoading && <option value="">Loading…</option>}
-                              {orgs.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
-                            </select>
-                            <ChevronDown size={13} className="up-org-caret" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {totalPages > 1 && !loading && (
-                      <Pagination
-                        embedded
-                        currentPage={page}
-                        totalPages={totalPages}
-                        onPageChange={setPage}
-                        totalElements={totalElements}
-                        itemLabel="files"
-                      />
+              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', paddingTop: 0 }}>
+                <header className="db-card-head" style={{ borderBottom: 'none', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>Uploads</h3>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+                    {isPlatformAdmin && (
+                      <div className="up-org-picker" style={{ margin: 0, height: 34, flexShrink: 0 }}>
+                        <Building2 size={13} className="up-org-icon" />
+                        <select
+                          value={selectedOrgId}
+                          onChange={e => setSelectedOrgId(e.target.value)}
+                          disabled={orgsLoading}
+                          className="up-org-select"
+                          style={{ height: '100%', minWidth: 160, fontSize: 13 }}
+                        >
+                          {orgsLoading && <option value="">Loading…</option>}
+                          {orgs.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
+                        </select>
+                        <ChevronDown size={13} className="up-org-caret" />
+                      </div>
                     )}
-                  </header>
+
+                    <AnimatePresence initial={false}>
+                      {isSearchOpen ? (
+                        <motion.div
+                          initial={{ width: 0, opacity: 0 }}
+                          animate={{ width: 220, opacity: 1 }}
+                          exit={{ width: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden' }}
+                        >
+                          <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                          <input
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Search file name…"
+                            style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
+                          />
+                          <button type="button" onClick={() => { setSearch(''); setIsSearchOpen(false); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex', color: 'var(--ink-tertiary)', flexShrink: 0 }}>
+                            <X size={14} />
+                          </button>
+                        </motion.div>
+                      ) : (
+                        <motion.button
+                          type="button"
+                          style={{ 
+                            width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8,
+                            cursor: 'pointer', color: 'var(--ink-secondary)'
+                          }}
+                          onClick={() => setIsSearchOpen(true)}
+                          title="Search"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <Search size={14} />
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </header>
+
+                {isPlatformAdmin && !confirmedReason && (
+                  <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <ShieldAlert size={15} style={{ color: 'var(--warning)' }} />
+                        <strong style={{ fontSize: 14 }}>Reason required to view another organization's data</strong>
+                      </div>
+                      <p style={{ fontSize: 12, color: 'var(--ink-secondary)', margin: 0 }}>
+                        All access to tenant data is recorded in the audit trail. Select an organization and reference a ticket or support case.
+                      </p>
+                    </div>
+                    <form
+                      style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+                      onSubmit={e => {
+                        e.preventDefault();
+                        setReasonGranted({ orgId: selectedOrgId, text: accessReason.trim() });
+                      }}
+                    >
+                      <input
+                        className="ds-input"
+                        style={{ flex: 1, maxWidth: 500, minWidth: 280, height: 32, fontSize: 13 }}
+                        placeholder="Reason for audit log..."
+                        value={accessReason}
+                        onChange={e => setReasonDraft({ orgId: selectedOrgId, text: e.target.value })}
+                      />
+                      <button type="submit" className="ds-btn is-primary" style={{ height: 32, padding: '0 12px', fontSize: 13, flexShrink: 0 }} disabled={!accessReason.trim()}>
+                        Confirm
+                      </button>
+                    </form>
+                  </div>
                 )}
 
                 <div className="db-card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: 0 }}>
@@ -306,16 +342,16 @@ export default function UploadsPage() {
                     </div>
                   ))}
                 </div>
-              ) : uploads.length === 0 ? (
-                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
-                  <CloudUpload size={32} className="ds-empty-icon" />
-                  <span className="ds-empty-title">No uploads yet</span>
-                  <span className="ds-empty-sub">Upload your first allocation file to start importing rows.</span>
-                </motion.div>
-              ) : (
-                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
-                  <motion.div variants={stagger} initial="hidden" animate="show">
-                    {uploads.map((u, idx) => {
+                  ) : filteredUploads.length === 0 ? (
+                    <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                      <CloudUpload size={32} className="ds-empty-icon" />
+                      <span className="ds-empty-title">No uploads match your search</span>
+                      <span className="ds-empty-sub">Try searching with a different file name.</span>
+                    </motion.div>
+                  ) : (
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+                      <motion.div variants={stagger} initial="hidden" animate="show">
+                        {filteredUploads.map((u, idx) => {
                       const isFailed = u.status === 'FAILED' || (u.failedRows ?? 0) > 0;
                       return (
                           <motion.button key={u.id} variants={fadeUp}
@@ -379,6 +415,25 @@ export default function UploadsPage() {
                 </div>
               )}
                 </div>
+
+                {(totalPages ?? 0) > 1 && (
+                  <footer className="up-pagination" style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    <span className="up-page-meta" style={{ fontSize: 13, color: 'var(--ink-secondary)' }}>
+                      Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
+                      {' · '}<strong>{totalElements.toLocaleString('en-IN')}</strong> files
+                    </span>
+                    <div style={{ marginLeft: 'auto' }}>
+                      <Pagination
+                        embedded
+                        currentPage={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        totalElements={totalElements}
+                        itemLabel="files"
+                      />
+                    </div>
+                  </footer>
+                )}
               </motion.section>
             </div>
           </div>

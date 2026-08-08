@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Flag, Plus, Loader2, AlertCircle, X, Building2, Globe, ChevronDown, SquarePen, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { featureFlagsApi } from '../api/featureFlagsApi';
@@ -31,7 +32,9 @@ type NewFlagScope = 'GLOBAL' | 'ORG';
 type Tab = 'global' | 'overrides';
 
 export default function FeatureFlagsPage() {
-  const [tab, setTab]                   = useState<Tab>('global');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') as Tab) || 'global';
+  const setTab = (t: Tab) => setSearchParams({ tab: t });
   const [flags, setFlags]               = useState<FeatureFlag[]>([]);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState<string | null>(null);
@@ -186,22 +189,20 @@ export default function FeatureFlagsPage() {
       <div className="db-content">
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
-          <motion.div variants={fadeUp} className="db-page-header">
+          <motion.div variants={fadeUp} className="db-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
               Manage feature flags for the platform and individual organizations
             </p>
-            <div className="db-kpi-toggle" role="tablist" aria-label="Feature flags view">
-              <button type="button" onClick={() => setTab('global')}
-                className={`db-kpi-toggle-btn${tab === 'global' ? ' is-active' : ''}`}
-                role="tab" aria-selected={tab === 'global'}>
-                Global Flags
-              </button>
-              <button type="button" onClick={() => setTab('overrides')}
-                className={`db-kpi-toggle-btn${tab === 'overrides' ? ' is-active' : ''}`}
-                role="tab" aria-selected={tab === 'overrides'}>
-                Organization Overrides
-              </button>
-            </div>
+            {tab === 'overrides' && (
+              <div className="ps-select-wrap" style={{ maxWidth: 340, minWidth: 240 }}>
+                <select value={selectedOrgId} onChange={e => setSelectedOrgId(e.target.value)}
+                  className="ds-select" style={{ width: '100%' }}>
+                  <option value="">Select an organization…</option>
+                  {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+              </div>
+            )}
           </motion.div>
 
           {showAdd && (
@@ -353,14 +354,6 @@ export default function FeatureFlagsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="ps-select-wrap" style={{ maxWidth: 340, marginBottom: 12 }}>
-                    <select value={selectedOrgId} onChange={e => setSelectedOrgId(e.target.value)}
-                      className="ds-select" style={{ width: '100%' }}>
-                      <option value="">Select an organization…</option>
-                      {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                    </select>
-                    <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
-                  </div>
                   <div className="ds-table-card">
                     <div className="ds-table-wrap">
                       <table className="ds-table is-no-row-hover ps-table">

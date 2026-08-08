@@ -75,38 +75,35 @@ export default function RestructureProposalsPage() {
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
-          <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Restructure Proposals</h1>
-              {!loading && totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
-              )}
-            </div>
+          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            {!loading && (
+              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+                You have <strong>{totalElements.toLocaleString('en-IN')} restructure proposals</strong> registered on file.
+              </p>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select
+              className="ds-select"
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value as RestructureStatus | ''); setPage(0); }}
+              style={{ height: 36 }}
+            >
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            {canDraft && (
+              <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
+                <Plus size={14} /> Draft proposal
+              </button>
+            )}
+            <button type="button" onClick={fetchProposals} disabled={loading} className="ds-btn is-secondary" style={{ height: 36 }} aria-label="Refresh" title="Refresh">
+              <RefreshCcw size={14} className={loading ? 'ds-spin' : ''} />
+            </button>
           </div>
         </div>
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(proposals.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <select
-                  className="ds-select"
-                  value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value as RestructureStatus | ''); setPage(0); }}
-                  style={{ height: 36 }}
-                >
-                  {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                {canDraft && (
-                  <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
-                    <Plus size={14} /> Draft proposal
-                  </button>
-                )}
-                <button type="button" onClick={fetchProposals} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                  <RefreshCcw size={14} className={loading ? 'ds-spin' : ''} />
-                </button>
-              </div>
-            </header>
 
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
               {loadError ? (
@@ -135,11 +132,6 @@ export default function RestructureProposalsPage() {
                   <span className="ds-empty-sub">
                     {statusFilter ? 'No proposals match this status filter.' : 'Draft an EMI restructure to renegotiate terms with a struggling but cooperative borrower.'}
                   </span>
-                  {canDraft && !statusFilter && (
-                    <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                      <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">Draft proposal</button>
-                    </div>
-                  )}
                 </motion.div>
               ) : (
                 <motion.div>

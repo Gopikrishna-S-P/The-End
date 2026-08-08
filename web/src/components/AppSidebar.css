@@ -866,20 +866,30 @@
 .asb-submenu {
   list-style: none;
   padding-left: 20px;
-  margin: 4px 0 8px 0;
+  margin: 2px 0 4px 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0px;
 }
 .asb-sub-item.asb-nav-item {
   min-height: 28px;
   height: 28px;
   font-size: 12px;
   padding: 2px 8px;
+  margin: 0;
 }
 .asb-sub-item .asb-nav-icon {
   margin-right: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.asb-root .asb-sub-item.is-active,
+.asb-root .asb-sub-item.is-active:hover {
+  background: var(--brand-subtle);
+  color: var(--ink-solid-hover, var(--brand));
+  font-weight: 600;
+}
+.asb-root .asb-sub-item.is-active .asb-nav-icon {
+  color: var(--brand);
 }

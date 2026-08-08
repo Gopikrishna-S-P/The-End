@@ -195,11 +195,7 @@
   background: transparent;
 }
 
-.db-root .ds-empty-icon {
-  background: var(--bg-hover);
-  border: none;
-  color: var(--text-secondary);
-}
+
 
 /* ── Content area ── */
 

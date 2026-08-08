@@ -149,7 +149,7 @@ function RankingsTab({ organizationId }: { organizationId: string }) {
         {loading && <Loader2 size={14} className="ds-spin" />}
       </div>
       {error && <ErrorBanner text={error} />}
-      {!loading && !error && rows.length === 0 && <EmptyNote text="No agent snapshots for this date yet." />}
+      {!loading && !error && rows.length === 0 && null}
       {rows.length > 0 && (
         <DataTable
           keyFn={r => r.agentId as string}

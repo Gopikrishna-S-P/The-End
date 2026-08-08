@@ -163,7 +163,7 @@ export default function AssignCasePanel({
                   const isPicked = picked.has(c.id);
                   return (
                     <motion.div key={c.id} variants={fadeUp}
-                      className={`dd-case-row${isPicked ? ' is-picked' : ''}`}
+                      className={`db-att-row dd-case-row${isPicked ? ' is-picked' : ''}`}
                       onClick={canPick ? (e) => { ripple(e as any); toggle(c.id); } : undefined}
                       style={{ cursor: canPick ? 'pointer' : 'default', opacity: canPick ? 1 : 0.6, boxShadow: isPicked ? 'none' : undefined }}
                     >

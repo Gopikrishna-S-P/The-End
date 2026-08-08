@@ -71,8 +71,8 @@ export function UsersTable({
 
   return (
     <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <header className="db-card-head" style={{ borderBottom: 'none', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2 className="db-card-title">Directory</h2>
+      <header className="db-card-head" style={{ borderBottom: 'none', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>Directory</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <AnimatePresence initial={false}>
             {isSearchOpen ? (
@@ -81,9 +81,9 @@ export function UsersTable({
                 animate={{ width: 220, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0 8px', height: 30, overflow: 'hidden' }}
+                style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden' }}
               >
-                <Search size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
                 <input
                   ref={inputRef}
                   type="search"
@@ -92,7 +92,7 @@ export function UsersTable({
                   placeholder="Search name or email…"
                   style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
                 />
-                <button type="button" onClick={() => { onClearSearch(); setIsSearchOpen(false); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex', color: 'var(--text-tertiary)', flexShrink: 0 }}>
+                <button type="button" onClick={() => { onClearSearch(); setIsSearchOpen(false); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex', color: 'var(--ink-tertiary)', flexShrink: 0 }}>
                   <X size={14} />
                 </button>
               </motion.div>
@@ -100,9 +100,9 @@ export function UsersTable({
               <motion.button
                 type="button"
                 style={{ 
-                  width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
-                  boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)'
+                  width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8,
+                  cursor: 'pointer', color: 'var(--ink-secondary)'
                 }}
                 onClick={() => setIsSearchOpen(true)}
                 title="Search"
@@ -186,39 +186,23 @@ export function UsersTable({
                     </div>
                     <div className="dd-case-right" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {canCreate && (
-                        <button type="button" onClick={() => onEdit(u)} 
-                          style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)', fontSize: 13, fontWeight: 500 }}>
-                          <SquarePen size={14} color="var(--ink-secondary)" /> Edit
+                        <button type="button" onClick={() => onEdit(u)} className="ds-table-row-action" title="Edit" aria-label="Edit">
+                          <SquarePen size={14} />
                         </button>
                       )}
                       {canCreate && (
-                        <button type="button" onClick={() => onPermissions(u)} 
-                          style={{ height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)', fontSize: 13, fontWeight: 500 }}>
-                          <Lock size={14} color="var(--ink-secondary)" /> Access
+                        <button type="button" onClick={() => onPermissions(u)} className="ds-table-row-action" title="Access" aria-label="Access">
+                          <Lock size={14} />
                         </button>
                       )}
                       {canCreate && (
-                        <button type="button" onClick={() => onToggleEnabled(u)} 
-                          style={{ 
-                            height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, 
-                            backgroundColor: u.enabled ? 'var(--danger-subtle)' : 'var(--brand-subtle)', 
-                            border: `1px solid ${u.enabled ? 'var(--danger-border)' : 'var(--success-border)'}`, 
-                            borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', 
-                            color: u.enabled ? 'var(--danger-solid)' : 'var(--brand)', fontSize: 13, fontWeight: 500 
-                          }}>
-                          {u.enabled ? <ToggleRight size={16} color="var(--danger-solid)" /> : <ToggleLeft size={16} color="var(--brand)" />}
-                          {u.enabled ? 'Disable' : 'Enable'}
+                        <button type="button" onClick={() => onToggleEnabled(u)} className="ds-table-row-action" title={u.enabled ? 'Disable' : 'Enable'} aria-label={u.enabled ? 'Disable' : 'Enable'}>
+                          {u.enabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
                         </button>
                       )}
                       {canDelete && (
-                        <button type="button" onClick={() => onRemove(u)} 
-                          style={{ 
-                            height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, 
-                            backgroundColor: 'var(--danger-subtle)', border: '1px solid var(--danger-border)', 
-                            borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: 'pointer', 
-                            color: 'var(--danger-solid)', fontSize: 13, fontWeight: 500 
-                          }}>
-                          <Trash2 size={14} color="var(--danger-solid)" /> Delete
+                        <button type="button" onClick={() => onRemove(u)} className="ds-table-row-action" title="Delete" aria-label="Delete">
+                          <Trash2 size={14} />
                         </button>
                       )}
                     </div>

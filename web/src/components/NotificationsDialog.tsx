@@ -166,7 +166,6 @@ function NotifRow({ notif, onNavigate }: { notif: Notification; onNavigate: (to:
       background: notif.read ? 'transparent' : 'color-mix(in srgb, var(--ink-solid) 2%, transparent)',
       borderRadius: 12, border: '1px solid var(--border-subtle)', position: 'relative',
     }}>
-      {!notif.read && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color, borderRadius: '12px 0 0 12px' }} />}
 
       <div style={{ width: 32, height: 32, borderRadius: '50%', background: `color-mix(in srgb, ${color} 15%, transparent)`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icon size={15} />

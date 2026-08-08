@@ -54,3 +54,8 @@
   gap: 8px;
   margin-top: 4px;
 }
+
+svg.ds-empty-icon {
+  padding: 13px;
+  box-sizing: border-box;
+}

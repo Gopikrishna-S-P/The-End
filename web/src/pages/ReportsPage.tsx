@@ -179,9 +179,6 @@ export default function ReportsPage() {
             </button>
           </motion.div>
 
-          <motion.div variants={fadeUp}>
-            <ReportsAnalyticsPanel organizationId={organizationId} />
-          </motion.div>
 
             <motion.section variants={fadeUp} className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', ...(jobs.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
                 <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as RMouseEvent } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Lock, LogOut, X as XIcon, PanelLeft, ChevronDown, ShieldCheck, Building2, FileClock, MessageSquareText, MessageSquareWarning, UserPlus, Users, ClipboardList, CalendarDays, FileText, Handshake } from 'lucide-react';
+import { Lock, LogOut, X as XIcon, PanelLeft, ChevronDown, ShieldCheck, Building2, FileClock, MessageSquareText, MessageSquareWarning, UserPlus, Users, ClipboardList, CalendarDays, FileText, Handshake, Globe, BookOpen } from 'lucide-react';
 import { Logo } from './Logo';
 import { prefetchRoute } from '../utils/routePrefetch';
 import { useT } from '../utils/i18n';
@@ -83,6 +83,22 @@ export default function AppSidebar({
   useEffect(() => {
     if (location.pathname === '/platform/setup') {
       setPlatformSetupExpanded(true);
+    }
+  }, [location.pathname]);
+
+  const [featureFlagsExpanded, setFeatureFlagsExpanded] = useState(location.pathname.startsWith('/platform/feature-flags'));
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/platform/feature-flags')) {
+      setFeatureFlagsExpanded(true);
+    }
+  }, [location.pathname]);
+
+  const [lucienExpanded, setLucienExpanded] = useState(location.pathname.startsWith('/app/lucien/admin'));
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/app/lucien/admin')) {
+      setLucienExpanded(true);
     }
   }, [location.pathname]);
 
@@ -216,12 +232,18 @@ export default function AppSidebar({
                   {section.items.map(item => {
                     const isActive = computeActive(item.to);
                     const label = t(item.label);
+                    const isParentExpanded = (item.label === 'Platform Setup' && platformSetupExpanded) ||
+                                             (item.label === 'User Setup' && userSetupExpanded) ||
+                                             (item.label === 'Loans' && loanExpanded) ||
+                                             (item.label === 'Feature Flags' && featureFlagsExpanded) ||
+                                             (item.label === 'Lucien' && lucienExpanded);
+                    const shouldShowActive = isActive && !isParentExpanded;
 
                     return (
                       <li key={item.to} style={{ position: 'relative' }}>
                         <NavLink
                           to={item.to}
-                          className={`asb-nav-item${isActive ? ' is-active' : ''}`}
+                          className={`asb-nav-item${shouldShowActive ? ' is-active' : ''}`}
                           aria-current={isActive ? 'page' : undefined}
                           aria-label={collapsed ? label : undefined}
                           onClick={() => {
@@ -235,11 +257,17 @@ export default function AppSidebar({
                             if (item.label === 'Platform Setup') {
                               setPlatformSetupExpanded(prev => !prev);
                             }
+                            if (item.label === 'Feature Flags') {
+                              setFeatureFlagsExpanded(prev => !prev);
+                            }
+                            if (item.label === 'Lucien') {
+                              setLucienExpanded(prev => !prev);
+                            }
                           }}
                           onMouseEnter={(e) => { prefetchRoute(item.to); if (collapsed) showTip(e, label); }}
                           onMouseLeave={hideTip}
                           onFocus={() => prefetchRoute(item.to)}
-                          style={(item.label === 'User Setup' || item.label === 'Loans' || item.label === 'Platform Setup') && expanded ? { paddingRight: 40 } : undefined}
+                          style={(item.label === 'User Setup' || item.label === 'Loans' || item.label === 'Platform Setup' || item.label === 'Feature Flags' || item.label === 'Lucien') && expanded ? { paddingRight: 40 } : undefined}
                         >
                            <span className="asb-nav-icon">
                              <item.icon size={14} aria-hidden="true" />
@@ -261,7 +289,7 @@ export default function AppSidebar({
                             </>
                            )}
                         </NavLink>
-                        {(item.label === 'User Setup' || item.label === 'Loans' || item.label === 'Platform Setup') && expanded && (
+                        {(item.label === 'User Setup' || item.label === 'Loans' || item.label === 'Platform Setup' || item.label === 'Feature Flags' || item.label === 'Lucien') && expanded && (
                           <button
                             type="button"
                             className="asb-chevron-btn"
@@ -271,9 +299,11 @@ export default function AppSidebar({
                               if (item.label === 'User Setup') setUserSetupExpanded(!userSetupExpanded);
                               if (item.label === 'Loans') setLoanExpanded(!loanExpanded);
                               if (item.label === 'Platform Setup') setPlatformSetupExpanded(!platformSetupExpanded);
+                              if (item.label === 'Feature Flags') setFeatureFlagsExpanded(!featureFlagsExpanded);
+                              if (item.label === 'Lucien') setLucienExpanded(!lucienExpanded);
                             }}
                           >
-                            <ChevronDown size={14} style={{ transform: (item.label === 'User Setup' ? userSetupExpanded : item.label === 'Loans' ? loanExpanded : platformSetupExpanded) ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                            <ChevronDown size={14} style={{ transform: (item.label === 'User Setup' ? userSetupExpanded : item.label === 'Loans' ? loanExpanded : item.label === 'Platform Setup' ? platformSetupExpanded : item.label === 'Feature Flags' ? featureFlagsExpanded : lucienExpanded) ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                           </button>
                         )}
                         {item.label === 'User Setup' && expanded && userSetupExpanded && (
@@ -388,6 +418,46 @@ export default function AppSidebar({
                                   <UserPlus size={12} />
                                 </span>
                                 <span className="asb-nav-label">Admin Users</span>
+                              </NavLink>
+                            </li>
+                          </ul>
+                        )}
+                        {item.label === 'Feature Flags' && expanded && featureFlagsExpanded && (
+                          <ul className="asb-submenu">
+                            <li>
+                              <NavLink to="/platform/feature-flags" end className={({ isActive }) => `asb-nav-item asb-sub-item${isActive && !location.search.includes('tab=overrides') ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <Globe size={12} />
+                                </span>
+                                <span className="asb-nav-label">Global Flags</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/platform/feature-flags?tab=overrides" className={({ isActive }) => `asb-nav-item asb-sub-item${location.search.includes('tab=overrides') ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <Building2 size={12} />
+                                </span>
+                                <span className="asb-nav-label">Organization Overrides</span>
+                              </NavLink>
+                            </li>
+                          </ul>
+                        )}
+                        {item.label === 'Lucien' && expanded && lucienExpanded && (
+                          <ul className="asb-submenu">
+                            <li>
+                              <NavLink to="/app/lucien/admin" end className={({ isActive }) => `asb-nav-item asb-sub-item${isActive && !location.search.includes('tab=rag') ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <MessageSquareText size={12} />
+                                </span>
+                                <span className="asb-nav-label">Prompts</span>
+                              </NavLink>
+                            </li>
+                            <li>
+                              <NavLink to="/app/lucien/admin?tab=rag" className={({ isActive }) => `asb-nav-item asb-sub-item${location.search.includes('tab=rag') ? ' is-active' : ''}`}>
+                                <span className="asb-nav-icon">
+                                  <BookOpen size={12} />
+                                </span>
+                                <span className="asb-nav-label">Knowledge Base</span>
                               </NavLink>
                             </li>
                           </ul>

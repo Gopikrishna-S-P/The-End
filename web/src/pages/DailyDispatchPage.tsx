@@ -212,12 +212,12 @@ export default function DailyDispatchPage() {
     <div className="dd-page">
       {/* ── Page Header ── */}
       <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <span className="dd-page-context">
+        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span className="dd-page-context" style={{ padding: 0 }}>
             {agentFullName ? (
-              <>Field Officer: <strong>{agentFullName}</strong></>
+              <>Daily case dispatch and route planning for field officer <strong>{agentFullName}</strong>.</>
             ) : (
-              'Select a Field Officer'
+              'Select a field officer to dispatch cases and plan routes.'
             )}
             {canDispatch && orgDispatched != null && (
               <span className="dd-cp-tab-count" style={{ marginLeft: 10 }} title="Cases dispatched org-wide on this date">

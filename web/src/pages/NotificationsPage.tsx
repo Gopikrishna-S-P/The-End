@@ -190,7 +190,6 @@ function NotifRow({ notif, color, onNavigate }: NotifRowProps) {
       borderRadius: 12, border: '1px solid var(--border-subtle)',
       position: 'relative', overflow: 'hidden'
     }}>
-      {!notif.read && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color }} />}
       
       <div style={{ width: 36, height: 36, borderRadius: '50%', background: `color-mix(in srgb, ${color} 15%, transparent)`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icon size={16} />

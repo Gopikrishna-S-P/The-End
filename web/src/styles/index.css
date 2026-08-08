@@ -170,3 +170,20 @@ var {
   font-variant-numeric: tabular-nums;
 }
 .up-page-meta strong { color: var(--text-primary); font-weight: 600; }
+
+/* Apply consistent backdrop blur styling to all popup, modal, and drawer backdrops */
+.asb-signout-overlay,
+.app-topbar-custom-backdrop,
+.ps-dialog-backdrop,
+.app-activity-backdrop,
+.app-feedback-backdrop,
+.app-prefs-backdrop,
+.app-pagehelp-backdrop,
+.app-shortcuts-backdrop,
+.app-split-pane-backdrop,
+.app-tour-backdrop,
+.app-whatsnew-backdrop,
+.access-denied-backdrop {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}

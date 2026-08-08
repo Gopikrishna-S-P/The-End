@@ -134,7 +134,7 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
               <motion.div variants={stagger} initial="hidden" animate="show">
                 {filtered.map(c => (
                   <motion.div key={c.id} variants={fadeUp}
-                    className="dd-case-row"
+                    className="db-att-row dd-case-row"
                   >
                     <div className="dd-case-info">
                       <span className="dd-case-borrower">{c.borrowerName || '—'}</span>

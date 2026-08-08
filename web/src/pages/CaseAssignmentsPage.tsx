@@ -6,7 +6,7 @@ import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import axiosInstance from '../api/axiosInstance';
 import type { AllocationResponse, UserResponse, ApiResponse } from '../types';
-import { CheckCircle2, AlertCircle, X, Search, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, X, Search, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import ReassignModal from '../components/ReassignModal';
 import AssignFoPanel from './AssignFoPanel';
 import AssignCasePanel from './AssignCasePanel';
@@ -32,6 +32,7 @@ export default function CaseAssignmentsPage() {
   const [fosStats, setFosStats] = useState<Map<string, { count: number; value: number; pending: number }>>(new Map());
   const [selectedFo, setSelectedFo] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showOfficerPanel, setShowOfficerPanel] = useState(false);
   const [feedback,   setFeedback]   = useState<{ kind: 'ok' | 'err'; msg: string; sub?: string; onRetry?: () => void } | null>(null);
 
   const [reassignAssignmentId, setReassignAssignmentId] = useState<string | null>(null);
@@ -141,15 +142,21 @@ export default function CaseAssignmentsPage() {
   return (
     <div className="dd-page">
       <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <h1 className="dd-page-title">Case Assignments</h1>
-          <span className="dd-page-context">
+        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <span className="dd-page-context" style={{ padding: 0 }}>
             {agentFullName ? (
-              <>Field Officer: <strong>{agentFullName}</strong></>
+              <>Managing active case assignments for field officer <strong>{agentFullName}</strong>.</>
             ) : (
-              'Select a Field Officer'
+              'Select a field officer to manage and assign their active cases.'
             )}
           </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button type="button" onClick={() => setShowOfficerPanel(v => !v)}
+            className="ds-btn is-primary" style={{ height: 36 }}>
+            Executive
+            {showOfficerPanel ? <ChevronUp size={14} style={{ marginLeft: 6 }} /> : <ChevronDown size={14} style={{ marginLeft: 6 }} />}
+          </button>
         </div>
       </div>
 
@@ -187,16 +194,9 @@ export default function CaseAssignmentsPage() {
 
       <div className="dd-main-container">
         <div className="dd-grid">
-          <div className="dd-agent-panel">
-            <AssignFoPanel
-              fos={fos} fosLoading={fosLoading} fosStats={fosStats}
-              selectedFo={selectedFo} onSelect={setSelectedFo}
-            />
-          </div>
-
           <div className="dd-case-panel">
             <div className="ds-card dd-cases-card is-overflow-hidden">
-              <div className="dd-cases-head">
+              <div className="dd-cases-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="dd-cp-tabs">
                   <button type="button" onClick={() => setActiveTab('assign')} className={`dd-cp-tab${activeTab === 'assign' ? ' is-active' : ''}`}>
                     Assign New
@@ -264,6 +264,23 @@ export default function CaseAssignmentsPage() {
                 )}
             </div>
           </div>
+          <AnimatePresence>
+            {showOfficerPanel && (
+              <motion.div
+                key="agent-panel"
+                className="dd-agent-panel"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <AssignFoPanel
+                  fos={fos} fosLoading={fosLoading} fosStats={fosStats}
+                  selectedFo={selectedFo} onSelect={setSelectedFo}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
