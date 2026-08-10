@@ -10,7 +10,7 @@ import { assignmentsApi } from '../api/assignmentsApi';
 import type { UserResponse, AllocationResponse, OptimizedAssignmentOrderResponse } from '../types';
 import {
   CheckCircle2, AlertCircle, X,
-  RefreshCw, Send, ChevronDown, ChevronUp, CalendarRange,
+  RefreshCw, Send, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import DispatchAgentPanel from './DispatchAgentPanel';
 import DispatchCasePanel, { resolveAmount } from './DispatchCasePanel';
@@ -228,10 +228,6 @@ export default function DailyDispatchPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={() => navigate('/app/calendar')}
-            className="ds-btn is-secondary" title="Holiday calendar" aria-label="Holiday calendar">
-            <CalendarRange size={14} />
-          </button>
           <button type="button" onClick={() => setShowOfficerPanel(v => !v)}
             className="ds-btn is-primary">
             Executive
