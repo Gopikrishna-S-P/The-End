@@ -136,34 +136,6 @@ export default function HomeScreen() {
     <Screen onRefresh={onRefresh} refreshing={refreshing} padded={false} edges={['left', 'right']}>
       <StatusBar style="dark" />
       
-      {/* Top Background Pattern (Dot Grid) */}
-      <View style={{ position: 'absolute', top: insets.top + 100, right: 20, opacity: 0.2 }}>
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
-        </View>
-      </View>
-
       <View style={{ paddingHorizontal: spacing.s4, paddingTop: insets.top + spacing.s4, paddingBottom: spacing.s2 }}>
         {/* Header row: Logo on the left, Icons (Bell & Avatar) on the right */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s5 }}>
