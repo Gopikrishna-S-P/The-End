@@ -176,7 +176,18 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={{ marginBottom: spacing.s6 }}>
+        <View style={{ marginBottom: spacing.s6, position: 'relative' }}>
+          {/* Exact Dot Pattern (4x4) */}
+          <View style={{ position: 'absolute', top: 0, right: 0 }}>
+            {[0, 1, 2, 3].map(row => (
+              <View key={`row-${row}`} style={{ flexDirection: 'row', gap: 6, marginBottom: row < 3 ? 6 : 0 }}>
+                {[0, 1, 2, 3].map(col => (
+                  <View key={`col-${col}`} style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#CBE1D4' }}/>
+                ))}
+              </View>
+            ))}
+          </View>
+          
           <Text variant="body" style={{ color: '#4B5563', marginBottom: 2 }}>Welcome back,</Text>
           <Text 
             style={{ 
@@ -265,8 +276,8 @@ export default function HomeScreen() {
 
         {/* Stat Cards */}
         <View style={{ flexDirection: 'row', gap: spacing.s3, marginTop: spacing.s5 }}>
-          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
-            <View style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: '#ECFDF5', opacity: 0.5 }} />
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2, overflow: 'hidden' }}>
+            <View style={{ position: 'absolute', bottom: -30, right: -40, width: '150%', height: 80, borderRadius: 100, backgroundColor: '#F0FDF4', transform: [{ rotate: '-15deg' }] }} />
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
               <IndianRupee size={20} color="#0AA550" />
             </View>
@@ -279,8 +290,8 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
-            <View style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: '#ECFDF5', opacity: 0.5 }} />
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2, overflow: 'hidden' }}>
+            <View style={{ position: 'absolute', bottom: -30, right: -40, width: '150%', height: 80, borderRadius: 100, backgroundColor: '#F0FDF4', transform: [{ rotate: '-15deg' }] }} />
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
               <Handshake size={20} color="#0AA550" />
             </View>
