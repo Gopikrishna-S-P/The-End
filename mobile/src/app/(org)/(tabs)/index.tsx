@@ -169,7 +169,7 @@ export default function HomeScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s5 }}>
           <Image 
             source={require('../../../../assets/images/logo.png')} 
-            style={{ width: 120, height: 32, resizeMode: 'contain', marginLeft: -spacing.s5, tintColor: '#0AA550' }} 
+            style={{ width: 120, height: 32, resizeMode: 'contain', marginLeft: -spacing.s5 }} 
           />
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s4 }}>
