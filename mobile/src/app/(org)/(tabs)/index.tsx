@@ -194,6 +194,7 @@ export default function HomeScreen() {
               color: '#0AA550', 
               fontFamily: 'Inter_700Bold', 
               fontSize: 32,
+              lineHeight: 40,
               letterSpacing: -0.5
             }}
           >
