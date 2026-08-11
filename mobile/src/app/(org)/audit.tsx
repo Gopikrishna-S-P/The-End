@@ -297,7 +297,7 @@ function ActivityFeed({
               const dotColor =
                 tone === 'success' ? colors.success :
                 tone === 'error'   ? colors.error   :
-                tone === 'warning' ? (colors.warning ?? '#B06000') :
+                tone === 'warning' ? (colors.warnInk ?? '#B06000') :
                 tone === 'info'    ? colors.accent  : colors.ink3;
               
               const KindIcon = KIND_META[log.kind].Icon;
@@ -366,7 +366,7 @@ function ActivityFeed({
                         borderRadius: radius.sm,
                         padding: spacing.s2,
                         borderLeftWidth: 3,
-                        borderLeftColor: colors.warning ?? '#B06000',
+                        borderLeftColor: colors.warnInk ?? '#B06000',
                       }}>
                         <Text variant="caption" color="secondary">Reason: {log.reason}</Text>
                       </View>
