@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, ShoppingBag, Briefcase, Bell, User, ClipboardCheck, IndianRupee, MoreHorizontal } from 'lucide-react-native';
+import { Home, Banknote, Briefcase, Bell, User, ClipboardCheck, IndianRupee, MoreHorizontal } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { useNotificationsBadge } from '@/hooks/useNotificationsBadge';
 import { useAuth } from '@/context/AuthContext';
@@ -53,7 +53,7 @@ export default function TabsLayout() {
         name="loans"
         options={{
           title: 'Loans',
-          tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size - 3} />,
+          tabBarIcon: ({ color, size }) => <Banknote color={color} size={size - 3} />,
           href: isLeadOrAdmin ? undefined : null // hide if not lead/admin
         }}
       />
