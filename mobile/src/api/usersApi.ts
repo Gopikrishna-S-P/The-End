@@ -33,9 +33,10 @@ export const usersApi = {
     size = 20,
     sortBy = 'createdAt',
     sortDir: 'asc' | 'desc' = 'desc',
+    role?: string,
   ): Promise<PagedResponse<UserResponse>> => {
     const r = await axiosInstance.get<ApiResponse<PagedResponse<UserResponse>>>('/api/v1/users', {
-      params: { page, size, sortBy, sortDir },
+      params: { page, size, sortBy, sortDir, role },
     });
     return r.data.data;
   },

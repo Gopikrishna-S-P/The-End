@@ -29,4 +29,12 @@ export const allocationsApi = {
     });
     return response.data.data;
   },
+
+  bulkAssign: async (allocationIds: string[], assignedToUserId: string): Promise<AllocationResponse[]> => {
+    const response = await axiosInstance.post<ApiResponse<AllocationResponse[]>>('/api/v1/allocations/bulk-assign', {
+      allocationIds,
+      assignedToUserId,
+    });
+    return response.data.data;
+  },
 };
