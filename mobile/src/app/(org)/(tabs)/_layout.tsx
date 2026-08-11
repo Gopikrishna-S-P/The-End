@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Briefcase, Bell, User, ClipboardCheck, DollarSign, Menu } from 'lucide-react-native';
+import { Home, ShoppingBag, Briefcase, Bell, User, ClipboardCheck, IndianRupee, MoreHorizontal } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { useNotificationsBadge } from '@/hooks/useNotificationsBadge';
 import { useAuth } from '@/context/AuthContext';
@@ -33,8 +33,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{ 
-          title: 'Home', 
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size - 3} /> 
+          title: 'Home',
+          tabBarIcon: ({ color, size, focused }) => <Home color={color} fill={focused ? color : 'none'} size={size - 3} /> 
         }}
       />
 
@@ -53,7 +53,7 @@ export default function TabsLayout() {
         name="loans"
         options={{
           title: 'Loans',
-          tabBarIcon: ({ color, size }) => <Briefcase color={color} size={size - 3} />,
+          tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size - 3} />,
           href: isLeadOrAdmin ? undefined : null // hide if not lead/admin
         }}
       />
@@ -63,7 +63,7 @@ export default function TabsLayout() {
         name="collections"
         options={{
           title: 'Collections',
-          tabBarIcon: ({ color, size }) => <DollarSign color={color} size={size - 3} />,
+          tabBarIcon: ({ color, size }) => <IndianRupee color={color} size={size - 3} />,
           href: undefined // always shown
         }}
       />
@@ -83,7 +83,7 @@ export default function TabsLayout() {
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: ({ color, size }) => <Menu color={color} size={size - 3} />,
+          tabBarIcon: ({ color, size }) => <MoreHorizontal color={color} size={size - 3} />,
         }}
       />
 
