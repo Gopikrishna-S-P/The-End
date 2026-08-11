@@ -53,7 +53,7 @@ export default function MoreScreen() {
     {
       title: 'Field Operations',
       links: [
-        { label: "Today's Visits", path: '/(org)/today', icon: Calendar, roles: ['FO', 'CALLER', 'TRACER'] },
+        { label: "Today's Visits", path: '/(org)/(tabs)/index', icon: Calendar, roles: ['FO', 'CALLER', 'TRACER'] },
         { label: 'Visited Logs', path: '/(org)/(tabs)/visited', icon: ClipboardCheck, roles: ['FO', 'CALLER', 'TRACER'] },
         { label: 'Daily Dispatch', path: '/(org)/dispatch', icon: MapPin, roles: ['MANAGER', 'TL'] },
         { label: 'Field Agents Roster', path: '/(org)/agents', icon: Users, roles: ['ORG_ADMIN', 'MANAGER', 'TL'] },
