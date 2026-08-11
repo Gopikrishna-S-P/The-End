@@ -22,4 +22,8 @@ public class StartSessionRequest {
     /** Optional — when set, starts a visit-interview session bound to this case instead of
      * the general assistant. Ownership/org-membership is verified server-side. */
     private UUID allocationId;
+
+    /** Only meaningful when allocationId is also set — starts the session in continuous
+     * ambient-listening mode (LucienController#ambientTurn/#help) instead of turn-based chat. */
+    private boolean ambientMode;
 }

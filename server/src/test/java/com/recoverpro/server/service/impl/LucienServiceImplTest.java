@@ -2,6 +2,7 @@ package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.client.LlamaMessage;
 import com.recoverpro.server.dto.request.ChatRequest;
+import com.recoverpro.server.dto.request.StartSessionRequest;
 import com.recoverpro.server.dto.response.AgentContextDto;
 import com.recoverpro.server.dto.response.ChatResponse;
 import com.recoverpro.server.entity.ChatMessage;
@@ -37,6 +38,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -124,5 +126,37 @@ class LucienServiceImplTest {
         assertThat(response.isBlocked()).isFalse();
         verify(sessionRepository).incrementBy("session-1", 2);
         verify(sessionRepository, never()).incrementMessageCount(any());
+    }
+
+    @Test
+    void startSession_ambientModeWithAllocationId_persistsAmbientInteractionMode() {
+        UUID allocationId = UUID.randomUUID();
+        when(sessionRepository.save(any(ChatSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        StartSessionRequest request = StartSessionRequest.builder()
+                .agentId(agentId)
+                .agentFirstName("Priya")
+                .allocationId(allocationId)
+                .ambientMode(true)
+                .build();
+
+        service.startSession(request, principal);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(ChatSession.class);
+        verify(sessionRepository).save(captor.capture());
+        assertThat(captor.getValue().getInteractionMode()).isEqualTo("AMBIENT");
+    }
+
+    @Test
+    void startSession_ambientModeWithoutAllocationId_throwsBusinessException() {
+        StartSessionRequest request = StartSessionRequest.builder()
+                .agentId(agentId)
+                .agentFirstName("Priya")
+                .ambientMode(true)
+                .build();
+
+        assertThatThrownBy(() -> service.startSession(request, principal))
+                .isInstanceOf(com.recoverpro.server.common.exception.BusinessException.class)
+                .hasMessageContaining("ambient");
     }
 }

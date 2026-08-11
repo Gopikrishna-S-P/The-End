@@ -37,6 +37,12 @@ public class ChatSession {
     @Column(name = "allocation_id")
     private UUID allocationId;
 
+    /** CHAT (default, turn-based text/voice) or AMBIENT (continuous doorstep listening — see
+     * LucienServiceImpl#ambientTurn). Only meaningful when allocationId is also set. */
+    @Column(name = "interaction_mode", nullable = false, length = 20)
+    @Builder.Default
+    private String interactionMode = "CHAT";
+
     @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "agent_first_name", nullable = false)
     private String agentFirstName;

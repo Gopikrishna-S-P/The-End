@@ -12,6 +12,7 @@ import com.recoverpro.server.entity.ChatMessage;
 import com.recoverpro.server.entity.ChatSession;
 import com.recoverpro.server.enums.ChatRole;
 import com.recoverpro.server.enums.SafetyDecision;
+import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.exception.SessionInactiveException;
 import com.recoverpro.server.service.ai.ChatRateLimiter;
@@ -88,6 +89,9 @@ public class LucienServiceImpl implements LucienService {
         log.info("Starting Lucien session for agentId={}", agentId);
 
         UUID allocationId = request.getAllocationId();
+        if (request.isAmbientMode() && allocationId == null) {
+            throw new BusinessException("A visit (allocationId) is required to start an ambient session.");
+        }
         if (allocationId != null) {
             // getAllocationById already enforces org isolation (throws ResourceNotFoundException
             // for a different org) via OrgIsolationGuard reading the security context.
@@ -102,6 +106,7 @@ public class LucienServiceImpl implements LucienService {
                 .organizationId(principal.getOrganizationId())
                 .agentFirstName(safeFirstName)
                 .allocationId(allocationId)
+                .interactionMode(request.isAmbientMode() ? "AMBIENT" : "CHAT")
                 .isActive(true)
                 .totalMessages(0)
                 .build();
