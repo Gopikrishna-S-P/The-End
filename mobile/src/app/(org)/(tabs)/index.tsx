@@ -137,7 +137,7 @@ export default function HomeScreen() {
       <StatusBar style="dark" />
       
       {/* Top Background Pattern (Dot Grid) */}
-      <View style={{ position: 'absolute', top: insets.top + 40, right: 20, opacity: 0.2 }}>
+      <View style={{ position: 'absolute', top: insets.top + 100, right: 20, opacity: 0.2 }}>
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
           <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
           <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
