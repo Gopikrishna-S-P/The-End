@@ -1,12 +1,13 @@
-import React, { useCallback, useState } from 'react';
-import { FlatList, View, StyleSheet, TextInput, Pressable } from 'react-native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { FlatList, View, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Search, WifiOff, X, Send } from 'lucide-react-native';
+import { Search, WifiOff, X, Send, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { useAuth } from '@/context/AuthContext';
 import { Screen, Text, EmptyState, LoadingView, Card, Button, Badge } from '@/components/ui';
 import { dailyDispatchApi } from '@/api/dailyDispatchApi';
 import { allocationsApi } from '@/api/allocationsApi';
+import { usersApi, UserResponse } from '@/api/usersApi';
 import type { AllocationResponse } from '@/types/domain';
 import { useToast } from '@/context/ToastContext';
 import { formatCurrency } from '@/utils/allocationHeuristics';
@@ -22,15 +23,35 @@ export default function DailyDispatchScreen() {
   const [search, setSearch] = useState('');
   const [loadError, setLoadError] = useState(false);
 
+  const [fos, setFos] = useState<UserResponse[]>([]);
+  const [selectedFo, setSelectedFo] = useState<string>('');
+  const [loadingFos, setLoadingFos] = useState(true);
+  const [showOfficerPanel, setShowOfficerPanel] = useState(false);
+
+  useEffect(() => {
+    usersApi.listUsers(0, 100, 'createdAt', 'desc', 'FO')
+      .then(res => {
+        setFos(res.content);
+        if (res.content.length > 0) setSelectedFo(res.content[0].id);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingFos(false));
+  }, []);
+
   const load = useCallback(async () => {
     if (!user) return;
     try {
       const dateStr = new Date().toISOString().split('T')[0];
-      let response = await dailyDispatchApi.myList(dateStr);
+      let response;
+      if (selectedFo) {
+         response = await dailyDispatchApi.agentList(selectedFo, dateStr);
+      } else {
+         response = await dailyDispatchApi.myList(dateStr);
+      }
       
       // Fallback: If no cases dispatched today, load any org-wide assigned cases so the screen isn't empty during testing.
       if (!response || response.length === 0) {
-        const paged = await allocationsApi.listAllocations({ status: 'ASSIGNED', size: 50 }).catch(() => null);
+        const paged = await allocationsApi.listAllocations({ status: 'ASSIGNED', assignedToUserId: selectedFo || undefined, size: 50 }).catch(() => null);
         response = paged?.content ?? [];
       }
       
@@ -39,7 +60,7 @@ export default function DailyDispatchScreen() {
     } catch (e) {
       setLoadError(true);
     }
-  }, [user]);
+  }, [user, selectedFo]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,15 +81,64 @@ export default function DailyDispatchScreen() {
     return c.borrowerName?.toLowerCase().includes(q) || c.loanNumber?.toLowerCase().includes(q);
   });
 
-  if (loading) return <LoadingView label="Loading daily dispatch…" />;
+  if (loading && dispatched.length === 0) return <LoadingView label="Loading daily dispatch…" />;
 
   return (
     <Screen edges={['top']}>
       <View style={{ gap: spacing.s4, paddingBottom: spacing.s4 }}>
-        <View>
-          <Text variant="title">Daily Dispatch</Text>
-          <Text variant="caption" color="secondary">{dispatched.length} assigned targets for today</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, paddingRight: spacing.s2 }}>
+            <Text variant="title">Daily Dispatch</Text>
+            <Text variant="caption" color="secondary">{dispatched.length} assigned targets for today</Text>
+          </View>
+          
+          {fos.length > 0 && (
+            <Pressable 
+              onPress={() => setShowOfficerPanel(!showOfficerPanel)}
+              style={{
+                flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accent,
+                paddingHorizontal: spacing.s3, paddingVertical: 8, borderRadius: radius.md, gap: 6
+              }}
+            >
+              <Text style={{ color: colors.canvas, fontWeight: '600', fontSize: 14 }}>Executive</Text>
+              {showOfficerPanel ? <ChevronUp size={16} color={colors.canvas} /> : <ChevronDown size={16} color={colors.canvas} />}
+            </Pressable>
+          )}
         </View>
+
+        {showOfficerPanel && fos.length > 0 && (
+          <View style={{ marginBottom: spacing.s2 }}>
+            <Text variant="caption" style={{ fontWeight: '600', marginBottom: spacing.s2, color: colors.ink2 }}>Select Executive</Text>
+            {loadingFos ? <ActivityIndicator size="small" color={colors.accent} style={{ alignSelf: 'flex-start' }} /> : (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={fos}
+                keyExtractor={f => f.id}
+                contentContainerStyle={{ gap: spacing.s2 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => {
+                      setSelectedFo(item.id);
+                    }}
+                    style={{
+                      paddingHorizontal: spacing.s4,
+                      paddingVertical: spacing.s2,
+                      borderRadius: radius.pill,
+                      backgroundColor: selectedFo === item.id ? colors.accent : colors.subtle,
+                      borderWidth: 1,
+                      borderColor: selectedFo === item.id ? colors.accent : colors.border
+                    }}
+                  >
+                    <Text style={{ color: selectedFo === item.id ? colors.canvas : colors.ink1, fontWeight: '500' }}>
+                      {item.firstName} {item.lastName}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            )}
+          </View>
+        )}
 
         <View style={{
           flexDirection: 'row', alignItems: 'center', gap: spacing.s2,
@@ -122,7 +192,7 @@ export default function DailyDispatchScreen() {
               <EmptyState
                 icon={Send}
                 title="Roster empty"
-                message="No cases are dispatched to your worklist today."
+                message="No cases are dispatched to the selected worklist today."
               />
             )
           }
