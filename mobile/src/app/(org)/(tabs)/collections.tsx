@@ -22,6 +22,7 @@ export default function CollectionsHubScreen() {
   const [loadError, setLoadError] = useState(false);
   
   const [selectedCol, setSelectedCol] = useState<CollectionResponse | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -47,10 +48,21 @@ export default function CollectionsHubScreen() {
     setRefreshing(false);
   };
 
-  const shareCSV = async () => {
+  const filterAndShareCSV = async (type: 'ALL' | 'TODAY' | 'MONTH' | 'YEAR') => {
+    const d = new Date();
+    // Use local date string to match basic logic
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const monthStartStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
+    const yearStartStr = `${d.getFullYear()}-01-01`;
+
+    let filtered = collections;
+    if (type === 'TODAY') filtered = collections.filter(c => c.collectionDate >= todayStr);
+    else if (type === 'MONTH') filtered = collections.filter(c => c.collectionDate >= monthStartStr);
+    else if (type === 'YEAR') filtered = collections.filter(c => c.collectionDate >= yearStartStr);
+
     try {
       const header = 'ID,Amount,Status,Date,Mode\n';
-      const rows = collections
+      const rows = filtered
         .map((c) => `${c.id},${c.amount},${c.status},${c.collectionDate},${c.paymentMode}`)
         .join('\n');
       await Share.share({
@@ -86,7 +98,7 @@ export default function CollectionsHubScreen() {
             <Text variant="title">Collections</Text>
             <Text variant="caption" color="secondary">{collections.length} transaction records</Text>
           </View>
-          <Button label="Export" onPress={shareCSV} variant="outline" fullWidth={false} size="md" />
+          <Button label="Export" onPress={() => setShowExportModal(true)} variant="outline" fullWidth={false} size="md" />
         </View>
 
         <FlatList
@@ -302,6 +314,29 @@ export default function CollectionsHubScreen() {
             <SafeAreaView />
           </View>
         </View>
+      </Modal>
+
+      {/* Export Options Modal */}
+      <Modal visible={showExportModal} animationType="fade" transparent>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.s4 }} onPress={() => setShowExportModal(false)}>
+          <View style={{ backgroundColor: colors.canvas, borderRadius: radius.md, width: '100%', maxWidth: 300, overflow: 'hidden' }}>
+            <View style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium" style={{ fontWeight: '600' }}>Export Date Range</Text>
+            </View>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('ALL'); }} style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium">All time</Text>
+            </Pressable>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('TODAY'); }} style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium">Today</Text>
+            </Pressable>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('MONTH'); }} style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium">This month</Text>
+            </Pressable>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('YEAR'); }} style={{ padding: spacing.s4 }}>
+              <Text variant="bodyMedium">This year</Text>
+            </Pressable>
+          </View>
+        </Pressable>
       </Modal>
 
     </Screen>
