@@ -108,19 +108,22 @@ export default function PtpListScreen() {
             <Text variant="title">Promises to Pay</Text>
             <Text variant="caption" color="secondary">{filteredPtps.length} active promises</Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: spacing.s2 }}>
-            <Button 
-              label="Filter"
+          <View style={{ flexDirection: 'row', gap: spacing.s3, alignItems: 'center' }}>
+            <Pressable 
               onPress={() => setShowFilterModal(true)} 
-              variant={filterStatus || searchQuery ? "primary" : "outline"} 
-              fullWidth={false} 
-            />
-            <Button 
-              label="Export"
+              style={{ padding: 4, position: 'relative' }}
+            >
+              <SlidersHorizontal size={20} color={filterStatus || searchQuery ? colors.accent : colors.ink2} />
+              {(filterStatus !== '' || searchQuery !== '') && (
+                <View style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, borderWidth: 1, borderColor: colors.canvas }} />
+              )}
+            </Pressable>
+            <Pressable 
               onPress={() => setShowExportModal(true)} 
-              variant="outline" 
-              fullWidth={false} 
-            />
+              style={{ padding: 4 }}
+            >
+              <Download size={20} color={colors.ink2} />
+            </Pressable>
           </View>
         </View>
 
