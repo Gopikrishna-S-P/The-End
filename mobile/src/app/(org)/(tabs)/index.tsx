@@ -7,7 +7,7 @@ import { Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import * as Location from 'expo-location';
-import { CalendarCheck, IndianRupee, Handshake, MapPinCheck, CloudOff, RefreshCw, Radio, Bell } from 'lucide-react-native';
+import { CalendarCheck, IndianRupee, Handshake, MapPinCheck, CloudOff, RefreshCw, Radio, Bell, ChevronRight } from 'lucide-react-native';
 import { useNotificationsBadge } from '@/hooks/useNotificationsBadge';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
@@ -135,87 +135,83 @@ export default function HomeScreen() {
   return (
     <Screen onRefresh={onRefresh} refreshing={refreshing} padded={false} edges={['left', 'right']}>
       <StatusBar style="dark" />
-      {/* Top Banner section with pastel double shade gradient extending under status bar */}
-      <LinearGradient
-        colors={['#A7F3D0', '#0AA550']}
-        locations={[0.0, 0.4]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ paddingHorizontal: spacing.s4, paddingTop: insets.top + spacing.s4, paddingBottom: spacing.s5, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}
-      >
+      
+      {/* Top Background Pattern (Dot Grid) */}
+      <View style={{ position: 'absolute', top: insets.top + 40, right: 20, opacity: 0.2 }}>
+        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+        </View>
+      </View>
+
+      <View style={{ paddingHorizontal: spacing.s4, paddingTop: insets.top + spacing.s4, paddingBottom: spacing.s2 }}>
         {/* Header row: Logo on the left, Icons (Bell & Avatar) on the right */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s3 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s5 }}>
           <Image 
             source={require('../../../../assets/images/logo.png')} 
-            style={{ width: 120, height: 32, resizeMode: 'contain', marginLeft: -spacing.s5 }} 
+            style={{ width: 120, height: 32, resizeMode: 'contain', marginLeft: -spacing.s5, tintColor: '#065F46' }} 
           />
           
-          {/* Action Icons Wrapper */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
-            {/* Bell/Notification Icon */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s4 }}>
+            {/* Bell Icon */}
             <Pressable 
-              onPress={() => router.push('/notifications')}
+              onPress={() => router.push('/(org)/(tabs)/notifications')}
               style={{ position: 'relative', padding: 4 }}
             >
               <Bell size={24} color="#065F46" />
               {unreadCount > 0 ? (
                 <View style={{
-                  position: 'absolute',
-                  top: -2,
-                  right: -2,
-                  backgroundColor: '#D93025',
-                  borderRadius: 8,
-                  minWidth: 16,
-                  height: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingHorizontal: 3
+                  position: 'absolute', top: -2, right: -2, backgroundColor: '#D93025', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3
                 }}>
-                  <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '700' }}>
-                    {unreadCount}
-                  </Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '700' }}>{unreadCount}</Text>
                 </View>
               ) : null}
             </Pressable>
 
             {/* Circular Avatar */}
             <Pressable 
-              onPress={() => router.push('/profile')}
-            style={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: 18, 
-              backgroundColor: '#065F46', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              borderWidth: 1,
-              borderColor: '#A7F3D0',
-              overflow: 'hidden'
-            }}
-          >
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={{ width: 36, height: 36 }} />
-            ) : (
-              <Text style={{ 
-                color: '#FFFFFF', 
-                fontSize: 14, 
-                fontWeight: 'bold' 
-              }}>
-                {(user?.firstName?.[0] ?? 'F') + (user?.lastName?.[0] ?? 'O')}
-              </Text>
-            )}
-          </Pressable>
+              onPress={() => router.push('/(org)/(tabs)/profile')}
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#065F46', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+            >
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={{ width: 36, height: 36 }} />
+              ) : (
+                <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' }}>
+                  {(user?.firstName?.[0] ?? 'F') + (user?.lastName?.[0] ?? 'O')}
+                </Text>
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
 
-        <View style={{ marginBottom: spacing.s4 }}>
-          <Text variant="caption" style={{ color: '#065F46', fontWeight: '500' }}>Welcome back</Text>
+        <View style={{ marginBottom: spacing.s6 }}>
+          <Text variant="body" style={{ color: '#4B5563', marginBottom: 2 }}>Welcome back,</Text>
           <Text 
-            variant="title" 
             style={{ 
               color: '#065F46', 
               fontFamily: 'Inter_700Bold', 
-              letterSpacing: 1.5 
+              fontSize: 32,
+              letterSpacing: -0.5
             }}
           >
             {user?.firstName ?? 'Field Officer'}
@@ -223,43 +219,37 @@ export default function HomeScreen() {
         </View>
 
         {pending > 0 ? (
-          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3, marginBottom: spacing.s4, backgroundColor: '#FFFFFF', borderWidth: 0, shadowOpacity: 0.05 }}>
+          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3, marginBottom: spacing.s4, backgroundColor: '#FFFFFF', shadowOpacity: 0.05 }}>
             <CloudOff size={18} color={colors.warnBorder} />
             <Text variant="caption" color="secondary" style={{ flex: 1 }}>
               {pending} {pending === 1 ? 'item' : 'items'} waiting to sync
             </Text>
             <Button
-              label="Sync now"
-              variant="ghost"
-              fullWidth={false}
-              size="md"
-              loading={syncing}
-              onPress={() => trySync()}
-              icon={<RefreshCw size={14} color={colors.accent} />}
+              label="Sync now" variant="ghost" fullWidth={false} size="md" loading={syncing} onPress={() => trySync()} icon={<RefreshCw size={14} color={colors.accent} />}
             />
           </Card>
         ) : null}
 
-        <Card style={{ gap: spacing.s4, backgroundColor: '#FFFFFF', borderRadius: 20, padding: spacing.s4, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 0 }}>
+        {/* Main Action Card */}
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, gap: spacing.s4 }}>
           
-          {/* Field Shift Section */}
+          {/* Field Shift */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
-            {/* Themed Icon Container */}
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: shift ? '#E6F4EA' : '#F1F3F4', alignItems: 'center', justifyContent: 'center' }}>
-              <Radio size={20} color={shift ? '#137333' : '#5F6368'} />
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center' }}>
+              <Radio size={24} color="#065F46" />
             </View>
 
             <View style={{ flex: 1, gap: 4 }}>
-              <Text variant="bodyMedium" style={{ fontWeight: '700', color: '#202124' }}>Field Shift</Text>
+              <Text style={{ fontWeight: '700', color: '#111827', fontSize: 16 }}>Field Shift</Text>
               
               <View style={{ flexDirection: 'row' }}>
                 {shift ? (
-                  <View style={{ backgroundColor: '#E6F4EA', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }}>
-                    <Text style={{ color: '#137333', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Active</Text>
+                  <View style={{ backgroundColor: '#ECFDF5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                    <Text style={{ color: '#065F46', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Active</Text>
                   </View>
                 ) : (
-                  <View style={{ backgroundColor: '#F1F3F4', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }}>
-                    <Text style={{ color: '#5F6368', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Off</Text>
+                  <View style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                    <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>OFF</Text>
                   </View>
                 )}
               </View>
@@ -267,25 +257,23 @@ export default function HomeScreen() {
             </View>
             
             {shift ? (
-              <Button label="End Shift" variant="outline" onPress={endShift} loading={ending} fullWidth={false} size="md" style={{ borderColor: '#DADCE0' }} />
+              <Button label="End Shift" variant="outline" onPress={endShift} loading={ending} fullWidth={false} style={{ paddingHorizontal: 20, borderColor: '#065F46' }} />
             ) : (
-              <Button label="Start" onPress={startShift} loading={starting} fullWidth={false} size="md" style={{ backgroundColor: '#0AA550' }} />
+              <Button label="Start" onPress={startShift} loading={starting} fullWidth={false} style={{ backgroundColor: '#065F46', paddingHorizontal: 24 }} />
             )}
           </View>
 
-          {/* Thin subtle horizontal separator line */}
-          <View style={{ height: 1, backgroundColor: '#F1F3F4', marginVertical: 2 }} />
+          <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 4 }} />
 
-          {/* Attendance Check-in Section */}
+          {/* Daily Check-In */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
-            {/* Themed Icon Container */}
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: checkedInAt ? '#E8F0FE' : '#FCE8E6', alignItems: 'center', justifyContent: 'center' }}>
-              <MapPinCheck size={20} color={checkedInAt ? '#1A73E8' : '#D93025'} />
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center' }}>
+              <MapPinCheck size={24} color="#065F46" />
             </View>
 
             <View style={{ flex: 1, gap: 2 }}>
-              <Text variant="bodyMedium" style={{ fontWeight: '700', color: '#202124' }}>Daily Check-In</Text>
-              <Text variant="caption" style={{ color: '#5F6368', fontSize: 12 }}>
+              <Text style={{ fontWeight: '700', color: '#111827', fontSize: 16 }}>Daily Check-In</Text>
+              <Text style={{ color: '#6B7280', fontSize: 13 }}>
                 {!checkedInAt 
                   ? 'You haven\'t checked in today' 
                   : checkedOutAt 
@@ -296,39 +284,51 @@ export default function HomeScreen() {
             </View>
 
             {!checkedInAt ? (
-              <Button
-                label="Check In"
-                onPress={onCheckIn}
-                loading={checkingIn}
-                fullWidth={false}
-                size="md"
-                style={{ backgroundColor: '#1A73E8', paddingHorizontal: spacing.s3, paddingVertical: spacing.s2 }}
-              />
+              <Button label="Check In" onPress={onCheckIn} loading={checkingIn} fullWidth={false} style={{ backgroundColor: '#065F46', paddingHorizontal: 20 }} />
             ) : !checkedOutAt ? (
-              <Button
-                label="Check Out"
-                onPress={onCheckOut}
-                loading={checkingOut}
-                fullWidth={false}
-                size="md"
-                style={{ backgroundColor: '#D93025', paddingHorizontal: spacing.s3, paddingVertical: spacing.s2 }}
-              />
+              <Button label="Check Out" onPress={onCheckOut} loading={checkingOut} fullWidth={false} variant="outline" style={{ paddingHorizontal: 20, borderColor: '#065F46' }} />
             ) : null}
           </View>
-        </Card>
-      </LinearGradient>
-
-      {/* Main body content below the green header */}
-      <View style={{ padding: spacing.s4, gap: spacing.s5 }}>
-        <View style={{ flexDirection: 'row', gap: spacing.s3 }}>
-          <StatCard icon={IndianRupee} label="Collected today" value={dashboard ? formatCurrency(dashboard.collectedAmountToday) : '—'} tone="success" />
-          <StatCard icon={Handshake} label="PTPs due today" value={dashboard ? String(dashboard.ptpsDueToday) : '—'} tone="warning" />
         </View>
 
-        <View style={{ gap: spacing.s3 }}>
+        {/* Stat Cards */}
+        <View style={{ flexDirection: 'row', gap: spacing.s3, marginTop: spacing.s5 }}>
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
+            <View style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: '#ECFDF5', opacity: 0.5 }} />
+            <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
+              <IndianRupee size={20} color="#065F46" />
+            </View>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? formatCurrency(dashboard.collectedAmountToday).replace('₹', '₹ ') : '₹ 0'}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
+              <Text style={{ color: '#6B7280', fontSize: 13 }}>Collected today</Text>
+              <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
+                <ChevronRight size={14} color="#111827" />
+              </View>
+            </View>
+          </View>
+
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
+            <View style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: '#ECFDF5', opacity: 0.5 }} />
+            <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
+              <Handshake size={20} color="#065F46" />
+            </View>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? String(dashboard.ptpsDueToday) : '0'}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
+              <Text style={{ color: '#6B7280', fontSize: 13 }}>PTPs due today</Text>
+              <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
+                <ChevronRight size={14} color="#111827" />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Today's Visits */}
+        <View style={{ marginTop: spacing.s6, gap: spacing.s3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text variant="headline">Today&apos;s visits</Text>
-            <Text variant="caption" color="accent" onPress={() => router.push('/(org)/(tabs)/cases')}>View all cases</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#065F46' }}>Today&apos;s visits</Text>
+            <Pressable onPress={() => router.push('/(org)/(tabs)/cases')}>
+              <Text style={{ fontSize: 14, color: '#065F46', fontWeight: '500' }}>View all cases</Text>
+            </Pressable>
           </View>
 
           {dashboard && dashboard.todayTotalCases > 0 ? (
@@ -338,7 +338,13 @@ export default function HomeScreen() {
           ) : null}
 
           {todayCases.length === 0 ? (
-            <EmptyState icon={CalendarCheck} title="No visits scheduled today" message="Cases assigned to you will show up here once dispatched." />
+            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s6 }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
+                <CalendarCheck size={40} color="#065F46" />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 4 }}>No visits scheduled today</Text>
+              <Text style={{ fontSize: 13, color: '#6B7280', textAlign: 'center' }}>Cases assigned to you will show up here{'\n'}once dispatched.</Text>
+            </View>
           ) : (
             todayCases.map((item) => (
               <CaseRow key={item.id} item={item} completed={completedByAllocationId.has(item.id)} />
