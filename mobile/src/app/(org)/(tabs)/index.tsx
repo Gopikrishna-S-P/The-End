@@ -276,7 +276,7 @@ export default function HomeScreen() {
 
         {/* Stat Cards */}
         <View style={{ flexDirection: 'row', gap: spacing.s3, marginTop: spacing.s5 }}>
-          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2, overflow: 'hidden' }}>
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
             <View style={{ position: 'absolute', bottom: -30, right: -40, width: '150%', height: 80, borderRadius: 100, backgroundColor: '#F0FDF4', transform: [{ rotate: '-15deg' }] }} />
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
               <IndianRupee size={20} color="#0AA550" />
@@ -290,7 +290,7 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2, overflow: 'hidden' }}>
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
             <View style={{ position: 'absolute', bottom: -30, right: -40, width: '150%', height: 80, borderRadius: 100, backgroundColor: '#F0FDF4', transform: [{ rotate: '-15deg' }] }} />
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
               <Handshake size={20} color="#0AA550" />
@@ -305,10 +305,10 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Today's Visits */}
-        <View style={{ marginTop: spacing.s6, gap: spacing.s3 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#0AA550' }}>Today&apos;s visits</Text>
+        {/* Today's Visits Card */}
+        <View style={{ marginTop: spacing.s5, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, gap: spacing.s3 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s2 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>Today&apos;s visits</Text>
             <Pressable onPress={() => router.push('/(org)/(tabs)/cases')}>
               <Text style={{ fontSize: 14, color: '#0AA550', fontWeight: '500' }}>View all cases</Text>
             </Pressable>
@@ -321,11 +321,21 @@ export default function HomeScreen() {
           ) : null}
 
           {todayCases.length === 0 ? (
-            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s6 }}>
-              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
-                <CalendarCheck size={40} color="#0AA550" />
+            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s5 }}>
+              {/* Illustration Placeholder */}
+              <View style={{ marginBottom: spacing.s4, alignItems: 'center' }}>
+                <View style={{ width: 80, height: 100, backgroundColor: '#ECFDF5', borderRadius: 12, borderWidth: 4, borderColor: '#0AA550', position: 'relative', alignItems: 'center' }}>
+                  <View style={{ width: 30, height: 10, backgroundColor: '#0AA550', borderBottomLeftRadius: 4, borderBottomRightRadius: 4, position: 'absolute', top: 0 }} />
+                  <View style={{ width: 50, height: 8, backgroundColor: '#CBE1D4', borderRadius: 4, marginTop: 30 }} />
+                  <View style={{ width: 50, height: 8, backgroundColor: '#CBE1D4', borderRadius: 4, marginTop: 12 }} />
+                  <View style={{ width: 50, height: 8, backgroundColor: '#CBE1D4', borderRadius: 4, marginTop: 12 }} />
+                  <View style={{ position: 'absolute', bottom: -10, right: -15, width: 32, height: 32, borderRadius: 16, backgroundColor: '#0AA550', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
+                    <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>✓</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 4 }}>No visits scheduled today</Text>
+
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 4 }}>No visits scheduled today</Text>
               <Text style={{ fontSize: 13, color: '#6B7280', textAlign: 'center' }}>Cases assigned to you will show up here{'\n'}once dispatched.</Text>
             </View>
           ) : (
