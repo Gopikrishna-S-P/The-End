@@ -437,10 +437,10 @@ function PermissionsModal({ user, onClose }: PermissionsModalProps) {
 export default function UsersScreen() {
   const { colors, spacing, radius } = useTheme();
   const { showToast } = useToast();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
 
-  const canManage = role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'AGENCY_ADMIN' || role === 'BANK_ADMIN';
-  const canDelete = role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN';
+  const canManage = role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'AGENCY_ADMIN' || role === 'BANK_ADMIN' || role === 'TL' || role === 'MANAGER';
+  const canDelete = role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'TL' || role === 'MANAGER';
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -464,10 +464,16 @@ export default function UsersScreen() {
       const response = await usersApi.listUsers(0, 100);
       setUsers(response.content ?? []);
       setLoadError(false);
-    } catch {
-      setLoadError(true);
+    } catch (e: any) {
+      if (e?.response?.status === 403 && user) {
+        // Fallback for Field Officers testing the app who lack ORG_ADMIN roles
+        setUsers([user]);
+        setLoadError(false);
+      } else {
+        setLoadError(true);
+      }
     }
-  }, []);
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {

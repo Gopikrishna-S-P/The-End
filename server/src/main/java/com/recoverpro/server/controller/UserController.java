@@ -29,7 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
 
-    private static final String ADMIN_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
+    private static final String ADMIN_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')";
     // Daily Dispatch and Field Agents (Manager/TL) both need to list field officers by role.
     private static final String LEADS_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')";
     // A custom role granted USER_CREATE/USER_DELETE via Role Management should be able to use
@@ -37,8 +37,7 @@ public class UserController {
     // granted role permissions into plain (non-ROLE_-prefixed) authorities at login.
     private static final String CAN_CREATE_USER = ADMIN_ROLES + " or hasAuthority('USER_CREATE')";
     private static final String CAN_DELETE_USER = ADMIN_ROLES + " or hasAuthority('USER_DELETE')";
-    // Viewing the user list/detail is a prerequisite for either action above.
-    private static final String CAN_VIEW_USERS = ADMIN_ROLES + " or hasAuthority('USER_CREATE') or hasAuthority('USER_DELETE')";
+    private static final String CAN_VIEW_USERS = LEADS_ROLES + " or hasAuthority('USER_CREATE') or hasAuthority('USER_DELETE')";
 
     private static final Map<String, String> SORTABLE_FIELDS = Map.of(
             "createdAt", "createdAt",

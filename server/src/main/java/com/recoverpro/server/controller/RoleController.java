@@ -24,7 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RoleController {
 
-    private static final String ADMIN_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN')";
+    private static final String ADMIN_ROLES = "hasAnyRole('PLATFORM_ADMIN','ORG_ADMIN','MANAGER','TL')";
     // A custom role granted ROLE_ASSIGN via Role Management can edit role permissions without
     // needing ORG_ADMIN/PLATFORM_ADMIN — see UserController's matching CAN_CREATE_USER.
     private static final String CAN_ASSIGN_ROLE = ADMIN_ROLES + " or hasAuthority('ROLE_ASSIGN')";

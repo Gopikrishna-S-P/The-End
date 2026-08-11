@@ -130,7 +130,7 @@ export default function RoleManagementScreen() {
   const { colors, spacing, radius } = useTheme();
   const { role } = useAuth();
 
-  const canCreate = role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN';
+  const canCreate = role === 'ORG_ADMIN' || role === 'PLATFORM_ADMIN' || role === 'TL' || role === 'MANAGER';
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
