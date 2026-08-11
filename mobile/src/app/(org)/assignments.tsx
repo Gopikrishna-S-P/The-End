@@ -6,7 +6,7 @@ import { useToast } from '@/context/ToastContext';
 import { usersApi, UserResponse } from '@/api/usersApi';
 import { allocationsApi } from '@/api/allocationsApi';
 import type { AllocationResponse } from '@/types/domain';
-import { CheckSquare, Square, Search, Briefcase } from 'lucide-react-native';
+import { CheckSquare, Square, Search, Briefcase, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { formatCurrency } from '@/utils/allocationHeuristics';
 
 export default function CaseAssignmentsScreen() {
@@ -24,6 +24,7 @@ export default function CaseAssignmentsScreen() {
   const [search, setSearch] = useState('');
   const [selectedCases, setSelectedCases] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [showOfficerPanel, setShowOfficerPanel] = useState(false);
 
   const tabs = [
     { key: 'assign', title: 'Assign New' },
@@ -140,36 +141,54 @@ export default function CaseAssignmentsScreen() {
   return (
     <Screen edges={['top']} padded={false}>
       <View style={{ padding: spacing.s4, paddingBottom: 0 }}>
-        <Text variant="title">Case Assignments</Text>
-        <Text variant="caption" color="secondary" style={{ marginBottom: spacing.s4 }}>Allocate cases to field officer rosters</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.s4 }}>
+          <View style={{ flex: 1, paddingRight: spacing.s2 }}>
+            <Text variant="title">Case Assignments</Text>
+            <Text variant="caption" color="secondary">Allocate cases to field officer rosters</Text>
+          </View>
+          <Pressable 
+            onPress={() => setShowOfficerPanel(!showOfficerPanel)}
+            style={{
+              flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accent,
+              paddingHorizontal: spacing.s3, paddingVertical: 8, borderRadius: radius.md, gap: 6
+            }}
+          >
+            <Text style={{ color: colors.canvas, fontWeight: '600', fontSize: 14 }}>Executive</Text>
+            {showOfficerPanel ? <ChevronUp size={16} color={colors.canvas} /> : <ChevronDown size={16} color={colors.canvas} />}
+          </Pressable>
+        </View>
         
         {/* FO Selector */}
-        <Text variant="caption" style={{ fontWeight: '600', marginBottom: spacing.s2, color: colors.ink2 }}>Select Executive</Text>
-        {loadingFos ? <ActivityIndicator size="small" color={colors.accent} style={{ alignSelf: 'flex-start', marginBottom: spacing.s3 }} /> : (
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={fos}
-            keyExtractor={f => f.id}
-            contentContainerStyle={{ gap: spacing.s2, paddingBottom: spacing.s4 }}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => setSelectedFo(item.id)}
-                style={{
-                  paddingHorizontal: spacing.s4,
-                  paddingVertical: spacing.s2,
-                  borderRadius: radius.pill,
-                  backgroundColor: selectedFo === item.id ? colors.accent : colors.subtle,
-                  borderWidth: 1,
-                  borderColor: selectedFo === item.id ? colors.accent : colors.border
-                }}
-              >
-                <Text style={{ color: selectedFo === item.id ? colors.canvas : colors.ink1, fontWeight: '500' }}>
-                  {item.firstName} {item.lastName}
-                </Text>
-              </Pressable>
+        {showOfficerPanel && (
+          <View style={{ marginBottom: spacing.s4 }}>
+            <Text variant="caption" style={{ fontWeight: '600', marginBottom: spacing.s2, color: colors.ink2 }}>Select Executive</Text>
+            {loadingFos ? <ActivityIndicator size="small" color={colors.accent} style={{ alignSelf: 'flex-start' }} /> : (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={fos}
+                keyExtractor={f => f.id}
+                contentContainerStyle={{ gap: spacing.s2 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => setSelectedFo(item.id)}
+                    style={{
+                      paddingHorizontal: spacing.s4,
+                      paddingVertical: spacing.s2,
+                      borderRadius: radius.pill,
+                      backgroundColor: selectedFo === item.id ? colors.accent : colors.subtle,
+                      borderWidth: 1,
+                      borderColor: selectedFo === item.id ? colors.accent : colors.border
+                    }}
+                  >
+                    <Text style={{ color: selectedFo === item.id ? colors.canvas : colors.ink1, fontWeight: '500' }}>
+                      {item.firstName} {item.lastName}
+                    </Text>
+                  </Pressable>
+                )}
+              />
             )}
-          />
+          </View>
         )}
 
         <SegmentedTabs
