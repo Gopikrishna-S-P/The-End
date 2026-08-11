@@ -43,51 +43,27 @@ function RootNavigator() {
       }}
       >
         <Stack.Protected guard={isAuthenticated}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="case/[id]/index" options={{ headerShown: true, title: 'Case detail' }} />
-          <Stack.Screen
-            name="case/[id]/visit"
-            options={{ headerShown: true, title: 'Log a visit', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="case/[id]/lucien-visit"
-            options={{ headerShown: false, presentation: 'fullScreenModal' }}
-          />
-          <Stack.Screen
-            name="case/[id]/ptp"
-            options={{ headerShown: true, title: 'Promise to pay', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="case/[id]/collection"
-            options={{ headerShown: true, title: 'Record collection', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="case/[id]/payment-link"
-            options={{ headerShown: true, title: 'Send payment link', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="case/[id]/call"
-            options={{ headerShown: true, title: 'Call borrower', presentation: 'modal' }}
-          />
-          <Stack.Screen
-            name="sos"
-            options={{ headerShown: true, title: '', presentation: 'fullScreenModal' }}
-          />
-          <Stack.Screen
-            name="visit-detail/[id]"
-            options={{ headerShown: false, presentation: 'card' }}
-          />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(org)" />
+          <Stack.Screen name="(platform)" />
         </Stack.Protected>
 
         <Stack.Protected guard={!isAuthenticated}>
           <Stack.Screen name="(auth)/login" />
           <Stack.Screen name="(auth)/forgot-password" />
         </Stack.Protected>
+
+        {/* Public screens — reachable both pre- and post-login */}
+        <Stack.Screen name="privacy" options={{ headerShown: true, title: 'Privacy Policy', presentation: 'card' }} />
+        <Stack.Screen name="terms" options={{ headerShown: true, title: 'Terms of Service', presentation: 'card' }} />
       </Stack>
-      {isAuthenticated ? <SosFloatingButton /> : null}
     </View>
   );
 }
+
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ToastProvider } from '@/context/ToastContext';
+import { SecurityProvider } from '@/context/SecurityContext';
 
 function RootLayout() {
   const scheme = useColorScheme();
@@ -103,12 +79,19 @@ function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-        <RootNavigator />
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <SecurityProvider>
+            <ToastProvider>
+              <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+              <RootNavigator />
+            </ToastProvider>
+          </SecurityProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
 
 export default Sentry.wrap(RootLayout);
+

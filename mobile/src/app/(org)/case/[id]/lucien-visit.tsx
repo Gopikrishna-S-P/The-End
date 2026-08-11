@@ -246,7 +246,7 @@ export default function LucienVisitScreen() {
       if (router.canGoBack()) {
         router.back();
       } else {
-        router.replace({ pathname: '/(tabs)' });
+        router.replace({ pathname: '/(org)/(tabs)' });
       }
     }, 1500);
     return () => clearTimeout(timeout);
@@ -369,7 +369,7 @@ export default function LucienVisitScreen() {
           {messages.length === 0 ? (
             <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s8, gap: spacing.s3 }}>
               <Image 
-                source={require('../../../../assets/images/lucien-logo.png')} 
+                source={require('../../../../../assets/images/lucien-logo.png')} 
                 style={{ width: 80, height: 80, resizeMode: 'contain', marginBottom: spacing.s2 }} 
               />
               <Text variant="headline" style={{ textAlign: 'center', fontSize: 18, fontWeight: '600', color: colors.ink1 }}>

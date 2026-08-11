@@ -1,0 +1,129 @@
+import React, { useCallback, useState } from 'react';
+import { FlatList, View, StyleSheet, TextInput, Pressable } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { Search, WifiOff, X, Users, AlertTriangle } from 'lucide-react-native';
+import { useTheme } from '@/theme/useTheme';
+import { useAuth } from '@/context/AuthContext';
+import { Screen, Text, EmptyState, LoadingView, Card, Badge } from '@/components/ui';
+import { borrowersApi, type BorrowerResponse } from '@/api/borrowersApi';
+import { formatDate } from '@/utils/date';
+
+export default function BorrowersScreen() {
+  const { user } = useAuth();
+  const { colors, spacing, radius } = useTheme();
+
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [borrowers, setBorrowers] = useState<BorrowerResponse[]>([]);
+  const [search, setSearch] = useState('');
+  const [loadError, setLoadError] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    try {
+      const response = await borrowersApi.list({ orgId: user.organizationId || '', size: 100 });
+      setBorrowers(response.content ?? []);
+      setLoadError(false);
+    } catch (e) {
+      setLoadError(true);
+    }
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      load().finally(() => setLoading(false));
+    }, [load])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
+  const filtered = borrowers.filter((b) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    const name = `${b.firstName} ${b.lastName}`.toLowerCase();
+    return name.includes(q) || b.email?.toLowerCase().includes(q) || b.phone?.includes(q);
+  });
+
+  if (loading) return <LoadingView label="Loading borrowers list…" />;
+
+  return (
+    <Screen edges={['top']}>
+      <View style={{ gap: spacing.s4, paddingBottom: spacing.s4 }}>
+        <View>
+          <Text variant="title">Borrowers</Text>
+          <Text variant="caption" color="secondary">{borrowers.length} registered profiles</Text>
+        </View>
+
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: spacing.s2,
+          backgroundColor: colors.subtle, borderRadius: radius.md, paddingHorizontal: spacing.s3,
+          borderWidth: 1, borderColor: colors.border,
+        }}
+        >
+          <Search size={16} color={colors.ink3} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search by name, email, phone…"
+            placeholderTextColor={colors.ink3}
+            style={{ flex: 1, paddingVertical: spacing.s3, color: colors.ink1, fontFamily: 'Inter_400Regular', fontSize: 15 }}
+          />
+          {search.length > 0 ? (
+            <Pressable onPress={() => setSearch('')} hitSlop={8}>
+              <X size={16} color={colors.ink3} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ gap: spacing.s3 }}
+          renderItem={({ item }) => (
+            <Card style={{ padding: spacing.s4, gap: spacing.s2 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text variant="bodyMedium" style={{ fontWeight: '700', color: colors.ink1 }}>
+                  {item.firstName} {item.lastName}
+                </Text>
+                {item.erasurePending ? (
+                  <Badge tone="warning" label="Erasure Pending" />
+                ) : (
+                  <Badge tone="success" label="Active" />
+                )}
+              </View>
+
+              <View style={{ gap: 2 }}>
+                {item.email ? <Text variant="caption" color="secondary">Email: {item.email}</Text> : null}
+                {item.phone ? <Text variant="caption" color="secondary">Phone: {item.phone}</Text> : null}
+                {item.ckycId ? <Text variant="caption" color="secondary">cKYC ID: {item.ckycId}</Text> : null}
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+                <Text variant="caption" color="tertiary">Registered: {formatDate(item.createdAt)}</Text>
+              </View>
+            </Card>
+          )}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          scrollEnabled={false}
+          ListEmptyComponent={
+            loadError ? (
+              <EmptyState icon={WifiOff} title="Couldn't load profiles" message="Pull down to try again." />
+            ) : (
+              <EmptyState
+                icon={Users}
+                title="No borrowers"
+                message="Borrower customer profiles registered on file will show up here."
+              />
+            )
+          }
+        />
+      </View>
+    </Screen>
+  );
+}

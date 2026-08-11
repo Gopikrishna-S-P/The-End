@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { View, Pressable, Image, Alert, Modal } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { LogOut, Mail, ShieldCheck, Building2, Camera, FolderOpen, type LucideIcon } from 'lucide-react-native';
@@ -96,7 +96,7 @@ export default function ProfileScreen() {
         <View style={{ alignItems: 'center', gap: spacing.s3, paddingTop: spacing.s4 }}>
           {/* Logo at the top of Profile Screen */}
           <Image 
-            source={require('../../../assets/images/logo.png')} 
+            source={require('../../../../assets/images/logo.png')} 
             style={{ width: 130, height: 35, resizeMode: 'contain', alignSelf: 'flex-start', marginLeft: -spacing.s4, marginBottom: spacing.s2 }} 
           />
           <Pressable onPress={handleSelectAvatar} style={{ position: 'relative' }}>
@@ -137,7 +137,9 @@ export default function ProfileScreen() {
           <Divider />
           <Row icon={Building2} label="Organization" value={user?.organizationId ? 'Assigned' : 'Not linked'} colors={colors} spacing={spacing} />
           <Divider />
-          <Row icon={ShieldCheck} label="Two-factor auth" value={user?.mfaEnabled ? 'Enabled' : 'Not enabled'} colors={colors} spacing={spacing} />
+          <Pressable onPress={() => router.push('/mfa-setup')}>
+            <Row icon={ShieldCheck} label="Two-factor auth" value={user?.mfaEnabled ? 'Enabled' : 'Not enabled'} colors={colors} spacing={spacing} />
+          </Pressable>
         </Card>
 
         <Button label="Log out" variant="outline" onPress={onLogout} loading={loggingOut} icon={<LogOut size={16} color={colors.ink1} />} />

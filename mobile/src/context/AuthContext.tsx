@@ -17,6 +17,7 @@ interface AuthContextValue {
   role: Role | null;
   login: (email: string, password: string, totpCode?: string, recoveryCode?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -91,11 +92,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshAuth = async () => {
+    try {
+      const refreshedUser = await authApi.me();
+      await saveUserCache(refreshedUser);
+      setUser(refreshedUser);
+    } catch (e) {
+      console.error('Failed to refresh user auth state:', e);
+    }
+  };
+
   // RoleResponse.name arrives as "ROLE_FO" over the wire — normalize to the bare Role union.
   const role = (user?.roles?.[0]?.name?.replace(/^ROLE_/, '') as Role) ?? null;
 
   const value = useMemo(
-    () => ({ user, isLoading, role, login, logout }),
+    () => ({ user, isLoading, role, login, logout, refreshAuth }),
     [user, isLoading, role],
   );
 

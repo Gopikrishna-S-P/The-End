@@ -54,7 +54,9 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [todayCases, setTodayCases] = useState<AllocationResponse[]>([]);
   const [checkedInAt, setCheckedInAt] = useState<string | null>(null);
+  const [checkedOutAt, setCheckedOutAt] = useState<string | null>(null);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<FieldAgentDashboardResponse | null>(null);
 
@@ -117,6 +119,15 @@ export default function HomeScreen() {
     } finally {
       setCheckingIn(false);
     }
+  };
+
+  const onCheckOut = async () => {
+    setCheckingOut(true);
+    // Since there is no checkout API yet, simulate network request and set local state
+    setTimeout(() => {
+      setCheckedOutAt(new Date().toISOString());
+      setCheckingOut(false);
+    }, 500);
   };
 
   if (loading) return <LoadingView label="Loading your day…" />;
@@ -275,7 +286,11 @@ export default function HomeScreen() {
             <View style={{ flex: 1, gap: 2 }}>
               <Text variant="bodyMedium" style={{ fontWeight: '700', color: '#202124' }}>Daily Check-In</Text>
               <Text variant="caption" style={{ color: '#5F6368', fontSize: 12 }}>
-                {checkedInAt ? `Checked in at ${formatTime(checkedInAt)}` : 'You haven\'t checked in today'}
+                {!checkedInAt 
+                  ? 'You haven\'t checked in today' 
+                  : checkedOutAt 
+                    ? `Checked out at ${formatTime(checkedOutAt)}`
+                    : `Checked in at ${formatTime(checkedInAt)}`}
               </Text>
               {checkInError ? <Text variant="caption" color="error">{checkInError}</Text> : null}
             </View>
@@ -288,6 +303,15 @@ export default function HomeScreen() {
                 fullWidth={false}
                 size="md"
                 style={{ backgroundColor: '#1A73E8', paddingHorizontal: spacing.s3, paddingVertical: spacing.s2 }}
+              />
+            ) : !checkedOutAt ? (
+              <Button
+                label="Check Out"
+                onPress={onCheckOut}
+                loading={checkingOut}
+                fullWidth={false}
+                size="md"
+                style={{ backgroundColor: '#D93025', paddingHorizontal: spacing.s3, paddingVertical: spacing.s2 }}
               />
             ) : null}
           </View>

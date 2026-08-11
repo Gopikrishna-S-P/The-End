@@ -56,8 +56,21 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }} edges={['top']}>
-      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s4, paddingBottom: spacing.s2 }}>
+      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s4, paddingBottom: spacing.s2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text variant="title">Alerts</Text>
+        {items.length > 0 ? (
+          <View style={{ flexDirection: 'row', gap: spacing.s3 }}>
+            <Pressable onPress={async () => {
+              const currentItems = [...items];
+              setItems([]);
+              for (const item of currentItems) {
+                await notificationsApi.dismiss(item.id).catch(() => {});
+              }
+            }}>
+              <Text variant="label" color="error">Clear all</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
       <FlatList
         data={items}

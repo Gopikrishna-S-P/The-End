@@ -21,4 +21,12 @@ export const allocationsApi = {
     const response = await axiosInstance.get<ApiResponse<AllocationResponse>>(`/api/v1/allocations/${id}`);
     return response.data.data;
   },
+
+  listAllocations: async (params: any, signal?: AbortSignal): Promise<PagedResponse<AllocationResponse>> => {
+    const response = await axiosInstance.get<ApiResponse<PagedResponse<AllocationResponse>>>('/api/v1/allocations', {
+      params,
+      signal,
+    });
+    return response.data.data;
+  },
 };

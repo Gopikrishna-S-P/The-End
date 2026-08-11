@@ -469,3 +469,36 @@ export interface ServerNotification {
   snoozedUntil?: string;
   dismissed?: boolean;
 }
+
+export interface TrendPoint {
+  year: number;
+  month: number;
+  label: string;
+  totalAmount: number;
+  totalCount: number;
+}
+
+export interface TopAgentPoint {
+  name: string;
+  amount: number;
+  count: number;
+}
+
+export interface CollectionsSection {
+  collectionVolumeThisMonth: number;
+  collectionCountThisMonth: number;
+  collectionVolumeLastMonth: number;
+  growthRate?: number;
+  monthlyTrend: TrendPoint[];
+  ptpMonthlyTrend?: TrendPoint[];
+  visitMonthlyTrend?: TrendPoint[];
+  topAgents?: TopAgentPoint[];
+}
+
+export interface UnifiedDashboardResponse {
+  role: string;
+  organizationId: string;
+  generatedAt: string;
+  collections?: CollectionsSection;
+}
+
