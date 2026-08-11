@@ -145,20 +145,6 @@ export default function HomeScreen() {
           />
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s4 }}>
-            {/* Bell Icon */}
-            <Pressable 
-              onPress={() => router.push('/(org)/(tabs)/notifications')}
-              style={{ position: 'relative', padding: 4 }}
-            >
-              <Bell size={24} color="#0AA550" />
-              {unreadCount > 0 ? (
-                <View style={{
-                  position: 'absolute', top: -2, right: -2, backgroundColor: '#D93025', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3
-                }}>
-                  <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '700' }}>{unreadCount}</Text>
-                </View>
-              ) : null}
-            </Pressable>
 
             {/* Circular Avatar */}
             <Pressable 
