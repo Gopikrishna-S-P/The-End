@@ -127,7 +127,9 @@ export default function CaseAssignmentsScreen() {
               <Text variant="caption" style={{ fontWeight: '600', color: colors.accent }}>{formatCurrency(item.outstandingAmount || 0)}</Text>
             </View>
             {activeTab === 'reassign' && item.agentName && (
-              <Badge label={`Current: ${item.agentName}`} tone="neutral" style={{ alignSelf: 'flex-start', marginTop: 6 }} />
+              <View style={{ alignSelf: 'flex-start', marginTop: 6 }}>
+                <Badge label={`Current: ${item.agentName}`} tone="neutral" />
+              </View>
             )}
           </View>
         </Card>
@@ -156,7 +158,7 @@ export default function CaseAssignmentsScreen() {
                 style={{
                   paddingHorizontal: spacing.s4,
                   paddingVertical: spacing.s2,
-                  borderRadius: radius.full,
+                  borderRadius: radius.pill,
                   backgroundColor: selectedFo === item.id ? colors.accent : colors.subtle,
                   borderWidth: 1,
                   borderColor: selectedFo === item.id ? colors.accent : colors.border
