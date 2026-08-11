@@ -200,13 +200,6 @@ async def transcribe(audio: UploadFile = File(...), lang: str = Form("en")):
     try:
         tmp.write(data)
         tmp.close()
-        # Save a copy for debugging
-        try:
-            with open(r"C:\Users\Keerthana\.gemini\antigravity-cli\brain\79d819ae-e1dd-4039-8fea-75bff29ccf36\scratch\debug.webm", "wb") as f:
-                f.write(data)
-            print("[STT] Saved debug.webm successfully")
-        except Exception as ex:
-            print(f"[STT] Failed to save debug.webm: {ex}")
         # Decode and resample to 16kHz mono float32 using PyAV
         import av
         container = av.open(tmp.name)
