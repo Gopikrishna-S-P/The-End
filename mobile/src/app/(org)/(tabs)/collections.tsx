@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, View, StyleSheet, TouchableOpacity, Share, Modal, Pressable, ScrollView, SafeAreaView } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { DollarSign, WifiOff, X, Banknote, FileText, CreditCard, Calendar, User, CheckCircle2 } from 'lucide-react-native';
+import { DollarSign, WifiOff, X, Banknote, FileText, CreditCard, Calendar, User, CheckCircle2, Download } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, Card, Badge, EmptyState, LoadingView, Divider, Button } from '@/components/ui';
@@ -98,7 +98,14 @@ export default function CollectionsHubScreen() {
             <Text variant="title">Collections</Text>
             <Text variant="caption" color="secondary">{collections.length} transaction records</Text>
           </View>
-          <Button label="Export" onPress={() => setShowExportModal(true)} variant="outline" fullWidth={false} size="md" />
+          <View style={{ flexDirection: 'row', gap: spacing.s3, alignItems: 'center' }}>
+            <Pressable 
+              onPress={() => setShowExportModal(true)} 
+              style={{ padding: 4 }}
+            >
+              <Download size={20} color={colors.ink2} />
+            </Pressable>
+          </View>
         </View>
 
         <FlatList
