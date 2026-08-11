@@ -139,28 +139,28 @@ export default function HomeScreen() {
       {/* Top Background Pattern (Dot Grid) */}
       <View style={{ position: 'absolute', top: insets.top + 40, right: 20, opacity: 0.2 }}>
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
         </View>
         <View style={{ flexDirection: 'row', gap: 6 }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#065F46' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#0AA550' }}/>
         </View>
       </View>
 
@@ -169,7 +169,7 @@ export default function HomeScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s5 }}>
           <Image 
             source={require('../../../../assets/images/logo.png')} 
-            style={{ width: 120, height: 32, resizeMode: 'contain', marginLeft: -spacing.s5, tintColor: '#065F46' }} 
+            style={{ width: 120, height: 32, resizeMode: 'contain', marginLeft: -spacing.s5, tintColor: '#0AA550' }} 
           />
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s4 }}>
@@ -178,7 +178,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/(org)/(tabs)/notifications')}
               style={{ position: 'relative', padding: 4 }}
             >
-              <Bell size={24} color="#065F46" />
+              <Bell size={24} color="#0AA550" />
               {unreadCount > 0 ? (
                 <View style={{
                   position: 'absolute', top: -2, right: -2, backgroundColor: '#D93025', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3
@@ -191,7 +191,7 @@ export default function HomeScreen() {
             {/* Circular Avatar */}
             <Pressable 
               onPress={() => router.push('/(org)/(tabs)/profile')}
-              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#065F46', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#0AA550', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
             >
               {avatarUri ? (
                 <Image source={{ uri: avatarUri }} style={{ width: 36, height: 36 }} />
@@ -208,7 +208,7 @@ export default function HomeScreen() {
           <Text variant="body" style={{ color: '#4B5563', marginBottom: 2 }}>Welcome back,</Text>
           <Text 
             style={{ 
-              color: '#065F46', 
+              color: '#0AA550', 
               fontFamily: 'Inter_700Bold', 
               fontSize: 32,
               letterSpacing: -0.5
@@ -236,7 +236,7 @@ export default function HomeScreen() {
           {/* Field Shift */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center' }}>
-              <Radio size={24} color="#065F46" />
+              <Radio size={24} color="#0AA550" />
             </View>
 
             <View style={{ flex: 1, gap: 4 }}>
@@ -245,7 +245,7 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row' }}>
                 {shift ? (
                   <View style={{ backgroundColor: '#ECFDF5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                    <Text style={{ color: '#065F46', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Active</Text>
+                    <Text style={{ color: '#0AA550', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>Active</Text>
                   </View>
                 ) : (
                   <View style={{ backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
@@ -257,9 +257,9 @@ export default function HomeScreen() {
             </View>
             
             {shift ? (
-              <Button label="End Shift" variant="outline" onPress={endShift} loading={ending} fullWidth={false} style={{ paddingHorizontal: 20, borderColor: '#065F46' }} />
+              <Button label="End Shift" variant="outline" onPress={endShift} loading={ending} fullWidth={false} style={{ paddingHorizontal: 20, borderColor: '#0AA550' }} />
             ) : (
-              <Button label="Start" onPress={startShift} loading={starting} fullWidth={false} style={{ backgroundColor: '#065F46', paddingHorizontal: 24 }} />
+              <Button label="Start" onPress={startShift} loading={starting} fullWidth={false} style={{ backgroundColor: '#0AA550', paddingHorizontal: 24 }} />
             )}
           </View>
 
@@ -268,7 +268,7 @@ export default function HomeScreen() {
           {/* Daily Check-In */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center' }}>
-              <MapPinCheck size={24} color="#065F46" />
+              <MapPinCheck size={24} color="#0AA550" />
             </View>
 
             <View style={{ flex: 1, gap: 2 }}>
@@ -284,9 +284,9 @@ export default function HomeScreen() {
             </View>
 
             {!checkedInAt ? (
-              <Button label="Check In" onPress={onCheckIn} loading={checkingIn} fullWidth={false} style={{ backgroundColor: '#065F46', paddingHorizontal: 20 }} />
+              <Button label="Check In" onPress={onCheckIn} loading={checkingIn} fullWidth={false} style={{ backgroundColor: '#0AA550', paddingHorizontal: 20 }} />
             ) : !checkedOutAt ? (
-              <Button label="Check Out" onPress={onCheckOut} loading={checkingOut} fullWidth={false} variant="outline" style={{ paddingHorizontal: 20, borderColor: '#065F46' }} />
+              <Button label="Check Out" onPress={onCheckOut} loading={checkingOut} fullWidth={false} variant="outline" style={{ paddingHorizontal: 20, borderColor: '#0AA550' }} />
             ) : null}
           </View>
         </View>
@@ -296,7 +296,7 @@ export default function HomeScreen() {
           <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
             <View style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: '#ECFDF5', opacity: 0.5 }} />
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
-              <IndianRupee size={20} color="#065F46" />
+              <IndianRupee size={20} color="#0AA550" />
             </View>
             <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? formatCurrency(dashboard.collectedAmountToday).replace('₹', '₹ ') : '₹ 0'}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
@@ -310,7 +310,7 @@ export default function HomeScreen() {
           <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' }}>
             <View style={{ position: 'absolute', bottom: -20, right: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: '#ECFDF5', opacity: 0.5 }} />
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
-              <Handshake size={20} color="#065F46" />
+              <Handshake size={20} color="#0AA550" />
             </View>
             <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? String(dashboard.ptpsDueToday) : '0'}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
@@ -325,9 +325,9 @@ export default function HomeScreen() {
         {/* Today's Visits */}
         <View style={{ marginTop: spacing.s6, gap: spacing.s3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#065F46' }}>Today&apos;s visits</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#0AA550' }}>Today&apos;s visits</Text>
             <Pressable onPress={() => router.push('/(org)/(tabs)/cases')}>
-              <Text style={{ fontSize: 14, color: '#065F46', fontWeight: '500' }}>View all cases</Text>
+              <Text style={{ fontSize: 14, color: '#0AA550', fontWeight: '500' }}>View all cases</Text>
             </Pressable>
           </View>
 
@@ -340,7 +340,7 @@ export default function HomeScreen() {
           {todayCases.length === 0 ? (
             <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s6 }}>
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
-                <CalendarCheck size={40} color="#065F46" />
+                <CalendarCheck size={40} color="#0AA550" />
               </View>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 4 }}>No visits scheduled today</Text>
               <Text style={{ fontSize: 13, color: '#6B7280', textAlign: 'center' }}>Cases assigned to you will show up here{'\n'}once dispatched.</Text>
