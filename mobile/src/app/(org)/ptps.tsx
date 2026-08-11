@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { FlatList, View, StyleSheet, Modal, Pressable, ScrollView, SafeAreaView } from 'react-native';
+import { FlatList, View, StyleSheet, Modal, Pressable, ScrollView, SafeAreaView, TextInput } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { TrendingUp, WifiOff, X, AlertTriangle, Clock, Calendar, User, FileText, CheckCircle2 } from 'lucide-react-native';
+import { TrendingUp, WifiOff, X, AlertTriangle, Clock, Calendar, User, FileText, CheckCircle2, Search, SlidersHorizontal, Download } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, Card, Badge, EmptyState, LoadingView, Divider, Button } from '@/components/ui';
@@ -20,6 +20,12 @@ export default function PtpListScreen() {
   const [loadError, setLoadError] = useState(false);
   
   const [selectedPtp, setSelectedPtp] = useState<PtpResponse | null>(null);
+  
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -56,18 +62,70 @@ export default function PtpListScreen() {
     }
   };
 
+  const filterAndShareCSV = async (type: 'ALL' | 'TODAY' | 'MONTH' | 'YEAR') => {
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const monthStartStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
+    const yearStartStr = `${d.getFullYear()}-01-01`;
+
+    let expFiltered = ptps;
+    if (type === 'TODAY') expFiltered = ptps.filter(p => p.promisedDate >= todayStr);
+    else if (type === 'MONTH') expFiltered = ptps.filter(p => p.promisedDate >= monthStartStr);
+    else if (type === 'YEAR') expFiltered = ptps.filter(p => p.promisedDate >= yearStartStr);
+
+    try {
+      const header = 'ID,Amount,Status,Date,Agent\n';
+      const rows = expFiltered
+        .map((p) => `${p.id},${p.promisedAmount},${p.status},${p.promisedDate},${p.agentName}`)
+        .join('\n');
+      import('react-native').then(({ Share }) => {
+        Share.share({
+          message: header + rows,
+          title: 'Export PTPs',
+        });
+      });
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const filteredPtps = ptps.filter(p => {
+    if (filterStatus && p.status !== filterStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!p.borrowerName?.toLowerCase().includes(q) && !p.loanNumber?.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
   if (loading) return <LoadingView label="Loading Promises to Pay…" />;
 
   return (
     <Screen edges={['top']}>
       <View style={{ gap: spacing.s4, paddingBottom: spacing.s4 }}>
-        <View>
-          <Text variant="title">Promises to Pay</Text>
-          <Text variant="caption" color="secondary">{ptps.length} active promises recorded</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1 }}>
+            <Text variant="title">Promises to Pay</Text>
+            <Text variant="caption" color="secondary">{filteredPtps.length} active promises</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: spacing.s2 }}>
+            <Button 
+              label="Filter"
+              onPress={() => setShowFilterModal(true)} 
+              variant={filterStatus || searchQuery ? "primary" : "outline"} 
+              fullWidth={false} 
+            />
+            <Button 
+              label="Export"
+              onPress={() => setShowExportModal(true)} 
+              variant="outline" 
+              fullWidth={false} 
+            />
+          </View>
         </View>
 
         <FlatList
-          data={ptps}
+          data={filteredPtps}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ gap: spacing.s3 }}
           renderItem={({ item }) => (
@@ -278,6 +336,85 @@ export default function PtpListScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Export Options Modal */}
+      <Modal visible={showExportModal} animationType="fade" transparent>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.s4 }} onPress={() => setShowExportModal(false)}>
+          <View style={{ backgroundColor: colors.canvas, borderRadius: radius.md, width: '100%', maxWidth: 300, overflow: 'hidden' }}>
+            <View style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium" style={{ fontWeight: '600' }}>Export Date Range</Text>
+            </View>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('ALL'); }} style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium">All time</Text>
+            </Pressable>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('TODAY'); }} style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium">Today</Text>
+            </Pressable>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('MONTH'); }} style={{ padding: spacing.s4, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Text variant="bodyMedium">This month</Text>
+            </Pressable>
+            <Pressable onPress={() => { setShowExportModal(false); filterAndShareCSV('YEAR'); }} style={{ padding: spacing.s4 }}>
+              <Text variant="bodyMedium">This year</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Filter Modal */}
+      <Modal visible={showFilterModal} animationType="fade" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: spacing.s4 }}>
+          <View style={{ backgroundColor: colors.canvas, borderRadius: radius.md, width: '100%', maxWidth: 350, padding: spacing.s4, gap: spacing.s4 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text variant="bodyMedium" style={{ fontWeight: '600' }}>Filter Promises</Text>
+              <Pressable onPress={() => setShowFilterModal(false)}><X size={20} color={colors.ink2} /></Pressable>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Text variant="caption" style={{ fontWeight: '500' }}>Search</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.subtle, borderRadius: radius.sm, paddingHorizontal: spacing.s2, borderWidth: 1, borderColor: colors.border }}>
+                <Search size={14} color={colors.ink3} />
+                <TextInput
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Borrower name or loan #"
+                  placeholderTextColor={colors.ink3}
+                  style={{ flex: 1, paddingVertical: spacing.s2, paddingHorizontal: spacing.s2, color: colors.ink1 }}
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery('')}><X size={14} color={colors.ink3} /></Pressable>
+                )}
+              </View>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Text variant="caption" style={{ fontWeight: '500' }}>Status</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {['', 'PENDING', 'FULFILLED', 'PARTIALLY_FULFILLED', 'BROKEN', 'CANCELLED'].map(status => (
+                  <Pressable
+                    key={status}
+                    onPress={() => setFilterStatus(status)}
+                    style={{
+                      paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill,
+                      backgroundColor: filterStatus === status ? colors.accent : colors.subtle,
+                      borderWidth: 1, borderColor: filterStatus === status ? colors.accent : colors.border
+                    }}
+                  >
+                    <Text style={{ color: filterStatus === status ? colors.canvas : colors.ink1, fontSize: 12 }}>
+                      {status === '' ? 'All' : status.replace('_', ' ')}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: spacing.s2, marginTop: spacing.s2 }}>
+              <Button label="Clear" variant="outline" onPress={() => { setSearchQuery(''); setFilterStatus(''); }} style={{ flex: 1 }} />
+              <Button label="Apply" variant="primary" onPress={() => setShowFilterModal(false)} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </Screen>
   );
 }
