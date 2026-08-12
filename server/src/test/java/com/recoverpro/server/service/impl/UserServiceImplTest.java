@@ -3,9 +3,11 @@ package com.recoverpro.server.service.impl;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.config.AppProperties;
 import com.recoverpro.server.config.PlatformConstants;
+import com.recoverpro.server.dto.request.CreateUserRequest;
 import com.recoverpro.server.dto.request.UpdateUserRequest;
 import com.recoverpro.server.dto.response.PageResponse;
 import com.recoverpro.server.dto.response.UserResponse;
+import com.recoverpro.server.entity.Permission;
 import com.recoverpro.server.entity.Role;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.mapper.UserMapper;
@@ -246,5 +248,101 @@ class UserServiceImplTest {
 
         assertThat(target.isEnabled()).isFalse();
         verify(userRepository, never()).countByRoleNameAndEnabledTrue(anyString());
+    }
+
+    @Test
+    void createUser_callerLacksTargetRolePermissions_throwsAndDoesNotSaveUser() {
+        UUID orgId = UUID.randomUUID();
+        UUID callerId = UUID.randomUUID();
+
+        Permission userCreatePerm = Permission.builder().name("USER_CREATE").build();
+        Permission userDeletePerm = Permission.builder().name("USER_DELETE").build();
+        Role tlRole = Role.builder().name(PlatformConstants.ROLE_TL)
+                .permissions(new HashSet<>(Set.of(userCreatePerm))).build();
+        Role orgAdminRole = Role.builder().name(PlatformConstants.ROLE_ORG_ADMIN)
+                .permissions(new HashSet<>(Set.of(userCreatePerm, userDeletePerm))).build();
+        User caller = User.builder().id(callerId).organizationId(orgId)
+                .roles(new HashSet<>(Set.of(tlRole))).build();
+
+        actAs(callerId);
+        when(userRepository.findById(callerId)).thenReturn(Optional.of(caller));
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(roleRepository.findByNameAndOrganizationIdIsNull(PlatformConstants.ROLE_ORG_ADMIN))
+                .thenReturn(Optional.of(orgAdminRole));
+
+        CreateUserRequest request = new CreateUserRequest();
+        request.setEmail("new.hire@example.com");
+        request.setFirstName("New");
+        request.setLastName("Hire");
+        request.setRoleNames(Set.of(PlatformConstants.ROLE_ORG_ADMIN));
+
+        assertThatThrownBy(() -> service.createUser(orgId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("permissions you don't hold");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUser_callerHoldsAllTargetRolePermissions_succeeds() {
+        UUID orgId = UUID.randomUUID();
+        UUID callerId = UUID.randomUUID();
+
+        Permission userCreatePerm = Permission.builder().name("USER_CREATE").build();
+        Role tlRole = Role.builder().name(PlatformConstants.ROLE_TL)
+                .permissions(new HashSet<>(Set.of(userCreatePerm))).build();
+        Role foRole = Role.builder().name(PlatformConstants.ROLE_FO)
+                .permissions(new HashSet<>()).build();
+        User caller = User.builder().id(callerId).organizationId(orgId)
+                .roles(new HashSet<>(Set.of(tlRole))).build();
+
+        actAs(callerId);
+        when(userRepository.findById(callerId)).thenReturn(Optional.of(caller));
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(roleRepository.findByNameAndOrganizationIdIsNull(PlatformConstants.ROLE_FO))
+                .thenReturn(Optional.of(foRole));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userMapper.toResponse(any())).thenReturn(UserResponse.builder().build());
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(appProperties.getSecurity()).thenReturn(new AppProperties.Security());
+
+        CreateUserRequest request = new CreateUserRequest();
+        request.setEmail("new.fo@example.com");
+        request.setFirstName("New");
+        request.setLastName("FO");
+        request.setRoleNames(Set.of(PlatformConstants.ROLE_FO));
+
+        service.createUser(orgId, request);
+
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    void createUser_nonPlatformAdminAssignsPlatformAdminRole_throwsAndDoesNotSaveUser() {
+        UUID orgId = UUID.randomUUID();
+        UUID callerId = UUID.randomUUID();
+
+        Role orgAdminRole = Role.builder().name(PlatformConstants.ROLE_ORG_ADMIN)
+                .permissions(new HashSet<>()).build();
+        Role platformAdminRole = Role.builder().name(PlatformConstants.ROLE_PLATFORM_ADMIN)
+                .permissions(new HashSet<>()).build();
+        User caller = User.builder().id(callerId).organizationId(orgId)
+                .roles(new HashSet<>(Set.of(orgAdminRole))).build();
+
+        actAs(callerId);
+        when(userRepository.findById(callerId)).thenReturn(Optional.of(caller));
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(roleRepository.findByNameAndOrganizationIdIsNull(PlatformConstants.ROLE_PLATFORM_ADMIN))
+                .thenReturn(Optional.of(platformAdminRole));
+
+        CreateUserRequest request = new CreateUserRequest();
+        request.setEmail("wannabe.admin@example.com");
+        request.setFirstName("Wannabe");
+        request.setLastName("Admin");
+        request.setRoleNames(Set.of(PlatformConstants.ROLE_PLATFORM_ADMIN));
+
+        assertThatThrownBy(() -> service.createUser(orgId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("ROLE_PLATFORM_ADMIN");
+        verify(userRepository, never()).save(any());
     }
 }

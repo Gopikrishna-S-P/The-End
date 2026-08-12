@@ -112,13 +112,28 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         if (request.getRoleNames() != null && !request.getRoleNames().isEmpty()) {
+            // Widened beyond Org/Platform Admin to MANAGER/TL by CAN_CREATE_USER (see
+            // UserController) -- a caller creating a user must not be able to grant a role
+            // carrying more authority than the caller itself holds. Mirrors assignRole()'s
+            // guard below, applied here too since assignRole() only protects existing users.
+            User caller = currentCallerOrThrow(callerOrgId);
+            boolean callerIsPlatformAdmin = isPlatformAdmin(caller);
+            Set<String> callerPerms = collectPermissions(caller);
+
             for (String name : request.getRoleNames()) {
                 String normalized = name.toUpperCase();
                 Role role = roleRepository.findByNameAndOrganizationIdIsNull(normalized)
                         .or(() -> roleRepository.findByNameAndOrganizationId(normalized, callerOrgId))
                         .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + name));
-                if (PlatformConstants.ROLE_PLATFORM_ADMIN.equals(role.getName())) {
+                if (PlatformConstants.ROLE_PLATFORM_ADMIN.equals(role.getName()) && !callerIsPlatformAdmin) {
                     throw new BusinessException("ROLE_PLATFORM_ADMIN cannot be assigned by an Org Admin");
+                }
+                Set<String> rolePerms = role.getPermissions().stream()
+                        .map(Permission::getName).collect(Collectors.toSet());
+                if (!callerPerms.containsAll(rolePerms)) {
+                    Set<String> missing = new HashSet<>(rolePerms);
+                    missing.removeAll(callerPerms);
+                    throw new BusinessException("You cannot assign a role with permissions you don't hold: " + missing);
                 }
                 user.addRole(role);
             }
