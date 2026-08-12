@@ -74,6 +74,8 @@ class LucienServiceImplTest {
     @Mock private OrgIsolationGuard orgIsolationGuard;
     @Mock private com.recoverpro.server.service.AllocationService allocationService;
     @Mock private com.recoverpro.server.service.VisitInterviewContextService visitInterviewContextService;
+    @Mock private com.recoverpro.server.port.ModelClientPort modelClientPort;
+    @Mock private com.recoverpro.server.lucien.ambient.AmbientReplyParser ambientReplyParser;
 
     private LucienServiceImpl service;
     private UUID agentId;
@@ -86,7 +88,7 @@ class LucienServiceImplTest {
                 outputSafetyFilter, systemPromptBuilder, systemPromptService, agentContextService,
                 contextAssembler, dataSanitizer, chatRateLimiter, tokenBudgetService, agentLoop,
                 toolRegistry, confirmationService, orgIsolationGuard, allocationService,
-                visitInterviewContextService);
+                visitInterviewContextService, modelClientPort, ambientReplyParser);
 
         agentId = UUID.randomUUID();
         User user = User.builder().id(agentId).organizationId(UUID.randomUUID()).build();
@@ -158,5 +160,95 @@ class LucienServiceImplTest {
         assertThatThrownBy(() -> service.startSession(request, principal))
                 .isInstanceOf(com.recoverpro.server.common.exception.BusinessException.class)
                 .hasMessageContaining("ambient");
+    }
+
+    @Test
+    void ambientTurn_modelStaysSilent_persistsUserMessageOnlyAndReturnsNoSpeak() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-1").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-1")).thenReturn(Optional.of(ambientSession));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-1")).thenReturn(List.of());
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse("{\"speak\":false,\"text\":null}", 10, 5));
+        when(ambientReplyParser.parse(anyString()))
+                .thenReturn(com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply.silent());
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Customer says nothing, just opened the door.").build();
+
+        var response = service.ambientTurn("sess-1", request, false, principal);
+
+        assertThat(response.isSpeak()).isFalse();
+        assertThat(response.getText()).isNull();
+        verify(messageRepository, org.mockito.Mockito.times(1)).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void ambientTurn_modelDecidesToSpeak_persistsBothMessagesAndReturnsText() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-2").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-2")).thenReturn(Optional.of(ambientSession));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-2")).thenReturn(List.of());
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse(
+                        "{\"speak\":true,\"text\":\"Ask if he can pay half today.\"}", 12, 8));
+        when(ambientReplyParser.parse(anyString())).thenReturn(
+                new com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply(
+                        true, "Ask if he can pay half today."));
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Customer says I don't have the full amount.").build();
+
+        var response = service.ambientTurn("sess-2", request, false, principal);
+
+        assertThat(response.isSpeak()).isTrue();
+        assertThat(response.getText()).isEqualTo("Ask if he can pay half today.");
+        verify(messageRepository, org.mockito.Mockito.times(2)).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void ambientTurn_forceSpeak_addsHelpInstructionToPromptMessages() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-3").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-3")).thenReturn(Optional.of(ambientSession));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-3")).thenReturn(List.of());
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse(
+                        "{\"speak\":true,\"text\":\"Try offering a payment plan.\"}", 12, 8));
+        when(ambientReplyParser.parse(anyString())).thenReturn(
+                new com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply(
+                        true, "Try offering a payment plan."));
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Long silence, negotiation stalled.").build();
+
+        service.ambientTurn("sess-3", request, true, principal);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(java.util.List.class);
+        verify(modelClientPort).chat((List<com.recoverpro.server.client.LlamaMessage>) captor.capture());
+        List<com.recoverpro.server.client.LlamaMessage> sentMessages = captor.getValue();
+        assertThat(sentMessages.stream().anyMatch(m -> m.getContent().contains("Help button")))
+                .isTrue();
+    }
+
+    @Test
+    void ambientTurn_sessionNotInAmbientMode_throwsBusinessException() {
+        ChatSession chatSession = ChatSession.builder()
+                .id("sess-4").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("CHAT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-4")).thenReturn(Optional.of(chatSession));
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("hello").build();
+
+        assertThatThrownBy(() -> service.ambientTurn("sess-4", request, false, principal))
+                .isInstanceOf(com.recoverpro.server.common.exception.BusinessException.class);
     }
 }

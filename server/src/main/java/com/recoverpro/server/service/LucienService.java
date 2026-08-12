@@ -1,8 +1,10 @@
 package com.recoverpro.server.service;
 
+import com.recoverpro.server.dto.request.AmbientTurnRequest;
 import com.recoverpro.server.dto.request.ChatRequest;
 import com.recoverpro.server.dto.request.ConfirmActionRequest;
 import com.recoverpro.server.dto.request.StartSessionRequest;
+import com.recoverpro.server.dto.response.AmbientTurnResponse;
 import com.recoverpro.server.dto.response.ChatMessageResponse;
 import com.recoverpro.server.dto.response.ChatResponse;
 import com.recoverpro.server.dto.response.SessionResponse;
@@ -21,6 +23,16 @@ public interface LucienService {
 
     /** Resolve a WRITE tool confirmation (confirm=true) or cancellation (confirm=false). */
     ChatResponse confirmAction(String sessionId, ConfirmActionRequest request, UserPrincipal principal);
+
+    /**
+     * One turn of ambient (continuous doorstep listening) mode. Unlike chat(), this does not
+     * always produce a reply — see LUCIEN_AMBIENT_VISIT_V1's speak/silent contract.
+     *
+     * @param forceSpeak true when the FO pressed the Help button — overrides the "stay silent
+     *                    by default" instruction for this turn only.
+     */
+    AmbientTurnResponse ambientTurn(String sessionId, AmbientTurnRequest request,
+                                     boolean forceSpeak, UserPrincipal principal);
 
     SessionResponse getSession(String sessionId, UserPrincipal principal);
 

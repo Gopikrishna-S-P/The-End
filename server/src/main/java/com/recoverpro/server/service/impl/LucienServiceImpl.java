@@ -1,10 +1,12 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.client.LlamaMessage;
+import com.recoverpro.server.dto.request.AmbientTurnRequest;
 import com.recoverpro.server.dto.request.ChatRequest;
 import com.recoverpro.server.dto.request.ConfirmActionRequest;
 import com.recoverpro.server.dto.request.StartSessionRequest;
 import com.recoverpro.server.dto.response.AgentContextDto;
+import com.recoverpro.server.dto.response.AmbientTurnResponse;
 import com.recoverpro.server.dto.response.ChatMessageResponse;
 import com.recoverpro.server.dto.response.ChatResponse;
 import com.recoverpro.server.dto.response.SessionResponse;
@@ -23,7 +25,10 @@ import com.recoverpro.server.service.safety.SafetyFilterResult;
 import com.recoverpro.server.lucien.agent.AgentLoopResult;
 import com.recoverpro.server.lucien.agent.ConfirmationService;
 import com.recoverpro.server.lucien.agent.LucienAgentLoop;
+import com.recoverpro.server.lucien.ambient.AmbientReplyParser;
 import com.recoverpro.server.lucien.tool.ToolRegistry;
+import com.recoverpro.server.port.ModelClientPort;
+import com.recoverpro.server.port.ModelClientResponse;
 import com.recoverpro.server.prompt.DefaultSystemPrompt;
 import com.recoverpro.server.prompt.SystemPromptBuilder;
 import com.recoverpro.server.repository.ChatMessageRepository;
@@ -73,6 +78,8 @@ public class LucienServiceImpl implements LucienService {
     private final OrgIsolationGuard orgIsolationGuard;
     private final AllocationService allocationService;
     private final VisitInterviewContextService visitInterviewContextService;
+    private final ModelClientPort modelClientPort;
+    private final AmbientReplyParser ambientReplyParser;
 
     @Value("${lucien.context.max-history-messages:20}")
     private int maxHistoryMessages;
@@ -265,6 +272,75 @@ public class LucienServiceImpl implements LucienService {
                 .timestamp(Instant.now())
                 .modelName(modelName)
                 .build();
+    }
+
+    private static final int AMBIENT_MAX_HISTORY_MESSAGES = 30;
+
+    @Override
+    @Transactional
+    public AmbientTurnResponse ambientTurn(String sessionId, AmbientTurnRequest request,
+                                            boolean forceSpeak, UserPrincipal principal) {
+        ChatSession session = sessionRepository.findByIdAndIsActiveTrue(sessionId)
+                .orElseThrow(() -> new SessionInactiveException(
+                        "Session not found or no longer active: " + sessionId));
+        if (!principal.getId().equals(session.getAgentId())) {
+            throw new ResourceNotFoundException("Session not found: " + sessionId);
+        }
+        if (session.getAllocationId() == null || !"AMBIENT".equals(session.getInteractionMode())) {
+            throw new BusinessException("This session is not in ambient-listening mode.");
+        }
+
+        ChatMessage userMsg = ChatMessage.builder()
+                .session(session)
+                .agentId(session.getAgentId())
+                .organizationId(session.getOrganizationId())
+                .role(ChatRole.USER)
+                .content(request.getSpeakerHint() != null
+                        ? "[" + request.getSpeakerHint() + "] " + request.getText()
+                        : request.getText())
+                .build();
+        messageRepository.save(userMsg);
+        sessionRepository.incrementMessageCount(session.getId());
+
+        List<LlamaMessage> messages = new ArrayList<>();
+        String systemPrompt = DefaultSystemPrompt.AMBIENT_TEMPLATE
+                .replace("{{AGENT_FIRST_NAME}}", session.getAgentFirstName());
+        messages.add(LlamaMessage.builder().role("system").content(systemPrompt).build());
+
+        List<ChatMessage> history = messageRepository.findBySessionIdOrderByCreatedAtAsc(session.getId());
+        int fromIndex = Math.max(0, history.size() - AMBIENT_MAX_HISTORY_MESSAGES);
+        for (ChatMessage m : history.subList(fromIndex, history.size())) {
+            messages.add(LlamaMessage.builder()
+                    .role(m.getRole() == ChatRole.ASSISTANT ? "assistant" : "user")
+                    .content(m.getContent())
+                    .build());
+        }
+
+        if (forceSpeak) {
+            messages.add(LlamaMessage.builder().role("user")
+                    .content(DefaultSystemPrompt.AMBIENT_FORCE_SPEAK_INSTRUCTION
+                            .replace("{{AGENT_FIRST_NAME}}", session.getAgentFirstName()))
+                    .build());
+        }
+
+        ModelClientResponse modelResponse = modelClientPort.chat(messages);
+        AmbientReplyParser.AmbientReply reply = ambientReplyParser.parse(modelResponse.content());
+
+        if (reply.speak()) {
+            ChatMessage assistantMsg = ChatMessage.builder()
+                    .session(session)
+                    .agentId(session.getAgentId())
+                    .organizationId(session.getOrganizationId())
+                    .role(ChatRole.ASSISTANT)
+                    .content(reply.text())
+                    .inputTokens(modelResponse.inputTokens())
+                    .outputTokens(modelResponse.outputTokens())
+                    .build();
+            messageRepository.save(assistantMsg);
+            sessionRepository.incrementMessageCount(session.getId());
+        }
+
+        return AmbientTurnResponse.builder().speak(reply.speak()).text(reply.text()).build();
     }
 
     @Override
