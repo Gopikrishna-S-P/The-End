@@ -283,6 +283,9 @@ public class LucienServiceImpl implements LucienService {
         ChatSession session = sessionRepository.findByIdAndIsActiveTrue(sessionId)
                 .orElseThrow(() -> new SessionInactiveException(
                         "Session not found or no longer active: " + sessionId));
+        // Deliberately narrower than assertSessionAccess(): ambient mode is a live, single-device
+        // doorstep session driven by the FO's own phone in real time, not a shared/supervised view,
+        // so same-org supervisors are not granted access here.
         if (!principal.getId().equals(session.getAgentId())) {
             throw new ResourceNotFoundException("Session not found: " + sessionId);
         }
@@ -290,16 +293,23 @@ public class LucienServiceImpl implements LucienService {
             throw new BusinessException("This session is not in ambient-listening mode.");
         }
 
-        ChatMessage userMsg = ChatMessage.builder()
-                .session(session)
-                .agentId(session.getAgentId())
-                .organizationId(session.getOrganizationId())
-                .role(ChatRole.USER)
-                .content(request.getSpeakerHint() != null
-                        ? "[" + request.getSpeakerHint() + "] " + request.getText()
-                        : request.getText())
-                .build();
-        messageRepository.save(userMsg);
+        SafetyFilterResult inputResult = inputSafetyFilter.filter(request.getText());
+        if (!inputResult.isAllowed()) {
+            log.warn("Input blocked sessionId={}: decision={}", session.getId(), inputResult.getDecision());
+            persistMessage(session, ChatRole.USER, inputResult.getReason(), null,
+                    inputResult.getDecision(), null, null, null, true, inputResult.getReason());
+            sessionRepository.incrementMessageCount(session.getId());
+            // Ambient mode's default is silence, not a surfaced reply -- unlike chat(), a blocked
+            // input here just means the FO doesn't hear anything from Lucien this turn.
+            return AmbientTurnResponse.builder().speak(false).text(null).build();
+        }
+
+        String sanitizedText = inputResult.getSanitizedContent();
+        String userContent = request.getSpeakerHint() != null
+                ? "[" + request.getSpeakerHint() + "] " + sanitizedText
+                : sanitizedText;
+        persistMessage(session, ChatRole.USER, userContent, null,
+                SafetyDecision.ALLOWED, null, null, null, false, null);
         sessionRepository.incrementMessageCount(session.getId());
 
         List<LlamaMessage> messages = new ArrayList<>();
@@ -326,21 +336,29 @@ public class LucienServiceImpl implements LucienService {
         ModelClientResponse modelResponse = modelClientPort.chat(messages);
         AmbientReplyParser.AmbientReply reply = ambientReplyParser.parse(modelResponse.content());
 
-        if (reply.speak()) {
-            ChatMessage assistantMsg = ChatMessage.builder()
-                    .session(session)
-                    .agentId(session.getAgentId())
-                    .organizationId(session.getOrganizationId())
-                    .role(ChatRole.ASSISTANT)
-                    .content(reply.text())
-                    .inputTokens(modelResponse.inputTokens())
-                    .outputTokens(modelResponse.outputTokens())
-                    .build();
-            messageRepository.save(assistantMsg);
-            sessionRepository.incrementMessageCount(session.getId());
+        if (!reply.speak()) {
+            return AmbientTurnResponse.builder().speak(false).text(null).build();
         }
 
-        return AmbientTurnResponse.builder().speak(reply.speak()).text(reply.text()).build();
+        SafetyFilterResult outputResult = outputSafetyFilter.filter(reply.text());
+        if (!outputResult.isAllowed()) {
+            log.warn("Output blocked for sessionId={}", session.getId());
+            persistMessage(session, ChatRole.ASSISTANT, outputResult.getReason(), null,
+                    null, outputResult.getDecision(),
+                    modelResponse.inputTokens(), modelResponse.outputTokens(), true, outputResult.getReason());
+            sessionRepository.incrementMessageCount(session.getId());
+            // Same silence-over-forced-fallback reasoning as the blocked-input path -- don't
+            // invent a "sorry I can't respond" line the FO never asked for.
+            return AmbientTurnResponse.builder().speak(false).text(null).build();
+        }
+
+        String finalReply = dataSanitizer.stripPii(outputResult.getSanitizedContent());
+        persistMessage(session, ChatRole.ASSISTANT, finalReply, null,
+                null, SafetyDecision.ALLOWED,
+                modelResponse.inputTokens(), modelResponse.outputTokens(), false, null);
+        sessionRepository.incrementMessageCount(session.getId());
+
+        return AmbientTurnResponse.builder().speak(true).text(finalReply).build();
     }
 
     @Override

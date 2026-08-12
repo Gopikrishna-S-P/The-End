@@ -199,6 +199,10 @@ class LucienServiceImplTest {
         when(ambientReplyParser.parse(anyString())).thenReturn(
                 new com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply(
                         true, "Ask if he can pay half today."));
+        when(outputSafetyFilter.filter("Ask if he can pay half today."))
+                .thenReturn(SafetyFilterResult.allowed("Ask if he can pay half today."));
+        when(dataSanitizer.stripPii("Ask if he can pay half today."))
+                .thenReturn("Ask if he can pay half today.");
 
         var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
                 .text("Customer says I don't have the full amount.").build();
@@ -224,6 +228,10 @@ class LucienServiceImplTest {
         when(ambientReplyParser.parse(anyString())).thenReturn(
                 new com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply(
                         true, "Try offering a payment plan."));
+        when(outputSafetyFilter.filter("Try offering a payment plan."))
+                .thenReturn(SafetyFilterResult.allowed("Try offering a payment plan."));
+        when(dataSanitizer.stripPii("Try offering a payment plan."))
+                .thenReturn("Try offering a payment plan.");
 
         var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
                 .text("Long silence, negotiation stalled.").build();
@@ -250,5 +258,56 @@ class LucienServiceImplTest {
 
         assertThatThrownBy(() -> service.ambientTurn("sess-4", request, false, principal))
                 .isInstanceOf(com.recoverpro.server.common.exception.BusinessException.class);
+    }
+
+    @Test
+    void ambientTurn_inputBlocked_returnsSilentWithoutCallingModel() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-5").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-5")).thenReturn(Optional.of(ambientSession));
+        when(inputSafetyFilter.filter(anyString())).thenReturn(
+                SafetyFilterResult.blocked(com.recoverpro.server.enums.SafetyDecision.BLOCKED_PII,
+                        "Contains PII"));
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Customer's Aadhaar number is 1234 5678 9012.").build();
+
+        var response = service.ambientTurn("sess-5", request, false, principal);
+
+        assertThat(response.isSpeak()).isFalse();
+        assertThat(response.getText()).isNull();
+        verify(modelClientPort, org.mockito.Mockito.never()).chat(any());
+        verify(messageRepository, org.mockito.Mockito.times(1)).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void ambientTurn_outputBlocked_returnsSilentEvenThoughParserSaidSpeak() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-6").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-6")).thenReturn(Optional.of(ambientSession));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-6")).thenReturn(List.of());
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse(
+                        "{\"speak\":true,\"text\":\"Here's the borrower's full account number.\"}", 12, 8));
+        when(ambientReplyParser.parse(anyString())).thenReturn(
+                new com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply(
+                        true, "Here's the borrower's full account number."));
+        when(outputSafetyFilter.filter("Here's the borrower's full account number.")).thenReturn(
+                SafetyFilterResult.blocked(com.recoverpro.server.enums.SafetyDecision.BLOCKED_PII,
+                        "Contains PII"));
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("What's the account number again?").build();
+
+        var response = service.ambientTurn("sess-6", request, false, principal);
+
+        assertThat(response.isSpeak()).isFalse();
+        assertThat(response.getText()).isNull();
+        verify(modelClientPort).chat(any());
+        verify(messageRepository, org.mockito.Mockito.times(2)).save(any(ChatMessage.class));
     }
 }
