@@ -95,3 +95,20 @@ export interface UserResponse {
   organizationId?: string;
   roles: RoleResponse[];
 }
+
+export interface DirectPermissionResponse {
+  id: string;
+  name: string;
+  resource: string;
+  action: string;
+  description?: string;
+  scope?: string;
+  granted: boolean;
+  grantedAt?: string;
+}
+
+export interface UserPermissionsResponse {
+  fromRoles: PermissionResponse[];
+  direct: DirectPermissionResponse[];
+}
+

@@ -12,3 +12,9 @@ export * from './LoadingView';
 export * from './Divider';
 export * from './Avatar';
 export * from './StatCard';
+export * from './SegmentedTabs';
+export * from './RadioGroup';
+export * from './ChipMultiSelect';
+export * from './TextArea';
+export * from './ConfirmDialog';
+

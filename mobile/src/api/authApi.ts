@@ -32,4 +32,18 @@ export const authApi = {
   resetPassword: async (data: { email: string; otp: string; newPassword: string }): Promise<void> => {
     await axiosInstance.post('/api/v1/auth/reset-password', data);
   },
+
+  setupMfa: async (): Promise<any> => {
+    const response = await axiosInstance.post('/api/v1/auth/mfa/setup');
+    return response.data.data;
+  },
+
+  enableMfa: async (totpCode: string): Promise<any> => {
+    const response = await axiosInstance.post('/api/v1/auth/mfa/enable', { totpCode });
+    return response.data.data;
+  },
+
+  disableMfa: async (totpCode: string): Promise<void> => {
+    await axiosInstance.post('/api/v1/auth/mfa/disable', { totpCode });
+  },
 };

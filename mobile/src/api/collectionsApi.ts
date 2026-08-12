@@ -1,8 +1,15 @@
 import axiosInstance, { newIdempotencyKey } from './axiosInstance';
-import type { ApiResponse } from '@/types/core';
+import type { ApiResponse, PagedResponse } from '@/types/core';
 import type { AgentCollectionReport, CollectionDocumentResponse, CollectionResponse, SubmitCollectionRequest } from '@/types/domain';
 
 export const collectionsApi = {
+  list: async (params?: { page?: number; size?: number }): Promise<PagedResponse<CollectionResponse>> => {
+    const response = await axiosInstance.get<ApiResponse<PagedResponse<CollectionResponse>>>('/api/v1/collections', {
+      params: { page: params?.page ?? 0, size: params?.size ?? 100 },
+    });
+    return response.data.data;
+  },
+
   submit: async (data: Omit<SubmitCollectionRequest, 'idempotencyKey'>): Promise<CollectionResponse> => {
     const payload: SubmitCollectionRequest = { ...data, idempotencyKey: newIdempotencyKey() };
     const response = await axiosInstance.post<ApiResponse<CollectionResponse>>('/api/v1/collections', payload);

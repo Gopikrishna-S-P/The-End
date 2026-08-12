@@ -12,6 +12,11 @@ export const paymentApi = {
     return response.data.data;
   },
 
+  getIntent: async (id: string): Promise<PaymentIntentResponse> => {
+    const response = await axiosInstance.get<ApiResponse<PaymentIntentResponse>>(`/api/v1/payments/intents/${id}`);
+    return response.data.data;
+  },
+
   createLink: async (data: CreatePaymentLinkRequest): Promise<PaymentLinkResponse> => {
     const response = await axiosInstance.post<ApiResponse<PaymentLinkResponse>>('/api/v1/payments/links', data);
     return response.data.data;

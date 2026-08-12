@@ -15,7 +15,7 @@ export function CaseRow({ item, completed }: { item: AllocationResponse; complet
   const dpd = resolveDPD(item);
 
   return (
-    <Card onPress={() => router.push({ pathname: '/case/[id]', params: { id: item.id } })} style={{ marginBottom: spacing.s3 }}>
+    <Card onPress={() => router.push({ pathname: '/(org)/case/[id]', params: { id: item.id } })} style={{ marginBottom: spacing.s3 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
         <View style={{ flex: 1, gap: spacing.s1 + 2 }}>
           <Text variant="bodyMedium" numberOfLines={1}>{item.borrowerName || 'Unknown borrower'}</Text>
