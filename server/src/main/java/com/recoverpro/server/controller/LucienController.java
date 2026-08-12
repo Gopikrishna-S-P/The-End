@@ -5,6 +5,7 @@ import com.recoverpro.server.client.SttClient;
 import com.recoverpro.server.client.TtsClient;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.config.PlanFeatureMatrix;
+import com.recoverpro.server.dto.request.AmbientTurnRequest;
 import com.recoverpro.server.dto.request.ChatRequest;
 import com.recoverpro.server.dto.request.ConfirmActionRequest;
 import com.recoverpro.server.dto.request.ConfirmVisitActionRequest;
@@ -12,6 +13,7 @@ import com.recoverpro.server.dto.request.SpeakRequest;
 import com.recoverpro.server.dto.request.StartSessionRequest;
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.dto.response.PagedResponse;
+import com.recoverpro.server.dto.response.AmbientTurnResponse;
 import com.recoverpro.server.dto.response.ChatMessageResponse;
 import com.recoverpro.server.dto.response.ChatResponse;
 import com.recoverpro.server.dto.response.SessionResponse;
@@ -88,6 +90,30 @@ public class LucienController {
         ChatResponse response = lucienService.confirmAction(sessionId, request, principal);
         return ResponseEntity.ok(ApiResponse.success(response,
                 request.isConfirmed() ? "Action executed." : "Action cancelled."));
+    }
+
+    @PostMapping("/sessions/{sessionId}/ambient-turn")
+    @RequiresFeature(PlanFeatureMatrix.LUCIEN_AI)
+    public ResponseEntity<ApiResponse<AmbientTurnResponse>> ambientTurn(
+            @PathVariable String sessionId,
+            @Valid @RequestBody AmbientTurnRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        log.debug("POST /api/v1/lucien/sessions/{}/ambient-turn", sessionId);
+        AmbientTurnResponse response = lucienService.ambientTurn(sessionId, request, false, principal);
+        return ResponseEntity.ok(ApiResponse.success(response, "Ambient turn processed."));
+    }
+
+    /** FO pressed the Help button — forces Lucien to respond this turn regardless of its own
+     * silent/speak judgment. Same underlying path as ambientTurn(), forceSpeak=true. */
+    @PostMapping("/sessions/{sessionId}/help")
+    @RequiresFeature(PlanFeatureMatrix.LUCIEN_AI)
+    public ResponseEntity<ApiResponse<AmbientTurnResponse>> help(
+            @PathVariable String sessionId,
+            @Valid @RequestBody AmbientTurnRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        log.info("POST /api/v1/lucien/sessions/{}/help", sessionId);
+        AmbientTurnResponse response = lucienService.ambientTurn(sessionId, request, true, principal);
+        return ResponseEntity.ok(ApiResponse.success(response, "Help response generated."));
     }
 
     /**
