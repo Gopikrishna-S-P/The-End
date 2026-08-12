@@ -24,7 +24,17 @@ public class ChatRateLimiter {
     @Value("${lucien.rate-limit.window-seconds:60}")
     private long windowSeconds;
 
+    // Ambient mode fires once per VAD-segmented utterance during a live doorstep conversation --
+    // much higher frequency than typed chat -- so it needs its own, more generous limit rather
+    // than reusing the chat one (which would falsely rate-limit a normal ambient visit).
+    @Value("${lucien.rate-limit.ambient.max-requests:120}")
+    private int ambientMaxRequests;
+
+    @Value("${lucien.rate-limit.ambient.window-seconds:60}")
+    private long ambientWindowSeconds;
+
     private static final String KEY_PREFIX = "rate:chat:";
+    private static final String AMBIENT_KEY_PREFIX = "rate:ambient:";
 
     // Atomic increment + conditional expire in a single Lua script.
     // Prevents the race where two threads both see count==0 and both set TTL,
@@ -38,16 +48,23 @@ public class ChatRateLimiter {
             """, Long.class);
 
     public void checkAndRecord(UUID agentId) {
-        String key = KEY_PREFIX + agentId;
+        checkAndRecord(KEY_PREFIX + agentId, maxRequests, windowSeconds);
+    }
+
+    public void checkAndRecordAmbient(UUID agentId) {
+        checkAndRecord(AMBIENT_KEY_PREFIX + agentId, ambientMaxRequests, ambientWindowSeconds);
+    }
+
+    private void checkAndRecord(String key, int limit, long windowSeconds) {
         try {
             Long count = redisTemplate.execute(INCREMENT_SCRIPT, List.of(key), String.valueOf(windowSeconds));
-            if (count != null && count > maxRequests) {
+            if (count != null && count > limit) {
                 Long ttl = redisTemplate.getExpire(key);
                 long retryAfter = ttl != null && ttl > 0 ? ttl : windowSeconds;
-                log.warn("Chat rate limit exceeded: agentId={} count={}", agentId, count);
+                log.warn("Rate limit exceeded: key={} count={}", key, count);
                 throw new RateLimitExceededException(
                         "Too many requests. Limit is %d messages per %ds. Retry after %ds."
-                                .formatted(maxRequests, windowSeconds, retryAfter),
+                                .formatted(limit, windowSeconds, retryAfter),
                         retryAfter);
             }
         } catch (RateLimitExceededException e) {

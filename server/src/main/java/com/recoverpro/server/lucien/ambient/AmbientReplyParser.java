@@ -33,7 +33,7 @@ public class AmbientReplyParser {
         }
         Matcher matcher = JSON_OBJECT.matcher(rawContent);
         if (!matcher.find()) {
-            log.warn("Ambient reply had no JSON object, treating as silent: {}", rawContent);
+            log.debug("Ambient reply had no JSON object, treating as silent: contentLength={}", rawContent.length());
             return AmbientReply.silent();
         }
         try {
@@ -41,12 +41,14 @@ public class AmbientReplyParser {
             boolean speak = node.path("speak").asBoolean(false);
             String text = node.path("text").isNull() ? null : node.path("text").asText(null);
             if (speak && (text == null || text.isBlank())) {
-                log.warn("Ambient reply had speak=true but no text, treating as silent: {}", rawContent);
+                log.debug("Ambient reply had speak=true but no text, treating as silent: contentLength={}",
+                        rawContent.length());
                 return AmbientReply.silent();
             }
             return new AmbientReply(speak, speak ? text : null);
         } catch (Exception e) {
-            log.warn("Malformed ambient reply JSON, treating as silent: {}", rawContent, e);
+            log.debug("Malformed ambient reply JSON, treating as silent: contentLength={}, error={}",
+                    rawContent.length(), e.getClass().getSimpleName());
             return AmbientReply.silent();
         }
     }

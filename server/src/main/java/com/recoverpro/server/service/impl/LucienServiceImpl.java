@@ -293,6 +293,11 @@ public class LucienServiceImpl implements LucienService {
             throw new BusinessException("This session is not in ambient-listening mode.");
         }
 
+        chatRateLimiter.checkAndRecordAmbient(session.getAgentId());
+
+        UUID orgId = tokenBudgetService.resolveOrgId(session.getAgentId()).orElse(null);
+        tokenBudgetService.checkBudget(orgId);
+
         SafetyFilterResult inputResult = inputSafetyFilter.filter(request.getText());
         if (!inputResult.isAllowed()) {
             log.warn("Input blocked sessionId={}: decision={}", session.getId(), inputResult.getDecision());
@@ -319,12 +324,12 @@ public class LucienServiceImpl implements LucienService {
 
         List<ChatMessage> history = messageRepository.findBySessionIdOrderByCreatedAtAsc(session.getId());
         int fromIndex = Math.max(0, history.size() - AMBIENT_MAX_HISTORY_MESSAGES);
-        for (ChatMessage m : history.subList(fromIndex, history.size())) {
-            messages.add(LlamaMessage.builder()
-                    .role(m.getRole() == ChatRole.ASSISTANT ? "assistant" : "user")
-                    .content(m.getContent())
-                    .build());
-        }
+        history.subList(fromIndex, history.size()).stream()
+                .filter(m -> !m.getWasBlocked())
+                .forEach(m -> messages.add(LlamaMessage.builder()
+                        .role(m.getRole() == ChatRole.ASSISTANT ? "assistant" : "user")
+                        .content(m.getContent())
+                        .build()));
 
         if (forceSpeak) {
             messages.add(LlamaMessage.builder().role("user")
@@ -334,6 +339,7 @@ public class LucienServiceImpl implements LucienService {
         }
 
         ModelClientResponse modelResponse = modelClientPort.chat(messages);
+        tokenBudgetService.recordUsage(orgId, modelResponse.inputTokens(), modelResponse.outputTokens());
         AmbientReplyParser.AmbientReply reply = ambientReplyParser.parse(modelResponse.content());
 
         if (!reply.speak()) {

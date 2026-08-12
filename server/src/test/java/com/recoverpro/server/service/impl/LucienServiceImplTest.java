@@ -310,4 +310,92 @@ class LucienServiceImplTest {
         verify(modelClientPort).chat(any());
         verify(messageRepository, org.mockito.Mockito.times(2)).save(any(ChatMessage.class));
     }
+
+    @Test
+    void ambientTurn_historyContainsBlockedMessage_excludedFromMessagesSentToModel() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-7").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-7")).thenReturn(Optional.of(ambientSession));
+
+        ChatMessage blockedMsg = ChatMessage.builder()
+                .role(ChatRole.USER)
+                .content("The response could not be delivered. Please rephrase your question.")
+                .wasBlocked(true).build();
+        ChatMessage allowedMsg = ChatMessage.builder()
+                .role(ChatRole.ASSISTANT).content("Please pay by Friday.")
+                .wasBlocked(false).build();
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-7"))
+                .thenReturn(List.of(blockedMsg, allowedMsg));
+
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse("{\"speak\":false,\"text\":null}", 10, 5));
+        when(ambientReplyParser.parse(anyString()))
+                .thenReturn(com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply.silent());
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Customer is quiet.").build();
+
+        service.ambientTurn("sess-7", request, false, principal);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(java.util.List.class);
+        verify(modelClientPort).chat((List<LlamaMessage>) captor.capture());
+        List<LlamaMessage> sentMessages = captor.getValue();
+        assertThat(sentMessages.stream().map(LlamaMessage::getContent))
+                .doesNotContain("The response could not be delivered. Please rephrase your question.")
+                .contains("Please pay by Friday.");
+    }
+
+    @Test
+    void ambientTurn_modelStaysSilent_stillChecksRateLimitBudgetAndRecordsTokenUsage() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-8").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-8")).thenReturn(Optional.of(ambientSession));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-8")).thenReturn(List.of());
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse("{\"speak\":false,\"text\":null}", 10, 5));
+        when(ambientReplyParser.parse(anyString()))
+                .thenReturn(com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply.silent());
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Customer is quiet.").build();
+
+        service.ambientTurn("sess-8", request, false, principal);
+
+        verify(chatRateLimiter).checkAndRecordAmbient(agentId);
+        verify(tokenBudgetService).checkBudget(principal.getOrganizationId());
+        verify(tokenBudgetService).recordUsage(principal.getOrganizationId(), 10, 5);
+    }
+
+    @Test
+    void ambientTurn_modelDecidesToSpeak_recordsTokenUsageRegardlessOfSpeakOutcome() {
+        ChatSession ambientSession = ChatSession.builder()
+                .id("sess-9").agentId(agentId).organizationId(principal.getOrganizationId())
+                .allocationId(UUID.randomUUID()).agentFirstName("Priya")
+                .interactionMode("AMBIENT").isActive(true).totalMessages(0).build();
+        when(sessionRepository.findByIdAndIsActiveTrue("sess-9")).thenReturn(Optional.of(ambientSession));
+        when(messageRepository.findBySessionIdOrderByCreatedAtAsc("sess-9")).thenReturn(List.of());
+        when(modelClientPort.chat(any())).thenReturn(
+                new com.recoverpro.server.port.ModelClientResponse(
+                        "{\"speak\":true,\"text\":\"Ask if he can pay half today.\"}", 12, 8));
+        when(ambientReplyParser.parse(anyString())).thenReturn(
+                new com.recoverpro.server.lucien.ambient.AmbientReplyParser.AmbientReply(
+                        true, "Ask if he can pay half today."));
+        when(outputSafetyFilter.filter("Ask if he can pay half today."))
+                .thenReturn(SafetyFilterResult.allowed("Ask if he can pay half today."));
+        when(dataSanitizer.stripPii("Ask if he can pay half today."))
+                .thenReturn("Ask if he can pay half today.");
+
+        var request = com.recoverpro.server.dto.request.AmbientTurnRequest.builder()
+                .text("Customer says I don't have the full amount.").build();
+
+        service.ambientTurn("sess-9", request, false, principal);
+
+        verify(chatRateLimiter).checkAndRecordAmbient(agentId);
+        verify(tokenBudgetService).checkBudget(principal.getOrganizationId());
+        verify(tokenBudgetService).recordUsage(principal.getOrganizationId(), 12, 8);
+    }
 }
