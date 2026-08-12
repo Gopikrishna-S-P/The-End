@@ -11,26 +11,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Setter;
-
 @Getter
-@Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserPrincipal implements UserDetails {
 
-    private UUID id;
-    private String email;
-    private String passwordHash;
-    private boolean enabled;
-    private boolean accountLocked;
-    private UUID organizationId;
-
-    @JsonDeserialize(contentAs = SimpleGrantedAuthority.class)
-    private Collection<? extends GrantedAuthority> authorities;
-
-    public UserPrincipal() {}
+    private final UUID id;
+    private final String email;
+    private final String passwordHash;
+    private final boolean enabled;
+    private final boolean accountLocked;
+    private final UUID organizationId;
+    private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(User user) {
         this.id             = user.getId();
