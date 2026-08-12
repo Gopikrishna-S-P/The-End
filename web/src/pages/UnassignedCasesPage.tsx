@@ -9,6 +9,7 @@ import {
   AlertCircle, X, ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import { Pagination } from '../components/Pagination';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 
 import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
@@ -25,6 +26,28 @@ const fmtCurrency = (v: number | null | undefined) => {
   if (v >= 1_000)      return `₹${(v / 1_000).toFixed(1)}K`;
   return `₹${Math.round(v)}`;
 };
+
+function resolveAmount(c: AllocationResponse): number | null {
+  if (typeof c.outstandingAmount === 'number') return c.outstandingAmount;
+  if (typeof c.totalDue === 'number') return c.totalDue;
+  const dd = c.dynamicData || {};
+  const key = Object.keys(dd).find(k => {
+    const kl = k.toLowerCase();
+    return kl.includes('outstanding') || kl.includes('pos') || kl.includes('balance')
+      || (kl.includes('total') && kl.includes('due'));
+  });
+  if (key != null) {
+    const num = Number(String(dd[key]).replace(/[^0-9.\-]/g, ''));
+    if (!Number.isNaN(num) && num !== 0) return num;
+  }
+  return null;
+}
+
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
+}
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 
@@ -95,7 +118,7 @@ export default function UnassignedCasesPage() {
   useEffect(() => { setPage(0); }, [search]);
 
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root">
       <AnimatePresence>
         {error && (
           <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
@@ -117,7 +140,6 @@ export default function UnassignedCasesPage() {
       <div className="db-content">
         <div className="dd-page-header" style={{ padding: '0 0 24px 0', border: 'none' }}>
           <div className="dd-page-titles">
-            <h1 className="dd-page-title">Unassigned Cases</h1>
             <span className="dd-page-context">
               <strong>{totalElements.toLocaleString('en-IN')}</strong> cases in pool
             </span>
@@ -125,11 +147,11 @@ export default function UnassignedCasesPage() {
         </div>
 
         <div className="dd-main-container" style={{ padding: 0 }}>
-          <div className="ds-card dd-cases-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+          <div className="ds-card dd-cases-card is-list-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             
             {/* ── Header: Title & Search ── */}
-            <header className="dd-cases-head" style={{ padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '44px' }}>
-              <h2 className="db-card-title">Unassigned Cases Pool</h2>
+            <header className="dd-cases-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '44px' }}>
+              <h3 className="db-list-title">Unassigned Cases Pool</h3>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <AnimatePresence mode="popLayout">
@@ -204,12 +226,14 @@ export default function UnassignedCasesPage() {
                   <motion.div variants={stagger} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
                     {rows.map((r) => {
                       const loanRef = r.loanAccountNo || r.loanNumber || '—';
+                      const amt = resolveAmount(r);
+                      const disposition = resolveDisposition(r);
 
                       return (
                         <motion.div
                           key={r.id}
                           variants={fadeUp}
-                          className="dd-case-row"
+                          className="dd-case-row is-list-row"
                           onClick={() => navigate(`/app/allocations/${r.id}`)}
                           role="button"
                           tabIndex={0}
@@ -222,13 +246,18 @@ export default function UnassignedCasesPage() {
                               {r.status && (
                                 <span className="dd-case-product" style={{ background: 'var(--bg-surface)' }}>{r.status}</span>
                               )}
+                              {disposition && (
+                                <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                                  {disposition.replace(/_/g, ' ')}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="dd-case-right">
                             <div className="dd-case-amount-col">
-                              {r.outstandingAmount != null ? (
+                              {amt != null ? (
                                 <>
-                                  <span className="dd-case-amount">{fmtCurrency(r.outstandingAmount)}</span>
+                                  <span className="dd-case-amount">{fmtCurrency(amt)}</span>
                                   <span className="dd-case-amount-lbl">POS</span>
                                 </>
                               ) : (

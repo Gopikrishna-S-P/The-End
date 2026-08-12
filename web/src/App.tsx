@@ -7,6 +7,7 @@ import { AuthProvider } from './AuthContext';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from './AppLayout';
 import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext';
+import PaginationPreview from './pages/__PaginationPreview';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -24,7 +25,6 @@ import AgentsPage from './pages/AgentsPage';
 import ReportsPage from './pages/ReportsPage';
 import AuditPage from './pages/AuditPage';
 import PtpsPage from './pages/PtpsPage';
-import LucienPage from './pages/LucienPage';
 import AgentDetailPage from './pages/AgentDetailPage';
 import ColumnSchemaPage from './pages/ColumnSchemaPage';
 import RoleManagementPage from './pages/RoleManagementPage';
@@ -73,13 +73,15 @@ const FeatureFlagsPage = lazy(() => import('./pages/FeatureFlagsPage'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const MessageTemplatesPage = lazy(() => import('./pages/MessageTemplatesPage'));
 
-// Route-split the heaviest pages: Leaflet (LiveTrackPage/FieldOpsPage), xlsx
+// Route-split the heaviest pages: Leaflet (FieldOpsPage), xlsx
 // (VisitsPage pulls it in via VisitExportModal), and the whole Platform Admin
 // console (never loaded by ordinary org users) — previously all four eagerly
 // loaded into the same >1.9MB main chunk as every other page.
-const LiveTrackPage = lazy(() => import('./pages/LiveTrackPage'));
 const FieldOpsPage = lazy(() => import('./pages/FieldOpsPage'));
 const VisitsPage = lazy(() => import('./pages/VisitsPage'));
+const VisitDetailPage = lazy(() => import('./pages/VisitDetailPage'));
+const CollectionDetailPage = lazy(() => import('./pages/CollectionDetailPage'));
+const CallsPage = lazy(() => import('./pages/CallsPage'));
 const PlatformSetupPage = lazy(() => import('./pages/PlatformSetupPage'));
 const PlatformDashboard = lazy(() => import('./pages/PlatformDashboard'));
 const PlatformSubscriptions = lazy(() => import('./pages/PlatformSubscriptions'));
@@ -163,6 +165,7 @@ function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             {/* ── Public routes ── */}
+            <Route path="/__pagination-preview" element={<PaginationPreview />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -185,19 +188,21 @@ function App() {
                   <Route path="/app/assignments" element={<CaseAssignmentsPage />} />
                   <Route path="/app/collections" element={<CollectionsPage />} />
                   <Route path="/app/collections/trend" element={<CollectionMomPage />} />
+                  <Route path="/app/collections/:id" element={<CollectionDetailPage />} />
                   <Route path="/app/non-contactables" element={<NonContactablesPage />} />
                   <Route path="/app/restructure-proposals" element={<RestructureProposalsPage />} />
                   <Route path="/app/settlement-offers" element={<SettlementOffersPage />} />
                   <Route path="/app/grievances" element={<GrievancesPage />} />
                   <Route path="/app/visits" element={<VisitsPage />} />
+                  <Route path="/app/visits/:id" element={<VisitDetailPage />} />
                   <Route path="/app/ptps" element={<PtpsPage />} />
                   <Route path="/app/today" element={<TodayVisitsPage />} />
                   <Route path="/app/visits/:caseId/submit" element={<VisitSubmitPage />} />
                   <Route path="/app/visits/:caseId/interview" element={<VisitInterviewPage />} />
                   <Route path="/app/reports" element={<ReportsPage />} />
                   <Route path="/app/audit" element={<AuditPage />} />
-                  <Route path="/app/lucien" element={<LucienPage />} />
                   <Route path="/app/notifications" element={<NotificationsPage />} />
+                  <Route path="/app/calls" element={<CallsPage />} />
                   <Route path="/app/my-cases" element={<MyCasesPage />} />
                   <Route path="/app/my-attendance" element={<MyAttendancePage />} />
                   <Route path="/app/start-visit" element={<StartVisitPage />} />
@@ -217,7 +222,8 @@ function App() {
                   <Route path="/app/dispatch" element={<DailyDispatchPage />} />
                   <Route path="/app/agents" element={<AgentsPage />} />
                   <Route path="/app/agents/:id" element={<AgentDetailPage />} />
-                  <Route path="/app/live-track" element={<LiveTrackPage />} />
+                  {/* Live Map merged into Field Ops — redirect old bookmarks/links. */}
+                  <Route path="/app/live-track" element={<Navigate to="/app/field-ops" replace />} />
                   <Route path="/app/field-ops" element={<FieldOpsPage />} />
 
                   <Route path="/app/settings/schema" element={<ColumnSchemaPage />} />

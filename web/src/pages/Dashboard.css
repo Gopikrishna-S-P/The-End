@@ -68,7 +68,13 @@
   letter-spacing: 0.08em;
 }
 
-.db-root {
+/* .dd-page rides along because the chart tokens in this block (--dbc-*,
+   --dbn-*, --db-track) are consumed by DonutChart, which Daily Dispatch and
+   Case Assignments render in their officer panels while rooting at .dd-page.
+   Without it those tokens are undefined there and every arc — including the
+   zero-state track ring — paints with no colour at all. */
+.db-root,
+.dd-page {
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -102,6 +108,11 @@
 
   /* Identity — categorical, fixed order */
   --dbc-1: #0AA550;  /* green — brand; always the lead/primary series */
+  /* NOTE: this token block is also inherited by .dd-page (see the selector
+     above) — Daily Dispatch / Case Assignments render DonutChart in their
+     officer panels but root at .dd-page, not .db-root. Without that the arcs
+     and the zero-state track ring resolve to an empty colour and paint
+     nothing at all. */
   --dbc-2: #2A80E2;  /* blue */
   --dbc-3: #C74C8E;  /* magenta */
   --dbc-4: #B17000;  /* amber */
@@ -147,7 +158,8 @@
    adjacent CVD ΔE 13.6, normal-vision ΔE 19.5, all six ≥3:1. The magnitude
    ramp also inverts its anchor, so "most" stays the most emphatic step
    against a dark plane rather than the one that disappears into it. */
-.app-layout.dark .db-root {
+.app-layout.dark .db-root,
+.app-layout.dark .dd-page {
   --dbc-1: #13A147;
   --dbc-2: #2279DC;
   --dbc-3: #B53C7F;
@@ -214,10 +226,15 @@
 /* ── Fill-viewport table card ──────────────────────────────────────────────
    Reused by list pages whose last card should fill exactly the remaining
    viewport height (Loans' behaviour), instead of a guessed vh-minus-px
-   offset that can under/overshoot per page's own header height. */
+   offset that can under/overshoot per page's own header height. Covers both
+   structural families: .db-root pages (.db-content/.db-inner) and .dd-page
+   pages (.dd-main-container/.dd-grid) — same fix, different wrapper names. */
 .db-fill-root {
   height: 100%;
   overflow: hidden;
+}
+.db-fill-root.dd-page {
+  padding: 20px 24px 36px;
 }
 .db-fill-root .db-content {
   display: flex;
@@ -229,6 +246,16 @@
 .db-fill-root .db-inner {
   flex: 1;
   min-height: 0;
+}
+.db-fill-root .dd-main-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.db-fill-root .dd-grid {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
 }
 .db-fill-chain {
   flex: 1;
@@ -292,14 +319,19 @@
   gap: 20px;
   flex-wrap: wrap;
 }
+/* Page title — one spec for every page in the app. Matches .dd-page-title
+   (DailyDispatch.shell.css), which is the app's reference: sans 20/700 at
+   -0.02em in --ink-primary. This was a 12px/900 mono eyebrow in
+   --ink-tertiary, so the dashboard's own title read four sizes smaller and a
+   different typeface from every list page's. */
 .db-root .db-page-title {
-  font-size: 12px;
-  font-weight: 900;
-  color: var(--ink-tertiary);
-  font-family: var(--font-mono);
   margin: 0;
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
-  letter-spacing: 0.06em;
+  color: var(--ink-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1474,6 +1506,85 @@ button.db-legend-row { cursor: pointer; }
   justify-content: space-between;
   gap: 12px;
   min-height: 20px;
+}
+
+/* ── List-card pattern (scrollable row list + <Pagination> footer) ──────────
+   Opt-in via .is-list-card / .is-list-row so it doesn't touch the generic
+   .db-card/.db-att-row used everywhere else (KPI cards, dialogs, settings
+   panels, etc.). Values match LoansPage — the app-wide reference for this
+   pattern — so every list page reads as one system. See .dd-cases-card.is-
+   list-card in DailyDispatch.cases.css for the dd-case-row typography half
+   of this same fix. */
+.db-card.is-list-card,
+.dd-cases-card.is-list-card,
+.ds-table-card.is-list-card {
+  padding: 12px;
+  gap: 0;
+  /* Neutralise the unscoped .dd-cases-card base rule's hardcoded
+     height:calc(100vh - 220px), which overshoots on pages whose header isn't
+     exactly Daily Dispatch's height. The flex-fill half of this lives in
+     ds.listcard.css scoped under .db-fill-root, because "fill the viewport"
+     is the PAGE's decision — a natural-scroll page with several stacked cards
+     must not have them all stretched. */
+  height: auto;
+}
+.db-card.is-list-card > .db-card-head,
+.dd-cases-card.is-list-card > .db-card-head {
+  padding: 8px 16px;
+}
+.db-att-row.is-list-row {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* Row text defaults — LoansPage's reference values, so pages stop having to
+   inline-copy them per row. dd-case-row's own baked-in typography (weaker:
+   500/13px label, mono/10px meta, mono/13px/700 amount) is fixed to match
+   in DailyDispatch.cases.css, scoped the same way. */
+.db-att-row.is-list-row .db-att-label {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+/* ── List-card title — a scoped variant of .db-card-title used only inside
+   .is-list-card headers (LoansPage's "Portfolio", etc.). Kept separate from
+   the generic .db-card-title (13px/700, shared by ~30 unrelated detail-panel/
+   drawer/settings headers at that smaller size) so fixing this one pattern
+   can't ripple into those. ─────────────────────────────────────────────── */
+.db-list-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-primary);
+  display: flex;
+  align-items: center;
+}
+
+/* ── Detail-page heading — the record's own name (borrower, agent, org) ─────
+   A detail page's record name IS that page's title, so it carries the same
+   spec as .dd-page-title / .db-page-title rather than its own 18/600. */
+.db-detail-title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ink-primary);
+}
+
+/* ── Detail section cards ───────────────────────────────────────────────────
+   One rhythm for every section card on a detail page, instead of re-inlining
+   the same padding pair on each card's head and body. */
+.db-detail-card > .db-card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.db-detail-card > .db-card-body {
+  padding: 4px 20px 8px;
+}
+.db-att-row.is-list-row:last-child {
+  border-bottom: none;
 }
 .db-card-title {
   margin: 0;

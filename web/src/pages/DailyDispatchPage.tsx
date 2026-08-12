@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePermissions } from '../hooks/usePermissions';
 import { useAuth } from '../AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { assignmentsApi } from '../api/assignmentsApi';
 import type { UserResponse, AllocationResponse, OptimizedAssignmentOrderResponse } from '../types';
 import {
   CheckCircle2, AlertCircle, X,
-  RefreshCw, Send, ChevronDown, ChevronUp,
+  RefreshCw, ChevronLeft, ChevronRight, CalendarDays,
 } from 'lucide-react';
 import DispatchAgentPanel from './DispatchAgentPanel';
 import DispatchCasePanel, { resolveAmount } from './DispatchCasePanel';
@@ -58,6 +58,8 @@ export default function DailyDispatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
   const selectedAgent = searchParams.get('agent') ?? '';
   const dispatchDate  = searchParams.get('date')  ?? todayIso;
 
@@ -89,20 +91,12 @@ export default function DailyDispatchPage() {
   const [feedback,      setFeedback]      = useState<{ kind: 'ok' | 'err'; msg: string; sub?: string; onRetry?: () => void } | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [orgDispatched, setOrgDispatched] = useState<number | null>(null);
-  const [showOfficerPanel, setShowOfficerPanel] = useState(false);
   const [optimizing,    setOptimizing]    = useState(false);
   const [optimizedOrder, setOptimizedOrder] = useState<string[] | null>(null);
   const [optimizeMeta,  setOptimizeMeta]  = useState<Map<string, OptimizedAssignmentOrderResponse['ordered'][number]> | null>(null);
 
   // Any change to the picked set invalidates a previously computed optimized order.
   useEffect(() => { setOptimizedOrder(null); setOptimizeMeta(null); }, [picked]);
-
-  // Officer panel auto-closes 30s after being opened.
-  useEffect(() => {
-    if (!showOfficerPanel) return;
-    const t = setTimeout(() => setShowOfficerPanel(false), 30000);
-    return () => clearTimeout(t);
-  }, [showOfficerPanel]);
 
   const agentObj      = useMemo(() => agents.find(a => a.id === selectedAgent), [agents, selectedAgent]);
   const agentFullName = agentObj ? `${agentObj.firstName} ${agentObj.lastName}`.trim() : '';
@@ -209,7 +203,7 @@ export default function DailyDispatchPage() {
   const totalDispatchedAmt = useMemo(() => dispatched.reduce((s, c) => s + (resolveAmount(c) ?? 0), 0), [dispatched]);
 
   return (
-    <div className="dd-page">
+    <div className="dd-page dd-daily-dispatch-page db-fill-root">
       {/* ── Page Header ── */}
       <div className="dd-page-header">
         <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
@@ -227,12 +221,21 @@ export default function DailyDispatchPage() {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={() => setShowOfficerPanel(v => !v)}
-            className="ds-btn is-primary">
-            Executive
-            {showOfficerPanel ? <ChevronUp size={14} style={{ marginLeft: 6 }} /> : <ChevronDown size={14} style={{ marginLeft: 6 }} />}
-          </button>
+        <div className="db-list-page-actions">
+          <div className="dd-date-nav">
+            <div className="dd-date-display" onClick={() => dateInputRef.current?.showPicker?.()}>
+              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); shiftDate(-1); }} aria-label="Previous day">
+                <ChevronLeft size={15} />
+              </button>
+              <CalendarDays size={13} className="dd-date-icon" />
+              <span className="dd-date-label">{dispatchDayLabel}</span>
+              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); shiftDate(1); }} aria-label="Next day">
+                <ChevronRight size={15} />
+              </button>
+            </div>
+            <input ref={dateInputRef} type="date" value={dispatchDate}
+              onChange={e => setDate(e.target.value)} className="dd-date-input-hidden" />
+          </div>
         </div>
       </div>
 
@@ -271,8 +274,9 @@ export default function DailyDispatchPage() {
 
 
       <div className="dd-main-container">
-        <div className="dd-grid">
-          <div className="dd-case-panel">
+        {/* ── Queue + officer, on the dashboard's 12-column grid ── */}
+        <div className="db-grid" style={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+          <div className="db-span-8" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <DispatchCasePanel
               selectedAgent={selectedAgent} activeTab={activeTab} setActiveTab={setActiveTab}
               undispatchedCases={undispatchedCases} dispatchedCases={dispatchedCases} displayedCases={displayedCases}
@@ -280,31 +284,19 @@ export default function DailyDispatchPage() {
               picked={picked} setPicked={setPicked} toggle={toggle} fmtINR={fmtINR} selectedTotal={selectedTotal}
               undoOne={undoOne} undoingId={undoingId} casesLoading={casesLoading}
               initials={initials} canDispatch={canDispatch} submitting={submitting} doSend={doSend} agentObj={agentObj}
-              dispatchDate={dispatchDate} dispatchDayLabel={dispatchDayLabel} setDate={setDate} shiftDate={shiftDate}
               optimizing={optimizing} onOptimize={runOptimize} optimizedOrder={optimizedOrder} optimizeMeta={optimizeMeta} canOptimize={canOptimize}
             />
           </div>
-          <AnimatePresence>
-            {showOfficerPanel && (
-              <motion.div
-                key="agent-panel"
-                className="dd-agent-panel"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <DispatchAgentPanel
-                  agents={agents} agentsLoading={agentsLoading} selectedAgent={selectedAgent}
-                  agentObj={agentObj} agentFullName={agentFullName}
-                  setAgent={setAgent}
-                  cases={cases} dispatched={dispatched} undispatchedCases={undispatchedCases}
-                  casesLoading={casesLoading} dispatchPct={dispatchPct} dispatchDayLabel={dispatchDayLabel}
-                  initials={initials}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="db-span-4" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <DispatchAgentPanel
+              agents={agents} agentsLoading={agentsLoading} selectedAgent={selectedAgent}
+              agentObj={agentObj} agentFullName={agentFullName}
+              setAgent={setAgent}
+              cases={cases} dispatched={dispatched} undispatchedCases={undispatchedCases}
+              casesLoading={casesLoading} dispatchPct={dispatchPct} dispatchDayLabel={dispatchDayLabel}
+              initials={initials}
+            />
+          </div>
         </div>
       </div>
     </div>

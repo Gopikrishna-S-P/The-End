@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, UserCheck, Send, CheckCircle2, Undo2, Check, ArrowUpRight, ChevronLeft, ChevronRight, CalendarDays, Wand2 } from 'lucide-react';
+import { Loader2, UserCheck, Send, CheckCircle2, Undo2, Check, ArrowUpRight, Search, Wand2 } from 'lucide-react';
 import type { UserResponse, AllocationResponse, OptimizedAssignmentOrderResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
 import { Modal, ModalFooter } from './PlatformSetupShared';
+import { Pagination } from '../components/Pagination';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 import '../styles/PlatformSetupPage.css';
 
 interface Props {
@@ -29,10 +31,6 @@ interface Props {
   doSend: () => void;
   agentObj: UserResponse | undefined;
   initials: (a: UserResponse) => string;
-  dispatchDate: string;
-  dispatchDayLabel: string;
-  setDate: (d: string) => void;
-  shiftDate: (delta: number) => void;
   optimizing: boolean;
   onOptimize: () => void;
   optimizedOrder: string[] | null;
@@ -121,6 +119,12 @@ function resolveProduct(c: AllocationResponse): string | null {
   return val.length > 0 ? val.slice(0, 14) : null;
 }
 
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
+}
+
 function dpdTone(dpd: number): 'neutral' | 'warn' | 'high' | 'critical' {
   if (dpd <= 30)  return 'neutral';
   if (dpd <= 90)  return 'warn';
@@ -135,18 +139,28 @@ const DISPATCH_HINT = IS_APPLE ? '⌘↵' : 'Ctrl↵';
 export default function DispatchCasePanel(p: Props) {
   const [casePage, setCasePage] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
-  const PAGE_SIZE = 20;
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const PAGE_SIZE = 10;
   const selectedTotalAnim = useCountUp(p.selectedTotal, 500);
   const { ref: listRef, fire: ripple } = useRipple<HTMLDivElement>();
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setCasePage(0);
-  }, [p.activeTab]);
+  }, [p.activeTab, searchQuery]);
 
-  const totalCases = p.displayedCases.length;
+  const query = searchQuery.trim().toLowerCase();
+  const filteredCases = query
+    ? p.displayedCases.filter(c => {
+        const name = (c.borrowerName || '').toLowerCase();
+        const loanRef = (c.loanAccountNo || c.loanNumber || '').toLowerCase();
+        return name.includes(query) || loanRef.includes(query);
+      })
+    : p.displayedCases;
+
+  const totalCases = filteredCases.length;
   const totalPages = Math.ceil(totalCases / PAGE_SIZE);
-  const pageCases = p.displayedCases.slice(casePage * PAGE_SIZE, (casePage + 1) * PAGE_SIZE);
+  const pageCases = filteredCases.slice(casePage * PAGE_SIZE, (casePage + 1) * PAGE_SIZE);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -167,8 +181,8 @@ export default function DispatchCasePanel(p: Props) {
   const agentFullName = p.agentObj ? `${p.agentObj.firstName} ${p.agentObj.lastName}`.trim() : '';
 
   return (
-    <div className="dd-cases-card ds-card is-overflow-hidden">
-      {/* ── Header: tabs (far left) · calendar (center) · search (far right) ── */}
+    <div className="dd-cases-card ds-card is-overflow-hidden is-list-card">
+      {/* ── Header: tabs (far left) · search (far right) ── */}
       <div className="dd-cases-head">
 
         <div className="dd-cases-head-left">
@@ -196,21 +210,43 @@ export default function DispatchCasePanel(p: Props) {
         <div aria-hidden="true" />
 
         <div className="dd-cases-head-right">
-          {/* Calendar */}
-          <div className="dd-date-nav">
-            <div className="dd-date-display" onClick={() => dateInputRef.current?.showPicker?.()}>
-              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); p.shiftDate(-1); }} aria-label="Previous day">
-                <ChevronLeft size={15} />
-              </button>
-              <CalendarDays size={13} className="dd-date-icon" />
-              <span className="dd-date-label">{p.dispatchDayLabel}</span>
-              <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); p.shiftDate(1); }} aria-label="Next day">
-                <ChevronRight size={15} />
-              </button>
-            </div>
-            <input ref={dateInputRef} type="date" value={p.dispatchDate}
-              onChange={e => p.setDate(e.target.value)} className="dd-date-input-hidden" />
-          </div>
+          {/* Search */}
+          <AnimatePresence mode="popLayout">
+            {!searchOpen ? (
+              <motion.button
+                key="search-btn"
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.15 }}
+                type="button" onClick={() => setSearchOpen(true)}
+                style={{ width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, cursor: 'pointer', color: 'var(--ink-secondary)' }}
+                aria-label="Open search"
+              >
+                <Search size={14} />
+              </motion.button>
+            ) : (
+              <motion.div
+                key="search-bar"
+                initial={{ width: 0, opacity: 0 }} animate={{ width: 220, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden' }}
+                onBlur={(e) => {
+                  const next = e.relatedTarget as Node | null;
+                  if (!next || !e.currentTarget.contains(next)) {
+                    setSearchOpen(false);
+                    setSearchQuery('');
+                  }
+                }}
+              >
+                <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search borrower or loan ID..."
+                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -245,6 +281,14 @@ export default function DispatchCasePanel(p: Props) {
                   <span className="ds-empty-title">Select a field officer</span>
                   <span className="ds-empty-sub">Pick an officer from the list to view their dispatch queue.</span>
                 </div>
+              ) : pageCases.length === 0 && query ? (
+                <div className="ds-empty" style={{ height: '100%', minHeight: 200 }}>
+                  <span className="ds-empty-icon">
+                    <Search size={20} aria-hidden="true" />
+                  </span>
+                  <span className="ds-empty-title">No matches</span>
+                  <span className="ds-empty-sub">No cases match "{searchQuery.trim()}".</span>
+                </div>
               ) : pageCases.length === 0 ? (
                 <div className="ds-empty" style={{ height: '100%', minHeight: 200 }}>
                   <span className="ds-empty-icon" style={p.activeTab === 'queue'
@@ -269,12 +313,13 @@ export default function DispatchCasePanel(p: Props) {
                     const amt       = resolveAmount(c);
                     const dpd       = resolveDPD(c);
                     const product   = resolveProduct(c);
+                    const disposition = resolveDisposition(c);
                     const loanRef   = c.loanAccountNo || c.loanNumber || '—';
                     const rank      = isPicked && p.optimizedOrder ? p.optimizedOrder.indexOf(c.id) : -1;
                     const meta      = rank >= 0 ? p.optimizeMeta?.get(c.id) : undefined;
                     return (
                       <div key={c.id}
-                        className={`dd-case-row${isPicked ? ' is-picked' : ''}${isDone ? ' is-done' : ''}`}
+                        className={`dd-case-row is-list-row${isPicked ? ' is-picked' : ''}${isDone ? ' is-done' : ''}`}
                         onClick={isDone ? undefined : (e) => { ripple(e as any); p.toggle(c.id); }}
                         style={{ boxShadow: isPicked ? 'none' : undefined }}
                         title={meta?.rationale}
@@ -295,6 +340,11 @@ export default function DispatchCasePanel(p: Props) {
                             )}
                             {product && (
                               <span className="dd-case-product">{product}</span>
+                            )}
+                            {disposition && (
+                              <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                                {disposition.replace(/_/g, ' ')}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -336,24 +386,13 @@ export default function DispatchCasePanel(p: Props) {
 
       {/* ── Pagination ── */}
       {totalPages > 1 && !p.casesLoading && (
-        <div className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-          <span className="up-page-meta">
-            Page <strong>{casePage + 1}</strong> of <strong>{totalPages}</strong>
-            {' · '}<strong>{totalCases.toLocaleString('en-IN')}</strong> cases
-          </span>
-          <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-            <button type="button" className="up-page-btn"
-              onClick={() => setCasePage(p => Math.max(0, p - 1))}
-              disabled={casePage === 0}>
-              <ChevronLeft size={14} />
-            </button>
-            <button type="button" className="up-page-btn"
-              onClick={() => setCasePage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={casePage >= totalPages - 1}>
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={casePage}
+          totalPages={totalPages}
+          onPageChange={setCasePage}
+          totalElements={totalCases}
+          itemLabel="cases"
+        />
       )}
 
       {/* ── Send bar — floats in when cases are selected ── */}
@@ -361,7 +400,7 @@ export default function DispatchCasePanel(p: Props) {
         {p.picked.size > 0 && p.canDispatch && (
           <motion.div
             className="dd-send-bar"
-            style={{ margin: '0 12px 12px', flexShrink: 0 }}
+            style={{ flexShrink: 0 }}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}

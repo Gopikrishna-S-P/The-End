@@ -58,7 +58,7 @@ export default function UserRequestsPage() {
   const pendingCount  = pendingData?.totalElements ?? 0;
 
   return (
-    <div className="dd-page">
+    <div className="dd-page db-fill-root">
       <div className="dd-page-header">
         <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span className="dd-page-context" style={{ padding: 0 }}>
@@ -96,11 +96,9 @@ export default function UserRequestsPage() {
       <div className="dd-main-container">
         <div className="dd-grid">
           <div className="dd-case-panel">
-            <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="ds-card dd-cases-card is-overflow-hidden is-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="dd-cases-head">
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  {tab === 'pending' ? 'Pending Approval' : 'My Submissions'}
-                </span>
+                <h3 className="db-list-title">User Requests</h3>
               </div>
 
               <div className="dd-cp-list-wrap">
@@ -128,7 +126,7 @@ export default function UserRequestsPage() {
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {activeRows.map((req) => (
-                        <div key={req.id} className="dd-case-row">
+                        <div key={req.id} className="dd-case-row is-list-row">
                           <div className="dd-case-info">
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: 'var(--bg-subtle)', color: 'var(--text-secondary)', flexShrink: 0 }}>
@@ -136,16 +134,16 @@ export default function UserRequestsPage() {
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <span className="dd-case-borrower" style={{ fontSize: 13 }}>
+                                  <span className="dd-case-borrower">
                                     {req.requestedFirstName} {req.requestedLastName}
                                   </span>
                                   <StatusPill status={req.status} />
                                   <RoleBadge role={req.requestedRole} staffRole={req.requestedStaffRole} />
                                 </div>
                                 <div className="dd-case-meta">
-                                  <span>{req.requestedEmail}</span>
-                                  <span>• Requested by {req.requestedByName}</span>
-                                  <span style={{ fontFamily: 'var(--font-mono)' }}>• {new Date(req.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' })}</span>
+                                  <span className="dd-case-loan">{req.requestedEmail}</span>
+                                  <span className="dd-case-loan">• Requested by {req.requestedByName}</span>
+                                  <span className="dd-case-loan">• {new Date(req.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' })}</span>
                                 </div>
                                 {req.status === 'REJECTED' && req.reviewNotes && (
                                   <div style={{ fontSize: 11, color: 'var(--warning)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

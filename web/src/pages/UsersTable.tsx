@@ -3,8 +3,9 @@ import type { UserResponse, RoleResponse, PagedResponse } from '../types';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   Plus, Loader2, X, ToggleLeft, ToggleRight, Trash2,
-  Lock, UserPlus, KeyRound, ChevronLeft, ChevronRight, Search, RefreshCw, SquarePen
+  Lock, UserPlus, KeyRound, Search, RefreshCw, SquarePen
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 import './Dashboard.css';
 
 export const roleLabel = (name: string) =>
@@ -70,9 +71,9 @@ export function UsersTable({
   }, [isSearchOpen, inputRef]);
 
   return (
-    <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <header className="db-card-head" style={{ borderBottom: 'none', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>Directory</h3>
+    <div className="ds-card dd-cases-card is-overflow-hidden is-list-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <header className="db-card-head" style={{ borderBottom: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h3 className="db-list-title">Directory</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <AnimatePresence initial={false}>
             {isSearchOpen ? (
@@ -147,7 +148,7 @@ export function UsersTable({
                 const fullName = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || '—';
                 const aColor = avatarColor(fullName);
                 return (
-                  <motion.div key={u.id} variants={fadeUp} className="dd-case-row">
+                  <motion.div key={u.id} variants={fadeUp} className="dd-case-row is-list-row">
                     <div className="dd-case-info">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, background: `${aColor}20`, border: `1px solid ${aColor}40`, color: aColor }}>
@@ -155,14 +156,14 @@ export function UsersTable({
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span className="dd-case-borrower" style={{ fontSize: 13 }}>{fullName}</span>
+                            <span className="dd-case-borrower">{fullName}</span>
                             <span className={`ds-pill ${u.enabled ? 'is-success' : 'is-neutral'}`} style={{ fontSize: 9, padding: '0 6px', height: 16 }}>{u.enabled ? 'Active' : 'Disabled'}</span>
                           </div>
                           <div className="dd-case-meta">
-                            <span>{u.email}</span>
-                            {userRoles.length === 0 && <span style={{ fontStyle: 'italic' }}>• no roles</span>}
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{u.email}</span>
+                            {userRoles.length === 0 && <span style={{ fontStyle: 'italic', fontFamily: 'var(--font-mono)', fontSize: 11 }}>• no roles</span>}
                             {userRoles.map(rn => (
-                              <span key={rn} style={{ display: 'flex', alignItems: 'center' }}>
+                              <span key={rn} style={{ display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                                 • {roleLabel(rn)}
                                 {canCreate && (
                                   <button type="button" onClick={() => onRemoveRole(u, rn)} title="Remove role" aria-label="Remove role" style={{ marginLeft: 2, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-tertiary)' }}>
@@ -215,22 +216,13 @@ export function UsersTable({
       </div>
 
       {(data?.totalPages ?? 0) > 1 && (
-        <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-          <span className="up-page-meta">
-            Page <strong>{page + 1}</strong> of <strong>{data?.totalPages}</strong>
-            {' · '}<strong>{totalUsers.toLocaleString('en-IN')}</strong> users
-          </span>
-          <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-            <button type="button" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={page === 0} aria-label="Previous page"
-              style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: page === 0 ? 'not-allowed' : 'pointer', color: 'var(--ink-secondary)', opacity: page === 0 ? 0.5 : 1 }}>
-              <ChevronLeft size={16} />
-            </button>
-            <button type="button" onClick={() => onPageChange(Math.min((data?.totalPages ?? 1) - 1, page + 1))} disabled={page >= (data?.totalPages ?? 1) - 1} aria-label="Next page"
-              style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)', cursor: page >= (data?.totalPages ?? 1) - 1 ? 'not-allowed' : 'pointer', color: 'var(--ink-secondary)', opacity: page >= (data?.totalPages ?? 1) - 1 ? 0.5 : 1 }}>
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </footer>
+        <Pagination
+          currentPage={page}
+          totalPages={data?.totalPages ?? 0}
+          onPageChange={onPageChange}
+          totalElements={totalUsers}
+          itemLabel="users"
+        />
       )}
     </div>
   );

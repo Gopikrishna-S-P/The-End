@@ -7,6 +7,9 @@ export interface SidebarNavItem {
   badge?: number;
   count?: number;
   locked?: boolean;
+  /** Sub-items rendered under the parent's chevron. Already role-filtered by
+   *  useAppNavState, so the sidebar renders whatever arrives here. */
+  children?: SidebarNavItem[];
 }
 
 export interface SidebarSection {

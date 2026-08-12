@@ -348,15 +348,15 @@ function FilterBar({ rows, filters, onChange }: {
       <div className="ds-toolbar" style={{ width: 'auto', justifyContent: 'flex-end', border: 'none', background: 'transparent', padding: 0, height: 'auto' }}>
         <div className="ps-filter-anchor" ref={anchorRef}>
           <button type="button"
-            style={{ padding: '0 16px', height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', background: 'var(--bg-surface)', color: 'var(--ink-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xs)', fontWeight: 500, letterSpacing: '0.02em', fontSize: 13, cursor: 'pointer' }}
+            className={`ds-btn is-secondary db-list-filter-btn${open || activeCount > 0 ? ' is-active' : ''}`}
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
             aria-haspopup="dialog"
           >
-            {activeCount > 0 && <span className="ds-filter-dot" aria-hidden="true" style={{ background: 'var(--brand)' }} />}
-            <SlidersHorizontal size={13} aria-hidden="true" />
+            <SlidersHorizontal size={14} aria-hidden="true" />
             Filter{activeCount > 0 ? ` · ${activeCount}` : ''}
             <ChevronDown size={12} aria-hidden="true" />
+            {activeCount > 0 && <span className="db-list-filter-dot" aria-hidden="true" />}
           </button>
 
           <AnimatePresence>
@@ -758,7 +758,7 @@ export default function PlatformSubscriptions() {
             <motion.div key="data" variants={stagger} initial="hidden" animate="show" className="db-inner">
 
               <div className="db-kpi-header">
-                <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+                <p className="dd-page-context">
                   You have <strong>{counts.total} organizations</strong>, with <span style={{ color: 'var(--success)', fontWeight: 500 }}>{counts.active} active</span> and <span style={{ color: 'var(--warning)', fontWeight: 500 }}>{counts.trial} on trial</span>.
                   {counts.pastDue > 0 ? (
                     <span> <button type="button" onClick={() => onlyStatus('PAST_DUE')} style={{ background: 'none', border: 'none', color: 'var(--danger)', textDecoration: 'underline', padding: 0, cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit', fontWeight: 500 }}>{counts.pastDue} past due</button>.</span>

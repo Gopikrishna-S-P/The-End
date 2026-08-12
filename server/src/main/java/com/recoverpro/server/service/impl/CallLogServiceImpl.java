@@ -7,25 +7,39 @@ import com.recoverpro.server.dto.request.CompleteCallRequest;
 import com.recoverpro.server.dto.response.AllocationResponse;
 import com.recoverpro.server.dto.response.CallLogResponse;
 import com.recoverpro.server.dto.response.CallStartResponse;
+import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.Borrower;
 import com.recoverpro.server.entity.CallLog;
+import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.CallOutcome;
 import com.recoverpro.server.enums.RecordingStatus;
+import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.BorrowerRepository;
 import com.recoverpro.server.repository.CallLogRepository;
+import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.AllocationService;
 import com.recoverpro.server.service.CallLogService;
 import com.recoverpro.server.service.storage.StoragePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,12 +56,17 @@ public class CallLogServiceImpl implements CallLogService {
 
     private final CallLogRepository callLogRepository;
     private final AllocationService allocationService;
+    private final AllocationRepository allocationRepository;
     private final BorrowerRepository borrowerRepository;
+    private final UserRepository userRepository;
     private final StoragePort storagePort;
     private final CallLogFailureRecorder callLogFailureRecorder;
 
     @Value("${app.storage.call-recordings-path:./uploads/call-recordings}")
     private String storagePath;
+
+    @Value("${aws.s3.signed-url-duration-hours:24}")
+    private long signedUrlDurationHours;
 
     @Override
     @Transactional
@@ -124,8 +143,69 @@ public class CallLogServiceImpl implements CallLogService {
     @Transactional(readOnly = true)
     public List<CallLogResponse> getByAllocation(UUID allocationId, UUID organizationId) {
         requireAllocationInOrg(allocationId, organizationId);
-        return callLogRepository.findByAllocationIdOrderByInitiatedAtDesc(allocationId)
-                .stream().map(this::toResponse).collect(Collectors.toList());
+        List<CallLog> callLogs = callLogRepository.findByAllocationIdOrderByInitiatedAtDesc(allocationId);
+        if (callLogs.isEmpty()) return List.of();
+
+        Set<UUID> agentIds = callLogs.stream().map(CallLog::getAgentId).collect(Collectors.toSet());
+        Map<UUID, String> agentNames = new HashMap<>();
+        userRepository.findAllById(agentIds).forEach(u -> agentNames.put(u.getId(), displayName(u)));
+
+        return callLogs.stream()
+                .map(c -> toResponse(c, agentNames.get(c.getAgentId()), null, null))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CallLogResponse> getForOrg(UUID organizationId, UUID agentId, CallOutcome outcome,
+                                            Instant fromDate, Instant toDate, Pageable pageable) {
+        Page<CallLog> page = callLogRepository.findWithFilters(organizationId, agentId, outcome, fromDate, toDate, pageable);
+        List<CallLog> callLogs = page.getContent();
+        if (callLogs.isEmpty()) return page.map(c -> toResponse(c, null, null, null));
+
+        Set<UUID> agentIds = callLogs.stream().map(CallLog::getAgentId).collect(Collectors.toSet());
+        Map<UUID, String> agentNames = new HashMap<>();
+        userRepository.findAllById(agentIds).forEach(u -> agentNames.put(u.getId(), displayName(u)));
+
+        Set<UUID> allocationIds = callLogs.stream().map(CallLog::getAllocationId).collect(Collectors.toSet());
+        Map<UUID, Allocation> allocationsById = new HashMap<>();
+        allocationRepository.findAllById(allocationIds).forEach(a -> allocationsById.put(a.getId(), a));
+
+        return page.map(c -> {
+            Allocation alloc = allocationsById.get(c.getAllocationId());
+            return toResponse(c, agentNames.get(c.getAgentId()),
+                    alloc != null ? alloc.getLoanNumber() : null,
+                    alloc != null ? alloc.getBorrowerName() : null);
+        });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Resource downloadRecording(UUID callLogId, UUID organizationId) {
+        CallLog callLog = requireCallLogInOrg(callLogId, organizationId);
+        if (callLog.getRecordingStatus() != RecordingStatus.UPLOADED || callLog.getRecordingPath() == null) {
+            throw new BusinessException("No recording is available for this call.");
+        }
+
+        if (storagePort.isS3Enabled()) {
+            String url = storagePort.presignedUrl(callLog.getRecordingPath(), Duration.ofHours(signedUrlDurationHours));
+            try {
+                return new UrlResource(url);
+            } catch (MalformedURLException e) {
+                throw new BusinessException("Could not generate URL for recording: " + callLogId);
+            }
+        }
+
+        try {
+            Path filePath = Paths.get(callLog.getRecordingPath());
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new BusinessException("Recording file is not accessible: " + callLogId);
+            }
+            return resource;
+        } catch (MalformedURLException e) {
+            throw new BusinessException("Invalid recording path for call: " + callLogId);
+        }
     }
 
     private AllocationResponse requireAllocationInOrg(UUID allocationId, UUID organizationId) {
@@ -155,10 +235,18 @@ public class CallLogServiceImpl implements CallLogService {
     }
 
     private CallLogResponse toResponse(CallLog callLog) {
+        String agentName = userRepository.findById(callLog.getAgentId()).map(this::displayName).orElse(null);
+        return toResponse(callLog, agentName, null, null);
+    }
+
+    private CallLogResponse toResponse(CallLog callLog, String agentName, String loanNumber, String borrowerName) {
         return CallLogResponse.builder()
                 .id(callLog.getId())
                 .allocationId(callLog.getAllocationId())
+                .loanNumber(loanNumber)
+                .borrowerName(borrowerName)
                 .agentId(callLog.getAgentId())
+                .agentName(agentName)
                 .initiatedAt(callLog.getInitiatedAt())
                 .endedAt(callLog.getEndedAt())
                 .durationSeconds(callLog.getDurationSeconds())
@@ -167,5 +255,12 @@ public class CallLogServiceImpl implements CallLogService {
                 .notes(callLog.getNotes())
                 .recordingStatus(callLog.getRecordingStatus())
                 .build();
+    }
+
+    private String displayName(User u) {
+        String first = Objects.requireNonNullElse(u.getFirstName(), "").trim();
+        String last = Objects.requireNonNullElse(u.getLastName(), "").trim();
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? null : full;
     }
 }

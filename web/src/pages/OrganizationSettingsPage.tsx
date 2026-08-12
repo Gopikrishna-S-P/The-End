@@ -126,7 +126,7 @@ export default function OrganizationSettingsPage() {
                       type="button" onClick={load} disabled={loading}
                       className="ds-btn is-secondary" aria-label="Refresh" title="Refresh"
                     >
-                      <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                      <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
                     </button>
                   </div>
                 </div>
@@ -175,7 +175,6 @@ export default function OrganizationSettingsPage() {
                       type="button" onClick={save}
                       disabled={saving || !name.trim() || name.trim() === org.name}
                       className="ds-btn is-primary"
-                      style={{ height: 36 }}
                     >
                       {saving ? <Loader2 size={14} className="ds-spin" /> : <Save size={14} />}
                       Save changes

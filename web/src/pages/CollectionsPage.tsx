@@ -10,15 +10,13 @@ import type {
 } from '../types';
 import {
   Download, CheckCircle2, XCircle,
-  Banknote, Clock, FileText, X, SlidersHorizontal, ChevronDown, ChevronRight,
-  UserX,
+  Banknote, Clock, FileText, X, SlidersHorizontal, ChevronDown, ChevronRight, Search,
 } from 'lucide-react';
-import CollectionDetailDrawer from './CollectionDetailDrawer';
 import { CollectionApprovalModal } from './CollectionApprovalModal';
 import { CollectionDepositModal } from './CollectionDepositModal';
 import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import { Pagination } from '../components/Pagination';
-import { StatusPill, PaymentModePill, fmtINR, fmtDate } from './CollectionsHelpers';
+import { StatusPill, PaymentModePill, fmtINR, fmtDate, fmtDT } from './CollectionsHelpers';
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
@@ -66,6 +64,7 @@ export default function CollectionsPage() {
   const [filterFromDate,        setFilterFromDate]        = useState('');
   const [filterToDate,          setFilterToDate]          = useState('');
   const [filterSearch,          setFilterSearch]          = useState('');
+  const [isSearchOpen,          setIsSearchOpen]          = useState(false);
   const [agents,                setAgents]                = useState<UserResponse[]>([]);
   const [filterOpen,            setFilterOpen]            = useState(false);
   // Draft copies — the filter dialog edits these; changes only take effect on "Apply".
@@ -77,15 +76,25 @@ export default function CollectionsPage() {
   const [showApprovalModal,     setShowApprovalModal]     = useState(false);
   const [approvalInitialAction, setApprovalInitialAction] = useState<ApprovalAction | null>(null);
   const [showDepositModal,      setShowDepositModal]      = useState(false);
-  const [drawerCollection,      setDrawerCollection]      = useState<CollectionResponse | null>(null);
   const [exporting,             setExporting]             = useState(false);
   const [showExportMenu,        setShowExportMenu]        = useState(false);
   const [customFrom,            setCustomFrom]            = useState('');
   const [customTo,              setCustomTo]              = useState('');
 
   const exportMenuRef = useRef<HTMLDivElement>(null);
-
   const organizationId = user?.organizationId || '';
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Click-outside closes search
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (searchContainerRef.current?.contains(e.target as Node)) return;
+      setIsSearchOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [isSearchOpen]);
 
   // Escape closes filter modal + export menu
   useEffect(() => {
@@ -190,7 +199,7 @@ export default function CollectionsPage() {
   const endIdx   = Math.min(startIdx + visibleCollections.length, totalElements);
 
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root">
       <div className="db-content">
         <div className="db-inner">
           <AnimatePresence>
@@ -236,40 +245,23 @@ export default function CollectionsPage() {
           </AnimatePresence>
 
           <div className="db-page-header">
-            <div className="db-page-header-left">
-              <div className="db-page-titles">
-                <h1 className="db-page-title">Collections</h1>
-                {!loading && totalElements > 0 && (
-                  <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
-                )}
-              </div>
-              {canApprove && pendingCount != null && pendingCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => { setFilterStatus('PENDING_APPROVAL'); setPage(0); }}
-                  className="ds-pill is-warn"
-                  style={{ border: 'none', background: 'var(--warning-subtle)', color: 'var(--warning)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
-                  title="Filter to pending approvals"
-                >
-                  <Clock size={12} />
-                  <span>{pendingCount} pending</span>
-                </button>
+            <div className="db-page-header-left is-list-header">
+              {!loading && (
+                <p className="dd-page-context">
+                  You have <strong>{totalElements.toLocaleString('en-IN')} total recoveries</strong> registered on file.
+                </p>
               )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button type="button" onClick={() => navigate('/app/non-contactables')}
-                className="ds-btn is-secondary" title="Non-contactable borrowers" aria-label="Non-contactable borrowers">
-                <UserX size={14} />
-              </button>
               <div ref={exportMenuRef} style={{ position: 'relative' }}>
                 <button
                   type="button"
                   onClick={() => setShowExportMenu(v => !v)}
                   disabled={exporting}
-                  className="ds-btn is-primary"
+                  className="ds-btn is-success"
                 >
-                  <Download size={14} style={{ marginRight: 6 }} />
+                  <Download size={14} />
                   {exporting ? 'Exporting…' : 'Export'}
                 </button>
                 <AnimatePresence>
@@ -299,20 +291,71 @@ export default function CollectionsPage() {
               <button
                 type="button"
                 onClick={openFilterDialog}
-                className="ds-btn is-secondary"
-                style={{
-                  background: filterOpen || hasFilters ? 'var(--ink-solid)' : undefined,
-                  color: filterOpen || hasFilters ? 'var(--bg-surface)' : undefined,
-                }}
+                className={`ds-btn is-secondary db-list-filter-btn${filterOpen || hasFilters ? ' is-active' : ''}`}
               >
-                <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+                <SlidersHorizontal size={14} />
                 Filter
+                {hasFilters && <span className="db-list-filter-dot" />}
               </button>
             </div>
           </div>
 
-          <section className="ds-table-card" style={{ marginTop: 0, height: 'calc(100vh - 220px)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+        <div className="db-grid" style={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+          <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <section className="ds-card is-overflow-hidden db-card is-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <h3 className="db-list-title">Recoveries</h3>
+                {canApprove && pendingCount != null && pendingCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setFilterStatus('PENDING_APPROVAL'); setPage(0); }}
+                    className="ds-pill is-warn"
+                    style={{ border: 'none', background: 'var(--warning-subtle)', color: 'var(--warning)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
+                    title="Filter to pending approvals"
+                  >
+                    <Clock size={12} />
+                    <span>{pendingCount} pending</span>
+                  </button>
+                )}
+              </div>
+              <div className="db-list-head-actions" ref={searchContainerRef}>
+                <AnimatePresence initial={false}>
+                  {isSearchOpen ? (
+                    <motion.div
+                      className="db-list-search"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 220, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                      <input
+                        value={filterSearch}
+                        onChange={e => {
+                          setFilterSearch(e.target.value);
+                          setPage(0);
+                        }}
+                        placeholder="Search borrower or ID…"
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      type="button"
+                      className="db-list-search-trigger"
+                      onClick={() => setIsSearchOpen(true)}
+                      title="Search"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <Search size={14} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            </header>
+            <div className="db-card-body db-list-body">
               {loading ? (
                 <div style={{ padding: '8px' }}>
                   {Array.from({ length: 8 }).map((_, i) => (
@@ -343,25 +386,27 @@ export default function CollectionsPage() {
                   )}
                 </motion.div>
               ) : (
-                <motion.div>
-                  {visibleCollections.map((c, idx) => (
+                <div className="db-list-scroll">
+                  <motion.div>
+                    {visibleCollections.map((c, idx) => (
                     <motion.button
                       key={c.id}
-                      className="db-att-row"
-                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
+                      className="db-att-row is-list-row"
+                      style={{ borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
                       aria-label={`Collection of ${fmtINR(c.amount)} on ${fmtDate(c.collectionDate)}`}
-                      onClick={() => setDrawerCollection(c)}
+                      onClick={() => navigate(`/app/collections/${c.id}`)}
                       whileHover={{ background: 'var(--bg-subtle)' }}
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: idx * 0.03 }}
                     >
                       <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
-                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Banknote size={13} style={{ color: 'var(--ink-tertiary)' }} />
-                          {c.borrowerName ?? '—'}
-                        </span>
-                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
-                          <StatusPill status={c.status} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <span className="db-att-label" style={{ flex: 'none', fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Banknote size={13} style={{ color: 'var(--ink-tertiary)' }} />
+                            {c.borrowerName ?? '—'}
+                          </span>
                           <PaymentModePill mode={c.paymentMode} />
+                        </div>
+                        <div className="db-ml-tooltip-row" style={{ gap: 4, padding: 0, flexWrap: 'wrap' }}>
                           <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                             {c.loanNumber ?? '—'}
                           </span>
@@ -369,49 +414,17 @@ export default function CollectionsPage() {
                             / {c.agentName ?? '—'}
                           </span>
                           <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                            / {fmtDate(c.collectionDate)}
+                            / {fmtDT(c.createdAt)}
                           </span>
                         </div>
                       </div>
 
                       <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                        <StatusPill status={c.status} />
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
                           {fmtINR(c.amount)}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={e => e.stopPropagation()}>
-                          {canApprove && c.status === 'PENDING_APPROVAL' && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedCollection(c); setApprovalInitialAction('APPROVE'); setShowApprovalModal(true); }}
-                                className="db-error-retry db-action-success"
-                                style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
-                                title="Approve"
-                              >
-                                <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Approve
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedCollection(c); setApprovalInitialAction('REJECT'); setShowApprovalModal(true); }}
-                                className="db-error-retry db-action-danger"
-                                style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
-                                title="Reject"
-                              >
-                                <XCircle size={12} style={{ marginRight: 4 }} /> Reject
-                              </button>
-                            </>
-                          )}
-                          {canApprove && c.status === 'APPROVED' && (
-                            <button
-                              type="button"
-                              onClick={() => { setSelectedCollection(c); setShowDepositModal(true); }}
-                              className="db-error-retry db-action-info"
-                              style={{ padding: '0 8px', height: 26, fontSize: 11, fontWeight: 600, width: 'auto' }}
-                              title="Mark deposited"
-                            >
-                              <Banknote size={12} style={{ marginRight: 4 }} /> Deposit
-                            </button>
-                          )}
                           {c.documents && c.documents.length > 0 && (
                             <button type="button" className="ds-table-row-action" title="View documents" aria-label="View documents">
                               <FileText size={14} />
@@ -422,7 +435,8 @@ export default function CollectionsPage() {
                       </div>
                     </motion.button>
                   ))}
-                </motion.div>
+                  </motion.div>
+                </div>
               )}
             </div>
 
@@ -430,7 +444,9 @@ export default function CollectionsPage() {
             {!loading && collections.length > 0 && totalPages > 1 && (
               <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
             )}
-          </section>
+            </section>
+          </div>
+        </div>
         </div>
 
         {/* ── Filter dialog — same Modal/Input/FormSection system as Platform Setup's Edit Org dialog ── */}
@@ -496,17 +512,6 @@ export default function CollectionsPage() {
             />
           </>
         )}
-
-        {/* ── Detail drawer ── */}
-        <AnimatePresence>
-          {drawerCollection && (
-            <CollectionDetailDrawer
-              collection={drawerCollection}
-              onClose={() => setDrawerCollection(null)}
-              onChanged={() => { setDrawerCollection(null); fetchCollections(); }}
-            />
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );

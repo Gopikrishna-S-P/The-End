@@ -3,6 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { UserCheck, CheckCircle2, Users, Briefcase } from 'lucide-react';
 import type { UserResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
+import { DonutCard } from './DashboardShared';
 import './Dashboard.css';
 
 interface Props {
@@ -34,6 +35,7 @@ const fadeIn: Variants = {
 };
 
 export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, onSelect }: Props) {
+
   return (
     <div className="dd-officers-card ds-card is-overflow-hidden">
       <div className="dd-ap-header db-card-head">
@@ -109,36 +111,16 @@ export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, o
             transition={{ duration: 0.22 }}
           >
             <div className="dd-dispatch-ring-wrap">
-              <svg width={96} height={96} aria-hidden="true" style={{ flexShrink: 0 }}>
-                <g transform="rotate(-90 48 48)">
-                  <circle cx="48" cy="48" r="36" stroke="var(--bg-subtle)" strokeWidth="12" fill="none" />
-                  <motion.circle cx="48" cy="48" r="36"
-                    stroke="var(--ink-solid)" strokeWidth="12" fill="none" strokeLinecap="round"
-                    strokeDasharray="226.195 226.195"
-                    initial={{ strokeDashoffset: 226.195 }}
-                    animate={{ strokeDashoffset: (() => {
-                      const total = Array.from(fosStats.values()).reduce((sum, s) => sum + s.count, 0);
-                      const count = fosStats.get(selectedFo)?.count || 0;
-                      const pct = total > 0 ? count / total : 0;
-                      return 226.195 * (1 - pct);
-                    })() }}
-                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                </g>
-                <text x="48" y="46" textAnchor="middle" fill="var(--ink-primary)" fontSize="14" fontWeight="700">
-                  {(() => {
-                    const total = Array.from(fosStats.values()).reduce((sum, s) => sum + s.count, 0);
-                    const count = fosStats.get(selectedFo)?.count || 0;
-                    return total > 0 ? Math.round((count / total) * 100) : 0;
-                  })()}%
-                </text>
-                <text x="48" y="61" textAnchor="middle" fill="var(--ink-tertiary)" fontSize="9" style={{ fontFamily: 'var(--font-mono)' }} letterSpacing="0.06em">LOAD</text>
-              </svg>
+              {/* Same donut + legend as the dashboard's "Case assignment" card. */}
+              <DonutCard
+                slices={[
+                  { label: 'Pending', value: fosStats.get(selectedFo)?.pending ?? 0, color: 'var(--dbc-1)' },
+                  { label: 'Closed',  value: Math.max(0, (fosStats.get(selectedFo)?.count ?? 0) - (fosStats.get(selectedFo)?.pending ?? 0)), color: 'var(--dbn-2)' },
+                ]}
+                centerLabel="CASES"
+                size={104}
+              />
               <div className="dd-ap-stats">
-                <div className="dd-ap-stat">
-                  <span className="dd-ap-stat-num is-done">{fosStats.get(selectedFo)?.count || 0}</span>
-                  <span className="dd-ap-stat-lbl">Cases</span>
-                </div>
                 <div className="dd-ap-stat">
                   <span className="dd-ap-stat-num" style={{ fontSize: 13, letterSpacing: '-0.01em' }}>
                     {(() => {

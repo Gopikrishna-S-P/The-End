@@ -301,3 +301,31 @@
   line-height: 1.5;
   max-width: 180px;
 }
+
+/* ── Selected-agent detail card ──────────────────────────────────────────────────
+   Ported from the retired LiveTrackPage.tsx's sidebar detail panel. */
+
+.fo-detail-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.fo-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12.5px;
+  font-family: var(--sans);
+  color: var(--ink-primary);
+}
+
+.fo-detail-row:last-child { border-bottom: none; }
+
+.fo-detail-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-tertiary);
+}

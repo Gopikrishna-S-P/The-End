@@ -43,24 +43,17 @@ export function PtpRow({ ptp, onSelect, isSelected, variants }: PtpRowProps) {
     <motion.button
       variants={variants}
       onClick={() => onSelect(ptp)}
-      className="db-att-row"
-      style={{
-        borderBottom: '1px solid var(--border-subtle)',
-        padding: '12px 16px',
-        borderRadius: 0,
-        width: '100%',
-        textAlign: 'left',
-        background: isSelected ? 'var(--bg-active)' : 'transparent',
-      }}
+      className="db-att-row is-list-row"
+      style={{ background: isSelected ? 'var(--bg-active)' : undefined }}
       whileHover={{ background: 'var(--bg-subtle)' }}
       aria-label={`PTP for ${ptp.borrowerName}, ${ptp.status}`}
     >
-      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
-        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="db-list-row-main">
+        <span className="db-att-label">
           <Phone size={13} style={{ color: 'var(--ink-tertiary)' }} />
           {ptp.borrowerName}
         </span>
-        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
+        <div className="db-list-row-meta" style={{ padding: 0, flexWrap: 'wrap' }}>
           <StatusPill status={ptp.status} />
           <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
             {ptp.loanNumber ?? '—'}
@@ -75,9 +68,9 @@ export function PtpRow({ ptp, onSelect, isSelected, variants }: PtpRowProps) {
         </div>
       </div>
 
-      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+      <div className="db-list-row-right" style={{ flexShrink: 0 }}>
+        <div className="db-list-amount-col">
+          <span className="db-list-amount">
             {fmtINR(ptp.promisedAmount)}
           </span>
           {ptp.collectedAmount > 0 && (
@@ -86,7 +79,7 @@ export function PtpRow({ ptp, onSelect, isSelected, variants }: PtpRowProps) {
             </span>
           )}
         </div>
-        <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
+        <ChevronRight size={16} className="db-list-chevron" />
       </div>
     </motion.button>
   );

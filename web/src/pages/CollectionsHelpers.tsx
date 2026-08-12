@@ -29,3 +29,6 @@ export const fmtINR = (val: number) =>
 
 export const fmtDate = (s?: string) =>
   s ? new Date(s).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' }) : '—';
+
+export const fmtDT = (s?: string | null) =>
+  s ? new Date(s).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';

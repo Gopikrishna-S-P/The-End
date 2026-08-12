@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -37,18 +35,23 @@ public class SessionAnomalyDetector {
                 issuing.setGeoCountry(country.toUpperCase(Locale.ROOT));
             }
 
-            List<RefreshToken> recent = refreshTokenRepository.findByUser_IdAndRevokedFalse(userId);
-            RefreshToken last = recent.stream()
+            // Both signals read session HISTORY, not the live (revoked=false) set.
+            // Rotation revokes the presenting token before this runs, so the live
+            // set is missing the very session being inspected — reading it made
+            // every refresh look like a new device for any user with a second
+            // active session, firing a platform notification each time.
+            RefreshToken last = refreshTokenRepository
+                    .findFirstByUser_IdOrderByCreatedAtDesc(userId)
                     .filter(t -> t.getCreatedAt() != null)
-                    .max(Comparator.comparing(RefreshToken::getCreatedAt))
                     .orElse(null);
 
-            if (last == null) return issuing;
-
-            if (issuing.getGeoCountry() != null && last.getGeoCountry() != null
+            if (last != null
+                    && issuing.getGeoCountry() != null && last.getGeoCountry() != null
                     && !issuing.getGeoCountry().equals(last.getGeoCountry())) {
                 Duration delta = Duration.between(last.getCreatedAt(), Instant.now());
                 if (delta.toMinutes() <= impossibleTravelWindowMin) {
+                    // Travel outranks the device signal — a relocated session is
+                    // the more severe finding, so it wins the single reason slot.
                     flag(issuing, "impossible-travel: "
                             + last.getGeoCountry() + " -> " + issuing.getGeoCountry()
                             + " in " + delta.toMinutes() + " minutes");
@@ -56,11 +59,12 @@ public class SessionAnomalyDetector {
                 }
             }
 
-            if (deviceId != null && !deviceId.isBlank()) {
-                boolean knownDevice = recent.stream().anyMatch(t -> deviceId.equals(t.getDeviceId()));
-                if (!knownDevice) {
-                    flag(issuing, "new-device fingerprint, OTP step-up recommended");
-                }
+            // Runs even when the user has no prior session at all: a first-ever
+            // login from an unknown device is exactly what this should catch, and
+            // the old `last == null` early return skipped it.
+            if (deviceId != null && !deviceId.isBlank()
+                    && !refreshTokenRepository.existsByUser_IdAndDeviceId(userId, deviceId)) {
+                flag(issuing, "new-device fingerprint, OTP step-up recommended");
             }
 
             return issuing;

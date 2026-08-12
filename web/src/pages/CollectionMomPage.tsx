@@ -91,10 +91,13 @@ export default function CollectionMomPage() {
   const [hovIdx,  setHovIdx]  = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // trendMonths must cover the widest range option (12) — the server
+  // otherwise defaults to 6, so picking "12M" silently showed whatever <=6
+  // months existed instead of a real 12-month window.
   const fetch = useCallback(() => {
     if (!orgId) return;
     setLoading(true); setError(false);
-    axiosInstance.get('/api/v1/analytics/dashboard')
+    axiosInstance.get('/api/v1/analytics/dashboard', { params: { trendMonths: 12 } })
       .then(r => setTrend(r.data?.data?.collections?.monthlyTrend ?? []))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -127,7 +130,7 @@ export default function CollectionMomPage() {
 
   // Best month
   const peakIdx = useMemo(() =>
-    sorted.reduce((bi, p, i) => p.totalAmount > sorted[bi].totalAmount ? i : bi, 0),
+    sorted.length ? sorted.reduce((bi, p, i) => p.totalAmount > sorted[bi].totalAmount ? i : bi, 0) : 0,
     [sorted]
   );
 
@@ -145,10 +148,13 @@ export default function CollectionMomPage() {
   const prevAnimated = useCountUp(prevAmt);
 
   // ── SVG layout ──────────────────────────────────────────────────────────────
+  // Fixed 600x240 virtual canvas for the point math; the SVG itself stretches to
+  // fill whatever height the flex chain below gives it (preserveAspectRatio="none"),
+  // so the chart genuinely fills the card instead of a hard-coded pixel height.
 
-  const W = 600; const H = 240; const padL = 8; const padR = 16; const padY = 18;
+  const W = 600; const H = 240; const padL = 8; const padR = 16; const padY = 8;
   const maxV  = Math.max(...sorted.map(p => p.totalAmount), 1);
-  const minV  = Math.min(...sorted.map(p => p.totalAmount));
+  const minV  = Math.min(...sorted.map(p => p.totalAmount), 0);
   const range2 = maxV - minV || 1;
   const cx    = (i: number) => padL + (n > 1 ? (i / (n - 1)) : 0.5) * (W - padL - padR);
   const cy    = (v: number) => padY + (1 - (v - minV) / range2) * (H - padY * 2);
@@ -194,26 +200,10 @@ export default function CollectionMomPage() {
   const lineColorDark2 = isUp || isFlat ? 'color-mix(in srgb, var(--brand) 4%, transparent)' : 'color-mix(in srgb, var(--danger-solid) 4%, transparent)';
 
   return (
-    <div className="db-root">
-      <div className="db-content">
-        <div className="db-inner">
-          <header className="db-card-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 24 }}>
-            <h1 className="db-card-title" style={{ fontSize: 18, margin: 0 }}>Month-over-Month Growth</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className="db-trend-range-toggle" style={{ margin: 0 }}>
-                {([3, 6, 12] as const).map(r => (
-                  <button key={r} type="button"
-                    className={`db-trend-range-btn${range === r ? ' is-active' : ''}`}
-                    onClick={() => setRange(r)}
-                  >{r}M</button>
-                ))}
-              </div>
-              <button type="button" onClick={fetch} disabled={loading}
-                className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
-              </button>
-            </div>
-          </header>
+    <div className="db-root" style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+      <div className="db-content" style={{ paddingBottom: 12, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+        <div className="db-inner" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
           {/* Error state */}
           {error && (
             <div className="db-error-banner" role="alert" style={{ marginBottom: 24 }}>
@@ -229,14 +219,28 @@ export default function CollectionMomPage() {
           {/* Loading skeleton */}
           {loading && <ChartSkeleton />}
 
-          {/* Single data point */}
-          {!loading && !error && n === 1 && (
-            <div className="ds-card db-card" style={{ padding: 24 }}>
-              <span className="db-kpi2-foot-meta">{sorted[0].label}</span>
-              <span style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)', display: 'block', marginTop: 8 }}>
-                {fmtINR(sorted[0].totalAmount)}
+          {/* Insufficient data (0 or 1 month) */}
+          {!loading && !error && n <= 1 && (
+            <div className="ds-card db-card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                <div className="db-trend-range-toggle" style={{ margin: 0 }}>
+                  {([3, 6, 12] as const).map(r => (
+                    <button key={r} type="button"
+                      className={`db-trend-range-btn${range === r ? ' is-active' : ''}`}
+                      onClick={() => setRange(r)}
+                    >{r}M</button>
+                  ))}
+                </div>
+                <button type="button" onClick={fetch} disabled={loading}
+                  className="ds-icon-btn" aria-label="Refresh" title="Refresh">
+                  <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                </button>
+              </div>
+              <span className="db-kpi2-foot-meta">{sorted[0]?.label ?? 'Current period'}</span>
+              <span style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)' }}>
+                {fmtINR(sorted[0]?.totalAmount ?? 0)}
               </span>
-              <span className="db-kpi2-foot-meta" style={{ marginTop: 8, display: 'block' }}>Only one month of data — trend available next month.</span>
+              <span className="db-kpi2-foot-meta">Insufficient data — trend visualization requires at least two periods.</span>
             </div>
           )}
 
@@ -245,17 +249,33 @@ export default function CollectionMomPage() {
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
-              <div className="ds-card db-card" style={{ padding: 24 }}>
+              <div className="ds-card db-card" style={{ padding: 12, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+                {/* Controls — range + refresh, no page title */}
+                <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+                  <div className="db-trend-range-toggle" style={{ margin: 0 }}>
+                    {([3, 6, 12] as const).map(r => (
+                      <button key={r} type="button"
+                        className={`db-trend-range-btn${range === r ? ' is-active' : ''}`}
+                        onClick={() => setRange(r)}
+                      >{r}M</button>
+                    ))}
+                  </div>
+                  <button type="button" onClick={fetch} disabled={loading}
+                    className="ds-icon-btn" aria-label="Refresh" title="Refresh">
+                    <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                  </button>
+                </div>
 
                 {/* MOM comparison row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   {/* This month (current — left) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span className="db-kpi2-foot-meta" style={{ letterSpacing: '0.04em' }}>{thisMonth?.label}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 700, color: isUp || isFlat ? 'var(--success)' : 'var(--danger)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, color: isUp || isFlat ? 'var(--success)' : 'var(--danger)' }}>
                       {fmtINR(thisAnimated)}
                     </span>
-                    <span className="db-kpi2-foot-meta">{thisMonth?.totalCount ?? 0} txns</span>
+                    <span className="db-kpi2-foot-meta" style={{ fontSize: 10 }}>{thisMonth?.totalCount ?? 0} txns</span>
                   </div>
 
                   {/* Compact change badge */}
@@ -265,44 +285,44 @@ export default function CollectionMomPage() {
                     transition={{ type: 'spring', stiffness: 400, damping: 18, delay: 0.3 }}
                     style={{
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                      width: 56, height: 56, borderRadius: '50%',
+                      width: 48, height: 48, borderRadius: '50%',
                       background: isUp ? 'var(--success-subtle)' : isFlat ? 'var(--bg-subtle)' : 'var(--danger-subtle)',
                       color: isUp ? 'var(--success)' : isFlat ? 'var(--ink-secondary)' : 'var(--danger)',
                     }}
                   >
                     <span>
-                      {isFlat ? <Minus size={14} /> : isUp ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                      {isFlat ? <Minus size={12} /> : isUp ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
                       {pctChange !== null ? `${Math.abs(pctChange).toFixed(0)}%` : '—'}
                     </span>
                   </motion.div>
 
                   {/* Last month (right) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', textAlign: 'right' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end', textAlign: 'right' }}>
                     <span className="db-kpi2-foot-meta" style={{ letterSpacing: '0.04em' }}>{lastMonth?.label}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 700, color: 'var(--ink-secondary)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, color: 'var(--ink-secondary)' }}>
                       {fmtINR(prevAnimated)}
                     </span>
-                    <span className="db-kpi2-foot-meta">{lastMonth?.totalCount ?? 0} txns</span>
+                    <span className="db-kpi2-foot-meta" style={{ fontSize: 10 }}>{lastMonth?.totalCount ?? 0} txns</span>
                   </div>
                 </div>
 
                 {/* Divider with label */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                   <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-tertiary)', letterSpacing: '0.04em' }}>TREND</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--ink-tertiary)', letterSpacing: '0.04em' }}>TREND</span>
                   <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
                 </div>
 
                 {/* Chart section */}
-                <div style={{ position: 'relative', width: '100%', height: 280, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                   {/* SVG */}
                   <svg
                     ref={svgRef}
                     viewBox={`0 0 ${W} ${H}`}
                     preserveAspectRatio="none"
-                    style={{ width: '100%', flex: 1, overflow: 'visible', zIndex: 1, cursor: 'crosshair' }}
+                    style={{ width: '100%', flex: 1, minHeight: 0, overflow: 'visible', zIndex: 1, cursor: 'crosshair' }}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={() => setHovIdx(null)}
                     aria-label="Collection trend chart"
@@ -355,8 +375,8 @@ export default function CollectionMomPage() {
                     {/* Peak marker */}
                     <g>
                       <circle cx={cx(peakIdx)} cy={cy(sorted[peakIdx].totalAmount)} r="4" fill={lineColor} opacity="0.9" />
-                      <rect x={cx(peakIdx) - 14} y={cy(sorted[peakIdx].totalAmount) - 26} width="28" height="18" rx="4" fill={lineColor} opacity="0.9" />
-                      <text x={cx(peakIdx)} y={cy(sorted[peakIdx].totalAmount) - 17} textAnchor="middle" dominantBaseline="middle" fill="var(--text-on-solid)" fontSize="7" fontWeight="700" fontFamily="var(--font-sans)">PEAK</text>
+                      <rect x={cx(peakIdx) - 22} y={cy(sorted[peakIdx].totalAmount) - 30} width="44" height="20" rx="6" fill={lineColor} opacity="0.9" />
+                      <text x={cx(peakIdx)} y={cy(sorted[peakIdx].totalAmount) - 20} textAnchor="middle" dominantBaseline="middle" fill="var(--text-on-solid)" fontSize="9" fontWeight="700" fontFamily="var(--font-sans)">PEAK</text>
                     </g>
 
                     {/* Last point dot */}
@@ -398,12 +418,12 @@ export default function CollectionMomPage() {
                   </AnimatePresence>
 
                   {/* X labels */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px 0 8px', marginTop: 'auto', borderTop: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 16px 0 8px', marginTop: 'auto', borderTop: '1px solid var(--border-subtle)' }}>
                     {sorted.map((p, i) => (
                       <span
                         key={i}
                         style={{
-                          fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: i === n - 1 || hovIdx === i ? 700 : 500,
+                          fontSize: 9, fontFamily: 'var(--font-mono)', fontWeight: i === n - 1 || hovIdx === i ? 700 : 500,
                           color: i === n - 1 ? 'var(--ink-primary)' : hovIdx === i ? 'var(--ink-primary)' : 'var(--ink-tertiary)',
                           background: i === n - 1 ? 'var(--bg-subtle)' : 'transparent',
                           padding: '2px 6px', borderRadius: 4, cursor: 'pointer', transition: 'all 0.2s ease',
@@ -419,20 +439,20 @@ export default function CollectionMomPage() {
                 </div>
 
                 {/* YTD + Avg growth */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span className="db-kpi2-foot-meta">YTD Total</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>{fmtINR(ytd)}</span>
+                <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span className="db-kpi2-foot-meta" style={{ fontSize: 10 }}>YTD Total</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>{fmtINR(ytd)}</span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-                    <span className="db-kpi2-foot-meta">Avg MoM Growth</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, color: avgGrowth >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+                    <span className="db-kpi2-foot-meta" style={{ fontSize: 10 }}>Avg MoM Growth</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: avgGrowth >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                       {avgGrowth >= 0 ? '+' : ''}{avgGrowth.toFixed(1)}%
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                    <span className="db-kpi2-foot-meta">Peak Month</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>{sorted[peakIdx]?.label?.slice(0, 3)}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+                    <span className="db-kpi2-foot-meta" style={{ fontSize: 10 }}>Peak Month</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>{sorted[peakIdx]?.label?.slice(0, 3)}</span>
                   </div>
                 </div>
 

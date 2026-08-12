@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Loader2, Users, UserCheck, Search, X } from 'lucide-react';
 import type { UserResponse, AllocationResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
+import { DonutCard } from './DashboardShared';
 
 interface Props {
   agents: UserResponse[];
@@ -90,35 +91,17 @@ function AgentStats({ cases, dispatched, dispatchPct, casesLoading }: {
     );
   }
 
-  const R = 36; const sw = 12; const SIZE = (R + sw) * 2;
-  const circ = 2 * Math.PI * R;
+  // Same donut + legend treatment as the dashboard's "Case assignment" card,
+  // so dispatch progress reads identically to the org-level chart.
+  const slices = [
+    { label: 'Sent', value: dispatched.length,                  color: 'var(--dbc-1)' },
+    { label: 'Left', value: cases.length - dispatched.length,   color: 'var(--dbn-2)' },
+  ];
 
   return (
     <div className="dd-dispatch-ring-wrap">
-      <svg width={SIZE} height={SIZE} aria-hidden="true" style={{ flexShrink: 0 }}>
-        <g transform={`rotate(-90 ${SIZE/2} ${SIZE/2})`}>
-          <circle cx={SIZE/2} cy={SIZE/2} r={R} stroke="var(--bg-subtle)" strokeWidth={sw} fill="none" />
-          <motion.circle cx={SIZE/2} cy={SIZE/2} r={R}
-            stroke="var(--ink-solid)" strokeWidth={sw} fill="none" strokeLinecap="round"
-            strokeDasharray={`${circ} ${circ}`}
-            initial={{ strokeDashoffset: circ }}
-            animate={{ strokeDashoffset: circ * (1 - dispatchPct / 100) }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </g>
-        <text x={SIZE/2} y={SIZE/2 - 2} textAnchor="middle" fill="var(--ink-primary)" fontSize="14" fontWeight="700">{dispatchPct}%</text>
-        <text x={SIZE/2} y={SIZE/2 + 13} textAnchor="middle" fill="var(--ink-tertiary)" fontSize="9"
-          style={{ fontFamily: 'var(--font-mono)' }} letterSpacing="0.06em">DONE</text>
-      </svg>
+      <DonutCard slices={slices} centerLabel="CASES" size={118} />
       <div className="dd-ap-stats">
-        <div className="dd-ap-stat">
-          <span className="dd-ap-stat-num is-done">{dispatched.length}</span>
-          <span className="dd-ap-stat-lbl">Sent</span>
-        </div>
-        <div className="dd-ap-stat">
-          <span className="dd-ap-stat-num">{cases.length - dispatched.length}</span>
-          <span className="dd-ap-stat-lbl">Left</span>
-        </div>
         <div className="dd-ap-stat">
           <span className="dd-ap-stat-num" style={{ fontSize: 13, letterSpacing: '-0.01em' }}>{fmtC(totalPortfolio)}</span>
           <span className="dd-ap-stat-lbl">Portfolio</span>

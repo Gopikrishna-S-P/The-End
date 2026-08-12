@@ -11,6 +11,7 @@ import { FRAUD_PILL } from './BorrowersHelpers';
 import { fmtDate, fmtCurrency } from './LoanDetailHelpers';
 import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
+import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
 
 const PAGE_SIZE = 25;
@@ -34,9 +35,9 @@ const CATEGORY_LABEL: Record<string, string> = {
   OTHER: 'Other',
 };
 
-const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
-const fadeUp: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: 'easeOut' } } };
-const fadeIn: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04, delayChildren: 0.02 } } };
+const fadeUp: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } } };
+const fadeIn: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.22, ease: 'easeOut' } } };
 
 export default function FraudCasesPage() {
   const { user } = useAuth();
@@ -90,115 +91,113 @@ export default function FraudCasesPage() {
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
           <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Fraud Cases</h1>
-              {!loading && totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
-              )}
-            </div>
+            {!loading && (
+              <p className="dd-page-context">
+                You have <strong>{totalElements.toLocaleString('en-IN')} fraud cases</strong> registered on file.
+              </p>
+            )}
+          </div>
+          <div className="db-list-page-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <select
+              className="ds-select"
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value as FraudCaseStatus | ''); setPage(0); }}
+              style={{ width: 'auto', height: 32 }}
+            >
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            {canTransition && (
+              <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 32 }}>
+                <Plus size={14} /> Report case
+              </button>
+            )}
+            <button type="button" onClick={fetchCases} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh" style={{ height: 32 }}>
+              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
+            </button>
           </div>
         </div>
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(cases.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <select
-                  className="ds-select"
-                  value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value as FraudCaseStatus | ''); setPage(0); }}
-                  style={{ height: 36 }}
-                >
-                  {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                {canTransition && (
-                  <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
-                    <Plus size={14} /> Report case
-                  </button>
-                )}
-                <button type="button" onClick={fetchCases} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                  <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-                </button>
-              </div>
-            </header>
-
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
-              {loadError ? (
-                <div className="ds-empty" style={{ padding: '60px 0' }}>
-                  <span className="ds-empty-title">Fraud cases could not be loaded.</span>
-                  <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                    <button type="button" onClick={fetchCases} className="ds-btn is-secondary">Retry</button>
-                  </div>
-                </div>
-              ) : loading ? (
-                <div style={{ padding: '8px' }}>
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
-                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
-                      </div>
-                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
-                    </div>
-                  ))}
-                </div>
-              ) : cases.length === 0 ? (
-                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
-                  <ShieldAlert size={32} className="ds-empty-icon" />
-                  <span className="ds-empty-title">No fraud cases on file</span>
-                  <span className="ds-empty-sub">
-                    {statusFilter ? 'No cases match this status filter.' : 'Cases reported under the RBI Master Direction on Frauds will appear here.'}
-                  </span>
-                  {canTransition && !statusFilter && (
-                    <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                      <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">Report case</button>
-                    </div>
-                  )}
-                </motion.div>
-              ) : (
-                <motion.div>
-                  {cases.map((c, idx) => (
-                    <motion.button
-                      key={c.id}
-                      variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
-                      initial="hidden" animate="show"
-                      className="db-att-row"
-                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: selected?.id === c.id ? 'var(--bg-active)' : 'transparent' }}
-                      onClick={() => setSelected(c)}
-                      whileHover={{ background: 'var(--bg-subtle)' }}
-                    >
-                      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
-                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <ShieldAlert size={13} style={{ color: 'var(--ink-tertiary)' }} />
-                          {CATEGORY_LABEL[c.category] || c.category}
-                        </span>
-                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
-                          <span className={`ds-pill ${FRAUD_PILL[c.status]}`}>{c.status.replace(/_/g, ' ')}</span>
-                          <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                            {c.caseNumber}
-                          </span>
-                          <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
-                            / Reported {fmtDate(c.reportedAt)}
-                          </span>
+          <motion.div variants={fadeUp} className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>
+              <table className="ds-table is-no-row-hover ps-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Category</th>
+                    <th style={{ width: '15%' }}>Case Number</th>
+                    <th style={{ width: '15%' }}>Status</th>
+                    <th style={{ width: '15%' }}>Reported</th>
+                    <th className="is-right" style={{ width: '15%' }}>Amount</th>
+                    <th className="is-right" style={{ width: '10%' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadError ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="ds-empty" style={{ padding: '60px 0' }}>
+                          <span className="ds-empty-title">Fraud cases could not be loaded.</span>
+                          <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                            <button type="button" onClick={fetchCases} className="ds-btn is-secondary">Retry</button>
+                          </div>
                         </div>
-                      </div>
-
-                      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                      </td>
+                    </tr>
+                  ) : loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} style={{ opacity: 1 - i * 0.08 }}>
+                        {Array.from({ length: 6 }).map((__, j) => (
+                          <td key={j}><div className="ds-skel" style={{ height: 14, width: j === 0 ? '75%' : '60%' }} /></td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : cases.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '60px 0' }}>
+                          <ShieldAlert size={32} className="ds-empty-icon" />
+                          <span className="ds-empty-title">No fraud cases on file</span>
+                          <span className="ds-empty-sub">
+                            {statusFilter ? 'No cases match this status filter.' : 'Cases reported under the RBI Master Direction on Frauds will appear here.'}
+                          </span>
+                        </motion.div>
+                      </td>
+                    </tr>
+                  ) : (
+                    cases.map((c) => (
+                      <tr key={c.id} style={{ background: selected?.id === c.id ? 'var(--bg-active)' : undefined }}>
+                        <td>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                            <ShieldAlert size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                            {CATEGORY_LABEL[c.category] || c.category}
+                          </div>
+                        </td>
+                        <td className="is-mono is-muted">{c.caseNumber}</td>
+                        <td>
+                          <span className={`ds-pill ${FRAUD_PILL[c.status]}`}>{c.status.replace(/_/g, ' ')}</span>
+                        </td>
+                        <td className="is-mono is-muted">{fmtDate(c.reportedAt)}</td>
+                        <td className="is-right is-mono is-muted">
                           {c.amountInvolved != null ? fmtCurrency(c.amountInvolved) : '—'}
-                        </span>
-                        <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
-                      </div>
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
+                        </td>
+                        <td className="is-right">
+                          <button type="button" onClick={() => setSelected(c)} className="ds-btn is-secondary is-sm">
+                            View case
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
 
             {totalPages > 1 && !loading && (
-              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
+              <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)' }}>
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
+              </div>
             )}
-          </motion.section>
+          </motion.div>
         </motion.div>
       </div>
 

@@ -179,7 +179,7 @@ export default function UploadDataPage() {
   }
 
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root">
       <div className="db-content">
         <motion.div className="db-inner" initial="hidden" animate="show">
 
@@ -191,24 +191,24 @@ export default function UploadDataPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <h2 className="db-kpi-title" style={{ fontSize: 20 }}>Upload Data</h2>
+                  <h2 className="dd-page-title">Upload Data</h2>
                   {response && <span className="db-kpi2-foot-meta" style={{ padding: 0 }}>/ {response.filename}</span>}
                 </div>
-                <span style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)' }}>
+                <span className="dd-page-context">
                   {response ? `${fmtNum(response.totalElements)} rows · ${columns.length} columns` : 'Loading...'}
                 </span>
               </div>
             </div>
 
-            <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 12 }}>
+            <div className="db-list-btn-group">
               {hasDraftChanges && (
                 <>
                   <button type="button" onClick={handleDiscardDrafts} disabled={isSavingAll}
-                    className="ds-btn is-secondary" style={{ height: 32, padding: '0 12px' }}>
+                    className="ds-btn is-secondary">
                     Discard
                   </button>
                   <button type="button" onClick={handleSaveDrafts} disabled={isSavingAll}
-                    className="ds-btn is-primary" style={{ height: 32, padding: '0 12px', background: 'var(--success)' }}>
+                    className="ds-btn is-primary" style={{ background: 'var(--success)', borderColor: 'var(--success)' }}>
                     {isSavingAll ? <RefreshCw size={14} className="ds-spin" /> : <Check size={14} />}
                     Save Changes
                   </button>
@@ -216,18 +216,18 @@ export default function UploadDataPage() {
                 </>
               )}
               <button type="button" onClick={load} className="ds-btn is-secondary"
-                title="Refresh" style={{ height: 32, padding: '0 8px' }} disabled={hasDraftChanges || isSavingAll}>
-                <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                title="Refresh" aria-label="Refresh" disabled={hasDraftChanges || isSavingAll}>
+                <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
               </button>
               {canCreateCol && (
                 <button type="button" onClick={() => { setShowAddRow(false); setShowAddCol(true); }}
-                  className="ds-btn is-secondary" style={{ height: 32 }}>
+                  className="ds-btn is-secondary">
                   <Columns3 size={14} /> Add Column
                 </button>
               )}
               {canCreateRow && (
                 <button type="button" onClick={() => setShowAddRow(r => !r)}
-                  className="ds-btn is-primary" style={{ height: 32 }}>
+                  className="ds-btn is-primary">
                   <Plus size={14} /> Add Row
                 </button>
               )}
@@ -240,9 +240,12 @@ export default function UploadDataPage() {
             </div>
           )}
 
-          <div className="db-grid">
-            <div className="db-span-12">
-              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', padding: 0, height: 'calc(100vh - 180px)' }}>
+          <div className="db-grid db-fill-chain">
+            <div className="db-span-12 db-fill-chain">
+              {/* padding:0 — this card holds an edge-to-edge data grid, not a row
+                  list, so it opts out of .is-list-card's 12px inset while keeping
+                  its shell (radius/border) and flex-fill height. */}
+              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card is-list-card" style={{ display: 'flex', flexDirection: 'column', padding: 0 }}>
             <div className="ud-body" style={{ flex: 1, overflow: 'hidden', padding: 0 }}>
               {loading ? (
                 <div style={{ padding: '0 8px' }}>

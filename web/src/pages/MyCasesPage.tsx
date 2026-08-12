@@ -7,6 +7,7 @@ import { allocationsApi } from '../api/allocationsApi';
 import { Pagination } from '../components/Pagination';
 import { useAuth } from '../AuthContext';
 import type { AllocationResponse } from '../types';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 
 import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
@@ -67,6 +68,12 @@ function resolveDPD(c: AllocationResponse): number | null {
     if (!Number.isNaN(num)) return num;
   }
   return null;
+}
+
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
 }
 
 function dpdTone(dpd: number): 'critical' | 'high' | 'warn' | 'neutral' {
@@ -130,11 +137,10 @@ export default function MyCasesPage() {
   const pageCases  = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
-    <div className="dd-page">
+    <div className="dd-page db-fill-root">
 
       <div className="dd-page-header">
         <div className="dd-page-titles">
-          <h1 className="dd-page-title">My Cases</h1>
           <span className="dd-page-context">
             <><strong>{myCases.length}</strong> total assigned cases</>
           </span>
@@ -160,10 +166,10 @@ export default function MyCasesPage() {
       <div className="dd-main-container">
         <div className="dd-grid">
           <div className="dd-case-panel">
-            <div className="ds-card dd-cases-card is-overflow-hidden">
+            <div className="ds-card dd-cases-card is-overflow-hidden is-list-card">
 
-              <header className="dd-cases-head" style={{ padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '48px' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>All Assigned</span>
+              <header className="dd-cases-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '48px' }}>
+                <h3 className="db-list-title">My Cases</h3>
                 <AnimatePresence mode="popLayout">
                   {!isSearchActive && !search ? (
                     <motion.button
@@ -229,6 +235,7 @@ export default function MyCasesPage() {
                   {pageCases.map((c) => {
                     const amt     = resolveAmount(c);
                     const dpd     = resolveDPD(c);
+                    const disposition = resolveDisposition(c);
                     const loanRef = c.loanAccountNo || c.loanNumber || '—';
                     const tone    = dpd != null ? dpdTone(dpd) : 'neutral';
 
@@ -236,7 +243,7 @@ export default function MyCasesPage() {
                       <motion.div
                         key={c.id}
                         variants={fadeUp}
-                        className="dd-case-row"
+                        className="dd-case-row is-list-row"
                         onClick={() => navigate(`/app/visits/${c.id}/interview`)}
                         role="button"
                         tabIndex={0}
@@ -248,6 +255,11 @@ export default function MyCasesPage() {
                             <span className="dd-case-loan">{loanRef}</span>
                             {dpd != null && (
                               <span className={`dd-case-dpd is-${tone}`}>DPD {dpd}</span>
+                            )}
+                            {disposition && (
+                              <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                                {disposition.replace(/_/g, ' ')}
+                              </span>
                             )}
                           </div>
                         </div>

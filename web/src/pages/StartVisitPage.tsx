@@ -6,8 +6,37 @@ import { visitSessionApi } from '../api/visitSessionApi';
 import { toastBus } from '../utils/toastBus';
 import type { AllocationResponse, ApiResponse } from '../types';
 import { MapPin, Briefcase, Play } from 'lucide-react';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
+import '../styles/DailyDispatch.shell.css';
 
 type Tab = 'dispatch' | 'assigned';
+
+const fmtINR = (v?: number | null) =>
+  v != null
+    ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v)
+    : '—';
+
+function resolveAmount(c: AllocationResponse): number | null {
+  if (typeof c.outstandingAmount === 'number') return c.outstandingAmount;
+  if (typeof c.totalDue === 'number') return c.totalDue;
+  const dd = c.dynamicData || {};
+  const key = Object.keys(dd).find(k => {
+    const kl = k.toLowerCase();
+    return kl.includes('outstanding') || kl.includes('pos') || kl.includes('balance')
+      || (kl.includes('total') && kl.includes('due'));
+  });
+  if (key != null) {
+    const num = Number(String(dd[key]).replace(/[^0-9.\-]/g, ''));
+    if (!Number.isNaN(num) && num !== 0) return num;
+  }
+  return null;
+}
+
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
+}
 
 function getGps(): Promise<{ lat: number; lng: number } | null> {
   return new Promise(resolve => {
@@ -94,7 +123,7 @@ export default function StartVisitPage() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">Start Visit</h1>
+        <h1 className="dd-page-title">Start Visit</h1>
       </div>
 
       <div className="ds-tabs" style={{ marginBottom: 16 }}>
@@ -118,7 +147,10 @@ export default function StartVisitPage() {
         <div className="ds-empty">No cases available</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {cases.map(c => (
+          {cases.map(c => {
+            const amt = resolveAmount(c);
+            const disposition = resolveDisposition(c);
+            return (
             <div
               key={c.id}
               className="ds-card"
@@ -126,19 +158,35 @@ export default function StartVisitPage() {
             >
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{c.borrowerName ?? c.loanNumber}</div>
-                <div style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>{c.loanNumber}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-tertiary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {c.loanNumber}
+                  {disposition && (
+                    <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                      {disposition.replace(/_/g, ' ')}
+                    </span>
+                  )}
+                </div>
               </div>
-              <button
-                className="ds-btn ds-btn--primary"
-                disabled={starting === c.id}
-                onClick={() => handleStart(c.id, tab === 'dispatch' ? 'DISPATCH' : 'ASSIGNED')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <Play size={14} />
-                {starting === c.id ? 'Starting…' : 'Start'}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {amt != null && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)' }}>{fmtINR(amt)}</span>
+                    <span style={{ fontSize: 10, color: 'var(--ink-tertiary)' }}>POS</span>
+                  </div>
+                )}
+                <button
+                  className="ds-btn ds-btn--primary"
+                  disabled={starting === c.id}
+                  onClick={() => handleStart(c.id, tab === 'dispatch' ? 'DISPATCH' : 'ASSIGNED')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Play size={14} />
+                  {starting === c.id ? 'Starting…' : 'Start'}
+                </button>
+              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

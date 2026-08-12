@@ -31,8 +31,8 @@ export function LogoutConfirmDialog({ open, isLoggingOut, onCancel, onConfirm }:
               <span style={{ fontSize: 13, color: 'var(--ink-secondary)', lineHeight: 1.5 }}>You'll be redirected to the sign-in page. Any unsaved changes will be lost.</span>
             </div>
             <div className="ds-modal-actions" style={{ marginTop: 24, display: 'flex', gap: 8 }}>
-              <button type="button" onClick={onCancel} className="ds-btn is-secondary" style={{ flex: 1, height: 36 }}>Cancel</button>
-              <button type="button" onClick={onConfirm} disabled={isLoggingOut} className="ds-btn is-primary" style={{ flex: 1, height: 36, background: 'var(--danger)', border: 'none', color: 'var(--text-on-solid)' }}>
+              <button type="button" onClick={onCancel} className="ds-btn is-secondary" style={{ flex: 1 }}>Cancel</button>
+              <button type="button" onClick={onConfirm} disabled={isLoggingOut} className="ds-btn is-primary" style={{ flex: 1, background: 'var(--danger)', border: 'none', color: 'var(--text-on-solid)' }}>
                 {isLoggingOut ? <Loader2 size={14} className="ds-spin" /> : <LogOut size={14} />}Sign out
               </button>
             </div>

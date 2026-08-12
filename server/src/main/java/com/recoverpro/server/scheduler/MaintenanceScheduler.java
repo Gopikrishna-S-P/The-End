@@ -3,6 +3,7 @@ package com.recoverpro.server.scheduler;
 import com.recoverpro.server.entity.AgentShift;
 import com.recoverpro.server.enums.ShiftStatus;
 import com.recoverpro.server.repository.AgentShiftRepository;
+import com.recoverpro.server.repository.AppNotificationRepository;
 import com.recoverpro.server.repository.ChatMessageRepository;
 import com.recoverpro.server.repository.ChatSessionRepository;
 import com.recoverpro.server.repository.PasswordResetTokenRepository;
@@ -35,9 +36,13 @@ public class MaintenanceScheduler {
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final AgentShiftRepository agentShiftRepository;
+    private final AppNotificationRepository appNotificationRepository;
 
     @Value("${lucien.sessions.max-age-days:90}")
     private int sessionMaxAgeDays;
+
+    @Value("${app.notifications.retention-days:90}")
+    private int notificationRetentionDays;
 
     @Value("${agent.shift.max-hours:14}")
     private int shiftMaxHours;
@@ -58,6 +63,21 @@ public class MaintenanceScheduler {
             userRepository.resetLockout(user.getId());
             log.info("Auto-unlocked account: id={}", user.getId());
         });
+    }
+
+    /**
+     * markRead/dismiss are soft, and nothing else deleted notifications, so the
+     * table only ever grew. Read/dismissed rows past the retention horizon are
+     * removed; unread rows are kept regardless of age so an unseen alert is
+     * never silently destroyed.
+     */
+    @Scheduled(cron = "0 30 3 * * *")
+    @Transactional
+    public void purgeSettledNotifications() {
+        Instant cutoff = Instant.now().minusSeconds((long) notificationRetentionDays * 86400);
+        int removed = appNotificationRepository.deleteSettledOlderThan(cutoff);
+        log.info("Notification purge: {} read/dismissed rows older than {} days removed",
+                removed, notificationRetentionDays);
     }
 
     @Scheduled(cron = "0 0 3 * * *")

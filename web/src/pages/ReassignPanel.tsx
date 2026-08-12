@@ -4,11 +4,20 @@ import { allocationsApi } from '../api/allocationsApi';
 import { assignmentsApi } from '../api/assignmentsApi';
 import { usePermissions } from '../hooks/usePermissions';
 import type { AllocationResponse, UserResponse } from '../types';
-import { ArrowRightLeft, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Trash2, UserCheck, X } from 'lucide-react';
-import { StatusPill } from './LoansHelpers';
+import { ArrowRightLeft, CheckCircle2, Loader2, Trash2, UserCheck, X } from 'lucide-react';
+import { StatusPill, formatCurrency } from './LoansHelpers';
+import { Pagination } from '../components/Pagination';
+import { resolveAmount } from './DispatchCasePanel';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 import './Dashboard.css';
 
-const ASSIGNED_SIZE = 15;
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
+}
+
+const ASSIGNED_SIZE = 10;
 
 interface Props {
   selectedFo: string;
@@ -102,7 +111,7 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
       <div className="dd-cp-list-wrap">
         <div className="dd-cp-list">
           <AnimatePresence mode="wait">
-            <motion.div key="reassign-list" variants={fadeIn} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
+            <motion.div key="reassign-list" variants={fadeIn} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
             {!selectedFo ? (
               <motion.div className="ds-empty" variants={fadeUp} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
                 <UserCheck size={32} className="ds-empty-icon" />
@@ -132,9 +141,12 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
               </motion.div>
             ) : (
               <motion.div variants={stagger} initial="hidden" animate="show">
-                {filtered.map(c => (
+                {filtered.map(c => {
+                  const amt = resolveAmount(c);
+                  const disposition = resolveDisposition(c);
+                  return (
                   <motion.div key={c.id} variants={fadeUp}
-                    className="db-att-row dd-case-row"
+                    className="db-att-row dd-case-row is-list-row"
                   >
                     <div className="dd-case-info">
                       <span className="dd-case-borrower">{c.borrowerName || '—'}</span>
@@ -142,11 +154,23 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
                         <span className={`ds-pill is-${(c.status as string) === 'DONE' ? 'success' : (c.status as string) === 'IN_PROGRESS' ? 'info' : (c.status as string) === 'CANCELLED' ? 'neutral' : 'warning'}`} style={{ fontSize: 10, padding: '0 4px', height: 16 }}>
                           {c.status}
                         </span>
-                        <span>{c.loanNumber || c.loanAccountNo || '—'}</span>
+                        <span className="dd-case-loan">{c.loanNumber || c.loanAccountNo || '—'}</span>
+                        {disposition && (
+                          <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                            {disposition.replace(/_/g, ' ')}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="dd-case-amt" style={{ alignItems: 'flex-end', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+                    {amt != null && (
+                      <div className="dd-case-amount-col">
+                        <span className="dd-case-amount">{formatCurrency(amt)}</span>
+                        <span className="dd-case-amount-lbl">POS</span>
+                      </div>
+                    )}
+
+                    <div className="dd-case-right" style={{ gap: 6 }}>
                       {canDelete && confirmDeleteId === c.id ? (
                         <>
                           <button type="button" className="db-error-retry"
@@ -188,7 +212,8 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
                       )}
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </motion.div>
             )}
             </motion.div>
@@ -197,23 +222,13 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
       </div>
 
       {assignedTotalPages > 1 && !assignedLoading && (
-        <div className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-          <span className="up-page-meta">
-            Page <strong>{assignedPage + 1}</strong> of <strong>{assignedTotalPages}</strong> · <strong>{assignedTotal.toLocaleString('en-IN')}</strong> cases
-          </span>
-          <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-            <button type="button" className="up-page-btn"
-              onClick={() => setAssignedPage(p => Math.max(0, p - 1))}
-              disabled={assignedPage === 0}>
-              <ChevronLeft size={14} />
-            </button>
-            <button type="button" className="up-page-btn"
-              onClick={() => setAssignedPage(p => Math.min(assignedTotalPages - 1, p + 1))}
-              disabled={assignedPage >= assignedTotalPages - 1}>
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={assignedPage}
+          totalPages={assignedTotalPages}
+          onPageChange={setAssignedPage}
+          totalElements={assignedTotal}
+          itemLabel="cases"
+        />
       )}
     </>
   );

@@ -278,3 +278,36 @@ export interface VisitImportResult {
   errors: VisitImportRowError[];
 }
 
+export type CallOutcome =
+  | 'ANSWERED'
+  | 'NO_ANSWER'
+  | 'BUSY'
+  | 'WRONG_NUMBER'
+  | 'CALLBACK_REQUESTED'
+  | 'REFUSED'
+  | 'SWITCHED_OFF';
+
+/** UPLOADED means a recording exists in storage. Playback (GET
+ *  /call-logs/{id}/recording) is restricted to ORG_ADMIN/MANAGER/TL —
+ *  narrower than who can see the log metadata itself. */
+export type RecordingStatus = 'PENDING' | 'UPLOADED' | 'FAILED' | 'NOT_RECORDED';
+
+export interface CallLogResponse {
+  id: string;
+  allocationId: string;
+  /** Loan account number from the linked Allocation (enriched server-side). */
+  loanNumber?: string;
+  /** Borrower display name from the linked Allocation (enriched server-side). */
+  borrowerName?: string;
+  agentId: string;
+  /** Display name of the calling agent (enriched server-side). */
+  agentName?: string;
+  initiatedAt: string;
+  endedAt?: string;
+  durationSeconds?: number;
+  outcome?: CallOutcome;
+  phoneMasked?: string;
+  notes?: string;
+  recordingStatus?: RecordingStatus;
+}
+

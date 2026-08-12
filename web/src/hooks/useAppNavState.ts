@@ -27,7 +27,9 @@ export function useAppNavState({ role, historyStack, currentIndex }: Params) {
   const LUCIEN_PATHS = new Set(['/app/lucien/admin']);
 
   const sections = useMemo(() => {
-    const filterItems = (items: NavItem[]) => items
+    // Explicit return type: the recursive call below would otherwise make this
+    // implicitly `any` (referenced in its own initializer).
+    const filterItems = (items: NavItem[]): NavItem[] => items
       .filter(item => {
         // alwaysFor is an authoritative role gate when present — a role it excludes
         // never sees the item, even if that role happens to hold the permission too
@@ -44,7 +46,17 @@ export function useAppNavState({ role, historyStack, currentIndex }: Params) {
         item.to === '/app/reports' && !reportsEnabled
           ? { ...item, locked: true }
           : item
-      );
+      )
+      // Children run through the same gate as their parent. Without this a
+      // child inherits only the parent's visibility — e.g. Reconciliation
+      // (ORG_ADMIN/MANAGER) would show to every TL and FO who can see
+      // Dashboard. Empty children collapse to undefined so the chevron
+      // renders only when there is something under it.
+      .map(item => {
+        if (!item.children?.length) return item;
+        const kids = filterItems(item.children);
+        return { ...item, children: kids.length ? kids : undefined };
+      });
     return NAV_SECTIONS.map(s => ({ ...s, items: filterItems(s.items) })).filter(s => s.items.length > 0);
   }, [role, hasAnyPermission, lucienEnabled, reportsEnabled]);
 

@@ -69,7 +69,7 @@
   background: var(--bg-surface);
   color: var(--text-primary);
   font-weight: 600;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 .dd-cp-tab-count {
@@ -250,6 +250,40 @@
 .dd-cp-list .dd-case-row,
 .dd-cp-list .dd-case-skel { flex-shrink: 0; }
 
+/* ── List-card pattern (scrollable row list + <Pagination> footer) ──────────
+   Opt-in via .is-list-card / .is-list-row — the reference values for this
+   whole app-wide pattern. See .db-card.is-list-card in Dashboard.css for
+   the parallel db-card/db-att-row family. */
+.dd-cases-card.is-list-card {
+  padding: 12px;
+}
+.dd-cases-card.is-list-card > .dd-cases-head {
+  padding: 8px 16px;
+}
+.dd-case-row.is-list-row {
+  padding: 10px 16px;
+  border-bottom-color: var(--border-subtle);
+}
+/* Row text — dd-case-row's own baked-in typography below (13px/500 label,
+   mono/10px meta, mono/13px/700 amount) predates this pattern and is weaker
+   than LoansPage's reference. Scoped to .is-list-row only, so DailyDispatch's
+   own dispatch view and Case Assignments (neither opts into is-list-row) are
+   unaffected. */
+.dd-case-row.is-list-row .dd-case-borrower {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.dd-case-row.is-list-row .dd-case-loan {
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.dd-case-row.is-list-row .dd-case-amount {
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
 /* ── Case row ────────────────────────────────────────────────────────────────── */
 
 /* Case row */
@@ -258,7 +292,9 @@
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  min-height: 50px;
+  /* 48px matches .db-att-row — the dashboard's row height — so rows line up
+     across both surfaces. */
+  min-height: 48px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   background: var(--bg-surface);

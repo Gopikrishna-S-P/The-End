@@ -4,11 +4,11 @@ import 'leaflet/dist/leaflet.css';
 import { fieldOpsApi } from '../api';
 import { useAuth } from '../AuthContext';
 import type { IncidentReportResponse } from '../types';
-import { AlertTriangle, AlertCircle, RefreshCw, X, Navigation2, Users, MapPin, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, AlertCircle, RefreshCw, X, Navigation2, MapPin, Radio, Battery, Compass, Gauge } from 'lucide-react';
 import { SosLiveMonitor } from './SosLiveMonitor';
 import { useDarkMode } from '../hooks/useDarkMode';
-import { REFRESH_MS } from './FieldOpsUtils';
-import { useLiveTrack } from '../hooks/useFieldOpsTrack';
+import { REFRESH_MS, relativeTime } from './FieldOpsUtils';
+import { useLiveTrackSocket, type AgentDot } from '../hooks/useLiveTrackSocket';
 import { FieldOpsMapPanel } from './FieldOpsMapPanel';
 import { FieldOpsIncidentPanel } from './FieldOpsIncidentPanel';
 import '../styles/AppPage.css';
@@ -116,11 +116,18 @@ export default function FieldOpsPage() {
   const [resolvingId,         setResolvingId]         = useState<string | null>(null);
   const [resolveNotes,        setResolveNotes]        = useState('');
   const [resolveLoading,      setResolveLoading]      = useState(false);
+  const [selected,            setSelected]            = useState<AgentDot | null>(null);
   const [, tick] = useState(0);
 
   const seenIds      = useRef<Set<string>>(new Set());
   const firstOpenRef = useRef<HTMLLIElement | null>(null);
-  const { agents, wsStatus } = useLiveTrack(orgId);
+  const { agents, status: wsStatus } = useLiveTrackSocket(orgId);
+
+  // Keep the detail panel in sync with the latest agent data, same as the
+  // old LiveTrackPage did.
+  useEffect(() => {
+    if (selected) setSelected(prev => prev ? (agents.get(prev.agentId) ?? prev) : null);
+  }, [agents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const t = setInterval(() => tick(n => n + 1), 60_000);
@@ -225,6 +232,7 @@ export default function FieldOpsPage() {
               <FieldOpsMapPanel
                 agents={agents} agentList={agentList} openAgentIds={openAgentIds}
                 openCount={openCount} mapCenter={mapCenter} isDark={isDark} wsStatus={wsStatus}
+                onSelect={setSelected}
               />
             </motion.div>
 
@@ -242,7 +250,7 @@ export default function FieldOpsPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <button type="button" onClick={load} disabled={refreshing}
                       className="ds-btn is-secondary" style={{ height: 32 }} aria-label="Refresh" title="Refresh">
-                      <RefreshCw size={14} className={refreshing ? 'ds-spin' : ''} style={{ marginRight: 6 }} /> Refresh
+                      <RefreshCw size={14} className={refreshing ? 'ds-spin' : ''} /> Refresh
                     </button>
                   </div>
                 </header>
@@ -254,14 +262,20 @@ export default function FieldOpsPage() {
                       <span className="ds-empty-sub">Officers appear here once they go live.</span>
                     </div>
                   ) : agentList.map(a => (
-                    <div key={a.agentId} className="db-att-row" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 20px', borderRadius: 0, background: openAgentIds.has(a.agentId) ? 'var(--danger-subtle)' : 'transparent' }}>
+                    <div key={a.agentId} className="db-att-row is-clickable" onClick={() => setSelected(a)}
+                      style={{
+                        borderBottom: '1px solid var(--border-subtle)', padding: '12px 20px', borderRadius: 0, cursor: 'pointer',
+                        background: openAgentIds.has(a.agentId) ? 'var(--danger-subtle)' : selected?.agentId === a.agentId ? 'var(--bg-subtle)' : 'transparent',
+                        opacity: a.online ? 1 : 0.55,
+                      }}>
                       <span className="db-att-chip" style={{ width: 32, height: 32, flexShrink: 0, background: openAgentIds.has(a.agentId) ? 'var(--danger)' : 'var(--bg-subtle)', color: openAgentIds.has(a.agentId) ? 'var(--text-on-solid)' : 'var(--ink-solid)' }}>
                         {`${a.agentName?.[0] ?? '?'}`.toUpperCase()}
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginLeft: 12 }}>
                         <span className="db-att-label" style={{ fontWeight: 600, color: 'var(--ink-primary)' }}>{a.agentName ?? 'Unknown'}</span>
                         <span className="db-kpi2-foot-meta" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <MapPin size={10} /> {a.accuracy != null ? `±${a.accuracy.toFixed(0)}m` : 'tracking'}
+                          <MapPin size={10} /> {a.accuracy > 0 ? `±${a.accuracy.toFixed(0)}m` : 'tracking'}
+                          {!a.online && ' · offline'}
                         </span>
                       </div>
                       {openAgentIds.has(a.agentId) && <span className="ds-pill is-danger" style={{ fontSize: 9, padding: '0 6px', height: 18 }}>SOS</span>}
@@ -269,6 +283,63 @@ export default function FieldOpsPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Selected agent detail — ported from the old LiveTrackPage's
+                  sidebar panel, shown when a map marker or list row is clicked. */}
+              {selected && (
+                <div className="ds-card db-card" style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '16px 20px', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink-primary)' }}>{selected.agentName ?? 'Unknown officer'}</span>
+                    <button type="button" onClick={() => setSelected(null)} className="ds-icon-btn is-sm" aria-label="Close">
+                      <X size={13} />
+                    </button>
+                  </div>
+                  <div className="fo-detail-grid">
+                    <div className="fo-detail-row">
+                      <span className="fo-detail-label"><Radio size={11} /> Status</span>
+                      <span style={{ fontWeight: 600, color: !selected.online ? 'var(--text-tertiary)' : selected.visitSessionId ? 'var(--success)' : 'var(--info)' }}>
+                        {!selected.online ? 'Offline' : selected.visitSessionId ? 'Active visit' : 'On shift'}
+                      </span>
+                    </div>
+                    <div className="fo-detail-row">
+                      <span className="fo-detail-label">Last update</span>
+                      <span>{relativeTime(new Date(selected.ts).toISOString())}</span>
+                    </div>
+                    <div className="fo-detail-row">
+                      <span className="fo-detail-label"><MapPin size={11} /> GPS accuracy</span>
+                      <span>±{Math.round(selected.accuracy)} m</span>
+                    </div>
+                    {selected.speed != null && (
+                      <div className="fo-detail-row">
+                        <span className="fo-detail-label"><Gauge size={11} /> Speed</span>
+                        <span>{(selected.speed * 3.6).toFixed(1)} km/h</span>
+                      </div>
+                    )}
+                    {selected.heading != null && (
+                      <div className="fo-detail-row">
+                        <span className="fo-detail-label"><Compass size={11} /> Heading</span>
+                        <span>{Math.round(selected.heading)}°</span>
+                      </div>
+                    )}
+                    {selected.batteryLevel != null && (
+                      <div className="fo-detail-row">
+                        <span className="fo-detail-label"><Battery size={11} /> Battery</span>
+                        <span style={{
+                          color: selected.batteryLevel < 0.2 ? 'var(--danger)' : undefined,
+                          fontWeight: selected.batteryLevel < 0.2 ? 600 : 400,
+                        }}>
+                          {Math.round(selected.batteryLevel * 100)}%{selected.batteryLevel < 0.2 ? ' ⚠ Low' : ''}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {selected.mockDetected && (
+                    <div className="db-att-row is-warn" style={{ padding: '8px 10px', borderRadius: 8, fontSize: 12 }}>
+                      <AlertTriangle size={13} style={{ color: 'var(--warning)', marginRight: 6 }} /> Mock GPS detected
+                    </div>
+                  )}
+                </div>
+              )}
 
               <FieldOpsIncidentPanel
                 incidents={incidents} loading={loading} showResolved={showResolved}

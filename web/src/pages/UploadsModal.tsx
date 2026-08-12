@@ -226,8 +226,8 @@ export function UploadsModal({ onClose, onSuccess, targetOrgId, accessReason }: 
             )}
 
             <div className="ds-modal-actions" style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-              <button type="button" onClick={onClose} disabled={uploading} className="ds-btn is-secondary" style={{ flex: 1, height: 36 }}>Cancel</button>
-              <button type="button" onClick={handleSubmit} disabled={!file || uploading} className="ds-btn is-primary" style={{ flex: 1, height: 36 }}>
+              <button type="button" onClick={onClose} disabled={uploading} className="ds-btn is-secondary" style={{ flex: 1 }}>Cancel</button>
+              <button type="button" onClick={handleSubmit} disabled={!file || uploading} className="ds-btn is-primary" style={{ flex: 1 }}>
                 {uploading ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Upload size={14} style={{ marginRight: 6 }} />}
                 {uploading ? 'Uploading…' : 'Upload file'}
               </button>

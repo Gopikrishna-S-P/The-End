@@ -140,55 +140,53 @@ export default function RoleManagementPage() {
   };
 
   return (
-    <div className="dd-page">
-      <AnimatePresence>
-        {error && (
-          <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24, flexShrink: 0 }}
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-            <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
-            <div className="db-error-body">
-              <span className="db-error-title">{error}</span>
-            </div>
-            <button className="db-error-retry" onClick={() => setError(null)} aria-label="Dismiss">
-              <X size={14} aria-hidden="true" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="dd-page-header">
-        <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-          <span className="dd-page-context" style={{ padding: 0 }}>
-            {!loading ? (
-              <>You have <strong>{roles.length} roles</strong> defined for access control settings.</>
-            ) : (
-              'Manage access control'
-            )}
-          </span>
-        </div>
-        <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {canAssign && (
-            <button
-              type="button"
-              onClick={() => { setShowCreateForm(!showCreateForm); setSaveError(null); }}
-              className={`ds-btn ${showCreateForm ? 'is-secondary' : 'is-primary'}`}
-            >
-              {showCreateForm ? <X size={14} style={{ marginRight: 6 }} /> : <Plus size={14} style={{ marginRight: 6 }} />}
-              {showCreateForm ? 'Cancel' : 'New role'}
-            </button>
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        <AnimatePresence>
+          {error && (
+            <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24, flexShrink: 0 }}
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+              <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
+              <div className="db-error-body">
+                <span className="db-error-title">{error}</span>
+              </div>
+              <button className="db-error-retry" onClick={() => setError(null)} aria-label="Dismiss">
+                <X size={14} aria-hidden="true" />
+              </button>
+            </motion.div>
           )}
-        </div>
-      </div>
+        </AnimatePresence>
 
-      <div className="dd-main-container">
-        <div className="dd-grid">
-          <div className="dd-case-panel">
-            <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-              <div className="dd-cp-list-wrap">
-                <div className="dd-cp-list">
-          
-          <AnimatePresence>
+        <div className="db-page-header">
+          <div className="db-page-header-left">
+            <p className="dd-page-context">
+              {!loading ? (
+                <>You have <strong>{roles.length} roles</strong> defined for access control settings.</>
+              ) : (
+                'Manage access control'
+              )}
+            </p>
+          </div>
+          <div className="db-list-page-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {canAssign && (
+              <button
+                type="button"
+                onClick={() => { setShowCreateForm(!showCreateForm); setSaveError(null); }}
+                className={`ds-btn ${showCreateForm ? 'is-secondary' : 'is-primary'}`}
+                style={{ height: 32 }}
+              >
+                {showCreateForm ? <X size={14} style={{ marginRight: 6 }} /> : <Plus size={14} style={{ marginRight: 6 }} />}
+                {showCreateForm ? 'Cancel' : 'New role'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <motion.div variants={fadeUp} className="ds-card db-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: 0, overflow: 'hidden' }}>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              <AnimatePresence>
             {showCreateForm && (
               <motion.form variants={fadeUp} initial="hidden" animate="show" exit={{ opacity: 0, y: -10 }} onSubmit={handleCreateRole} style={{ borderBottom: '4px solid var(--bg-subtle)' }}>
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-subtle)' }}>
@@ -228,7 +226,6 @@ export default function RoleManagementPage() {
                       type="submit"
                       disabled={creating || !newRoleName.trim()}
                       className="ds-btn is-primary"
-                      style={{ height: 36 }}
                     >
                       {creating ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Plus size={14} style={{ marginRight: 6 }} />}
                       Create role
@@ -314,11 +311,9 @@ export default function RoleManagementPage() {
               </div>
             </motion.div>
           )}
-                </div>
-              </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +17,18 @@ import java.util.UUID;
 public interface AppNotificationRepository extends JpaRepository<AppNotification, UUID> {
 
     Page<AppNotification> findByRecipientIdAndDismissedFalseOrderByCreatedAtDesc(UUID recipientId, Pageable pageable);
+
+    /**
+     * Retention sweep. markRead/dismiss are soft — they only stamp readAt /
+     * set dismissed so the list and unread count can filter — so nothing ever
+     * removed a row and app_notifications grew without bound. Only settled
+     * rows (read or dismissed) are eligible; unread notifications are kept
+     * however old, since deleting one destroys an unseen alert.
+     */
+    @Modifying
+    @Query("DELETE FROM AppNotification n WHERE n.createdAt < :cutoff " +
+           "AND (n.readAt IS NOT NULL OR n.dismissed = true)")
+    int deleteSettledOlderThan(@Param("cutoff") Instant cutoff);
 
     long countByRecipientIdAndReadAtIsNullAndDismissedFalse(UUID recipientId);
 

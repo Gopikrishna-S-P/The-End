@@ -16,7 +16,10 @@ public class CallLogResponse {
 
     private UUID id;
     private UUID allocationId;
+    private String loanNumber;
+    private String borrowerName;
     private UUID agentId;
+    private String agentName;
     private Instant initiatedAt;
     private Instant endedAt;
     private Integer durationSeconds;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { visitsApi } from '../api/visitsApi';
 import type { VisitLogResponse } from '../types';
@@ -6,7 +7,6 @@ import {
   MapPin, RefreshCw,
   Search, X, ChevronUp, ChevronDown, Download, Upload, SlidersHorizontal, Activity
 } from 'lucide-react';
-import VisitDetailDrawer from './VisitDetailDrawer';
 import VisitExportModal from '../components/VisitExportModal';
 import VisitImportModal from '../components/VisitImportModal';
 import { Pagination } from '../components/Pagination';
@@ -48,6 +48,7 @@ const fadeIn: Variants = {
 
 export default function VisitsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const canImport = user?.roles?.some(r => r.name === 'ROLE_ORG_ADMIN' || r.name === 'ROLE_PLATFORM_ADMIN') ?? false;
 
   const [visits, setVisits]               = useState<VisitLogResponse[]>([]);
@@ -55,7 +56,6 @@ export default function VisitsPage() {
   const [page, setPage]                   = useState(0);
   const [totalPages, setTotalPages]       = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [selected, setSelected]           = useState<VisitLogResponse | null>(null);
   const [search, setSearch]               = useState('');
   const [approvalFilter, setApproval]     = useState('');
   const [filterOpen, setFilterOpen]       = useState(false);
@@ -166,131 +166,96 @@ export default function VisitsPage() {
   const hasFilters = Boolean(search || approvalFilter);
   const clearFilters = () => { setSearch(''); setApproval(''); };
 
+  // Head counts, rendered as plain "n label | n label" text. The total is
+  // omitted while loading / at zero, exactly as the old pill was, so the
+  // separators are built from the list rather than hard-coded between spans.
+  const countItems = [
+    ...(!loading && totalElements > 0
+      ? [{ key: 'total', n: totalElements, label: 'visits' }]
+      : []),
+    { key: 'today', n: todayCount, label: 'today' },
+    { key: 'month', n: monthCount, label: 'this month' },
+  ];
+
   return (
-    <div className="dd-page">
-      <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <h1 className="dd-page-title">Field Visits</h1>
-          <span className="dd-page-context">Log of all field visits and interactions</span>
-        </div>
-        <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button"
-            onClick={() => setFilterOpen(true)}
-            className="ds-btn is-secondary is-sm"
-            style={{ position: 'relative' }}
-            aria-label="Filter"
-            title="Filter"
-          >
-            <SlidersHorizontal size={14} />
-            {approvalFilter && <span style={{ position: 'absolute', top: -2, right: -2, width: 6, height: 6, borderRadius: '50%', background: 'var(--bg-surface)' }} />}
-          </button>
-          <button type="button" onClick={() => fetchVisits()} disabled={loading}
-            className="ds-btn is-secondary is-sm" aria-label="Refresh" title="Refresh">
-            <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-          </button>
-          {canImport && (
-            <button type="button" onClick={() => setShowImportModal(true)} className="ds-btn is-secondary is-sm">
-              <Upload size={14} /> Import
-            </button>
-          )}
-          <button type="button" onClick={() => setShowExportModal(true)} className="ds-btn is-primary is-sm">
-            <Download size={14} /> Export
-          </button>
-        </div>
-      </div>
+    <div className="db-root db-fill-root">
+      <div className="db-content">
+        <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
 
-      <div className="dd-main-container">
-        <div className="dd-case-panel" style={{ flex: 1 }}>
-          <AnimatePresence>
-            {filterOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, y: -10, height: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ overflow: 'hidden', padding: '12px 16px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Approval</span>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    {APPROVAL_OPTIONS.map(o => (
-                      <button key={o.value} type="button"
-                        onClick={() => setApproval(o.value)}
-                        style={{ padding: '4px 10px', fontSize: 12, borderRadius: 999, border: '1px solid', background: approvalFilter === o.value ? 'var(--ink-primary)' : 'var(--bg-surface)', color: approvalFilter === o.value ? 'var(--bg-surface)' : 'var(--ink-secondary)', borderColor: approvalFilter === o.value ? 'var(--ink-primary)' : 'var(--border)', cursor: 'pointer', transition: 'all 0.15s' }}>
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {hasFilters && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
-                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--success)' }} />
-                    Active filters
-                    <button type="button" onClick={() => setFilterOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 2, display: 'flex' }}>
-                      <X size={11} />
-                    </button>
-                  </span>
-                )}
-                <button type="button" onClick={clearFilters} className="db-customize-btn" style={{ padding: '0 8px', fontSize: 11 }}>
-                  Clear all
+          <div className="db-kpi-header" style={{ gap: 24, flexWrap: 'wrap', minHeight: 48, justifyContent: 'space-between' }}>
+            <p className="dd-page-context">Log of all field visits and interactions</p>
+            <div className="db-list-page-actions">
+              <div className="db-list-btn-group">
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(true)}
+                  className={`ds-btn is-secondary db-list-filter-btn${filterOpen || approvalFilter ? ' is-active' : ''}`}
+                >
+                  <SlidersHorizontal size={14} />
+                  Filter
+                  {approvalFilter && <span className="db-list-filter-dot" />}
                 </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.section variants={fadeUp} className="ds-card dd-cases-card is-overflow-hidden" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div className="dd-cases-head" style={{ padding: '0 16px', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-subtle)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveTab('all'); setPage(0); }}
-                    style={{
-                      background: activeTab === 'all' ? 'var(--bg-surface)' : 'transparent',
-                      color: activeTab === 'all' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                      border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
-                      boxShadow: activeTab === 'all' ? 'var(--shadow-xs)' : 'none'
-                    }}
-                  >
-                    All Visits
+                <button type="button" onClick={() => fetchVisits()} disabled={loading}
+                  className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
+                  <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
+                </button>
+                {canImport && (
+                  <button type="button" onClick={() => setShowImportModal(true)} className="ds-btn is-secondary">
+                    <Upload size={14} /> Import
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveTab('my'); setPage(0); }}
-                    style={{
-                      background: activeTab === 'my' ? 'var(--bg-surface)' : 'transparent',
-                      color: activeTab === 'my' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                      border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
-                      boxShadow: activeTab === 'my' ? 'var(--shadow-xs)' : 'none'
-                    }}
-                  >
-                    My Visits
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {!loading && totalElements > 0 && (
-                    <motion.span className="ds-pill is-neutral"
-                      initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontFeatureSettings: '"tnum", "zero"' }}>
-                        {totalElements.toLocaleString('en-IN')}
-                      </span> visits
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                <span className="ds-pill is-neutral">
-                  <span style={{ fontFamily: 'var(--font-mono)', fontFeatureSettings: '"tnum", "zero"' }}>
-                    {todayCount.toLocaleString('en-IN')}
-                  </span> today
-                </span>
-                <span className="ds-pill is-neutral">
-                  <span style={{ fontFamily: 'var(--font-mono)', fontFeatureSettings: '"tnum", "zero"' }}>
-                    {monthCount.toLocaleString('en-IN')}
-                  </span> this month
-                </span>
+                )}
+                <button type="button" onClick={() => setShowExportModal(true)} className="ds-btn is-success">
+                  <Download size={14} /> Export
+                </button>
               </div>
-              
+            </div>
+          </div>
+
+          {/* .db-grid is `align-items: start` and has no .db-fill-root rule, so
+              the viewport-height chain dies here unless the grid and its cell
+              are stretched explicitly — same wiring LoansPage uses. */}
+          <div className="db-grid" style={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+            <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card is-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                <header className="db-card-head" style={{ borderBottom: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+                  <div className="vis-head-left">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-subtle)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('all'); setPage(0); }}
+                        style={{
+                          background: activeTab === 'all' ? 'var(--bg-surface)' : 'transparent',
+                          color: activeTab === 'all' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                          border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
+                          boxShadow: activeTab === 'all' ? 'var(--shadow-xs)' : 'none'
+                        }}
+                      >
+                        All Visits
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('my'); setPage(0); }}
+                        style={{
+                          background: activeTab === 'my' ? 'var(--bg-surface)' : 'transparent',
+                          color: activeTab === 'my' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                          border: 'none', padding: '4px 12px', fontSize: 13, fontWeight: 500, borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.15s',
+                          boxShadow: activeTab === 'my' ? 'var(--shadow-xs)' : 'none'
+                        }}
+                      >
+                        My Visits
+                      </button>
+                    </div>
+
+                    <div className="vis-counts">
+                      {countItems.map((it, i) => (
+                        <span key={it.key} className="vis-counts-item">
+                          {i > 0 && <span className="vis-counts-sep" aria-hidden="true">|</span>}
+                          <span className="vis-counts-num">{it.n.toLocaleString('en-IN')}</span> {it.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <motion.div
                   initial={false}
@@ -346,17 +311,27 @@ export default function VisitsPage() {
                   )}
                 </motion.div>
               </div>
-            </div>
+                </header>
 
-            <div className="dd-cp-list-wrap" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-              <div className="dd-cp-list" style={{ padding: 0 }}>
+                <div className="db-card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: 0 }}>
+                  <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="db-att-row has-border" style={{ opacity: 1 - i * 0.1, cursor: 'default' }}>
-                    <span className="ds-skel" style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <span className="ds-skel" style={{ height: 14, width: '45%', borderRadius: 4 }} />
-                      <span className="ds-skel" style={{ height: 11, width: '65%', borderRadius: 4 }} />
+                  /* Mirrors VisitRow exactly — name over loan number, then
+                     disposition/verify/approval/FO/GPS — so the placeholder
+                     and the real row occupy the same boxes and nothing
+                     shifts when the data lands. */
+                  <div key={i} className="db-att-row is-list-row vis-row" style={{ opacity: 1 - i * 0.1, cursor: 'default' }}>
+                    <div className="vis-row-id">
+                      <span className="ds-skel" style={{ height: 14, width: 170, borderRadius: 4 }} />
+                      <span className="ds-skel" style={{ height: 11, width: 104, borderRadius: 4 }} />
+                    </div>
+                    <div className="vis-row-cols">
+                      <span className="ds-skel" style={{ height: 20, width: 74, borderRadius: 999 }} />
+                      <span className="ds-skel" style={{ height: 20, width: 64, borderRadius: 999 }} />
+                      <span className="ds-skel" style={{ height: 20, width: 70, borderRadius: 999 }} />
+                      <span className="ds-skel" style={{ height: 12, width: 88, borderRadius: 4 }} />
+                      <span className="ds-skel" style={{ height: 28, width: 62, borderRadius: 'var(--radius-sm)' }} />
                     </div>
                   </div>
                 ))
@@ -380,44 +355,40 @@ export default function VisitsPage() {
                   )}
                 </motion.div>
               ) : (
-                <motion.div variants={stagger} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
+                /* No stagger/fade on the rows. fadeUp is opacity 0→1 over 0.40s
+                   and the wrapper staggered it 0.05s per row, so with 20 rows
+                   the list sat at graded partial opacity for ~1.4s after every
+                   load — read as "faded rows". Rows now paint at full opacity. */
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {filtered.map((v) => (
                     <VisitRow
                       key={v.id}
                       visit={v}
-                      isSelected={selected?.id === v.id}
-                      onToggle={() => setSelected(p => p?.id === v.id ? null : v)}
-                      variants={fadeUp}
+                      isSelected={false}
+                      onToggle={() => navigate(`/app/visits/${v.id}`)}
                     />
                   ))}
-                </motion.div>
+                </div>
               )}
-              </div>
-            </div>
+                  </div>
+                </div>
 
-            {/* ── Pagination ── */}
-            {!loading && visits.length > 0 && (
-              <Pagination
-                currentPage={page}
-                totalPages={Math.max(1, totalPages)}
-                onPageChange={setPage}
-                totalElements={totalElements}
-                itemLabel="visits"
-              />
-            )}
-          </motion.section>
-        </div>
+                {/* ── Pagination ── */}
+                {!loading && visits.length > 0 && (
+                  <Pagination
+                    currentPage={page}
+                    totalPages={Math.max(1, totalPages)}
+                    onPageChange={setPage}
+                    totalElements={totalElements}
+                    itemLabel="visits"
+                  />
+                )}
+              </motion.section>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      <AnimatePresence>
-        {selected && (
-          <VisitDetailDrawer
-            visit={selected}
-            onClose={() => setSelected(null)}
-            onChanged={() => { setSelected(null); fetchVisits(); }}
-          />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showExportModal && (

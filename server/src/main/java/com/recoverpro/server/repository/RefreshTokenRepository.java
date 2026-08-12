@@ -19,6 +19,29 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     List<RefreshToken> findByUser_IdAndRevokedFalse(UUID userId);
 
+    /**
+     * Device history — deliberately spans revoked tokens.
+     *
+     * Rotation revokes the presenting token before the replacement is inspected,
+     * so the live (revoked=false) set no longer contains the device that is
+     * currently authenticating. Answering "have we seen this device?" from that
+     * set therefore reports every refresh from a user with a second active
+     * session as a brand-new device. History is the correct source: a device is
+     * known if it ever held a token, revoked or not.
+     *
+     * Horizon is the refresh-token lifetime (7d) because MaintenanceScheduler
+     * deletes rows past expiresAt — a device dormant longer than that is
+     * re-challenged, which is the intended behaviour.
+     */
+    boolean existsByUser_IdAndDeviceId(UUID userId, String deviceId);
+
+    /**
+     * The genuine previous session, revoked or not — used for impossible-travel.
+     * The active set would yield some other concurrent session, not the one this
+     * login actually follows.
+     */
+    Optional<RefreshToken> findFirstByUser_IdOrderByCreatedAtDesc(UUID userId);
+
     @Query("SELECT rt FROM RefreshToken rt WHERE rt.tokenPrefix = :prefix AND rt.revoked = false")
     List<RefreshToken> findByTokenPrefixAndRevokedFalse(@Param("prefix") String prefix);
 

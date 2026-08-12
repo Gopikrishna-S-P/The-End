@@ -289,7 +289,7 @@ export default function PlatformRevenueTrendPage() {
                     )}
                     <button type="button" onClick={load} disabled={loading}
                       className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                      <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                      <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
                     </button>
                   </div>
                 </header>

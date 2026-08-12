@@ -2,12 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { allocationsApi } from '../api/allocationsApi';
 import type { AllocationResponse, UserResponse } from '../types';
-import { UserCheck, ChevronLeft, ChevronRight, Loader2, CheckCircle2, Check, UserPlus, Send } from 'lucide-react';
+import { UserCheck, Loader2, CheckCircle2, Check, UserPlus, Send } from 'lucide-react';
 import { usePermissions } from '../hooks/usePermissions';
 import { formatCurrency, StatusPill } from './LoansHelpers';
+import { Pagination } from '../components/Pagination';
+import { resolveAmount } from './DispatchCasePanel';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 import './Dashboard.css';
 
-const PAGE_SIZE = 5;
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
+}
+
+const PAGE_SIZE = 10;
 
 const initials = (f: UserResponse) =>
   `${f.firstName?.[0] ?? ''}${f.lastName?.[0] ?? ''}`.toUpperCase() || '?';
@@ -123,7 +132,7 @@ export default function AssignCasePanel({
   
   const selectedTotalAmt = Array.from(picked).reduce((sum, id) => {
     const c = cases.find(x => x.id === id);
-    return sum + (c?.outstandingAmount ?? 0);
+    return sum + (c ? (resolveAmount(c) ?? 0) : 0);
   }, 0);
   
   const selectedTotalAnim = useCountUp(selectedTotalAmt, 500);
@@ -133,7 +142,7 @@ export default function AssignCasePanel({
       <div className="dd-cp-list-wrap" ref={containerRef}>
         <div className="dd-cp-list">
           <AnimatePresence mode="wait">
-          <motion.div key="assign-list" variants={fadeIn} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
+          <motion.div key="assign-list" variants={fadeIn} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
             {casesLoading ? (
               Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.1 }}>
@@ -161,9 +170,11 @@ export default function AssignCasePanel({
               <motion.div variants={stagger} initial="hidden" animate="show">
                 {cases.map((c, idx) => {
                   const isPicked = picked.has(c.id);
+                  const amt = resolveAmount(c);
+                  const disposition = resolveDisposition(c);
                   return (
                     <motion.div key={c.id} variants={fadeUp}
-                      className={`db-att-row dd-case-row${isPicked ? ' is-picked' : ''}`}
+                      className={`db-att-row dd-case-row is-list-row${isPicked ? ' is-picked' : ''}`}
                       onClick={canPick ? (e) => { ripple(e as any); toggle(c.id); } : undefined}
                       style={{ cursor: canPick ? 'pointer' : 'default', opacity: canPick ? 1 : 0.6, boxShadow: isPicked ? 'none' : undefined }}
                     >
@@ -177,22 +188,26 @@ export default function AssignCasePanel({
                           <span className={`ds-pill is-${(c.status as string) === 'DONE' ? 'success' : (c.status as string) === 'IN_PROGRESS' ? 'info' : (c.status as string) === 'CANCELLED' ? 'neutral' : 'warning'}`} style={{ fontSize: 10, padding: '0 4px', height: 16 }}>
                             {c.status}
                           </span>
-                          <span>{c.loanNumber || c.loanAccountNo || '—'}</span>
+                          <span className="dd-case-loan">{c.loanNumber || c.loanAccountNo || '—'}</span>
+                          {disposition && (
+                            <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                              {disposition.replace(/_/g, ' ')}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      <div className="dd-case-amt">
-                        {c.outstandingAmount != null ? (
-                          <>
-                            <span className="dd-case-amt-val">{formatCurrency(c.outstandingAmount)}</span>
-                            <span className="dd-case-amt-lbl">POS</span>
-                          </>
-                        ) : <span className="dd-case-amt-val">—</span>}
+                      {/* Same classes as DispatchCasePanel — dd-case-amt* had no
+                          CSS definition anywhere, so this rendered unstyled. */}
+                      <div className="dd-case-right">
+                        <div className="dd-case-amount-col">
+                          <span className="dd-case-amount">{amt != null ? formatCurrency(amt) : '—'}</span>
+                          {amt != null && <span className="dd-case-amount-lbl">POS</span>}
+                        </div>
                       </div>
                     </motion.div>
                   );
                 })}
-                  <div style={{ height: 16, flexShrink: 0 }} />
                 </motion.div>
               )}
             </motion.div>
@@ -201,23 +216,13 @@ export default function AssignCasePanel({
       </div>
 
         {totalPages > 1 && !casesLoading && (
-          <div className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-            <span className="up-page-meta">
-              Page <strong>{casePage + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalCases.toLocaleString('en-IN')}</strong> cases
-            </span>
-            <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-              <button type="button" className="up-page-btn"
-                onClick={() => setCasePage(p => Math.max(0, p - 1))}
-                disabled={casePage === 0}>
-                <ChevronLeft size={14} />
-              </button>
-              <button type="button" className="up-page-btn"
-                onClick={() => setCasePage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={casePage >= totalPages - 1}>
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={casePage}
+            totalPages={totalPages}
+            onPageChange={setCasePage}
+            totalElements={totalCases}
+            itemLabel="cases"
+          />
         )}
 
         {/* Inline Action Row that replaces 5th row visually */}

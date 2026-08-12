@@ -451,3 +451,133 @@
   object-fit: cover;
   display: block;
 }
+
+/* ── List-card head ─────────────────────────────────────────────────────────
+   Tabs sit left, search right (the header itself is space-between). The card
+   carries no "Itinerary" heading — the page is already named in the
+   breadcrumb, so a title here only repeated it. */
+.vis-head-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Counts as plain text — no pill, no background — separated by a hairline
+   pipe: "178 visits | 0 today | 0 this month". */
+.vis-counts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+.vis-counts-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.vis-counts-sep {
+  color: var(--border);
+  user-select: none;
+}
+.vis-counts-num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum", "zero";
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+/* ── Visit row ──────────────────────────────────────────────────────────────
+   Built on .db-att-row.is-list-row (UploadsPage's row) rather than
+   .dd-case-row. Those two carry different baked-in behaviour, so the pieces
+   dd-case-row supplied have to be restated here:
+     - the divider, which lives on .dd-case-row, not .db-att-row
+     - .is-picked, which is only defined as .dd-case-row.is-picked          */
+.vis-row { border-bottom: 1px solid var(--border); }
+.vis-row:last-child { border-bottom: none; }
+.vis-row.is-picked { background: var(--bg-active); }
+
+/* Customer name over loan number. .db-att-label ships flex:1, which in this
+   column parent would stretch the name box vertically — pinned back to auto. */
+.vis-row-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vis-row-id .db-att-label { flex: 0 0 auto; min-width: 0; }
+.vis-row-loan {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Disposition → verify → approval → FO → GPS. */
+.vis-row-cols {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.vis-row-fo {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vis-row-gps { flex-shrink: 0; text-decoration: none; }
+.vis-row-gps-text {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .vis-row-cols { flex-wrap: wrap; gap: 8px; width: 100%; justify-content: flex-start; }
+  .vis-row-fo { max-width: none; }
+}
+
+/* ── Detail page: approve / reject / delete ─────────────────────────────────
+   The drawer parked these in a sticky .ds-drawer-footer. On the full page
+   they are the last card in the column instead. */
+.vis-detail-actions {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  /* Sits beside .alloc-detail-split (flex:1) inside the fill chain, so it has
+     to hold its own height rather than be compressed by the card above. */
+  flex-shrink: 0;
+}
+
+/* ── Detail card — content-height variant of .ld-card ───────────────────────
+   .ld-card is `flex:1; min-height:0` for LoanDetail's viewport-pinned layout.
+   Here the card grows with its content and .app-main scrolls the page, so a
+   visit with three populated sections renders three sections tall instead of
+   a full-height empty box. overflow:hidden only clips the 16px radius. */
+.vis-detail-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+/* .ld-main-scroll supplied this; the sheet is a direct child now. */
+.vis-detail-card > .ld-sheet > .ld-section:first-child > .ld-section-label {
+  padding-top: 14px;
+}

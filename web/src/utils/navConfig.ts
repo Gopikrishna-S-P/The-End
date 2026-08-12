@@ -4,7 +4,10 @@ import {
   BarChart2, Layers, MapPin, Upload, Send,
   CalendarDays, LineChart, Settings2, LayoutDashboard,
   ClipboardCheck, Play, Receipt, Building2, Flag, Bookmark,
-  Sparkles, CreditCard,
+  Sparkles, CreditCard, Users, Navigation, Inbox, Table2, Phone,
+  Banknote, TrendingUp, Scale, ShieldAlert, PhoneOff, AlertTriangle,
+  Link2, ShieldCheck, FileClock, MessageSquareText, UserPlus,
+  HandCoins, Handshake, Bell,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -15,6 +18,9 @@ export interface NavItem {
   alwaysFor?: Role[];
   count?: number;
   locked?: boolean;
+  /** Rendered under a chevron on the parent. Filtered by the same role/permission
+   *  gate as top-level items, so a child never leaks to a role the parent shows. */
+  children?: NavItem[];
 }
 export interface NavSection { label: string; items: NavItem[] }
 
@@ -37,16 +43,45 @@ export const NAV_SECTIONS: NavSection[] = [
       // showing them this link led to a dead-end (case picker, no submit button).
       { label: 'Start Visit',    to: '/app/start-visit',   icon: Play,           alwaysFor: ['FO'] },
       { label: 'My Attendance',  to: '/app/my-attendance', icon: ClipboardCheck, alwaysFor: ['FO','CALLER','TRACER'] },
+      // Own call log — CallLogController self-scopes FO/CALLER to their own
+      // agentId server-side, so this is always "my calls", never org-wide.
+      { label: 'Calls',          to: '/app/calls',         icon: Phone,          alwaysFor: ['FO','CALLER','TRACER'] },
 
       // Shared daily driver — everyone who touches money sees this.
-      { label: 'Dashboard',   to: '/app/dashboard',   icon: BarChart2, alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
+      // Children are gated tighter than the parent on purpose: Dashboard is
+      // visible to FO/CALLER/TRACER, but money and risk pages are not.
+      { label: 'Dashboard',   to: '/app/dashboard',   icon: BarChart2, alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'],
+        children: [
+          { label: 'Collections',      to: '/app/collections',       icon: Banknote,   alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Collection Trend', to: '/app/collections/trend', icon: TrendingUp, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Portfolio Risk',   to: '/app/portfolio-risk',    icon: LineChart,  alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Reconciliation',   to: '/app/reconciliation',    icon: Receipt,    alwaysFor: ['ORG_ADMIN','MANAGER'] },
+          { label: 'Payment Links',    to: '/app/payments/links',    icon: Link2,      alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Notifications',    to: '/app/notifications',     icon: Bell,       alwaysFor: ['ORG_ADMIN','MANAGER','TL','FO','CALLER','TRACER'] },
+        ] },
 
       // Leads (MANAGER / TL) — oversee the day's work. File Uploads dropped from
       // these two roles to stay within the 5-6 cap; it's a periodic data-setup
       // task, not a daily one, and stays on the sidebar for ORG_ADMIN below.
       { label: 'Daily Dispatch', to: '/app/dispatch',   icon: Send,      alwaysFor: ['MANAGER','TL'], permissions: ['DAILY_DISPATCH_CREATE'] },
-      { label: 'Loans',          to: '/app/allocations', icon: Layers,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
-      { label: 'Visit Logs',     to: '/app/visits',      icon: MapPin,    alwaysFor: ['MANAGER','TL'] },
+      { label: 'Loans',          to: '/app/allocations', icon: Layers,    alwaysFor: ['ORG_ADMIN','MANAGER','TL'],
+        children: [
+          { label: 'Borrowers',             to: '/app/borrowers',             icon: Users,         alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Assignments',           to: '/app/assignments',           icon: Bookmark,      alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'PTPs',                  to: '/app/ptps',                  icon: Handshake,     alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Restructure Proposals', to: '/app/restructure-proposals', icon: Scale,         alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Settlement Offers',     to: '/app/settlement-offers',     icon: HandCoins,     alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Non-Contactables',      to: '/app/non-contactables',      icon: PhoneOff,      alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Fraud Cases',           to: '/app/fraud-cases',           icon: ShieldAlert,   alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+          { label: 'Grievances',            to: '/app/grievances',            icon: AlertTriangle, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
+        ] },
+      { label: 'Visit Logs',     to: '/app/visits',      icon: MapPin,    alwaysFor: ['MANAGER','TL'],
+        children: [
+          { label: 'Field Agents',     to: '/app/agents',           icon: Users,         alwaysFor: ['MANAGER','TL'] },
+          { label: 'Field Ops',        to: '/app/field-ops',        icon: Navigation,    alwaysFor: ['MANAGER','TL'] },
+          { label: 'Attendance',       to: '/app/attendance',       icon: ClipboardCheck, alwaysFor: ['MANAGER','TL'] },
+          { label: 'Unassigned Cases', to: '/app/cases/unassigned', icon: Inbox,         alwaysFor: ['MANAGER','TL'] },
+        ] },
       { label: 'Reports',        to: '/app/reports',     icon: LineChart, alwaysFor: ['ORG_ADMIN','MANAGER','TL'] },
       // Ground truth: UploadsPage.tsx self-gates on UPLOAD_READER_ROLES =
       // [PLATFORM_ADMIN, ORG_ADMIN, MANAGER, TL], and ORG_ADMIN's seeded
@@ -58,7 +93,18 @@ export const NAV_SECTIONS: NavSection[] = [
       // Org admin — same operational hubs, plus team setup instead of field-day tools.
       // Daily Dispatch dropped for this role to stay within the cap — it's a
       // MANAGER/TL day-of-work tool, not an org-admin one.
-      { label: 'User Setup', to: '/app/users', icon: Settings2, alwaysFor: ['ORG_ADMIN'] },
+      { label: 'User Setup', to: '/app/users', icon: Settings2, alwaysFor: ['ORG_ADMIN'],
+        children: [
+          { label: 'Manage roles',       to: '/app/settings/roles',              icon: ShieldCheck,        alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Organisation',       to: '/app/settings/organization',       icon: Building2,          alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Audit logs',         to: '/app/audit',                       icon: FileClock,          alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Message templates',  to: '/app/settings/message-templates',  icon: MessageSquareText,  alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Grievance officer',  to: '/app/settings/grievance-officer',  icon: AlertTriangle,      alwaysFor: ['ORG_ADMIN'] },
+          { label: 'User requests',      to: '/app/users/requests',              icon: UserPlus,           alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Column schemas',     to: '/app/settings/schema',             icon: Table2,             alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Holiday calendar',   to: '/app/calendar',                    icon: CalendarDays,       alwaysFor: ['ORG_ADMIN'] },
+          { label: 'Billing',            to: '/app/subscription',                icon: CreditCard,         alwaysFor: ['ORG_ADMIN'] },
+        ] },
 
       // Platform admin — a distinct console, not the org workspace at all.
       // Revenue Trend dropped to stay within the cap — it's a drill-down still
@@ -68,9 +114,21 @@ export const NAV_SECTIONS: NavSection[] = [
       // with its own cross-org picker, so it was fully built for this role and
       // just missing the link — same gap ORG_ADMIN had below before that fix.
       { label: 'Overview',       to: '/platform/dashboard',     icon: LayoutDashboard, alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Lucien',         to: '/app/lucien/admin',       icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'],
+        children: [
+          { label: 'Organizations', to: '/platform/setup',            icon: Building2, alwaysFor: ['PLATFORM_ADMIN'] },
+          { label: 'Users',         to: '/platform/setup?tab=users',  icon: Users,     alwaysFor: ['PLATFORM_ADMIN'] },
+        ] },
+      { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'],
+        children: [
+          { label: 'Flags',     to: '/platform/feature-flags',                 icon: Flag,      alwaysFor: ['PLATFORM_ADMIN'] },
+          { label: 'Overrides', to: '/platform/feature-flags?tab=overrides',   icon: Settings2, alwaysFor: ['PLATFORM_ADMIN'] },
+        ] },
+      { label: 'Lucien',         to: '/app/lucien/admin',       icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'],
+        children: [
+          { label: 'System prompt', to: '/app/lucien/admin',           icon: Sparkles, alwaysFor: ['PLATFORM_ADMIN'] },
+          { label: 'RAG documents', to: '/app/lucien/admin?tab=rag',   icon: Layers,   alwaysFor: ['PLATFORM_ADMIN'] },
+        ] },
       { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'File Uploads',   to: '/app/uploads',            icon: Upload,          alwaysFor: ['PLATFORM_ADMIN'] },
     ],
@@ -99,7 +157,6 @@ export const ROUTE_LABELS: Record<string, string> = {
   '/app/ptps': 'PTPs',
   '/app/audit': 'Audit Logs',
   '/app/agents': 'Field Agents',
-  '/app/live-track': 'Live Map',
   '/app/settings/schema': 'Column Schemas',
   '/app/settings/roles': 'Roles',
   '/app/settings/organization': 'Organization',

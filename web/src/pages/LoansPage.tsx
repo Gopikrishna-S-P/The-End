@@ -13,6 +13,7 @@ import { Modal, ModalFooter, FormSection, Input } from './PlatformSetupShared';
 import { Pagination } from '../components/Pagination';
 import { useAuth } from '../AuthContext';
 import { StatusPill } from './LoansHelpers';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 
 import '../styles/AppPage.css';
 import '../styles/PlatformSetupPage.css';
@@ -20,7 +21,6 @@ import '../styles/DailyDispatch.shell.css';
 import '../styles/DailyDispatch.cases.css';
 import './Dashboard.css';
 import '../styles/UploadsPage.css';
-import '../styles/LoansPage.css';
 
 const PAGE_SIZE = 20;
 
@@ -61,6 +61,12 @@ function resolveDPD(c: AllocationResponse): number | null {
     if (!Number.isNaN(num)) return num;
   }
   return null;
+}
+
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
 }
 
 function dpdTone(dpd: number): 'critical' | 'high' | 'warn' | 'neutral' {
@@ -183,10 +189,10 @@ export default function LoansPage() {
   }, [load]);
 
   return (
-    <div className="db-root alloc-root">
+    <div className="db-root db-fill-root">
       <AnimatePresence>
         {loadError && (
-          <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
+          <motion.div key="toast-err" className="db-error-banner is-list-banner" role="alert"
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
             <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
@@ -206,40 +212,44 @@ export default function LoansPage() {
 
       <div className="db-content">
         <div className="db-page-header">
-          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <div className="db-page-header-left is-list-header">
             {!loading && (
-              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+              <p className="dd-page-context">
                 You have <strong>{totalElements.toLocaleString('en-IN')} total loans</strong> registered on file.
               </p>
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              type="button"
-              onClick={openFilterDialog}
-              className={`ds-btn ${filterOpen || hasFilters ? 'is-primary' : 'is-secondary'}`}
-              title="Filter" aria-label="Filter"
-            >
-              <SlidersHorizontal size={14} />
-            </button>
+          <div className="db-list-page-actions">
+            <div className="db-list-btn-group">
+              <button
+                type="button"
+                onClick={openFilterDialog}
+                className={`ds-btn is-secondary db-list-filter-btn${filterOpen || hasFilters ? ' is-active' : ''}`}
+              >
+                <SlidersHorizontal size={14} />
+                Filter
+                {hasFilters && <span className="db-list-filter-dot" />}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="dd-shell" style={{ display: 'flex' }}>
-          <div className="ds-card is-overflow-hidden db-card" style={{ width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <header className="db-card-head" style={{ borderBottom: 'none', padding: '4px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>Loans</h3>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+        <div className="db-grid" style={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+          <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div className="ds-card is-overflow-hidden db-card is-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: 'none' }}>
+              <h3 className="db-list-title">Portfolio</h3>
+
+              <div className="db-list-head-actions">
                 <AnimatePresence initial={false}>
                   {isSearchOpen ? (
                     <motion.div
+                      className="db-list-search"
                       initial={{ width: 0, opacity: 0 }}
                       animate={{ width: 220, opacity: 1 }}
                       exit={{ width: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden' }}
                     >
                       <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
                       <input
@@ -249,20 +259,15 @@ export default function LoansPage() {
                           setUrl(p => { if (val) p.set('q', val); else p.delete('q'); p.delete('page'); });
                         }}
                         placeholder="Search borrower or ID…"
-                        style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
                       />
-                      <button type="button" onClick={() => { setUrl(p => { p.delete('q'); p.delete('page'); }); setIsSearchOpen(false); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex', color: 'var(--ink-tertiary)', flexShrink: 0 }}>
+                      <button type="button" className="db-list-search-clear" onClick={() => { setUrl(p => { p.delete('q'); p.delete('page'); }); setIsSearchOpen(false); }}>
                         <X size={14} />
                       </button>
                     </motion.div>
                   ) : (
                     <motion.button
                       type="button"
-                      style={{ 
-                        width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8,
-                        cursor: 'pointer', color: 'var(--ink-secondary)'
-                      }}
+                      className="db-list-search-trigger"
                       onClick={() => setIsSearchOpen(true)}
                       title="Search"
                       initial={{ opacity: 0 }}
@@ -280,11 +285,11 @@ export default function LoansPage() {
             {/* ── Active-filter chips ── */}
             <AnimatePresence>
               {hasFilters && (
-                <motion.div variants={fadeUp} style={{ padding: '8px 16px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <motion.div variants={fadeUp} className="db-list-filterbar">
                   {searchTerm && (
                     <span className="ds-pill is-accent">
                       “{searchTerm}”
-                      <button type="button" onClick={() => setUrl(p => { p.delete('q'); p.delete('page'); })} aria-label="Clear search filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                      <button type="button" className="db-list-chip-x" onClick={() => setUrl(p => { p.delete('q'); p.delete('page'); })} aria-label="Clear search filter">
                         <X size={11} />
                       </button>
                     </span>
@@ -292,7 +297,7 @@ export default function LoansPage() {
                   {filterAgentId && (
                     <span className="ds-pill is-info">
                       {agents.find(a => a.id === filterAgentId) ? `${agents.find(a => a.id === filterAgentId)!.firstName} ${agents.find(a => a.id === filterAgentId)!.lastName}`.trim() : 'Agent'}
-                      <button type="button" onClick={() => setFilterAgentId('')} aria-label="Clear agent filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                      <button type="button" className="db-list-chip-x" onClick={() => setFilterAgentId('')} aria-label="Clear agent filter">
                         <X size={11} />
                       </button>
                     </span>
@@ -300,7 +305,7 @@ export default function LoansPage() {
                   {fileUploadId && (
                     <span className="ds-pill is-info">
                       Upload-filtered
-                      <button type="button" onClick={() => setUrl(p => p.delete('fileUploadId'))} aria-label="Clear upload filter" style={{ background: 'transparent', border: 'none', marginLeft: 4, cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                      <button type="button" className="db-list-chip-x" onClick={() => setUrl(p => p.delete('fileUploadId'))} aria-label="Clear upload filter">
                         <X size={11} />
                       </button>
                     </span>
@@ -313,11 +318,11 @@ export default function LoansPage() {
             </AnimatePresence>
 
             {/* db-card-body — same scrollable list treatment as UploadsPage */}
-            <div className="db-card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: 0 }}>
+            <div className="db-card-body db-list-body">
               {loading ? (
-                <div style={{ padding: '8px' }}>
+                <div className="db-list-skel-wrap">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div key={i} className="dd-case-skel db-list-skel" style={{ opacity: 1 - i * 0.09 }}>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span className="ds-skel" style={{ height: 16, width: '40%' }} />
                         <span className="ds-skel" style={{ height: 12, width: '25%' }} />
@@ -327,7 +332,7 @@ export default function LoansPage() {
                   ))}
                 </div>
               ) : allocations.length === 0 ? (
-                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show">
                   <AlertCircle size={32} className="ds-empty-icon" />
                   <span className="ds-empty-title">No loans found</span>
                   <span className="ds-empty-sub">
@@ -337,27 +342,27 @@ export default function LoansPage() {
                   </span>
                 </motion.div>
               ) : (
-                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+                <div className="db-list-scroll">
                   <motion.div variants={stagger} initial="hidden" animate="show">
                     {allocations.map((c) => {
                       const amt     = resolveAmount(c);
                       const dpd     = resolveDPD(c);
+                      const disposition = resolveDisposition(c);
                       const loanRef = c.loanAccountNo || c.loanNumber || '—';
                       const tone    = dpd != null ? dpdTone(dpd) : 'neutral';
 
                       return (
                         <motion.button key={c.id} variants={fadeUp}
-                          className="db-att-row"
-                          style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
+                          className="db-att-row is-list-row"
                           onClick={() => navigate(`/app/allocations/${c.id}`)}
                           whileHover={{ background: 'var(--bg-subtle)' }}>
 
-                          <div style={{ flex: 1, marginLeft: 0 }}>
-                            <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div className="db-list-row-main">
+                            <span className="db-att-label">
                               <Users size={13} style={{ color: 'var(--ink-tertiary)' }} />
                               {c.borrowerName || '—'}
                             </span>
-                            <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10 }}>
+                            <div className="db-list-row-meta">
                               <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                                 {loanRef}
                               </span>
@@ -365,21 +370,26 @@ export default function LoansPage() {
                                 <span className={`dd-case-dpd is-${tone}`}>DPD {dpd}</span>
                               )}
                               {c.status && <StatusPill status={c.status} />}
+                              {disposition && (
+                                <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                                  {disposition.replace(/_/g, ' ')}
+                                </span>
+                              )}
                             </div>
                           </div>
 
-                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <div className="db-list-row-right">
                             {amt != null && (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                              <div className="db-list-amount-col">
+                                <span className="db-list-amount">
                                   {fmtINR(amt)}
                                 </span>
-                                <span style={{ fontSize: 10, color: 'var(--ink-tertiary)', letterSpacing: '0.02em' }}>
+                                <span className="db-list-amount-label">
                                   OUTSTANDING
                                 </span>
                               </div>
                             )}
-                            <ChevronRightIcon size={16} style={{ color: 'var(--ink-tertiary)' }} />
+                            <ChevronRightIcon size={16} className="db-list-chevron" />
                           </div>
                         </motion.button>
                       );
@@ -390,28 +400,20 @@ export default function LoansPage() {
             </div>
 
             {totalPages > 1 && !loading && (
-              <footer className="up-pagination" style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                <span className="up-page-meta" style={{ fontSize: 13, color: 'var(--ink-secondary)' }}>
-                  Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                  {' · '}<strong>{totalElements.toLocaleString('en-IN')}</strong> loans
-                </span>
-                <div style={{ marginLeft: 'auto' }}>
-                  <Pagination
-                    embedded
-                    currentPage={page}
-                    totalPages={totalPages}
-                    onPageChange={setPage}
-                    totalElements={totalElements}
-                    itemLabel="loans"
-                  />
-                </div>
-              </footer>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalElements={totalElements}
+                itemLabel="loans"
+              />
             )}
 
           </div>
+          </div>
         </div>
       </div>
-      
+
       {/* ── Filter dialog — same Modal/Input/FormSection system as Platform Setup's Edit Org dialog ── */}
       {filterOpen && (
         <Modal title="Filter loans" subtitle="Narrow down the portfolio list" onClose={() => setFilterOpen(false)}>

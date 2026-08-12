@@ -1,6 +1,6 @@
 import {
   Loader2, MapPin, CheckCircle2, Phone, Camera, Navigation,
-  MessageSquare, Banknote, Calendar, FileText, ChevronRight,
+  MessageSquare, Banknote, Calendar, FileText, ArrowLeft,
   AlertCircle, IndianRupee, Route
 } from 'lucide-react';
 import type { VisitLogResponse, AllocationResponse } from '../types';
@@ -69,12 +69,13 @@ export function VisitDrawerBody({ visit, allocation, img1, img2, imgLoading, pro
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               {onClose && (
-                <button type="button" onClick={onClose} className="ds-drawer-close" aria-label="Close" style={{ alignSelf: 'center' }}>
-                  <ChevronRight size={16} />
+                <button type="button" onClick={onClose} className="ds-btn is-secondary" aria-label="Back to visit log"
+                  style={{ alignSelf: 'center', padding: '0 8px', height: 32, flexShrink: 0 }}>
+                  <ArrowLeft size={16} />
                 </button>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-primary)', margin: 0 }}>
+                <h1 className="db-detail-title">
                   {allocation?.borrowerName ?? 'Visit details'}
                 </h1>
                 {allocation?.loanNumber && (

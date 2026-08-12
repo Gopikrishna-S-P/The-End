@@ -166,21 +166,24 @@ export default function ReportsPage() {
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
           <motion.div variants={fadeUp} className="db-page-header">
-            <div className="db-page-header-left">
-              <div className="db-page-titles">
-                <h1 className="db-page-title">Reports</h1>
-                {!loading && totalElements > 0 && (
-                  <span className="db-page-org">{totalElements.toLocaleString('en-IN')} generated</span>
-                )}
+            <div className="db-page-header-left is-list-header">
+              {!loading && totalElements > 0 && (
+                <p className="dd-page-context">
+                  You have <strong>{totalElements.toLocaleString('en-IN')} reports</strong> generated.
+                </p>
+              )}
+            </div>
+            <div className="db-list-page-actions">
+              <div className="db-list-btn-group">
+                <button type="button" onClick={() => setShowGenerateModal(true)} className="ds-btn is-primary">
+                  <Plus size={14} /> Generate report
+                </button>
               </div>
             </div>
-            <button type="button" onClick={() => setShowGenerateModal(true)} className="ds-btn is-primary">
-              <Plus size={14} /> Generate report
-            </button>
           </motion.div>
 
 
-            <motion.section variants={fadeUp} className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', ...(jobs.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+            <motion.section variants={fadeUp} className="ds-table-card is-list-card is-flush" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>
                   <table className="ds-table ps-table">
                     <thead>

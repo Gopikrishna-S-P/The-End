@@ -143,7 +143,7 @@ export default function UsersPage() {
   const adminCount = data?.content.filter(u => u.roles?.some((r: any) => r.name.includes('ADMIN'))).length ?? 0;
 
   return (
-    <div className="dd-page">
+    <div className="dd-page db-fill-root">
       <div className="dd-page-header">
         <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span className="dd-page-context" style={{ padding: 0 }}>
@@ -152,34 +152,28 @@ export default function UsersPage() {
             )}
           </span>
         </div>
-        <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button" onClick={load} disabled={loading}
-            aria-label="Refresh" title="Refresh"
-            style={{ 
-              width: 36, height: 36, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)',
-              boxShadow: 'var(--shadow-xs)', cursor: 'pointer', color: 'var(--ink-secondary)'
-            }}
-          >
-            <RefreshCw size={16} className={loading ? 'ds-spin' : ''} />
-          </button>
-          {canCreate && (
+        <div className="db-list-page-actions">
+          <div className="db-list-btn-group">
             <button
-              type="button" onClick={() => setShowCreate(true)}
-              className="ds-btn is-primary" 
-              style={{ 
-                height: 36, borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-xs)',
-                display: 'flex', alignItems: 'center' 
-              }}
+              type="button" onClick={load} disabled={loading}
+              className="ds-btn is-secondary"
+              aria-label="Refresh" title="Refresh"
             >
-              <Plus size={16} style={{ marginRight: 6 }} /> New user
+              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
             </button>
-          )}
+            {canCreate && (
+              <button
+                type="button" onClick={() => setShowCreate(true)}
+                className="ds-btn is-primary"
+              >
+                <Plus size={14} /> New user
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="dd-main-container" style={{ display: 'block', overflowY: 'auto' }}>
+      <div className="dd-main-container">
         <motion.div className="db-inner" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <div className="db-grid">
             <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>

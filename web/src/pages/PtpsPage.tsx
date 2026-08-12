@@ -47,17 +47,17 @@ const yearStartIso  = () => `${new Date().getFullYear()}-01-01`;
 
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
+  show: { transition: { staggerChildren: 0.04, delayChildren: 0.02 } },
 };
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.40, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+  hidden: { opacity: 0 },
+  show:   { opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } },
 };
 
 const fadeIn: Variants = {
   hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
+  show:   { opacity: 1, transition: { duration: 0.22, ease: 'easeOut' as const } },
 };
 
 // ── Ripple hook ────────────────────────────────────────────────────────────────
@@ -142,6 +142,7 @@ export default function PtpsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [filterStatus, setFilterStatus]   = useState<PtpStatus | ''>('');
   const [searchInput, setSearchInput]     = useState('');
+  const [isSearchOpen, setIsSearchOpen]   = useState(false);
   const [filterOpen, setFilterOpen]       = useState(false);
   const [selectedPtp, setSelectedPtp]     = useState<PtpResponse | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -160,7 +161,11 @@ export default function PtpsPage() {
       if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-      e.preventDefault(); inputRef.current?.focus();
+      // The field lives collapsed in the card head now, so open it before
+      // focusing — inputRef is null until the expanded branch renders.
+      e.preventDefault();
+      setIsSearchOpen(true);
+      requestAnimationFrame(() => inputRef.current?.focus());
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -255,46 +260,20 @@ export default function PtpsPage() {
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
-          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <div className="db-page-header-left is-list-header">
             {!loading && (
-              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+              <p className="dd-page-context">
                 You have <strong>{totalElements.toLocaleString('en-IN')} commitments</strong> with <strong>{pendingCount.toLocaleString('en-IN')} pending</strong>, <strong>{fulfilledCount.toLocaleString('en-IN')} fulfilled</strong> and <strong>{brokenCount.toLocaleString('en-IN')} broken</strong>.
               </p>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
-              <input
-                ref={inputRef}
-                type="search"
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                placeholder="Search loan number or borrower…"
-                autoComplete="off"
-                spellCheck={false}
-                aria-label="Search PTPs"
-                style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 220 }}
-              />
-              <AnimatePresence>
-                {searchInput && (
-                  <motion.button type="button" onClick={() => setSearchInput('')}
-                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex' }}
-                    initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.12 }}>
-                    <X size={12} />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="db-list-page-actions">
+            <div className="db-list-btn-group">
               {canUpdate && !isBankView && (
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(true)}
                   className="ds-btn is-primary"
-                  style={{ height: 36 }}
                 >
                   <Plus size={14} /> New PTP
                 </button>
@@ -304,10 +283,9 @@ export default function PtpsPage() {
                   type="button"
                   onClick={() => setShowExportMenu(v => !v)}
                   disabled={exporting}
-                  className="ds-btn is-secondary"
-                  style={{ padding: '0 12px', height: 36 }}
+                  className="ds-btn is-success"
                 >
-                  <Download size={14} style={{ marginRight: 6 }} />
+                  <Download size={14} />
                   {exporting ? 'Exporting…' : 'Export'}
                 </button>
                 <AnimatePresence>
@@ -337,17 +315,16 @@ export default function PtpsPage() {
               <button
                 type="button"
                 onClick={() => setFilterOpen(true)}
-                className="ds-btn is-secondary"
-                style={{ background: filterOpen || filterStatus ? 'var(--ink-solid)' : 'transparent', color: filterOpen || filterStatus ? 'var(--bg-surface)' : 'inherit', position: 'relative', height: 36 }}
+                className={`ds-btn is-secondary db-list-filter-btn${filterOpen || filterStatus ? ' is-active' : ''}`}
               >
-                <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+                <SlidersHorizontal size={14} />
                 Filter
-                {filterStatus && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
+                {filterStatus && <span className="db-list-filter-dot" />}
               </button>
 
               <button type="button" onClick={fetchPtps} disabled={loading}
-                className="ds-btn is-secondary" style={{ height: 36 }} aria-label="Refresh" title="Refresh">
-                <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
+                className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
+                <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
               </button>
             </div>
           </div>
@@ -373,13 +350,63 @@ export default function PtpsPage() {
             )}
           </AnimatePresence>
 
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visiblePtps.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+          <motion.section variants={fadeUp} className="ds-card db-card is-list-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visiblePtps.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: 'none' }}>
+              <h3 className="db-list-title">Promise to Pay</h3>
 
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+              <div className="db-list-head-actions">
+                <AnimatePresence initial={false}>
+                  {isSearchOpen ? (
+                    <motion.div
+                      className="db-list-search"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 220, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                      <input
+                        ref={inputRef}
+                        type="search"
+                        value={searchInput}
+                        onChange={e => setSearchInput(e.target.value)}
+                        placeholder="Search loan number or borrower…"
+                        autoComplete="off"
+                        spellCheck={false}
+                        aria-label="Search PTPs"
+                      />
+                      <button
+                        type="button"
+                        className="db-list-search-clear"
+                        onClick={() => { setSearchInput(''); setIsSearchOpen(false); }}
+                        aria-label="Close search"
+                      >
+                        <X size={14} />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      type="button"
+                      className="db-list-search-trigger"
+                      onClick={() => setIsSearchOpen(true)}
+                      title="Search"
+                      aria-label="Search PTPs"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <Search size={14} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            </header>
+
+            <div className="db-list-body db-list-scroll">
               {loading ? (
-                <div style={{ padding: '8px' }}>
+                <div className="db-list-skel-wrap">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div key={i} className="dd-case-skel db-list-skel" style={{ opacity: 1 - i * 0.09 }}>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span className="ds-skel" style={{ height: 16, width: '40%' }} />
                         <span className="ds-skel" style={{ height: 12, width: '25%' }} />
@@ -389,7 +416,8 @@ export default function PtpsPage() {
                   ))}
                 </div>
               ) : visiblePtps.length === 0 ? (
-                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show">
+
                   <Phone size={32} className="ds-empty-icon" />
                   <span className="ds-empty-title">No PTP records found</span>
                   <span className="ds-empty-sub">

@@ -202,12 +202,11 @@ export default function AuditPage() {
             <button
               type="button"
               onClick={openFilterModal}
-              className="ds-btn is-secondary"
-              style={{ position: 'relative' }}
+              className={`ds-btn is-secondary db-list-filter-btn${filter !== 'all' || fromDate || toDate ? ' is-active' : ''}`}
             >
-              <SlidersHorizontal size={14} style={{ marginRight: 6 }} />
+              <SlidersHorizontal size={14} />
               Filter
-              {(filter !== 'all' || fromDate || toDate) && <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--success)' }} />}
+              {(filter !== 'all' || fromDate || toDate) && <span className="db-list-filter-dot" />}
             </button>
           )}
           <button
@@ -216,7 +215,7 @@ export default function AuditPage() {
             disabled={tab === 'activity' ? loading : adminLoading}
             className="ds-btn is-secondary" aria-label="Refresh" title="Refresh"
           >
-            <RefreshCw size={14} className={(tab === 'activity' ? loading : adminLoading) ? 'ds-spin' : ''} style={{ marginRight: 6 }} /> Refresh
+            <RefreshCw size={14} className={(tab === 'activity' ? loading : adminLoading) ? 'ds-spin' : ''} /> Refresh
           </button>
         </div>
       </div>
@@ -309,7 +308,7 @@ export default function AuditPage() {
           )}
         </AnimatePresence>
 
-        <motion.div variants={stagger} initial="hidden" animate="show" className="ds-card audit-trail-card" style={{ width: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <motion.div variants={stagger} initial="hidden" animate="show" className="ds-card audit-trail-card is-list-card is-flush" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div className="audit-trail-card-header">
             <span className="audit-trail-card-title">Activity stream</span>
             <span className="audit-trail-card-count">{filtered.length}</span>

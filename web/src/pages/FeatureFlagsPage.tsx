@@ -190,7 +190,7 @@ export default function FeatureFlagsPage() {
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
           <motion.div variants={fadeUp} className="db-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+            <p className="dd-page-context">
               Manage feature flags for the platform and individual organizations
             </p>
             {tab === 'overrides' && (

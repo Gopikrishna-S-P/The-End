@@ -9,6 +9,7 @@ import { GrievanceCreateModal } from './GrievanceCreateModal';
 import { fmtDate } from './LoanDetailHelpers';
 import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
+import '../styles/PlatformSetupPage.css';
 import './Dashboard.css';
 
 const PAGE_SIZE = 25;
@@ -53,9 +54,9 @@ const STATUS_OPTIONS: Array<{ value: GrievanceStatus | ''; label: string }> = [
 
 const RESOLUTION_PENDING_STATUSES = new Set<GrievanceStatus>(['ACKNOWLEDGED', 'INVESTIGATING', 'ESCALATED']);
 
-const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
-const fadeUp: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: 'easeOut' } } };
-const fadeIn: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04, delayChildren: 0.02 } } };
+const fadeUp: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } } };
+const fadeIn: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.22, ease: 'easeOut' } } };
 
 export default function GrievancesPage() {
   const { hasRole } = usePermissions();
@@ -102,121 +103,123 @@ export default function GrievancesPage() {
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
           <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Grievances</h1>
-              {!loading && totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
-              )}
-            </div>
+            {!loading && (
+              <p className="dd-page-context">
+                You have <strong>{totalElements.toLocaleString('en-IN')} grievances</strong> registered on file.
+              </p>
+            )}
+          </div>
+          <div className="db-list-page-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <select
+              className="ds-select"
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value as GrievanceStatus | ''); setPage(0); }}
+              style={{ width: 'auto', height: 32 }}
+            >
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            {canRaise && (
+              <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 32 }}>
+                <Plus size={14} /> Raise grievance
+              </button>
+            )}
+            <button type="button" onClick={fetchGrievances} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh" style={{ height: 32 }}>
+              <RefreshCcw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
+            </button>
           </div>
         </div>
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(grievances.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', justifyContent: 'flex-end' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <select
-                  className="ds-select"
-                  value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value as GrievanceStatus | ''); setPage(0); }}
-                  style={{ height: 36 }}
-                >
-                  {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                {canRaise && (
-                  <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
-                    <Plus size={14} /> Raise grievance
-                  </button>
-                )}
-                <button type="button" onClick={fetchGrievances} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                  <RefreshCcw size={14} className={loading ? 'ds-spin' : ''} />
-                </button>
-              </div>
-            </header>
-
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
-              {loadError ? (
-                <div className="ds-empty" style={{ padding: '60px 0' }}>
-                  <span className="ds-empty-title">Grievances could not be loaded.</span>
-                  <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                    <button type="button" onClick={fetchGrievances} className="ds-btn is-secondary">Retry</button>
-                  </div>
-                </div>
-              ) : loading ? (
-                <div style={{ padding: '8px' }}>
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <span className="ds-skel" style={{ height: 16, width: '40%' }} />
-                        <span className="ds-skel" style={{ height: 12, width: '25%' }} />
-                      </div>
-                      <span className="ds-skel" style={{ height: 18, width: 80 }} />
-                    </div>
-                  ))}
-                </div>
-              ) : grievances.length === 0 ? (
-                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
-                  <MessageSquareWarning size={32} className="ds-empty-icon" />
-                  <span className="ds-empty-title">No grievances on file</span>
-                  <span className="ds-empty-sub">
-                    {statusFilter ? 'No grievances match this status filter.' : 'Borrower complaints logged by staff will appear here.'}
-                  </span>
-                  {canRaise && !statusFilter && (
-                    <div className="ds-empty-actions" style={{ marginTop: 12 }}>
-                      <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">Raise grievance</button>
-                    </div>
-                  )}
-                </motion.div>
-              ) : (
-                <motion.div>
-                  {grievances.map((g, idx) => {
-                    const now = Date.now();
-                    const ackOverdue = g.status === 'RECEIVED' && !!g.acknowledgementDueAt && new Date(g.acknowledgementDueAt).getTime() < now;
-                    const resOverdue = RESOLUTION_PENDING_STATUSES.has(g.status) && !!g.resolutionDueAt && new Date(g.resolutionDueAt).getTime() < now;
-                    return (
-                      <motion.button
-                        key={g.id}
-                        variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
-                        initial="hidden" animate="show"
-                        className="db-att-row"
-                        style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: selected?.id === g.id ? 'var(--bg-active)' : 'transparent' }}
-                        onClick={() => setSelected(g)}
-                        whileHover={{ background: 'var(--bg-subtle)' }}
-                      >
-                        <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
-                          <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <MessageSquareWarning size={13} style={{ color: 'var(--ink-tertiary)' }} />
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{g.ticketNumber}</span>
-                            <span className={`ds-pill ${GRIEVANCE_PILL[g.status]}`}>{g.status.replace(/_/g, ' ')}</span>
-                          </span>
-                          <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
-                            <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
-                              {GRIEVANCE_CATEGORY_LABEL[g.category] || g.category}
-                            </span>
-                            <span className="db-kpi2-foot-meta" style={{ fontSize: 11, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              / {g.subject}
-                            </span>
-                            <span className="db-kpi2-foot-meta" style={{ fontSize: 11 }}>
-                              / Raised {fmtDate(g.createdAt)}
-                            </span>
+          <motion.div variants={fadeUp} className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>
+              <table className="ds-table is-no-row-hover ps-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '15%' }}>Ticket No.</th>
+                    <th style={{ width: '15%' }}>Category</th>
+                    <th style={{ width: '25%' }}>Subject</th>
+                    <th style={{ width: '15%' }}>Status</th>
+                    <th style={{ width: '15%' }}>Raised</th>
+                    <th className="is-right" style={{ width: '15%' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadError ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="ds-empty" style={{ padding: '60px 0' }}>
+                          <span className="ds-empty-title">Grievances could not be loaded.</span>
+                          <div className="ds-empty-actions" style={{ marginTop: 12 }}>
+                            <button type="button" onClick={fetchGrievances} className="ds-btn is-secondary">Retry</button>
                           </div>
                         </div>
-
-                        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                          {(ackOverdue || resOverdue) && <span className="ds-pill is-error">Overdue</span>}
-                          <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </motion.div>
-              )}
+                      </td>
+                    </tr>
+                  ) : loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i} style={{ opacity: 1 - i * 0.08 }}>
+                        {Array.from({ length: 6 }).map((__, j) => (
+                          <td key={j}><div className="ds-skel" style={{ height: 14, width: j === 2 ? '80%' : '60%' }} /></td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : grievances.length === 0 ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '60px 0' }}>
+                          <MessageSquareWarning size={32} className="ds-empty-icon" />
+                          <span className="ds-empty-title">No grievances on file</span>
+                          <span className="ds-empty-sub">
+                            {statusFilter ? 'No grievances match this status filter.' : 'Borrower complaints logged by staff will appear here.'}
+                          </span>
+                        </motion.div>
+                      </td>
+                    </tr>
+                  ) : (
+                    grievances.map((g) => {
+                      const now = Date.now();
+                      const ackOverdue = g.status === 'RECEIVED' && !!g.acknowledgementDueAt && new Date(g.acknowledgementDueAt).getTime() < now;
+                      const resOverdue = RESOLUTION_PENDING_STATUSES.has(g.status) && !!g.resolutionDueAt && new Date(g.resolutionDueAt).getTime() < now;
+                      return (
+                        <tr key={g.id} style={{ background: selected?.id === g.id ? 'var(--bg-active)' : undefined }}>
+                          <td>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                              <MessageSquareWarning size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                              <span className="is-mono">{g.ticketNumber}</span>
+                            </div>
+                          </td>
+                          <td className="is-muted">{GRIEVANCE_CATEGORY_LABEL[g.category] || g.category}</td>
+                          <td>
+                            <div style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {g.subject}
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span className={`ds-pill ${GRIEVANCE_PILL[g.status]}`}>{g.status.replace(/_/g, ' ')}</span>
+                              {(ackOverdue || resOverdue) && <span className="ds-pill is-error">Overdue</span>}
+                            </div>
+                          </td>
+                          <td className="is-mono is-muted">{fmtDate(g.createdAt)}</td>
+                          <td className="is-right">
+                            <button type="button" onClick={() => setSelected(g)} className="ds-btn is-secondary is-sm">
+                              View case
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
 
             {totalPages > 1 && !loading && (
-              <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
+              <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)' }}>
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalElements={totalElements} itemLabel="records" />
+              </div>
             )}
-          </motion.section>
+          </motion.div>
         </motion.div>
       </div>
 

@@ -21,6 +21,9 @@ public class CollectionResponse {
 
     private UUID id;
     private UUID allocationId;
+    private String loanNumber;
+    private String borrowerName;
+    private String agentName;
     private UUID organizationId;
     private UUID submittedBy;
     private UUID approvedBy;

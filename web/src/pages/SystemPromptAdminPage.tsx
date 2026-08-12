@@ -160,7 +160,7 @@ export default function SystemPromptAdminPage({ headerExtra }: { headerExtra?: R
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
           <motion.div variants={fadeUp} className="db-page-header">
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+            <p className="dd-page-context">
               Edit the instructions Lucien loads at runtime
             </p>
             {headerExtra}

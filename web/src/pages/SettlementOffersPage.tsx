@@ -27,9 +27,9 @@ const STATUS_OPTIONS: Array<{ value: SettlementOfferStatus | ''; label: string }
 
 const fmtMoney = (v: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
 
-const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
-const fadeUp: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: 'easeOut' } } };
-const fadeIn: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.24, ease: 'easeOut' } } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04, delayChildren: 0.02 } } };
+const fadeUp: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } } };
+const fadeIn: Variants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.22, ease: 'easeOut' } } };
 
 export default function SettlementOffersPage() {
   const { hasRole } = usePermissions();
@@ -76,37 +76,42 @@ export default function SettlementOffersPage() {
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
-          <div className="db-page-header-left" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <div className="db-page-header-left is-list-header">
             {!loading && (
-              <p style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)', margin: 0 }}>
+              <p className="dd-page-context">
                 You have <strong>{totalElements.toLocaleString('en-IN')} settlement offers</strong> registered on file.
               </p>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <select
-              className="ds-select"
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value as SettlementOfferStatus | ''); setPage(0); }}
-              style={{ height: 36 }}
-            >
-              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            {canDraft && (
-              <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
-                <Plus size={14} /> New offer
+          <div className="db-list-page-actions">
+            <div className="db-list-btn-group">
+              <select
+                className="ds-select"
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value as SettlementOfferStatus | ''); setPage(0); }}
+                style={{ width: 'auto' }}
+              >
+                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              {canDraft && (
+                <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary">
+                  <Plus size={14} /> New offer
+                </button>
+              )}
+              <button type="button" onClick={fetchOffers} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
+                <RefreshCcw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
               </button>
-            )}
-            <button type="button" onClick={fetchOffers} disabled={loading} className="ds-btn is-secondary" style={{ height: 36 }} aria-label="Refresh" title="Refresh">
-              <RefreshCcw size={14} className={loading ? 'ds-spin' : ''} />
-            </button>
+            </div>
           </div>
         </div>
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(offers.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+          <motion.section variants={fadeUp} className="ds-card db-card is-list-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(offers.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: 'none' }}>
+              <h3 className="db-list-title">Settlement</h3>
+            </header>
 
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+            <div className="db-list-body db-list-scroll">
               {loadError ? (
                 <div className="ds-empty" style={{ padding: '60px 0' }}>
                   <span className="ds-empty-title">Settlement offers could not be loaded.</span>
@@ -115,9 +120,9 @@ export default function SettlementOffersPage() {
                   </div>
                 </div>
               ) : loading ? (
-                <div style={{ padding: '8px' }}>
+                <div className="db-list-skel-wrap">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div key={i} className="dd-case-skel db-list-skel" style={{ opacity: 1 - i * 0.09 }}>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span className="ds-skel" style={{ height: 16, width: '40%' }} />
                         <span className="ds-skel" style={{ height: 12, width: '25%' }} />
@@ -127,7 +132,8 @@ export default function SettlementOffersPage() {
                   ))}
                 </div>
               ) : offers.length === 0 ? (
-                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show">
+
                   <HandCoins size={32} className="ds-empty-icon" />
                   <span className="ds-empty-title">No settlement offers</span>
                   <span className="ds-empty-sub">
@@ -141,18 +147,18 @@ export default function SettlementOffersPage() {
                       key={o.id}
                       variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.02 } } }}
                       initial="hidden" animate="show"
-                      className="db-att-row"
-                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: selected?.id === o.id ? 'var(--bg-active)' : 'transparent' }}
+                      className="db-att-row is-list-row"
+                      style={{ background: selected?.id === o.id ? 'var(--bg-active)' : undefined }}
                       onClick={() => setSelected(o)}
                       whileHover={{ background: 'var(--bg-subtle)' }}
                     >
-                      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
-                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div className="db-list-row-main">
+                        <span className="db-att-label">
                           <HandCoins size={13} style={{ color: 'var(--ink-tertiary)' }} />
                           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5 }}>{o.allocationId}</span>
                           <span className={`ds-pill ${SETTLEMENT_PILL[o.status]}`}>{o.status.replace(/_/g, ' ')}</span>
                         </span>
-                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
+                        <div className="db-list-row-meta" style={{ padding: 0, flexWrap: 'wrap' }}>
                           <span className="db-kpi2-foot-meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
                             {fmtMoney(o.outstandingAtOffer)} → {fmtMoney(o.offeredAmount)}
                           </span>
@@ -165,11 +171,11 @@ export default function SettlementOffersPage() {
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>
+                      <div className="db-list-row-right" style={{ flexShrink: 0 }}>
+                        <span className="db-list-amount">
                           {fmtMoney(o.offeredAmount)}
                         </span>
-                        <ChevronRight size={16} style={{ color: 'var(--ink-tertiary)' }} />
+                        <ChevronRight size={16} className="db-list-chevron" />
                       </div>
                     </motion.button>
                   ))}

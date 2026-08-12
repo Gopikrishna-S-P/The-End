@@ -12,6 +12,7 @@ public class CollectionMapper {
         return CollectionResponse.builder()
                 .id(c.getId())
                 .allocationId(c.getAllocationId())
+                .loanNumber(c.getLoanNumber())
                 .organizationId(c.getOrganizationId())
                 .submittedBy(c.getSubmittedBy())
                 .approvedBy(c.getApprovedBy())

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAccessToken } from '../api/axiosInstance';
-import { wsUrl, REFRESH_MS } from '../pages/FieldOpsUtils';
+import { wsUrl, REFRESH_MS, type WsStatus } from '../pages/FieldOpsUtils';
 import { fieldOpsApi } from '../api/fieldOpsApi';
 
 export interface AgentDot {
@@ -23,15 +23,14 @@ function getToken(): string | null {
 }
 
 export function useLiveTrackSocket(orgId?: string) {
-  const [agents, setAgents]       = useState<Map<string, AgentDot>>(new Map());
-  const [connected, setConnected] = useState(false);
+  const [agents, setAgents] = useState<Map<string, AgentDot>>(new Map());
+  const [status, setStatus] = useState<WsStatus>('connecting');
   const wsRef      = useRef<WebSocket | null>(null);
   const retryRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
   // REST polling fallback (GET /api/v1/agent/active) — used because the
-  // ws/live-track socket has no guarantee of ever connecting; see
-  // useFieldOpsTrack.ts for the identical rationale.
+  // ws/live-track socket has no guarantee of ever connecting.
   useEffect(() => {
     if (!orgId) return;
     let alive = true;
@@ -72,12 +71,13 @@ export function useLiveTrackSocket(orgId?: string) {
   const connect = useCallback(() => {
     const token = getToken();
     if (!token) return;
+    setStatus('connecting');
     const ws = new WebSocket(wsUrl('ws/live-track', getToken()));
     wsRef.current = ws;
 
     ws.onopen = () => {
       if (!mountedRef.current) { ws.close(); return; }
-      setConnected(true);
+      setStatus('connected');
       ws.send(JSON.stringify({ type: 'subscribe' }));
     };
 
@@ -116,13 +116,13 @@ export function useLiveTrackSocket(orgId?: string) {
     };
 
     ws.onclose = () => {
-      setConnected(false);
-      wsRef.current = null;
       if (!mountedRef.current) return;
+      setStatus('disconnected');
+      wsRef.current = null;
       retryRef.current = setTimeout(connect, 3000);
     };
 
-    ws.onerror = () => ws.close();
+    ws.onerror = () => { setStatus('error'); ws.close(); };
   }, []);
 
   useEffect(() => {
@@ -135,5 +135,5 @@ export function useLiveTrackSocket(orgId?: string) {
     };
   }, [connect]);
 
-  return { agents, connected };
+  return { agents, status, connected: status === 'connected' };
 }

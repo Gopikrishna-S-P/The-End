@@ -44,9 +44,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -390,6 +392,10 @@ public class CollectionServiceImpl implements CollectionService {
         CollectionResponse response = collectionMapper.toResponse(collection);
         List<CollectionDocumentResponse> docs = documentService.getDocumentsByCollection(collection.getId());
         response.setDocuments(docs);
+        allocationRepository.findById(collection.getAllocationId())
+                .ifPresent(a -> response.setBorrowerName(a.getBorrowerName()));
+        response.setAgentName(userRepository.findById(collection.getSubmittedBy())
+                .map(this::displayName).orElse(null));
         return response;
     }
 
@@ -397,13 +403,32 @@ public class CollectionServiceImpl implements CollectionService {
         if (collections.isEmpty()) return List.of();
         Map<UUID, List<CollectionDocumentResponse>> docsByCollectionId = documentService
                 .getDocumentsByCollectionIds(collections.stream().map(Collection::getId).collect(Collectors.toList()));
+
+        Set<UUID> allocationIds = collections.stream().map(Collection::getAllocationId).collect(Collectors.toSet());
+        Map<UUID, Allocation> allocationsById = new HashMap<>();
+        allocationRepository.findAllById(allocationIds).forEach(a -> allocationsById.put(a.getId(), a));
+
+        Set<UUID> agentIds = collections.stream().map(Collection::getSubmittedBy).collect(Collectors.toSet());
+        Map<UUID, String> agentNamesById = new HashMap<>();
+        userRepository.findAllById(agentIds).forEach(u -> agentNamesById.put(u.getId(), displayName(u)));
+
         return collections.stream()
                 .map(c -> {
                     CollectionResponse response = collectionMapper.toResponse(c);
                     response.setDocuments(docsByCollectionId.getOrDefault(c.getId(), List.of()));
+                    Allocation alloc = allocationsById.get(c.getAllocationId());
+                    if (alloc != null) response.setBorrowerName(alloc.getBorrowerName());
+                    response.setAgentName(agentNamesById.get(c.getSubmittedBy()));
                     return response;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private String displayName(User u) {
+        String first = Objects.requireNonNullElse(u.getFirstName(), "").trim();
+        String last = Objects.requireNonNullElse(u.getLastName(), "").trim();
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? null : full;
     }
 
     private void audit(UUID collectionId, String action, UUID performedBy,

@@ -6,7 +6,7 @@ import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import axiosInstance from '../api/axiosInstance';
 import type { AllocationResponse, UserResponse, ApiResponse } from '../types';
-import { CheckCircle2, AlertCircle, X, Search, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, AlertCircle, X, Search, RefreshCw } from 'lucide-react';
 import ReassignModal from '../components/ReassignModal';
 import AssignFoPanel from './AssignFoPanel';
 import AssignCasePanel from './AssignCasePanel';
@@ -32,7 +32,6 @@ export default function CaseAssignmentsPage() {
   const [fosStats, setFosStats] = useState<Map<string, { count: number; value: number; pending: number }>>(new Map());
   const [selectedFo, setSelectedFo] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [showOfficerPanel, setShowOfficerPanel] = useState(false);
   const [feedback,   setFeedback]   = useState<{ kind: 'ok' | 'err'; msg: string; sub?: string; onRetry?: () => void } | null>(null);
 
   const [reassignAssignmentId, setReassignAssignmentId] = useState<string | null>(null);
@@ -140,7 +139,7 @@ export default function CaseAssignmentsPage() {
   };
 
   return (
-    <div className="dd-page">
+    <div className="dd-page dd-case-assignments-page db-fill-root">
       <div className="dd-page-header">
         <div className="dd-page-titles" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
           <span className="dd-page-context" style={{ padding: 0 }}>
@@ -150,13 +149,6 @@ export default function CaseAssignmentsPage() {
               'Select a field officer to manage and assign their active cases.'
             )}
           </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={() => setShowOfficerPanel(v => !v)}
-            className="ds-btn is-primary" style={{ height: 36 }}>
-            Executive
-            {showOfficerPanel ? <ChevronUp size={14} style={{ marginLeft: 6 }} /> : <ChevronDown size={14} style={{ marginLeft: 6 }} />}
-          </button>
         </div>
       </div>
 
@@ -193,9 +185,10 @@ export default function CaseAssignmentsPage() {
       </AnimatePresence>
 
       <div className="dd-main-container">
-        <div className="dd-grid">
-          <div className="dd-case-panel">
-            <div className="ds-card dd-cases-card is-overflow-hidden">
+        {/* Same 8/4 split as Daily Dispatch — the dashboard's 12-column grid */}
+        <div className="db-grid" style={{ flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+          <div className="db-span-8" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div className="ds-card dd-cases-card is-overflow-hidden is-list-card">
               <div className="dd-cases-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="dd-cp-tabs">
                   <button type="button" onClick={() => setActiveTab('assign')} className={`dd-cp-tab${activeTab === 'assign' ? ' is-active' : ''}`}>
@@ -210,12 +203,12 @@ export default function CaseAssignmentsPage() {
                 </div>
 
                 <AnimatePresence mode="popLayout">
-                  {!isSearchActive && !tabSearch ? (
+                  {!isSearchActive ? (
                     <motion.button
                       key="search-btn"
                       initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.15 }}
                       type="button" onClick={() => setIsSearchActive(true)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, border: 'none', background: 'transparent', color: 'var(--ink-tertiary)', cursor: 'pointer', borderRadius: 8, marginLeft: 'auto' }}
+                      style={{ width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, cursor: 'pointer', color: 'var(--ink-secondary)', marginLeft: 'auto' }}
                       aria-label="Open search"
                     >
                       <Search size={14} />
@@ -223,23 +216,24 @@ export default function CaseAssignmentsPage() {
                   ) : (
                     <motion.div
                       key="search-bar"
-                      initial={{ opacity: 0, width: 32 }} animate={{ opacity: 1, width: 240 }} exit={{ opacity: 0, width: 32 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="dd-cp-search" style={{ overflow: 'hidden', marginLeft: 'auto' }}
+                      initial={{ width: 0, opacity: 0 }} animate={{ width: 240, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+                      style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden', marginLeft: 'auto' }}
+                      onBlur={(e) => {
+                        const next = e.relatedTarget as Node | null;
+                        if (!next || !e.currentTarget.contains(next)) {
+                          setIsSearchActive(false);
+                          setTabSearch('');
+                        }
+                      }}
                     >
-                      <Search size={14} className="dd-agent-search-icon" style={{ flexShrink: 0, color: 'var(--ink-tertiary)', marginLeft: 4 }} />
+                      <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
                       <input
                         autoFocus
                         value={tabSearch}
                         onChange={e => setTabSearch(e.target.value)}
                         placeholder="Search borrower or loan ID..."
-                        style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent' }}
+                        style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
                       />
-                      <button
-                        type="button" className="dd-cp-search-clear"
-                        onClick={() => { setIsSearchActive(false); setTabSearch(''); }} aria-label="Close search"
-                      >
-                        <X size={14} />
-                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -264,23 +258,12 @@ export default function CaseAssignmentsPage() {
                 )}
             </div>
           </div>
-          <AnimatePresence>
-            {showOfficerPanel && (
-              <motion.div
-                key="agent-panel"
-                className="dd-agent-panel"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <AssignFoPanel
-                  fos={fos} fosLoading={fosLoading} fosStats={fosStats}
-                  selectedFo={selectedFo} onSelect={setSelectedFo}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="db-span-4" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <AssignFoPanel
+              fos={fos} fosLoading={fosLoading} fosStats={fosStats}
+              selectedFo={selectedFo} onSelect={setSelectedFo}
+            />
+          </div>
         </div>
       </div>
 

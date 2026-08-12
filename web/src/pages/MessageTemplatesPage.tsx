@@ -113,7 +113,7 @@ export default function MessageTemplatesPage() {
                 {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               <button type="button" className="ds-btn is-secondary is-sm" onClick={loadTemplates} disabled={listLoading} aria-label="Refresh">
-                {listLoading ? <Loader2 size={13} className="ds-spin" /> : <RefreshCw size={13} />}
+                {listLoading ? <Loader2 size={13} className="ds-spin" /> : <RefreshCw size={13} />} Refresh
               </button>
             </div>
           </div>
@@ -174,17 +174,17 @@ export default function MessageTemplatesPage() {
                   </div>
                   <div style={{ padding: '0 20px 20px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     <button type="button" className="ds-btn is-secondary" disabled={pending !== null}
-                      onClick={() => runAction('submit-for-dlt')} style={{ height: 36 }}>
+                      onClick={() => runAction('submit-for-dlt')}>
                       {pending === 'submit-for-dlt' ? <Loader2 size={14} className="ds-spin" /> : <Send size={14} />}
                       Submit for DLT
                     </button>
                     <button type="button" className="ds-btn is-primary" disabled={pending !== null}
-                      onClick={() => runAction('activate')} style={{ height: 36 }}>
+                      onClick={() => runAction('activate')}>
                       {pending === 'activate' ? <Loader2 size={14} className="ds-spin" /> : <CheckCircle2 size={14} />}
                       Activate
                     </button>
                     <button type="button" className="ds-btn is-secondary" disabled={pending !== null}
-                      onClick={() => runAction('retire')} style={{ height: 36, color: 'var(--danger)' }}>
+                      onClick={() => runAction('retire')} style={{ color: 'var(--danger)' }}>
                       {pending === 'retire' ? <Loader2 size={14} className="ds-spin" /> : <Archive size={14} />}
                       Retire
                     </button>

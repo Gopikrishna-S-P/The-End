@@ -157,7 +157,7 @@ export default function AgentDetailPage() {
             <button type="button" onClick={() => navigate(-1)} className="ds-btn is-secondary" style={{ padding: '0 8px', height: 32 }} aria-label="Go back">
               <ArrowLeft size={16} />
             </button>
-            <h1 className="db-card-title" style={{ fontSize: 18, margin: 0 }}><span className="ds-skel" style={{ width: 200, height: 28 }} /></h1>
+            <h1 className="dd-page-title"><span className="ds-skel" style={{ width: 200, height: 28 }} /></h1>
           </div>
           <div className="db-inner">
             <div className="db-kpi-band">
@@ -181,7 +181,7 @@ export default function AgentDetailPage() {
             <button type="button" onClick={() => navigate(-1)} className="ds-btn is-secondary" style={{ padding: '0 8px', height: 32 }} aria-label="Go back">
               <ArrowLeft size={16} />
             </button>
-            <h1 className="db-card-title" style={{ fontSize: 18, margin: 0 }}>Agent Profile</h1>
+            <h1 className="dd-page-title">Agent Profile</h1>
           </div>
           <div className="db-inner">
             <div className="ds-empty" style={{ padding: '80px 0' }}>
@@ -229,7 +229,7 @@ export default function AgentDetailPage() {
                   <div style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, background: `${color}20`, border: `1px solid ${color}40`, color }}>
                     {initials}
                   </div>
-                  <h1 className="db-card-title" style={{ fontSize: 15, margin: 0 }}>{fullName}</h1>
+                  <h1 className="dd-page-title">{fullName}</h1>
                   <span className={`ds-pill ${profile.enabled ? 'is-success' : 'is-neutral'}`} style={{ marginLeft: 4 }}>
                     {profile.enabled ? 'Active' : 'Disabled'}
                   </span>

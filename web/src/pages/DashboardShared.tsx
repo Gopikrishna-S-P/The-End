@@ -391,15 +391,18 @@ export function DonutChart({ slices, size = 132, thickness = 20, centerLabel = '
   );
 }
 
-export function DonutCard({ slices, centerLabel, fmt = fmtNum }: {
+export function DonutCard({ slices, centerLabel, fmt = fmtNum, size }: {
   slices: DonutSlice[]; centerLabel: string; fmt?: (n: number) => string;
+  /** Override the chart diameter — narrow surfaces (e.g. the 288px dispatch
+   *  agent panel) can't fit DonutChart's 132px default beside the legend. */
+  size?: number;
 }) {
   const [active, setActive] = useState<number | null>(null);
   const total = slices.reduce((s, d) => s + d.value, 0);
   const has = total > 0;
   return (
     <div className="db-donut-card">
-      <DonutChart slices={slices} centerLabel={centerLabel} fmt={fmt}
+      <DonutChart slices={slices} centerLabel={centerLabel} fmt={fmt} size={size}
         activeIndex={active} onActiveChange={setActive} />
       <div className="db-legend">
         {slices.map((s, i) => (

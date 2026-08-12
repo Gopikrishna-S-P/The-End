@@ -36,3 +36,28 @@
   cursor: pointer;
 }
 .dd-error-retry:hover { background: color-mix(in srgb, var(--error) 12%, transparent); }
+
+/* ── Page-specific chrome ───────────────────────────────────────────────────
+   The card height/padding/radius and row padding these two pages used to
+   define here are now supplied by the shared list-card system: their roots
+   carry .db-fill-root and their case cards/rows carry .is-list-card /
+   .is-list-row (see styles/ds/ds.listcard.css). Only the rules with no
+   shared equivalent remain below.
+
+   .dd-officers-card is the agent side-panel, not a list card, so it still
+   needs the flex-fill treatment spelled out — the shared .is-list-card rule
+   doesn't reach it. */
+/* No margin-bottom: the page shell's own 36px bottom padding is the gap, same
+   as LoansPage. A margin here stacked on top of it and cost the card another
+   20px of height. */
+.dd-page.dd-daily-dispatch-page .dd-officers-card,
+.dd-page.dd-case-assignments-page .dd-officers-card {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+/* Agent-panel header — matches the list card's 8px/16px head padding. */
+.dd-page.dd-daily-dispatch-page .dd-ap-header,
+.dd-page.dd-case-assignments-page .dd-ap-header {
+  padding: 8px 16px;
+}

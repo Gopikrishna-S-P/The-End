@@ -5,9 +5,11 @@ import { apiClient, unwrapApiResponse } from '../client';
 import { useAuth } from '../AuthContext';
 import { dailyDispatchApi } from '../api/dailyDispatchApi';
 import type { AllocationResponse, PagedResponse } from '../types';
-import { ChevronLeft, ChevronRight, MapPin, RefreshCw, Phone, AlertCircle, Briefcase, X } from 'lucide-react';
+import { ChevronRight, MapPin, RefreshCw, Phone, AlertCircle, Briefcase, X } from 'lucide-react';
 import ActiveVisitCard from '../components/ActiveVisitCard';
 import ShiftSosCard from '../components/ShiftSosCard';
+import { Pagination } from '../components/Pagination';
+import { PILL_VARIANT, dynField } from './LoanDetailHelpers';
 
 import '../styles/AppPage.css';
 import '../styles/DailyDispatchPage.css';
@@ -18,6 +20,28 @@ const fmtINR = (v?: number | null) =>
   v != null
     ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v)
     : '—';
+
+function resolveAmount(c: AllocationResponse): number | null {
+  if (typeof c.outstandingAmount === 'number') return c.outstandingAmount;
+  if (typeof c.totalDue === 'number') return c.totalDue;
+  const dd = c.dynamicData || {};
+  const key = Object.keys(dd).find(k => {
+    const kl = k.toLowerCase();
+    return kl.includes('outstanding') || kl.includes('pos') || kl.includes('balance')
+      || (kl.includes('total') && kl.includes('due'));
+  });
+  if (key != null) {
+    const num = Number(String(dd[key]).replace(/[^0-9.\-]/g, ''));
+    if (!Number.isNaN(num) && num !== 0) return num;
+  }
+  return null;
+}
+
+/** Most recent visit disposition — set/updated by the FO from the allocation
+ *  detail page, so it can change between renders as visits get logged. */
+function resolveDisposition(c: AllocationResponse): string | undefined {
+  return c.latestDisposition || dynField(c.dynamicData || {}, ['disposition', 'Disposition', 'DISPOSITION']);
+}
 
 // ── Motion variants ────────────────────────────────────────────────────────────
 
@@ -94,10 +118,12 @@ export default function TodayVisitsPage() {
 
     const RippleRow = ({ c }: { c: AllocationResponse }) => {
       const { ref, fire } = useRipple<HTMLButtonElement>();
+      const amt = resolveAmount(c);
+      const disposition = resolveDisposition(c);
       return (
         <motion.div
           variants={fadeUp}
-          className="dd-case-row"
+          className="dd-case-row is-list-row"
           onClick={() => navigate(`/app/visits/${c.id}/interview`)}
           role="button"
           tabIndex={0}
@@ -107,6 +133,11 @@ export default function TodayVisitsPage() {
             <span className="dd-case-borrower">{c.borrowerName || 'Unknown borrower'}</span>
             <div className="dd-case-meta">
               <span className="dd-case-loan">{c.loanAccountNo || c.loanNumber || '—'}</span>
+              {disposition && (
+                <span className={`ds-pill ${PILL_VARIANT[disposition] ?? ''}`} style={{ fontSize: 9.5, padding: '1px 5px', height: 'auto' }}>
+                  {disposition.replace(/_/g, ' ')}
+                </span>
+              )}
             </div>
           </div>
           <div style={{ flex: '1 1 25%', display: 'flex', alignItems: 'center' }}>
@@ -115,6 +146,12 @@ export default function TodayVisitsPage() {
             </span>
           </div>
           <div className="dd-case-right" style={{ flex: '1 1 35%', justifyContent: 'flex-end', gap: 16 }}>
+            {amt != null && (
+              <div className="dd-case-amount-col">
+                <span className="dd-case-amount">{fmtINR(amt)}</span>
+                <span className="dd-case-amount-lbl">POS</span>
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{c.agentName || 'Unassigned'}</span>
               <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Field Officer</span>
@@ -128,24 +165,30 @@ export default function TodayVisitsPage() {
   const isFo = user?.roles?.some(r => r.name === 'ROLE_FO') ?? false;
 
   return (
-    <div className="dd-page">
-      {isFo && <ShiftSosCard />}
-      <ActiveVisitCard onClosed={load} />
-      {/* ── Page Header ── */}
-      <div className="dd-page-header">
-        <div className="dd-page-titles">
-          <h1 className="dd-page-title">Today's Visits</h1>
-          <span className="dd-page-context"><strong>{cases.length}</strong> visits scheduled for {todayLabel}</span>
+    <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
+        {isFo && <ShiftSosCard />}
+        <ActiveVisitCard onClosed={load} />
+        <div className="db-page-header">
+          <div className="db-page-header-left">
+            {!loading && (
+              <p className="dd-page-context">
+                You have <strong>{cases.length} visits</strong> scheduled for {todayLabel}.
+              </p>
+            )}
+          </div>
+          <div className="db-list-page-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button
+              type="button" onClick={load} disabled={loading}
+              className="ds-btn is-secondary" aria-label="Refresh" title="Refresh"
+              style={{ height: 32 }}
+            >
+              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
+            </button>
+          </div>
         </div>
-        <div className="dd-page-actions">
-          <button
-            type="button" onClick={load} disabled={loading}
-            className="ds-btn is-secondary" aria-label="Refresh" title="Refresh"
-          >
-            <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
-          </button>
-        </div>
-      </div>
+
+        <div className="db-inner" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
       <AnimatePresence>
         {error && (
@@ -175,38 +218,30 @@ export default function TodayVisitsPage() {
         )}
       </AnimatePresence>
 
-      <div className="dd-main-container">
-        <div className="dd-grid">
-          <div className="dd-case-panel">
-            <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-              <div className="dd-cases-head">
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Your itinerary</span>
-              </div>
+          <section className="ds-card db-card is-list-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: 'none', gap: 12 }}>
+              <h3 className="db-list-title">Today's Visits</h3>
+            </header>
 
-              <div className="dd-cp-list-wrap">
-                <div className="dd-cp-list">
-                  {loading ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="dd-case-skel">
-                        <span className="ds-skel" style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span className="ds-skel" style={{ height: '14px', width: '40%', borderRadius: '4px' }} />
-                          <span className="ds-skel" style={{ height: '11px', width: '25%', borderRadius: '4px' }} />
-                        </div>
+            <div className="db-list-body db-list-scroll">
+              {loading ? (
+                <div className="db-list-skel-wrap">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="dd-case-skel db-list-skel" style={{ opacity: 1 - i * 0.09 }}>
+                      <span className="ds-skel" style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span className="ds-skel" style={{ height: '14px', width: '40%', borderRadius: '4px' }} />
+                        <span className="ds-skel" style={{ height: '11px', width: '25%', borderRadius: '4px' }} />
                       </div>
-                    ))
-                  ) : cases.length === 0 ? (
-                    <motion.div variants={fadeIn} initial="hidden" animate="show" className="dd-cp-empty">
-                      <div className="dd-cp-empty-icon">
-                        <MapPin size={24} />
-                      </div>
-                      <div className="dd-cp-empty-title">
-                        No visits scheduled
-                      </div>
-                      <div className="dd-cp-empty-sub">
-                        Your TL hasn't dispatched any cases for today, or you've finished them all.
-                      </div>
-                    </motion.div>
+                    </div>
+                  ))}
+                </div>
+              ) : cases.length === 0 ? (
+                <motion.div className="ds-empty" variants={fadeIn} initial="hidden" animate="show">
+                  <MapPin size={32} className="ds-empty-icon" />
+                  <span className="ds-empty-title">No visits scheduled</span>
+                  <span className="ds-empty-sub">Your TL hasn't dispatched any cases for today, or you've finished them all.</span>
+                </motion.div>
                   ) : (
                     <motion.div variants={stagger} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
                       {cases.slice(page * 50, (page + 1) * 50).map((c) => (
@@ -214,39 +249,18 @@ export default function TodayVisitsPage() {
                       ))}
                     </motion.div>
                   )}
-                </div>
-              </div>
-
-              {cases.length > 50 && !loading && (
-                <footer className="up-pagination" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0 }}>
-                  <span className="up-page-meta">
-                    Page <strong>{page + 1}</strong> of <strong>{Math.ceil(cases.length / 50)}</strong>
-                    {' · '}<strong>{cases.length}</strong> cases
-                  </span>
-                  <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                    <button
-                      type="button"
-                      className="up-page-btn"
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
-                      disabled={page === 0}
-                      aria-label="Previous page"
-                    >
-                      <ChevronLeft size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className="up-page-btn"
-                      onClick={() => setPage(p => Math.min(Math.ceil(cases.length / 50) - 1, p + 1))}
-                      disabled={page >= Math.ceil(cases.length / 50) - 1}
-                      aria-label="Next page"
-                    >
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </footer>
-              )}
             </div>
-          </div>
+
+            {cases.length > 50 && !loading && (
+              <Pagination
+                currentPage={page}
+                totalPages={Math.ceil(cases.length / 50)}
+                onPageChange={setPage}
+                totalElements={cases.length}
+                itemLabel="cases"
+              />
+            )}
+          </section>
         </div>
       </div>
     </div>

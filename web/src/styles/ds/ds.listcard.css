@@ -1,0 +1,334 @@
+/* ── List-page design system ────────────────────────────────────────────────
+   Extracted verbatim from LoansPage — the app-wide reference for the
+   "page shell + header + card + scrollable row list + Pagination" pattern.
+
+   Loaded globally from styles/index.css, same reasoning as .up-pagination:
+   list pages don't import each other's stylesheets, so a page-scoped
+   definition would only work by accident when another page's chunk happened
+   to be loaded.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Page shell ─────────────────────────────────────────────────────────────
+   Extends the .db-fill-root chain (pages/Dashboard.css) to the .dd-shell
+   wrapper, which that chain doesn't otherwise reach. Used by AuditPage;
+   LoansPage moved to the dashboard's .db-grid/.db-span-12. */
+.db-fill-root .dd-shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Page header ──────────────────────────────────────────────────────────
+   Sentence-style context text uses the pre-existing, already-widely-used
+   .dd-page-context (DailyDispatch.shell.css) — the app's real reference for
+   this, not a new class. This block only owns the wrapper's column layout. */
+.db-page-header-left.is-list-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* ── Page toolbar (right side of the page header) ───────────────────────────
+   PtpsPage is the reference: [search] gap-16 [button group gap-8].
+   Every control is 36px tall — which is already .ds-btn's default height
+   (--ds-ctl-h), so pages must NOT re-inline `height: 36`. */
+.db-list-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.db-list-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Page-level search — PtpsPage reference: subtle pill, no border */
+.db-list-toolbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 12px;
+  height: 36px;
+  background: var(--bg-subtle);
+  border-radius: 8px;
+}
+.db-list-toolbar-search input {
+  width: 220px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-primary);
+}
+.db-list-toolbar-search input::placeholder { color: var(--ink-tertiary); }
+.db-list-toolbar-search input::-webkit-search-cancel-button { display: none; }
+.db-list-toolbar-search-clear {
+  display: flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+}
+
+/* Filter button — PtpsPage reference: icon + "Filter" label + active dot.
+   Selector carries .ds-btn so the active fill reliably beats .is-secondary
+   regardless of which stylesheet the bundler emits first. */
+.ds-btn.db-list-filter-btn { position: relative; }
+.ds-btn.db-list-filter-btn.is-active,
+.ds-btn.db-list-filter-btn.is-active:hover:not(:disabled) {
+  background: var(--ink-solid);
+  border-color: var(--ink-solid);
+  color: var(--bg-surface);
+}
+.db-list-filter-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+/* ── Error banner ───────────────────────────────────────────────────────── */
+.db-error-banner.is-list-banner { margin-bottom: 24px; }
+
+/* ── Card shell — complements .is-list-card's padding/height rules ────────
+   Radius is LoansPage's 16px (.db-root .db-card), not the 20px --radius-lg
+   that .dd-page's own .ds-card rule applies. The .dd-page-prefixed selector
+   is listed explicitly so it outranks that rule regardless of import order. */
+.is-list-card { width: 100%; }
+.ds-card.is-list-card,
+.dd-page .ds-card.is-list-card {
+  border-radius: 16px;
+  border-color: var(--border);
+}
+/* Table cards opt out of the 12px inset — a <table>/data grid reads better
+   edge-to-edge — while keeping the identical outer shell (radius, border,
+   flex-fill height) as every row-list card. */
+.is-list-card.is-flush { padding: 0; }
+
+/* Flex-fill is scoped to pages that opted into the viewport-height chain.
+   On a natural-scroll page (several stacked cards, no .db-fill-root) an
+   unconditional flex:1 would stretch every card to equal height. */
+.db-fill-root .is-list-card {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Card header: title left, controls right ────────────────────────────── */
+.db-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.db-list-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* ── Expanding search field (34px tall, r8) ─────────────────────────────── */
+.db-list-search {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+.db-list-search input {
+  width: 100%;
+  padding-left: 8px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+}
+.db-list-search-clear {
+  display: flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+}
+.db-list-search-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+/* ── Active-filter chip bar, directly under the card header ─────────────── */
+.db-list-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.db-list-chip-x {
+  display: flex;
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ── Body + scroll region ───────────────────────────────────────────────── */
+/* .db-card-body is also listed so this wins on specificity (0,2,0). Both
+   classes sit on the same element, but .db-card-body's `padding: 8px 20px
+   20px` ships in the Dashboard route chunk, which loads AFTER this file in
+   the entry bundle — at equal specificity it won on source order and added
+   20px of inset that pushed list rows off Daily Dispatch's alignment. */
+.db-list-body,
+.db-card-body.db-list-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+}
+.db-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ── Row internals ──────────────────────────────────────────────────────────
+   The row-shell reset is scoped to .db-att-row specifically: those rows are
+   <button>/<motion.button> elements needing the UA button styles knocked out,
+   whereas .dd-case-row rows are <div>s already sitting on var(--bg-surface).
+   Applying it to both families would repaint the dd-case-row background. */
+.db-att-row.is-list-row {
+  width: 100%;
+  border-radius: 0;
+  text-align: left;
+  background: transparent;
+}
+.db-list-row-main { flex: 1; min-width: 0; margin-left: 0; }
+.is-list-row .db-att-label { display: flex; align-items: center; gap: 6px; }
+.db-list-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+.db-list-row-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: right;
+}
+.db-list-amount-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.db-list-amount {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+.db-list-amount-label {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ink-tertiary);
+}
+.db-list-chevron { color: var(--ink-tertiary); flex-shrink: 0; }
+
+/* ── Skeleton + empty ───────────────────────────────────────────────────── */
+.db-list-skel-wrap { padding: 8px; }
+.db-list-skel {
+  display: flex;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.is-list-card .ds-empty { padding: 80px 0; }
+
+/* ── Responsive ─────────────────────────────────────────────────────────────
+   The single shared responsive rule for this whole pattern. Any page using
+   is-list-card/is-list-row inherits it — do not add page-specific list-card
+   breakpoints anywhere else. */
+
+@media (max-width: 1200px) {
+  .db-list-toolbar-search input { width: 170px; }
+  .db-list-page-actions { gap: 12px; }
+}
+
+@media (max-width: 1024px) {
+  .db-list-row-meta  { gap: 12px; }
+  .db-list-row-right { gap: 12px; }
+  .db-list-toolbar-search input { width: 130px; }
+}
+
+@media (max-width: 860px) {
+  .db-list-search   { width: 160px; }
+  .db-list-row-meta { gap: 10px; margin-top: 8px; }
+  /* Toolbar wraps under the sentence instead of squeezing it */
+  .db-page-header       { align-items: flex-start; }
+  .db-list-page-actions { flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .db-card.is-list-card,
+  .dd-cases-card.is-list-card,
+  .ds-table-card.is-list-card { padding: 8px; }
+
+  .db-page-header        { gap: 10px; margin-bottom: 12px; }
+
+  /* Toolbar goes full-width: search on its own line, buttons below it */
+  .db-list-page-actions        { width: 100%; gap: 10px; }
+  .db-list-toolbar-search      { width: 100%; }
+  .db-list-toolbar-search input { width: 100%; }
+  .db-list-btn-group           { width: 100%; flex-wrap: wrap; }
+  /* Label-less icon buttons keep their square footprint; labelled ones share the row */
+  .db-list-btn-group > .ds-btn { flex: 1 1 auto; }
+
+  .db-list-head          { gap: 10px; padding: 8px 12px; }
+  .db-list-head-actions  { width: 100%; margin-left: 0; }
+  .db-list-search        { flex: 1; width: auto; }
+  .db-list-filterbar     { padding: 8px 12px; }
+
+  .db-att-row.is-list-row,
+  .dd-case-row.is-list-row { padding: 10px 12px; flex-wrap: wrap; row-gap: 8px; }
+
+  .db-list-row-main   { flex: 1 1 100%; }
+  .db-list-row-right  { width: 100%; justify-content: flex-start; gap: 12px; }
+  .db-list-amount-col { align-items: flex-start; }
+  .db-list-row-meta   { flex-wrap: wrap; gap: 8px; }
+
+  .db-list-title { font-size: 14px; }
+  .up-pagination { padding: 12px 14px; gap: 8px; }
+}
+
+@media (max-width: 420px) {
+  .db-list-chevron  { display: none; }
+  .db-list-row-meta { gap: 6px; }
+  .up-page-btn      { min-width: 26px; height: 26px; padding: 0 6px; }
+}

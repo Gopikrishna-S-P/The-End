@@ -105,6 +105,27 @@
   transform: translateY(-1px);
 }
 
+/* Green solid — the export action. Mirrors is-primary/is-danger exactly, so
+   Export reads as its own affordance instead of competing with the page's
+   primary action (it was is-primary on three pages and is-secondary on a
+   fourth). Its own token, not --success: that is the status green (#067647
+   light / #22C55E dark) and shifts between themes, while this button holds
+   one colour in both. */
+.ds-btn.is-success {
+  --ds-btn-green: #0AA550;
+  background: var(--ds-btn-green);
+  border-color: var(--ds-btn-green);
+  color: #fff;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ds-btn-green) 16%, transparent), var(--shadow-xs);
+}
+.ds-btn.is-success:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ds-btn-green) 88%, black);
+  border-color: color-mix(in srgb, var(--ds-btn-green) 88%, black);
+  box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--ds-btn-green) 28%, transparent), var(--shadow-sm);
+  transform: translateY(-1px);
+}
+.ds-btn.is-success:active:not(:disabled) { transform: translateY(0); }
+
 /* ── Size modifiers ───────────────────────────────────────────────────────── */
 .ds-btn.is-sm { height: var(--ds-ctl-h-sm); padding: 0 10px; font-size: 12px; }
 .ds-btn.is-lg { height: var(--ds-row-h);    padding: 0 20px; font-size: 14px; }

@@ -172,21 +172,25 @@ export default function PaymentLinksPage() {
     <div className="db-root">
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ maxWidth: 960 }}>
-          <header className="db-card-head" style={{ marginBottom: 20, padding: 0, background: 'transparent', border: 'none' }}>
-            <h2 className="db-card-title" style={{ fontSize: 20 }}>Payment Links</h2>
-            <p className="db-kpi2-foot-meta" style={{ marginTop: 4 }}>
-              Create a payment intent against a loan allocation, then issue a shareable UPI / NACH / e-Mandate link.
-            </p>
-          </header>
+          <div className="db-page-header">
+            <div className="db-page-header-left">
+              <p className="dd-page-context">
+                Create a payment intent against a loan allocation, then issue a shareable UPI / NACH / e-Mandate link
+              </p>
+            </div>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 24, alignItems: 'start' }}>
 
             {/* ── Left: create / lookup intent ── */}
-            <motion.section variants={fadeUp} className="ds-card db-card">
-              <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <h2 className="db-card-title"><IndianRupee size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} />New payment intent</h2>
-              </header>
-              <div className="db-card-body" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <motion.section variants={fadeUp} className="ds-card db-card" style={{ padding: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <IndianRupee size={12} style={{ color: 'var(--ink-tertiary)' }} />
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-secondary)' }}>
+                    New Payment Intent
+                  </span>
+                </div>
                 <div className="ds-field">
                   <span className="ds-label is-required">Allocation ID</span>
                   <input
@@ -265,8 +269,13 @@ export default function PaymentLinksPage() {
               </div>
 
               {/* Lookup existing */}
-              <div style={{ borderTop: '1px solid var(--border-subtle)', padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <span className="ds-label">Look up an existing intent</span>
+              <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: 8, paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <Search size={12} style={{ color: 'var(--ink-tertiary)' }} />
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-secondary)' }}>
+                    Look Up Intent
+                  </span>
+                </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     type="text"
@@ -277,7 +286,7 @@ export default function PaymentLinksPage() {
                     style={{ fontFamily: 'var(--font-mono)', fontSize: 12, flex: 1 }}
                     onKeyDown={e => { if (e.key === 'Enter') handleLookup(); }}
                   />
-                  <button type="button" className="ds-btn is-secondary" onClick={handleLookup} disabled={!lookupId.trim() || lookupLoading} style={{ height: 36, flexShrink: 0 }}>
+                  <button type="button" className="ds-btn is-secondary" onClick={handleLookup} disabled={!lookupId.trim() || lookupLoading} style={{ flexShrink: 0 }}>
                     {lookupLoading ? <Loader2 size={14} className="ds-spin" /> : <Search size={14} />}
                   </button>
                 </div>
@@ -290,13 +299,16 @@ export default function PaymentLinksPage() {
             </motion.section>
 
             {/* ── Right: intent detail + issue link ── */}
-            <motion.section variants={fadeUp} className="ds-card db-card">
-              <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                <h2 className="db-card-title"><Link2 size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} />Intent &amp; link</h2>
-              </header>
+            <motion.section variants={fadeUp} className="ds-card db-card" style={{ padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
+                <Link2 size={12} style={{ color: 'var(--ink-tertiary)' }} />
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-secondary)' }}>
+                  Intent &amp; Link
+                </span>
+              </div>
 
               {!intent && (
-                <div className="db-card-body" style={{ padding: 32, textAlign: 'center' }}>
+                <div style={{ padding: '32px 0', textAlign: 'center' }}>
                   <span style={{ fontSize: 13, color: 'var(--ink-tertiary)' }}>
                     Create or look up a payment intent to issue a link.
                   </span>
@@ -306,7 +318,7 @@ export default function PaymentLinksPage() {
               <AnimatePresence>
                 {intent && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <div className="db-card-body" style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-tertiary)' }}>{intent.id}</span>
                         <StatusPill status={intent.status} />
@@ -334,8 +346,13 @@ export default function PaymentLinksPage() {
                     </div>
 
                     {/* Issue link */}
-                    <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <span className="ds-label">Issue a payment link</span>
+                    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Send size={12} style={{ color: 'var(--ink-tertiary)' }} />
+                        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-secondary)' }}>
+                          Issue Link
+                        </span>
+                      </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         <div className="ds-field">
                           <span className="ds-label">Rail</span>
@@ -362,7 +379,7 @@ export default function PaymentLinksPage() {
                         </div>
                       )}
 
-                      <button type="button" className="ds-btn is-primary" onClick={handleCreateLink} disabled={creatingLink} style={{ height: 36 }}>
+                      <button type="button" className="ds-btn is-primary" onClick={handleCreateLink} disabled={creatingLink}>
                         {creatingLink ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Send size={14} style={{ marginRight: 6 }} />}
                         {creatingLink ? 'Issuing…' : 'Issue link'}
                       </button>

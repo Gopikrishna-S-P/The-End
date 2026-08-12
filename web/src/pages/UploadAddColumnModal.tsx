@@ -72,9 +72,9 @@ export function UploadAddColumnModal({ uploadId, onClose, onAdded }: Props) {
           </div>
 
           <div className="ds-modal-actions" style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
-            <button type="button" onClick={onClose} className="ds-btn is-secondary" style={{ flex: 1, height: 36 }}>Cancel</button>
+            <button type="button" onClick={onClose} className="ds-btn is-secondary" style={{ flex: 1 }}>Cancel</button>
             <button type="button" onClick={handleAdd} disabled={!valid || saving}
-              className="ds-btn is-primary" style={{ flex: 1, height: 36 }}>
+              className="ds-btn is-primary" style={{ flex: 1 }}>
               {saving ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <Plus size={14} style={{ marginRight: 6 }} />}Add
             </button>
           </div>

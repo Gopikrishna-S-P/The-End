@@ -26,7 +26,6 @@ const REGISTRY: Record<string, PageHelp> = {
       'Use the date picker (top-right of each chart) to compare against last week / month.',
     ],
     links: [
-      { label: 'Lucien AI insights', to: '/app/lucien' },
       { label: 'Reports',            to: '/app/reports' },
       { label: 'Today\'s Visits',    to: '/app/today' },
       { label: 'My Cases',           to: '/app/my-cases' },
@@ -60,7 +59,6 @@ const REGISTRY: Record<string, PageHelp> = {
     ],
     links: [
       { label: 'Field Agents list', to: '/app/agents' },
-      { label: 'Live Tracking Map', to: '/app/live-track' },
       { label: 'Field Operations',  to: '/app/field-ops' },
       { label: 'Agent Attendance',  to: '/app/attendance' },
       { label: 'Holiday Calendar',  to: '/app/calendar' },
@@ -113,20 +111,6 @@ const REGISTRY: Record<string, PageHelp> = {
       { label: 'User Setup profile',    to: '/app/users' },
       { label: 'Role Permissions',      to: '/app/settings/roles' },
       { label: 'Workspace settings',    to: '/app/settings/organization' },
-    ],
-  },
-
-  '/app/lucien': {
-    title: 'Lucien AI',
-    description: 'Conversational insights over your portfolio. Ask follow-ups in plain English; Lucien cites the underlying data.',
-    tips: [
-      'Lucien only answers from your org\'s data — nothing is shared cross-tenant.',
-      'Pin useful queries; they become saved searches in the command palette.',
-    ],
-    links: [
-      { label: 'Return to Dashboard', to: '/app/dashboard' },
-      { label: 'Generated Reports',   to: '/app/reports' },
-      { label: 'Column Configuration', to: '/app/settings/schema' },
     ],
   },
 

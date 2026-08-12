@@ -5,9 +5,10 @@ import {
   ArrowRightLeft, ChevronDown, Loader2,
 } from 'lucide-react';
 import CaseTimeline from '../components/CaseTimeline';
+import { CallHistorySection } from '../components/CallHistorySection';
 import type { AllocationResponse, AllocationStatus } from '../types';
 import {
-  Pill, Row, fmtCurrency, fmtDate, fmtDT, fmtRelative,
+  Pill, fmtCurrency, fmtDate, fmtDT, fmtRelative,
   FIELD_GROUPS, ALL_DISPOSITIONS, bucketFor, dynField, parseDynAmount,
   type GroupedFields, type Tone, type NextAction,
 } from './LoanDetailHelpers';
@@ -71,31 +72,34 @@ export default function LoanDetailContent(p: Props) {
   const posAmt = a.outstandingAmount ?? parseDynAmount(dynField(dyn, ['POS Amt', 'POS AMT', 'POS AMOUNT', 'pos_amount', 'pos_amt']));
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flex: 1, minHeight: 0 }}>
+    /* One card for the whole record: summary and case data are two columns
+       inside it, divided by a hairline, rather than two separately-bordered
+       cards floating next to each other. */
+    <div className="ds-card db-card ld-card">
 
-      {/* ── Left — fixed summary sidebar, sized to content, never scrolls ── */}
-      <aside style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="ds-card db-card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ── Fixed top block: identity + disposition, tabs, and the facts that
+             give every field below its context. Nothing here scrolls. ───── */}
+      <header className="ld-head">
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-              <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--ink-primary)', margin: 0, lineHeight: 1.25, wordBreak: 'break-word' }}>
-                {a.borrowerName || '—'}
-              </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--ink-secondary)', fontWeight: 500 }}>
-                {a.loanNumber || '—'}
-              </span>
-            </div>
+        <div className="ld-card-head">
+          <h2 className="db-list-title">Loan case</h2>
+        </div>
+
+        <div className="ld-head-top">
+          <div className="ld-identity">
+            <h1 className="db-detail-title">{a.borrowerName || 'Loan case'}</h1>
+            <span className="ld-loan-ref">{a.loanNumber || a.loanAccountNo || '—'}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Disposition sits beside the name — it is the case's current state */}
+          <div className="ld-head-pills">
             {p.canChangeStatus ? (
               <div ref={dispositionRef} style={{ position: 'relative' }}>
                 <button
                   type="button"
                   onClick={() => setDispositionOpen(v => !v)}
                   disabled={p.dispositionUpdating}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', padding: 0, cursor: p.dispositionUpdating ? 'not-allowed' : 'pointer', opacity: p.dispositionUpdating ? 0.6 : 1 }}
+                  className="ld-disposition-btn"
                   aria-label="Change disposition"
                   aria-expanded={dispositionOpen}
                 >
@@ -131,99 +135,7 @@ export default function LoanDetailContent(p: Props) {
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
-            {posAmt != null && (
-              <div>
-                <span style={{ fontSize: 12, color: 'var(--ink-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <IndianRupee size={12} /> POS (Principal Outstanding)
-                </span>
-                <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-primary)', display: 'block', marginTop: 2 }}>
-                  {fmtCurrency(posAmt)}
-                </span>
-                {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
-                  <span style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600 }}>
-                    {a.npaFlagged ? 'NPA flagged' : `${p.daysOverdue} d overdue`}
-                  </span>
-                )}
-              </div>
-            )}
-            {a.totalDue != null && (
-              <div>
-                <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Total due</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink-primary)', display: 'block', marginTop: 2 }}>
-                  {fmtCurrency(Number(a.totalDue))}
-                </span>
-                {p.dueDateIso && (
-                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Due {fmtDate(p.dueDateIso)}</span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {a.assignedToUserId && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
-              <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Assigned to</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-primary)', fontWeight: 600, fontSize: 14 }}>
-                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <User size={12} style={{ color: 'var(--ink-tertiary)' }} />
-                </div>
-                {p.agentName ?? '—'}
-              </div>
-              {a.assignedAt && (
-                <span style={{ fontSize: 11.5, color: 'var(--ink-tertiary)' }} title={fmtDT(a.assignedAt)}>
-                  since {fmtRelative(a.assignedAt)}
-                </span>
-              )}
-            </div>
-          )}
-
-          {(fieldExecutiveValue || securitizationValue) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
-              {fieldExecutiveValue && (
-                <div>
-                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Field Executive</span>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-primary)', marginTop: 2 }}>{fieldExecutiveValue}</div>
-                </div>
-              )}
-              {securitizationValue && (
-                <div>
-                  <span style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>Securitization</span>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-primary)', marginTop: 2 }}>{securitizationValue}</div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4, borderTop: '1px solid var(--border-subtle)' }}>
-            {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
-              <button type="button" className="ds-btn is-secondary" onClick={p.onReassign} style={{ height: 32, width: '100%' }}>
-                <ArrowRightLeft size={14} style={{ marginRight: 6 }} /> Reassign
-              </button>
-            )}
-            {mapsHref && (
-              <a href={mapsHref} target="_blank" rel="noreferrer"
-                className="ds-btn is-secondary" style={{ height: 32, width: '100%', textDecoration: 'none' }}>
-                <MapPin size={12} />
-                {p.lastKnownLocation ? 'Last GPS location' : 'Address in Maps'}
-              </a>
-            )}
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Right — case data, independently scrollable ─────────────────── */}
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <h1 className="db-page-title" style={{ fontSize: 18, lineHeight: 1.3 }}>{a.borrowerName || 'Loan case'}</h1>
-            <span style={{ fontSize: 13, color: 'var(--ink-tertiary)' }}>
-              {activeTab === 'activity'
-                ? 'Every visit, collection, PTP, and reassignment on this case, newest first.'
-                : (a.loanNumber || a.loanAccountNo || '—')}
-            </span>
-          </div>
-          <div className="db-kpi-toggle" style={{ display: 'inline-flex' }}>
+          <div className="db-kpi-toggle ld-head-tabs">
             {[
               { id: 'details', label: 'Details' },
               { id: 'activity', label: 'Activity' }
@@ -236,52 +148,121 @@ export default function LoanDetailContent(p: Props) {
           </div>
         </div>
 
-        <div className="alloc-detail-scroll" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
-        {activeTab === 'details' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Facts strip — one type scale, no per-item bespoke sizing */}
+        <div className="ld-facts">
+          {posAmt != null && (
+            <div className="ld-fact is-lead">
+              <span className="ld-fact-label"><IndianRupee size={11} /> POS outstanding</span>
+              <span className="ld-fact-value">{fmtCurrency(posAmt)}</span>
+              {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
+                <span className="ld-fact-note is-danger">
+                  {a.npaFlagged ? 'NPA flagged' : `${p.daysOverdue} d overdue`}
+                </span>
+              )}
+            </div>
+          )}
+          {a.totalDue != null && (
+            <div className="ld-fact">
+              <span className="ld-fact-label">Total due</span>
+              <span className="ld-fact-value">{fmtCurrency(Number(a.totalDue))}</span>
+              {p.dueDateIso && <span className="ld-fact-note">Due {fmtDate(p.dueDateIso)}</span>}
+            </div>
+          )}
+          {a.assignedToUserId && (
+            <div className="ld-fact">
+              <span className="ld-fact-label">Assigned to</span>
+              <span className="ld-fact-value">
+                <User size={12} className="alloc-agent-icon" style={{ marginRight: 6 }} />
+                {p.agentName ?? '—'}
+              </span>
+              {a.assignedAt && (
+                <span className="ld-fact-note" title={fmtDT(a.assignedAt)}>since {fmtRelative(a.assignedAt)}</span>
+              )}
+            </div>
+          )}
+          {fieldExecutiveValue && (
+            <div className="ld-fact">
+              <span className="ld-fact-label">Field Executive</span>
+              <span className="ld-fact-value">{fieldExecutiveValue}</span>
+            </div>
+          )}
+          {securitizationValue && (
+            <div className="ld-fact">
+              <span className="ld-fact-label">Securitization</span>
+              <span className="ld-fact-value">{securitizationValue}</span>
+            </div>
+          )}
 
-            {p.groups && FIELD_GROUPS.map(g => {
+          <div className="ld-head-actions">
+            {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
+              <button type="button" className="ds-btn is-secondary is-sm" onClick={p.onReassign}>
+                <ArrowRightLeft size={13} /> Reassign
+              </button>
+            )}
+            {mapsHref && (
+              <a href={mapsHref} target="_blank" rel="noreferrer"
+                className="ds-btn is-secondary is-sm" style={{ textDecoration: 'none' }}>
+                <MapPin size={12} />
+                {p.lastKnownLocation ? 'Last GPS' : 'Maps'}
+              </a>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="ld-main">
+        <div className="alloc-detail-scroll ld-main-scroll">
+        {activeTab === 'details' && p.groups && (
+          /* Hairline-separated sections — not five cards that differ only by
+             icon and label. No card chrome of its own: it IS the card body. */
+          <div className="ld-sheet">
+            {FIELD_GROUPS.map(g => {
               const entries = p.groups![g.id];
               if (entries.length === 0) return null;
               const Icon = g.icon;
               return (
-                <div key={g.id} className="ds-card db-card">
-                  <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-                    <h2 className="db-card-title"><Icon size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> {g.label} details</h2>
-                  </header>
-                  <div className="db-card-body" style={{ padding: '4px 20px 8px' }}>
+                <section key={g.id} className="ld-section">
+                  <h2 className="ld-section-label"><Icon size={12} /> {g.label}</h2>
+                  <dl className="ld-grid">
                     {entries.map(([k, v]) => (
-                      <Row key={k} label={k.replace(/_/g, ' ')}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</Row>
+                      <div key={k} className="ld-field">
+                        <dt className="ld-field-label" title={k.replace(/_/g, ' ')}>{k.replace(/_/g, ' ')}</dt>
+                        <dd className="ld-field-value">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</dd>
+                      </div>
                     ))}
-                  </div>
-                </div>
+                  </dl>
+                </section>
               );
             })}
 
-            {p.groups && p.groups.other.length > 0 && (
-              <div className="ds-card db-card">
-                <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-                  <h2 className="db-card-title"><Info size={14} style={{ marginRight: 8, color: 'var(--ink-tertiary)' }} /> Additional data</h2>
-                </header>
-                <div className="db-card-body" style={{ padding: '4px 20px 8px' }}>
+            {p.groups.other.length > 0 && (
+              <details className="ld-more">
+                <summary>
+                  <Info size={13} />
+                  Additional data
+                  <span className="ld-more-count">{p.groups.other.length}</span>
+                  <ChevronDown size={14} className="ld-more-chevron" />
+                </summary>
+                <dl className="ld-grid">
                   {p.groups.other.map(([k, v]) => (
-                    <Row key={k} label={k.replace(/_/g, ' ')}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</Row>
+                    <div key={k} className="ld-field">
+                      <dt className="ld-field-label" title={k.replace(/_/g, ' ')}>{k.replace(/_/g, ' ')}</dt>
+                      <dd className="ld-field-value">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</dd>
+                    </div>
                   ))}
-                </div>
-              </div>
+                </dl>
+              </details>
             )}
           </div>
         )}
 
         {activeTab === 'activity' && (
-          <div className="ds-card db-card" style={{ minHeight: 400 }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
-              <h2 className="db-card-title">Activity Feed</h2>
-            </header>
-            <div className="db-card-body" style={{ padding: 0 }}>
-              <CaseTimeline allocationId={a.id} />
-            </div>
-          </div>
+          /* No nested card — the tab already names this view, and the page's
+             single card is the only surface. */
+          <>
+            <CallHistorySection allocationId={a.id} />
+            <CaseTimeline allocationId={a.id} />
+          </>
         )}
         </div>
       </div>

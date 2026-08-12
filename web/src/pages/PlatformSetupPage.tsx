@@ -31,7 +31,7 @@ export default function PlatformSetupPage() {
       <div className="db-content">
         <motion.div className="db-inner" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <div className="db-page-header">
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+            <p className="dd-page-context">
               Manage organizations and platform users
             </p>
           </div>

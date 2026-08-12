@@ -44,8 +44,23 @@
 
 .dd-dispatch-ring-wrap {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.dd-dispatch-ring-wrap .db-legend { width: 100%; }
+
+/* Inside the fixed 288px .dd-agent-panel (Case Assignments) the donut and its
+   legend must stack — DonutCard's default row layout is tuned for the
+   dashboard's much wider card and squashes the 4-column legend rows here.
+   Daily Dispatch now gives this card a full .db-span-4 column, so it keeps
+   the dashboard's side-by-side arrangement. */
+.dd-agent-panel .dd-dispatch-ring-wrap .db-donut-card {
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   width: 100%;
 }
 

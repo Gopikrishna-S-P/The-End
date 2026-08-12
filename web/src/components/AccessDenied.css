@@ -1,16 +1,19 @@
-/* ── AccessDenied — popup pattern, same chrome as TopbarCustomizeDialog /
-   Help & resources (.app-topbar-custom-backdrop/-dialog): blurred scrim +
-   translucent glass card ── */
+/* ── AccessDenied — a full-page takeover, not a popup/modal: flat canvas
+   background, centered column, no card, no border, no shadow, no scrim.
+   Portalled to document.body with position:fixed so it replaces the whole
+   screen (topbar + sidebar included), the way a dedicated error page would. ── */
 
-.access-denied-backdrop {
+.access-denied-page {
   position: fixed;
   inset: 0;
   z-index: var(--z-splash);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: var(--shadow-overlay-scrim);
+  padding: 24px;
+  background: var(--bg-canvas);
+  text-align: center;
   animation: ad-fade-in var(--dur-base) var(--ease-out) both;
 }
 
@@ -19,103 +22,72 @@
   to   { opacity: 1; }
 }
 
-.access-denied-dialog {
-  width: 100%;
-  max-width: 380px;
-  text-align: center;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 32px 28px;
-  box-shadow: var(--shadow-lg);
-  animation: ad-rise var(--dur-slow) var(--ease-out) both;
-}
+/* ── Icon: solid red disc, white X. The disc pops in once on mount; the X
+   glyph inside shakes on its own interval — a quick wobble every few
+   seconds, not a continuous spinner — so it reads as "alert", not "loading". ── */
 
-@keyframes ad-rise {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to   { opacity: 1; transform: none; }
-}
-
-.access-denied-logo {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-
-.access-denied-icon {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 16px;
+.access-denied-icon-circle {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  margin-bottom: 28px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--warning) 14%, transparent);
-  color: var(--warning);
+  background: var(--danger);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-md);
+  animation: ad-pop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+@keyframes ad-pop {
+  0%   { opacity: 0; transform: scale(0.3); }
+  60%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.access-denied-icon-shake {
+  display: flex;
+  animation: ad-shake-interval 3.5s ease-in-out infinite;
+}
+
+@keyframes ad-shake-interval {
+  0%, 70%  { transform: rotate(0deg); }
+  75%      { transform: rotate(-12deg); }
+  80%      { transform: rotate(10deg); }
+  85%      { transform: rotate(-8deg); }
+  90%      { transform: rotate(6deg); }
+  95%      { transform: rotate(-3deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+/* ── Copy ── */
 
 .access-denied-title {
   font-family: var(--font-sans);
-  font-size: 19px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.01em;
-  margin: 0 0 8px;
+  margin: 0 0 16px;
+  animation: ad-rise var(--dur-slow) var(--ease-out) 150ms both;
 }
 
 .access-denied-sub {
   font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text-secondary);
-  margin: 0 0 16px;
+  margin: 0;
+  max-width: 420px;
+  animation: ad-rise var(--dur-slow) var(--ease-out) 220ms both;
 }
 
-.access-denied-route-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 12px;
-  margin-bottom: 24px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-hover);
-  color: var(--text-tertiary);
+@keyframes ad-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
 }
 
-.access-denied-route-chip code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.access-denied-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.access-denied-btn-primary {
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 40px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--ink-solid);
-  color: var(--text-on-solid);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 150ms var(--ease);
-}
-.access-denied-btn-primary:hover { background: var(--ink-solid-hover); }
-
-/* No manual "Dark mode" block — every rule above is a token, and
-   ds.tokens.css's .app-layout.dark already re-themes all of them. Same
-   pattern as TopbarCustomizeDialog/PlatformSetupPage/MfaGate/
-   ProfileSettingsDialog. */
+/* No manual "Dark mode" block — every color above is a token, and
+   ds.tokens.css's .app-layout.dark already re-themes all of them. */

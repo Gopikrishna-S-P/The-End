@@ -17,4 +17,3 @@ export { default as AgentsPage } from './AgentsPage';
 export { default as AttendancePage } from './AttendancePage';
 export { default as MyAttendancePage } from './MyAttendancePage';
 export { default as StartVisitPage } from './StartVisitPage';
-export { default as LiveTrackPage } from './LiveTrackPage';

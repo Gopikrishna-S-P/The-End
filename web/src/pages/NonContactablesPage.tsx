@@ -145,6 +145,7 @@ export default function NonContactablesPage() {
   const [totalPages, setTotalPages]       = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [searchInput, setSearchInput]     = useState('');
+  const [searchOpen, setSearchOpen]       = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deletingId, setDeletingId]       = useState<string | null>(null);
   const [toast, setToast]                 = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
@@ -196,12 +197,21 @@ export default function NonContactablesPage() {
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <div className="db-page-header">
           <div className="db-page-header-left">
-            <div className="db-page-titles">
-              <h1 className="db-page-title">Non-Contactable Visits</h1>
-              {!loading && totalElements > 0 && (
-                <span className="db-page-org">{totalElements.toLocaleString('en-IN')} records</span>
-              )}
-            </div>
+            {!loading && (
+              <p className="dd-page-context">
+                You have <strong>{totalElements.toLocaleString('en-IN')} non-contactable records</strong> logged by field officers.
+              </p>
+            )}
+          </div>
+          <div className="db-list-page-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {canCreate && (
+              <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 32 }}>
+                <Plus size={14} /> Record outcome
+              </button>
+            )}
+            <button type="button" onClick={fetchRecords} disabled={loading} className="ds-btn is-secondary" aria-label="Refresh" title="Refresh" style={{ height: 32 }}>
+              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
+            </button>
           </div>
         </div>
 
@@ -220,52 +230,59 @@ export default function NonContactablesPage() {
             )}
           </AnimatePresence>
 
-          <section className="ds-card db-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visibleRecords.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
-                <div className="db-search" style={{ margin: 0, background: 'var(--bg-subtle)', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Search size={14} style={{ color: 'var(--ink-tertiary)' }} />
-                  <input
-                    ref={inputRef}
-                    type="search"
-                    value={searchInput}
-                    onChange={e => setSearchInput(e.target.value)}
-                    placeholder="Search allocation, reason, notes…"
-                    autoComplete="off"
-                    spellCheck={false}
-                    aria-label="Search non-contactable records on this page"
-                    style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: 240 }}
-                  />
-                  <AnimatePresence>
-                    {searchInput && (
-                      <motion.button type="button" onClick={() => setSearchInput('')}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, display: 'flex' }}
-                        initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.12 }}>
-                        <X size={12} />
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {canCreate && (
-                  <button type="button" onClick={() => setShowCreateModal(true)} className="ds-btn is-primary" style={{ height: 36 }}>
-                    <Plus size={14} /> Record outcome
-                  </button>
-                )}
-
-                <button type="button" onClick={fetchRecords} disabled={loading}
-                  className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
-                  <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-                </button>
+          <section className="ds-card db-card is-list-card" style={{ marginTop: 0, display: 'flex', flexDirection: 'column', ...(visibleRecords.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: 'none', gap: 12 }}>
+              <h3 className="db-list-title">Skips</h3>
+              <div className="db-list-head-actions">
+                <AnimatePresence mode="popLayout">
+                  {!searchOpen ? (
+                    <motion.button
+                      key="search-btn"
+                      initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.15 }}
+                      type="button" onClick={() => setSearchOpen(true)}
+                      style={{ width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, cursor: 'pointer', color: 'var(--ink-secondary)' }}
+                      aria-label="Open search"
+                    >
+                      <Search size={14} />
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      key="search-bar"
+                      initial={{ width: 0, opacity: 0 }} animate={{ width: 220, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0 10px', height: 34, overflow: 'hidden' }}
+                      onBlur={(e) => {
+                        const next = e.relatedTarget as Node | null;
+                        if (!next || !e.currentTarget.contains(next)) {
+                          setSearchOpen(false);
+                          setSearchInput('');
+                        }
+                      }}
+                    >
+                      <Search size={14} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
+                      <input
+                        ref={inputRef}
+                        autoFocus
+                        type="search"
+                        value={searchInput}
+                        onChange={e => setSearchInput(e.target.value)}
+                        placeholder="Search allocation, reason, notes…"
+                        autoComplete="off"
+                        spellCheck={false}
+                        aria-label="Search non-contactable records on this page"
+                        style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 13, width: '100%', paddingLeft: 8 }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </header>
 
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 0 }}>
+            <div className="db-list-body db-list-scroll">
               {loading ? (
-                <div style={{ padding: '8px' }}>
+                <div className="db-list-skel-wrap">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.09, padding: '16px 0', display: 'flex', gap: 12, borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div key={i} className="dd-case-skel db-list-skel" style={{ opacity: 1 - i * 0.09 }}>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span className="ds-skel" style={{ height: 16, width: '40%' }} />
                         <span className="ds-skel" style={{ height: 12, width: '25%' }} />
@@ -275,7 +292,8 @@ export default function NonContactablesPage() {
                   ))}
                 </div>
               ) : visibleRecords.length === 0 ? (
-                <motion.div className="ds-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} style={{ padding: '80px 0' }}>
+                <motion.div className="ds-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+
                   <PhoneOff size={32} className="ds-empty-icon" />
                   <span className="ds-empty-title">{searchInput ? 'No matches on this page' : 'No non-contactable records'}</span>
                   <span className="ds-empty-sub">
@@ -289,17 +307,17 @@ export default function NonContactablesPage() {
                   {visibleRecords.map((r, idx) => (
                     <motion.div
                       key={r.id}
-                      className="db-att-row"
-                      style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', cursor: 'default' }}
+                      className="db-att-row is-list-row"
+                      style={{ cursor: 'default' }}
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: idx * 0.03 }}
                     >
-                      <div style={{ flex: 1, marginLeft: 0, minWidth: 0 }}>
-                        <span className="db-att-label" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div className="db-list-row-main">
+                        <span className="db-att-label">
                           <PhoneOff size={13} style={{ color: 'var(--ink-tertiary)' }} />
                           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5 }} title={r.allocationId}>{shortId(r.allocationId)}</span>
                           <span className="ds-pill is-warn">{r.reason}</span>
                         </span>
-                        <div className="db-ml-tooltip-row" style={{ gap: 16, padding: 0, marginTop: 10, flexWrap: 'wrap' }}>
+                        <div className="db-list-row-meta" style={{ padding: 0, flexWrap: 'wrap' }}>
                           {r.notes && (
                             <span className="db-kpi2-foot-meta" style={{ fontSize: 11, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {r.notes}
@@ -315,7 +333,7 @@ export default function NonContactablesPage() {
                       </div>
 
                       {canDelete && (
-                        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                        <div className="db-list-row-right" style={{ flexShrink: 0 }}>
                           <button
                             type="button"
                             onClick={() => handleDelete(r.id)}

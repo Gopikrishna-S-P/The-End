@@ -173,12 +173,20 @@
 }
 
 /* ── Utilities ────────────────────────────────────────────────────────────── */
-.app-layout h1, .app-layout h2 {
+/* Element fallbacks for prose that carries no class of its own. Wrapped in
+   :where() so they weigh 0 in the cascade.
+   Unwrapped, `.app-layout h1, .app-layout h2` and `.app-layout p` are (0,1,1)
+   and outrank every single-class component rule (0,1,0) in the design system:
+   every <h1>/<h2> page title silently rendered at 600/-0.012em instead of the
+   700/-0.02em its class asked for, and every header sentence written as a <p>
+   rendered at 14-15px against the 13px the same class gives a <span>. The
+   defaults still apply to unstyled elements; any class now beats them. */
+:where(.app-layout h1, .app-layout h2) {
   font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: -0.012em;
 }
-.app-layout p { font-size: clamp(0.875rem,2vw,0.9375rem); line-height: 1.6; }
+:where(.app-layout p) { font-size: clamp(0.875rem,2vw,0.9375rem); line-height: 1.6; }
 
 .app-layout .sr-only,
 .sr-only {

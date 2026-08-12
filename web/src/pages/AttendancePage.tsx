@@ -103,13 +103,12 @@ export default function AttendancePage() {
   const dispatchDayLabel = new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return (
-    <div className="dd-page">
+    <div className="dd-page db-fill-root">
       <div className="dd-page-header">
         <div className="dd-page-titles">
-          <h1 className="dd-page-title">Attendance</h1>
           <span className="dd-page-context">Daily staff check-in log</span>
         </div>
-        <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="db-list-page-actions">
           <div className="dd-date-nav">
             <div className="dd-date-display" onClick={() => dateInputRef.current?.showPicker?.()}>
               <button type="button" className="dd-date-arrow" onClick={(e) => { e.stopPropagation(); shiftDate(-1); }} aria-label="Previous day">
@@ -124,22 +123,24 @@ export default function AttendancePage() {
             <input ref={dateInputRef} type="date" value={date}
               onChange={e => { setDate(e.target.value); setPage(0); }} className="dd-date-input-hidden" />
           </div>
-          <button type="button" onClick={() => load(date, page)} disabled={loading}
-            className="ds-btn is-secondary is-sm" aria-label="Refresh">
-            <RefreshCw size={14} className={loading ? 'ds-spin' : ''} />
-          </button>
-          <button type="button" onClick={exportCsv} disabled={records.length === 0 || exporting} className="ds-btn is-primary is-sm">
-            <Download size={14} /> {exporting ? 'Exporting…' : 'Export'}
-          </button>
+          <div className="db-list-btn-group">
+            <button type="button" onClick={() => load(date, page)} disabled={loading}
+              className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
+              <RefreshCw size={14} className={loading ? 'ds-spin' : ''} /> Refresh
+            </button>
+            <button type="button" onClick={exportCsv} disabled={records.length === 0 || exporting} className="ds-btn is-success">
+              <Download size={14} /> {exporting ? 'Exporting…' : 'Export'}
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="dd-main-container">
         <div className="dd-case-panel" style={{ flex: 1 }}>
-          <motion.section variants={fadeUp} className="ds-card dd-cases-card is-overflow-hidden" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div className="dd-cases-head" style={{ padding: '0 16px', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <motion.section variants={fadeUp} className="ds-card dd-cases-card is-overflow-hidden is-list-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="dd-cases-head" style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-primary)' }}>Daily Records</span>
+                <h3 className="db-list-title">Attendance</h3>
                 <AnimatePresence>
                   {!loading && total > 0 && (
                     <motion.span className="ds-pill is-neutral"
@@ -158,7 +159,7 @@ export default function AttendancePage() {
               <div className="dd-cp-list" style={{ padding: 0 }}>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="db-att-row has-border" style={{ opacity: 1 - i * 0.15, cursor: 'default', display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 16 }}>
+                    <div key={i} className="db-att-row is-list-row" style={{ opacity: 1 - i * 0.15, cursor: 'default', display: 'flex', alignItems: 'center', gap: 16 }}>
                       <span className="ds-skel" style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }} />
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span className="ds-skel" style={{ height: 14, width: '30%', borderRadius: 4 }} />
@@ -181,13 +182,13 @@ export default function AttendancePage() {
                 ) : (
                   <motion.div variants={stagger} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column' }}>
                     {records.map((r, i) => (
-                      <motion.div key={r.id} variants={fadeUp} className="db-att-row has-border" style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 16, borderBottom: i < records.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
+                      <motion.div key={r.id} variants={fadeUp} className="db-att-row is-list-row" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-secondary)', fontWeight: 600, fontSize: 13, flexShrink: 0 }}>
                            {r.userName.substring(0, 2).toUpperCase()}
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 500, color: 'var(--ink-primary)', fontSize: 14 }}>{r.userName}</div>
-                          <div style={{ fontSize: 12, color: 'var(--ink-tertiary)', display: 'flex', gap: 8, marginTop: 2 }}>
+                          <div className="db-att-label">{r.userName}</div>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-tertiary)', display: 'flex', gap: 8, marginTop: 2 }}>
                              <span>Check-in: {formatTime(r.checkedInAt)}</span>
                              {r.accuracy != null && <span>· Accuracy: {Math.round(r.accuracy)}m</span>}
                           </div>

@@ -132,7 +132,7 @@ export default function RagDocumentsPage({ headerExtra }: { headerExtra?: ReactN
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
           <motion.div variants={fadeUp} className="db-page-header">
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+            <p className="dd-page-context">
               Compliance documents Lucien retrieves from — platform-wide
             </p>
             {headerExtra}

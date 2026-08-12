@@ -96,10 +96,10 @@ export default function UploadErrorsPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <h2 className="db-kpi-title" style={{ fontSize: 20 }}>Row Errors</h2>
+                  <h2 className="dd-page-title">Row Errors</h2>
                   {id && <span className="db-kpi2-foot-meta" style={{ padding: 0 }}>/ Batch {id.substring(0, 8)}…</span>}
                 </div>
-                <span style={{ fontSize: 13, color: 'var(--ink-tertiary)', fontWeight: 400, fontFamily: 'var(--font-sans)' }}>
+                <span className="dd-page-context">
                   {totalElements.toLocaleString('en-IN')} {totalElements === 1 ? 'error' : 'errors'} found
                 </span>
               </div>
@@ -128,7 +128,7 @@ export default function UploadErrorsPage() {
             </motion.div>
           )}
 
-          <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', ...(filtered.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
+          <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card is-list-card is-flush" style={{ display: 'flex', flexDirection: 'column' }}>
             <header className="db-card-head">
               {allColumns.length > 1 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

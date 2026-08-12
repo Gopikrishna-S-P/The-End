@@ -6,10 +6,12 @@ import { npaApi, type RiskReportResponse, type RiskRecordResponse } from '../api
 import type { NpaRiskLevel } from '../types';
 import {
   ShieldAlert, AlertCircle, RefreshCw,
-  CheckCircle2, X, Loader2, TrendingUp, Wallet, Percent, ListFilter,
+  CheckCircle2, X, Loader2, ListFilter,
 } from 'lucide-react';
 import { Pagination } from '../components/Pagination';
+import { Modal, FormSection } from './PlatformSetupShared';
 import './Dashboard.css';
+import '../styles/PlatformSetupPage.css';
 
 // This screen deliberately never prints the word "NPA" anywhere in its copy —
 // see web/docs/design-dna.md: "every loan is already an NPA; never surface the
@@ -51,6 +53,7 @@ export default function PortfolioRiskPage() {
   const [reportError, setReportError] = useState<string | null>(null);
 
   const [riskFilter, setRiskFilter] = useState<NpaRiskLevel | 'ALL'>('ALL');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [records, setRecords] = useState<RiskRecordResponse[]>([]);
   const [totalPages, setTotalPages] = useState(0);
@@ -129,7 +132,6 @@ export default function PortfolioRiskPage() {
   }
 
   const counts = report?.countByRiskLevel ?? {};
-  const amounts = report?.amountByRiskLevel ?? {};
 
   return (
     <div className="db-root db-fill-root" style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -147,13 +149,20 @@ export default function PortfolioRiskPage() {
       <div className="db-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1, paddingBottom: 36 }}>
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
-          <div className="db-kpi-header">
-            <h2 className="db-kpi-title">Portfolio Risk</h2>
+          <div className="db-page-header">
+            <div className="db-page-header-left">
+              <p className="dd-page-context">
+                Review portfolio risk and manage flagged cases
+              </p>
+            </div>
             <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 12 }}>
               <input type="date" value={date} max={todayStr()} onChange={e => setDate(e.target.value)}
                 className="ds-input" style={{ height: 32, fontSize: 13, width: 148 }} />
-              <button type="button" onClick={loadReport} disabled={reportLoading} className="ds-btn is-secondary" style={{ height: 32 }} title="Refresh">
-                <RefreshCw size={13} className={reportLoading ? 'ds-spin' : ''} />
+              <button type="button" onClick={() => setFilterOpen(true)} className={`ds-btn ${riskFilter !== 'ALL' ? 'is-primary' : 'is-secondary'}`} style={{ height: 32 }}>
+                <ListFilter size={13} /> Filter
+              </button>
+              <button type="button" onClick={loadReport} disabled={reportLoading} className="ds-btn is-secondary" style={{ height: 32 }}>
+                <RefreshCw size={13} className={reportLoading ? 'ds-spin' : ''} /> Refresh
               </button>
               {canFlag && (
                 <button type="button" onClick={() => setShowSweep(v => !v)} className="ds-btn is-primary" style={{ height: 32 }}>
@@ -190,82 +199,31 @@ export default function PortfolioRiskPage() {
             </div>
           )}
 
-          {/* ── KPI Band ── */}
-          <motion.div variants={fadeUp} className="db-kpi-band">
-            <div className="db-kpi2-card">
-              <div className="db-kpi2-top"><span className="db-kpi2-label">Flagged cases</span><span className="db-kpi2-icon"><ShieldAlert size={14} /></span></div>
-              <span className="db-kpi2-value">{reportLoading ? '—' : fmtNum(report?.totalNpaCount)}</span>
-              <div className="db-kpi2-sub"><span className="db-kpi2-sub-meta">As of {fmtDate(report?.reportDate ?? date)}</span></div>
-            </div>
-            <div className="db-kpi2-card is-accent">
-              <div className="db-kpi2-top"><span className="db-kpi2-label">Amount at risk</span><span className="db-kpi2-icon"><Wallet size={14} /></span></div>
-              <span className="db-kpi2-value">{reportLoading ? '—' : fmtINR(report?.totalNpaAmount)}</span>
-              <div className="db-kpi2-sub"><span className="db-kpi2-sub-meta">Outstanding on flagged cases</span></div>
-            </div>
-            <div className="db-kpi2-card">
-              <div className="db-kpi2-top"><span className="db-kpi2-label">Risk ratio</span><span className="db-kpi2-icon"><Percent size={14} /></span></div>
-              <span className="db-kpi2-value">{reportLoading ? '—' : `${Number(report?.npaRatioPct ?? 0).toFixed(1)}%`}</span>
-              <div className="db-kpi2-sub"><span className="db-kpi2-sub-meta">Of the active book</span></div>
-            </div>
-            <div className="db-kpi2-card">
-              <div className="db-kpi2-top"><span className="db-kpi2-label">Critical</span><span className="db-kpi2-icon"><TrendingUp size={14} /></span></div>
-              <span className="db-kpi2-value">{reportLoading ? '—' : fmtNum(counts.CRITICAL ?? 0)}</span>
-              <div className="db-kpi2-sub"><span className="db-kpi2-sub-meta">{fmtINR(amounts.CRITICAL ?? 0)} outstanding</span></div>
-            </div>
-          </motion.div>
-
           {/* ── Records table ── */}
-          <div className="db-grid" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-            <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', ...(records.length > 0 ? { flex: 1, minHeight: 0 } : {}) }}>
-                <header className="db-card-head">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <ListFilter size={13} style={{ color: 'var(--ink-tertiary)' }} />
-                    <button type="button" onClick={() => { setRiskFilter('ALL'); setPage(0); }}
-                      className={`ds-btn is-sm ${riskFilter === 'ALL' ? 'is-primary' : 'is-secondary'}`}>
-                      All
-                    </button>
-                    {RISK_LEVELS.map(lvl => (
-                      <button key={lvl} type="button" onClick={() => { setRiskFilter(lvl); setPage(0); }}
-                        className={`ds-btn is-sm ${riskFilter === lvl ? 'is-primary' : 'is-secondary'}`}>
-                        {lvl}<span className={`ds-pill ${RISK_PILL[lvl]}`} style={{ marginLeft: 6 }}>{fmtNum(counts[lvl] ?? 0)}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {totalPages > 1 && !recordsLoading && (
-                    <Pagination
-                      embedded
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={setPage}
-                      totalElements={totalElements}
-                      itemLabel="loans"
-                    />
-                  )}
-                </header>
-
-                <div className="ds-table-wrap" style={{ border: 'none', borderRadius: 0, flex: 1, overflow: 'auto' }}>
-                  <table className="ds-table">
+          {/* ── Records table ── */}
+          <motion.div variants={fadeUp} className="ds-table-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                <div className="ds-table-wrap" style={{ flex: 1, overflow: 'auto' }}>
+                  <table className="ds-table is-no-row-hover ps-table">
                     <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                        <th style={{ padding: '12px 16px', paddingLeft: 24 }}>Loan / Borrower</th>
-                        <th style={{ padding: '12px 16px' }}>Risk</th>
-                        <th className="is-right" style={{ padding: '12px 16px' }}>Overdue days</th>
-                        <th className="is-right" style={{ padding: '12px 16px' }}>Outstanding</th>
-                        <th style={{ padding: '12px 16px' }}>Last payment</th>
-                        <th style={{ padding: '12px 16px', paddingRight: 24 }} />
+                      <tr>
+                        <th style={{ width: '30%' }}>Loan / Borrower</th>
+                        <th style={{ width: '15%' }}>Risk</th>
+                        <th className="is-right" style={{ width: '15%' }}>Overdue days</th>
+                        <th className="is-right" style={{ width: '20%' }}>Outstanding</th>
+                        <th style={{ width: '15%' }}>Last payment</th>
+                        <th style={{ width: '5%' }} />
                       </tr>
                     </thead>
                     <tbody>
                       {recordsLoading ? (
                         Array.from({ length: 6 }).map((_, i) => (
-                          <tr key={i} style={{ opacity: 1 - i * 0.12, borderBottom: '1px solid var(--border-subtle)' }}>
-                            <td style={{ padding: '12px 16px', paddingLeft: 24 }}><span className="ds-skel" style={{ height: 14, width: '60%' }} /></td>
-                            <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 60 }} /></td>
-                            <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 40, marginLeft: 'auto' }} /></td>
-                            <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 70, marginLeft: 'auto' }} /></td>
-                            <td style={{ padding: '12px 16px' }}><span className="ds-skel" style={{ height: 14, width: 70 }} /></td>
-                            <td style={{ padding: '12px 16px', paddingRight: 24 }} />
+                          <tr key={i} style={{ opacity: 1 - i * 0.12 }}>
+                            <td><span className="ds-skel" style={{ height: 14, width: '60%' }} /></td>
+                            <td><span className="ds-skel" style={{ height: 14, width: 60 }} /></td>
+                            <td><span className="ds-skel" style={{ height: 14, width: 40, marginLeft: 'auto' }} /></td>
+                            <td><span className="ds-skel" style={{ height: 14, width: 70, marginLeft: 'auto' }} /></td>
+                            <td><span className="ds-skel" style={{ height: 14, width: 70 }} /></td>
+                            <td />
                           </tr>
                         ))
                       ) : records.length === 0 ? (
@@ -281,16 +239,16 @@ export default function PortfolioRiskPage() {
                       ) : (
                         records.map((r, i) => (
                           <motion.tr key={r.allocationId} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.24, delay: i * 0.02 }} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                            <td style={{ padding: '12px 16px', paddingLeft: 24 }}>
+                            transition={{ duration: 0.24, delay: i * 0.02 }}>
+                            <td>
                               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--ink-primary)' }}>{r.loanNumber ?? '—'}</div>
                               <div style={{ fontSize: 12, color: 'var(--ink-tertiary)' }}>{r.borrowerName ?? '—'}</div>
                             </td>
-                            <td style={{ padding: '12px 16px' }}><span className={`ds-pill ${RISK_PILL[r.riskLevel]}`}>{r.riskLevel}</span></td>
-                            <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-primary)' }}>{r.overdueDays}d</td>
-                            <td className="is-right" style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--ink-secondary)' }}>{fmtINR(r.outstandingAmount)}</td>
-                            <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--ink-secondary)' }}>{fmtDate(r.lastPaymentDate)}</td>
-                            <td style={{ padding: '12px 16px', paddingRight: 24, textAlign: 'right' }}>
+                            <td><span className={`ds-pill ${RISK_PILL[r.riskLevel]}`}>{r.riskLevel}</span></td>
+                            <td className="is-right" style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--ink-primary)' }}>{r.overdueDays}d</td>
+                            <td className="is-right" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-secondary)' }}>{fmtINR(r.outstandingAmount)}</td>
+                            <td style={{ fontSize: 12, color: 'var(--ink-secondary)' }}>{fmtDate(r.lastPaymentDate)}</td>
+                            <td style={{ textAlign: 'right' }}>
                               <button type="button" onClick={() => handleResolve(r.id)} disabled={resolvingId === r.id}
                                 className="ds-btn is-secondary is-sm">
                                 {resolvingId === r.id ? <Loader2 size={12} className="ds-spin" /> : <CheckCircle2 size={12} />}
@@ -303,11 +261,40 @@ export default function PortfolioRiskPage() {
                     </tbody>
                   </table>
                 </div>
-              </motion.section>
-            </div>
-          </div>
+                {totalPages > 1 && !recordsLoading && (
+                  <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)' }}>
+                    <Pagination
+                      embedded
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                      totalElements={totalElements}
+                      itemLabel="loans"
+                    />
+                  </div>
+                )}
+          </motion.div>
         </motion.div>
       </div>
+
+      {filterOpen && (
+        <Modal title="Filter risk cases" subtitle="Filter the portfolio by risk level" onClose={() => setFilterOpen(false)}>
+          <FormSection title="Risk Level">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <button type="button" onClick={() => { setRiskFilter('ALL'); setPage(0); setFilterOpen(false); }}
+                className={`ds-btn is-sm ${riskFilter === 'ALL' ? 'is-primary' : 'is-secondary'}`}>
+                All
+              </button>
+              {RISK_LEVELS.map(lvl => (
+                <button key={lvl} type="button" onClick={() => { setRiskFilter(lvl); setPage(0); setFilterOpen(false); }}
+                  className={`ds-btn is-sm ${riskFilter === lvl ? 'is-primary' : 'is-secondary'}`}>
+                  {lvl}<span className={`ds-pill ${RISK_PILL[lvl]}`} style={{ marginLeft: 6 }}>{fmtNum(counts[lvl] ?? 0)}</span>
+                </button>
+              ))}
+            </div>
+          </FormSection>
+        </Modal>
+      )}
     </div>
   );
 }

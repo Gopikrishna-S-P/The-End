@@ -215,12 +215,12 @@ export default function UploadsPage() {
   }
 
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root">
       <div className="db-content">
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
 
           <div className="db-kpi-header" style={{ gap: 24, flexWrap: 'wrap', minHeight: 48, justifyContent: 'space-between' }}>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-tertiary)', margin: 0 }}>
+            <p className="dd-page-context">
               You have <strong>{fmtNum(filesAnim)} files</strong> with <strong>{fmtNum(rowsAnim)} rows</strong>, <span style={{ color: failedAnim > 0 ? 'var(--error)' : 'inherit', fontWeight: failedAnim > 0 ? 500 : 'inherit' }}>{fmtNum(failedAnim)} failed</span> and <span style={{ color: inFlightCount > 0 ? 'var(--warning)' : 'inherit', fontWeight: inFlightCount > 0 ? 500 : 'inherit' }}>{fmtNum(inFlightCount)} processing</span>.
             </p>
             <div className="db-kpi-toggle" style={{ border: 'none', background: 'transparent', padding: 0, gap: 16, alignItems: 'center' }}>
@@ -234,8 +234,8 @@ export default function UploadsPage() {
           {/* ── Uploads List ── */}
           <div className="db-grid">
             <div className="db-span-12">
-              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card" style={{ display: 'flex', flexDirection: 'column', paddingTop: 0 }}>
-                <header className="db-card-head" style={{ borderBottom: 'none', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <motion.section variants={fadeUp} className="ds-card is-overflow-hidden db-card is-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                <header className="db-card-head" style={{ borderBottom: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)' }}>Uploads</h3>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
@@ -355,8 +355,8 @@ export default function UploadsPage() {
                       const isFailed = u.status === 'FAILED' || (u.failedRows ?? 0) > 0;
                       return (
                           <motion.button key={u.id} variants={fadeUp}
-                            className="db-att-row"
-                            style={{ borderBottom: '1px solid var(--border-subtle)', padding: '12px 16px', borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
+                            className="db-att-row is-list-row"
+                            style={{ borderRadius: 0, width: '100%', textAlign: 'left', background: 'transparent' }}
                           onClick={() => navigate(`${basePath}/uploads/${u.id}/data`)}
                           whileHover={{ background: 'var(--bg-subtle)' }}>
 
@@ -417,22 +417,13 @@ export default function UploadsPage() {
                 </div>
 
                 {(totalPages ?? 0) > 1 && (
-                  <footer className="up-pagination" style={{ padding: '12px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                    <span className="up-page-meta" style={{ fontSize: 13, color: 'var(--ink-secondary)' }}>
-                      Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong>
-                      {' · '}<strong>{totalElements.toLocaleString('en-IN')}</strong> files
-                    </span>
-                    <div style={{ marginLeft: 'auto' }}>
-                      <Pagination
-                        embedded
-                        currentPage={page}
-                        totalPages={totalPages}
-                        onPageChange={setPage}
-                        totalElements={totalElements}
-                        itemLabel="files"
-                      />
-                    </div>
-                  </footer>
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                    totalElements={totalElements}
+                    itemLabel="files"
+                  />
                 )}
               </motion.section>
             </div>

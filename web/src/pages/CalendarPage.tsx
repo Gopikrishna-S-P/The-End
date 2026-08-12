@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   CalendarOff, Plus, Loader2, AlertCircle, X, Save, Trash2,
-  ChevronLeft, ChevronRight, Settings2, Search, CheckCircle2, XCircle,
+  Settings2, Search, CheckCircle2, XCircle,
 } from 'lucide-react';
 import { calendarApi } from '../api/calendarApi';
 import { useAuth } from '../AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { extractApiError } from '../utils/extractApiError';
 import type { HolidayCalendar, AgentCapacityConfig } from '../types';
+import { Pagination } from '../components/Pagination';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 
@@ -151,7 +152,7 @@ export default function CalendarPage() {
     <div className="db-root">
       <AnimatePresence>
         {error && (
-          <motion.div key="toast-err" className="db-error-banner" role="alert" style={{ marginBottom: 24 }}
+          <motion.div key="toast-err" className="db-error-banner is-list-banner" role="alert"
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
             <AlertCircle size={16} aria-hidden="true" className="db-error-icon" />
@@ -170,7 +171,7 @@ export default function CalendarPage() {
               <input
                 id="cal-org-id" type="text" placeholder="Organization UUID" value={orgIdInput}
                 onChange={(e) => { setOrgIdInput(e.target.value); setPage(0); }}
-                className="ds-input" style={{ width: '100%', height: 36 }}
+                className="ds-input" style={{ width: '100%' }}
               />
             </motion.div>
           )}
@@ -211,7 +212,7 @@ export default function CalendarPage() {
                     <span>Allow holiday assignments</span>
                   </label>
                   {isAdmin && (
-                    <button type="button" className="ds-btn is-primary" disabled={!configDirty || configSaving} onClick={handleSaveConfig} style={{ height: 36, marginLeft: 'auto' }}>
+                    <button type="button" className="ds-btn is-primary" disabled={!configDirty || configSaving} onClick={handleSaveConfig} style={{ marginLeft: 'auto' }}>
                       {configSaving ? <Loader2 size={14} className="ds-spin" /> : <Save size={14} />}
                       Save config
                     </button>
@@ -235,7 +236,7 @@ export default function CalendarPage() {
                 <label className="ds-label" htmlFor="cal-check-date">Date</label>
                 <input id="cal-check-date" type="date" value={checkDate} onChange={(e) => { setCheckDate(e.target.value); setCheckResult(null); }} className="ds-input" />
               </div>
-              <button type="button" className="ds-btn is-secondary" disabled={!orgId || !checkDate || checking} onClick={handleCheckDate} style={{ height: 36 }}>
+              <button type="button" className="ds-btn is-secondary" disabled={!orgId || !checkDate || checking} onClick={handleCheckDate}>
                 {checking ? <Loader2 size={14} className="ds-spin" /> : 'Check'}
               </button>
               {checkResult !== null && (
@@ -263,7 +264,7 @@ export default function CalendarPage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button type="submit" className="ds-btn is-primary" disabled={saving || !newDate} style={{ height: 36 }}>
+                    <button type="submit" className="ds-btn is-primary" disabled={saving || !newDate}>
                       {saving ? <Loader2 size={14} className="ds-spin" /> : <Save size={14} />}
                       Add holiday
                     </button>
@@ -274,16 +275,16 @@ export default function CalendarPage() {
           </AnimatePresence>
 
           {/* ── Holidays table ── */}
-          <motion.section variants={fadeUp} className="ds-card db-card" style={{ marginTop: 0 }}>
-            <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px' }}>
+          <motion.section variants={fadeUp} className="ds-card db-card is-list-card is-flush" style={{ marginTop: 0 }}>
+            <header className="db-card-head db-list-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 className="db-card-title">Holiday Calendar</h2>
+                <h2 className="db-list-title">Holiday Calendar</h2>
                 {!loading && totalElements > 0 && (
                   <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>/ {totalElements.toLocaleString('en-IN')} holidays</span>
                 )}
               </div>
               {isAdmin && (
-                <button type="button" onClick={() => { setShowAdd(v => !v); setError(null); }} className={`ds-btn ${showAdd ? 'is-secondary' : 'is-primary'}`} style={{ height: 36 }}>
+                <button type="button" onClick={() => { setShowAdd(v => !v); setError(null); }} className={`ds-btn ${showAdd ? 'is-secondary' : 'is-primary'}`}>
                   {showAdd ? <X size={14} /> : <Plus size={14} />}
                   {showAdd ? 'Cancel' : 'Add holiday'}
                 </button>
@@ -349,13 +350,13 @@ export default function CalendarPage() {
             </div>
 
             {totalPages > 1 && !loading && (
-              <div className="up-pagination" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                <span className="up-page-meta">Page <strong>{page + 1}</strong> of <strong>{totalPages}</strong> · <strong>{totalElements.toLocaleString('en-IN')}</strong> holidays</span>
-                <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} aria-label="Previous page"><ChevronLeft size={14} /></button>
-                  <button type="button" className="up-page-btn" onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page + 1 >= totalPages} aria-label="Next page"><ChevronRight size={14} /></button>
-                </div>
-              </div>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalElements={totalElements}
+                itemLabel="holidays"
+              />
             )}
           </motion.section>
         </motion.div>

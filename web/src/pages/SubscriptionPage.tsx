@@ -162,7 +162,7 @@ export default function SubscriptionPage() {
           <header className="db-card-head" style={{ marginBottom: 20, padding: 0, background: 'transparent', border: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <h2 className="db-card-title" style={{ fontSize: 20 }}>Billing & Plans</h2>
+                <h2 className="dd-page-title">Billing &amp; Plans</h2>
               </div>
             </div>
           </header>
@@ -208,7 +208,7 @@ export default function SubscriptionPage() {
                   )}
                 </div>
                 {canManage && sub.hasStripeCustomer && sub.status === 'ACTIVE' && (
-                  <button type="button" className="ds-btn is-secondary" onClick={handlePortal} disabled={btnLoad === 'portal'} style={{ height: 36 }}>
+                  <button type="button" className="ds-btn is-secondary" onClick={handlePortal} disabled={btnLoad === 'portal'}>
                     {btnLoad === 'portal' ? <Loader2 size={14} className="ds-spin" style={{ marginRight: 6 }} /> : <CreditCard size={14} style={{ marginRight: 6 }} />}
                     Manage billing
                     <ExternalLink size={13} style={{ marginLeft: 6, color: 'var(--ink-tertiary)' }} />
