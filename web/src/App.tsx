@@ -31,7 +31,6 @@ import RoleManagementPage from './pages/RoleManagementPage';
 import UploadErrorsPage from './pages/UploadErrorsPage';
 import UploadDataPage from './pages/UploadDataPage';
 import SubscriptionPage from './pages/SubscriptionPage';
-import UnassignedCasesPage from './pages/UnassignedCasesPage';
 import DailyDispatchPage from './pages/DailyDispatchPage';
 import TodayVisitsPage from './pages/TodayVisitsPage';
 import VisitSubmitPage from './pages/VisitSubmitPage';
@@ -184,7 +183,6 @@ function App() {
                   <Route path="/app/dashboard" element={<Dashboard />} />
                   <Route path="/app/allocations" element={<LoansPage />} />
                   <Route path="/app/allocations/:id" element={<LoanDetailPage />} />
-                  <Route path="/app/cases/unassigned" element={<UnassignedCasesPage />} />
                   <Route path="/app/assignments" element={<CaseAssignmentsPage />} />
                   <Route path="/app/collections" element={<CollectionsPage />} />
                   <Route path="/app/collections/trend" element={<CollectionMomPage />} />

@@ -19,8 +19,12 @@
 
 /* ── Map card ─────────────────────────────────────────────────────────────────── */
 
+/* Was flex: 0 0 55% — a leftover from an older side-by-side map/roster split
+   that no longer exists. The map now owns its whole card, so it should fill
+   it fully instead of being capped at 55% of the available height. */
 .fo-map-panel {
-  flex: 0 0 55%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -86,6 +90,62 @@
   color: var(--text-on-solid);
 }
 
+/* Expand/collapse toggle — grows the map to fill the whole page row (the
+   sidebar hides), still inside the app's own layout/nav chrome, not the
+   browser's real Fullscreen API. Same floating-badge treatment as
+   .fo-map-badge: translucent surface so it reads against unpredictable
+   tile colours underneath. */
+.fo-map-expand-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  color: var(--ink-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+.fo-map-expand-btn:hover { background: var(--bg-hover); }
+
+/* Leaflet's own zoom control (+/-, top-left by default) ships with the
+   library's stock look — plain white squares, #ccc borders, sharp corners —
+   which clashed against the expand button and badges above, which are
+   themed to the app's tokens. Same translucent-surface treatment, so every
+   floating control on this map now reads as one family. */
+.fo-map-wrap .leaflet-control-zoom {
+  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  overflow: hidden;
+}
+.fo-map-wrap .leaflet-control-zoom a {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--ink-primary);
+  border: none;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  transition: background var(--dur-fast);
+}
+.fo-map-wrap .leaflet-control-zoom a:hover {
+  background: var(--bg-hover);
+  color: var(--ink-primary);
+}
+.fo-map-wrap .leaflet-control-zoom-in {
+  border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
 /* Map empty / disconnect overlay */
 .fo-map-overlay {
   position: absolute;
@@ -144,6 +204,92 @@
   50%       { box-shadow: 0 0 0 7px color-mix(in srgb, var(--danger-solid) 10%, transparent); }
 }
 
+/* ── Page context sentence ────────────────────────────────────────────────────
+   Was riding .db-section-label, which is a 10px letter-spaced mono "eyebrow"
+   label, not a readable sentence. Matches Daily Dispatch's .dd-page-context —
+   the app's actual reference for a page-level descriptive sentence — instead:
+   13px sans, normal tracking, no separate big title above it. */
+.fo-page-context {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-tertiary);
+}
+
+/* ── Selected-agent detail footer ─────────────────────────────────────────────
+   Lives inside the Officers card itself now, as a bottom section — matches
+   Daily Dispatch's .dd-agent-stats-footer (a border-top strip inside the
+   same card), not a second stacked card with its own border/shadow/margin. */
+.fo-detail-footer {
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Sidebar tabs ─────────────────────────────────────────────────────────────
+   Segmented-control style, matching Daily Dispatch's .dd-cp-tabs (the app's
+   reference tab treatment) rather than the range-toggle pill used elsewhere —
+   a raised active tab on a subtle track, not an underline. */
+.fo-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  flex-shrink: 0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+.fo-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  height: auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 5px;
+  transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
+  white-space: nowrap;
+}
+
+.fo-tab:hover { color: var(--text-primary); }
+
+.fo-tab.is-active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.fo-tab-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fo-tab.is-active .fo-tab-count { color: var(--ink-solid); }
+
+/* Incidents tab carries its own urgency colour regardless of active state —
+   an open SOS should read as red whether or not you're currently looking
+   at that tab. */
+.fo-tab-count.is-danger { color: var(--danger); }
+.fo-tab.is-active .fo-tab-count.is-danger { color: var(--danger); }
+
 /* ── Active agents card ───────────────────────────────────────────────────────── */
 
 /* Page-specific layout. Card chrome (bg/border/radius/shadow) from .ds-card. */
@@ -199,9 +345,12 @@
 }
 
 .fo-roster-row:last-child { border-bottom: none; }
+.fo-roster-row { cursor: pointer; }
 .fo-roster-row:hover { background: var(--bg-subtle); }
 .fo-roster-row.is-sos { background: color-mix(in srgb, var(--danger-solid) 3%, transparent); }
 .fo-roster-row.is-sos:hover { background: color-mix(in srgb, var(--danger-solid) 6%, transparent); }
+.fo-roster-row.is-selected { background: var(--bg-subtle); }
+.fo-roster-row.is-offline { opacity: 0.55; }
 
 .fo-roster-avatar {
   width: 28px;

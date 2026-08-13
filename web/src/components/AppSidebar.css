@@ -578,7 +578,7 @@
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
-  color: #98A2B3;
+  color: var(--text-placeholder);
   cursor: pointer;
   transition: all var(--dur-fast);
   margin-left: 2px;
@@ -589,9 +589,9 @@
    cursor is the one control here most likely to be clicked twice in a row.
    Colour carries the state, as everywhere else in this rail. */
 .asb-root .asb-footer-logout-icon:hover {
-  background: #FEF3F2;
-  border-color: #FECACA;
-  color: #DC2626;
+  background: var(--danger-subtle);
+  border-color: var(--danger-border);
+  color: var(--danger);
 }
 
 .asb-root .asb-footer-logout-icon:focus-visible {

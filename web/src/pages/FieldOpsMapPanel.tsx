@@ -1,8 +1,9 @@
-import { Fragment, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-leaflet';
+import { Fragment, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Circle, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Navigation2, AlertTriangle, WifiOff } from 'lucide-react';
+import { Navigation2, AlertTriangle, WifiOff, Maximize2, Minimize2 } from 'lucide-react';
 import type { AgentDot } from '../hooks/useLiveTrackSocket';
+import { useAnimatedAgentPositions } from '../hooks/useAnimatedAgentPositions';
 import {
   TILE_LIGHT_URL, TILE_DARK_URL, TILE_ATTRIB, STREET_ZOOM, CITY_ZOOM,
   type WsStatus,
@@ -14,9 +15,47 @@ interface Props {
   openAgentIds: Set<string>;
   openCount: number;
   mapCenter: [number, number];
+  selectedAgentId: string | null;
   isDark: boolean;
   wsStatus: WsStatus;
   onSelect: (agent: AgentDot) => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}
+
+// Leaflet measures its container's size once at mount and never re-checks
+// on its own — it has no idea when a CSS/flex layout change (the expand
+// toggle, a window resize, the sidebar hiding) makes its box taller or
+// wider later. Without this, the map's own tile canvas can end up smaller
+// than its container, leaving a blank/gray strip at the edge. A
+// ResizeObserver on the map's real DOM container tells Leaflet to
+// re-measure any time that box's actual size changes.
+function InvalidateOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
+// Pans/zooms the map to the selected agent exactly once per selection —
+// not on every ping while they stay selected, so it doesn't fight the
+// supervisor's own panning/zooming once they've looked where they wanted.
+function FlyToSelected({ selectedId, agents }: { selectedId: string | null; agents: Map<string, AgentDot> }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!selectedId) return;
+    const agent = agents.get(selectedId);
+    if (!agent) return;
+    map.flyTo([agent.lat, agent.lng], STREET_ZOOM, { duration: 1 });
+    // Only the selection itself should retrigger the fly-to, not subsequent
+    // position pings for the already-selected agent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+  return null;
 }
 
 // Colour + shape by state, ported from the old LiveTrackPage.tsx's makeIcon()
@@ -48,10 +87,15 @@ function makeAgentIcon(agent: AgentDot, hasSos: boolean) {
 
 const TRAIL_LEN = 20;
 
-export function FieldOpsMapPanel({ agents, agentList, openAgentIds, openCount, mapCenter, isDark, wsStatus, onSelect }: Props) {
+export function FieldOpsMapPanel({ agents, agentList, openAgentIds, openCount, mapCenter, selectedAgentId, isDark, wsStatus, onSelect, isExpanded, onToggleExpand }: Props) {
+  // Smoothed marker positions — glides toward each new ping over ~2s instead
+  // of snapping, so movement reads as continuous rather than a series of jumps.
+  const animatedPositions = useAnimatedAgentPositions(agents);
+
   // Breadcrumb history — last 20 positions per agent, kept across renders in a
   // ref (not state) since it's purely a rendering aid and shouldn't re-trigger
-  // the effect chain that state would.
+  // the effect chain that state would. Recorded from the REAL ping positions,
+  // not the animated ones, so the trail marks actual sampled points.
   const trailsRef = useRef<Map<string, [number, number][]>>(new Map());
   agentList.forEach(agent => {
     const trail = trailsRef.current.get(agent.agentId) ?? [];
@@ -70,36 +114,38 @@ export function FieldOpsMapPanel({ agents, agentList, openAgentIds, openCount, m
           style={{ height: '100%', width: '100%' }} scrollWheelZoom maxZoom={19}>
           <TileLayer attribution={TILE_ATTRIB} url={isDark ? TILE_DARK_URL : TILE_LIGHT_URL}
             maxZoom={19} key={isDark ? 'dark' : 'light'} />
+          <InvalidateOnResize />
+          <FlyToSelected selectedId={selectedAgentId} agents={agents} />
           {agentList.map(agent => {
             const hasSos = openAgentIds.has(agent.agentId);
             const color = dotColor(agent, hasSos);
             const trail = trailsRef.current.get(agent.agentId) ?? [];
+            const pos = animatedPositions.get(agent.agentId) ?? [agent.lat, agent.lng];
             return (
               <Fragment key={agent.agentId}>
                 {agent.accuracy > 0 && (
-                  <Circle center={[agent.lat, agent.lng]} radius={agent.accuracy}
+                  <Circle center={pos} radius={agent.accuracy}
                     pathOptions={{ color, fillColor: color, fillOpacity: 0.07, weight: 1, opacity: 0.25 }} />
                 )}
                 {trail.length > 1 && (
                   <Polyline positions={trail} pathOptions={{ color, weight: 2, opacity: 0.45, dashArray: '5 5' }} />
                 )}
-                <Marker position={[agent.lat, agent.lng]} icon={makeAgentIcon(agent, hasSos)}
-                  eventHandlers={{ click: () => onSelect(agent) }}>
-                  <Popup>
-                    <strong>{agent.agentName ?? 'Unknown agent'}</strong>
-                    <br />{agent.online ? (agent.visitSessionId ? 'Active visit' : 'On shift') : 'Offline'}
-                    {agent.accuracy > 0 && <><br />±{agent.accuracy.toFixed(0)} m accuracy</>}
-                    {agent.speed    != null && <><br />{(agent.speed * 3.6).toFixed(1)} km/h</>}
-                    <br />{new Date(agent.ts).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}
-                    {hasSos && (
-                      <><br /><span style={{ color: 'var(--danger)', fontWeight: 600 }}>⚠ SOS active</span></>
-                    )}
-                  </Popup>
-                </Marker>
+                {/* No Leaflet Popup here — clicking already opens the sidebar
+                    detail panel, which shows everything this would have
+                    (name/status/accuracy/speed) plus more (heading, battery,
+                    mock-GPS), so a popup bubble would only duplicate it. */}
+                <Marker position={pos} icon={makeAgentIcon(agent, hasSos)}
+                  eventHandlers={{ click: () => onSelect(agent) }} />
               </Fragment>
             );
           })}
         </MapContainer>
+
+        <button type="button" className="fo-map-expand-btn" onClick={onToggleExpand}
+          aria-label={isExpanded ? 'Collapse map' : 'Expand map to full page'}
+          title={isExpanded ? 'Collapse map' : 'Expand map to full page'}>
+          {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+        </button>
 
         <div className="fo-map-badges">
           <span className="fo-map-badge"><span className="fo-map-badge-dot" />{agents.size} live</span>

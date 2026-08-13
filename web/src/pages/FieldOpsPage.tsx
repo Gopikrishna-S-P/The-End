@@ -32,73 +32,6 @@ const fadeIn: Variants = {
   show:   { opacity: 1, transition: { duration: 0.28, ease: 'easeOut' as const } },
 };
 
-// ── Ripple hook ────────────────────────────────────────────────────────────────
-
-function useRipple<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const fire = useCallback((e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 2.2;
-    const span = document.createElement('span');
-    span.className = 'db-ripple';
-    span.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
-    el.appendChild(span);
-    span.addEventListener('animationend', () => span.remove(), { once: true });
-  }, []);
-  return { ref, fire };
-}
-
-// ── Count-up animation ────────────────────────────────────────────────────────
-
-function useCountUp(target: number, duration = 900) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (target === 0) { setVal(0); return; }
-    let start: number | null = null;
-    const frame = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setVal(Math.round(eased * target));
-      if (p < 1) requestAnimationFrame(frame);
-    };
-    const id = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(id);
-  }, [target, duration]);
-  return val;
-}
-
-// ── KPI card ──────────────────────────────────────────────────────────────────
-
-function KpiCard({ label, value, footer, icon: Icon, accent, warn, danger, onClick }: {
-  label: string; value: string | number;
-  footer?: React.ReactNode;
-  icon?: React.ElementType; accent?: boolean; warn?: boolean; danger?: boolean;
-  onClick?: () => void;
-}) {
-  const { ref, fire } = useRipple<HTMLButtonElement>();
-  return (
-    <motion.button ref={ref} type="button" variants={fadeUp}
-      className={`db-kpi2-card${accent ? ' is-accent' : ''}${warn ? ' is-warn' : ''}${danger ? ' is-danger' : ''}${onClick ? ' is-hoverable' : ''}`}
-      onClick={e => { fire(e); onClick?.(); }} disabled={!onClick}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
-    >
-      <div className="db-kpi2-top">
-        <span className="db-kpi2-label">{label}</span>
-        {Icon && <span className="db-kpi2-icon"><Icon size={14} aria-hidden="true" /></span>}
-      </div>
-      <div className="db-kpi2-value-row">
-        <span className="db-kpi2-value">{value}</span>
-      </div>
-      {footer && <div className="db-kpi2-footer">{footer}</div>}
-    </motion.button>
-  );
-}
-
 export default function FieldOpsPage() {
   const { user } = useAuth();
   const orgId = user?.organizationId ?? '';
@@ -117,6 +50,8 @@ export default function FieldOpsPage() {
   const [resolveNotes,        setResolveNotes]        = useState('');
   const [resolveLoading,      setResolveLoading]      = useState(false);
   const [selected,            setSelected]            = useState<AgentDot | null>(null);
+  const [mapExpanded,         setMapExpanded]         = useState(false);
+  const [sidebarTab,          setSidebarTab]          = useState<'officers' | 'incidents'>('officers');
   const [, tick] = useState(0);
 
   const seenIds      = useRef<Set<string>>(new Set());
@@ -175,7 +110,6 @@ export default function FieldOpsPage() {
   };
 
   const openCount    = incidents.filter(i => !i.resolvedAt).length;
-  const resolvedCount = incidents.filter(i => !!i.resolvedAt).length;
   const openAgentIds = new Set(incidents.filter(i => !i.resolvedAt).map(i => i.agentId));
   const agentList    = [...agents.values()].sort(
     (a, b) => (openAgentIds.has(b.agentId) ? 1 : 0) - (openAgentIds.has(a.agentId) ? 1 : 0),
@@ -184,12 +118,8 @@ export default function FieldOpsPage() {
     ? [agentList[0].lat, agentList[0].lng]
     : [20.5937, 78.9629];
 
-  const liveAgentsAnim = useCountUp(agents.size);
-  const openSosAnim = useCountUp(openCount);
-  const resolvedAnim = useCountUp(resolvedCount);
-
   return (
-    <div className="db-root">
+    <div className="db-root db-fill-root">
       <AnimatePresence>
         {newSosAlert && (
           <motion.div key="toast-err" className="ds-toast is-err" role="status"
@@ -225,131 +155,155 @@ export default function FieldOpsPage() {
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
 
+          <div className="db-page-header">
+            <div className="db-page-header-left">
+              <span className="fo-page-context">
+                Monitor field officers' live location and respond to SOS incidents in real time.
+              </span>
+            </div>
+            {/* Tabs + refresh live in the page header, top-right — hidden while
+                the map is expanded since there's no sidebar to switch between. */}
+            {!mapExpanded && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="fo-tabs">
+                  <button type="button" className={`fo-tab${sidebarTab === 'officers' ? ' is-active' : ''}`} onClick={() => setSidebarTab('officers')}>
+                    Officers<span className="fo-tab-count">{agentList.length}</span>
+                  </button>
+                  <button type="button" className={`fo-tab${sidebarTab === 'incidents' ? ' is-active' : ''}`} onClick={() => setSidebarTab('incidents')}>
+                    Incidents<span className={`fo-tab-count${openCount > 0 ? ' is-danger' : ''}`}>{openCount}</span>
+                  </button>
+                </div>
+                <button type="button" onClick={load} disabled={refreshing}
+                  className="ds-icon-btn is-sm" aria-label="Refresh incidents" title="Refresh incidents">
+                  <RefreshCw size={14} className={refreshing ? 'ds-spin' : ''} />
+                </button>
+              </div>
+            )}
+          </div>
 
           <div style={{ display: 'flex', gap: 24, flex: 1, minHeight: 0 }}>
             {/* Map Panel (Left, flex: 1) */}
             <motion.div variants={fadeUp} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 12, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
               <FieldOpsMapPanel
                 agents={agents} agentList={agentList} openAgentIds={openAgentIds}
-                openCount={openCount} mapCenter={mapCenter} isDark={isDark} wsStatus={wsStatus}
-                onSelect={setSelected}
+                openCount={openCount} mapCenter={mapCenter} selectedAgentId={selected?.agentId ?? null}
+                isDark={isDark} wsStatus={wsStatus}
+                onSelect={a => { setSelected(a); setSidebarTab('officers'); }}
+                isExpanded={mapExpanded} onToggleExpand={() => setMapExpanded(v => !v)}
               />
             </motion.div>
 
-            {/* Sidebar (Right, width: 380px) */}
+            {/* Sidebar (Right, width: 380px). Officers/Incidents share one card
+                via tabs instead of stacking two full cards — only one list is
+                ever on screen at a time, and the Incidents tab carries a
+                danger badge so an open SOS is never missed while on Officers.
+                Hidden while the map is expanded, so the map gets the full row. */}
+            {!mapExpanded && (
             <motion.div variants={fadeUp} style={{ width: 380, display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto', paddingRight: 4 }}>
-              <div className="ds-card db-card" style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-                <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <h2 className="db-card-title">Live Tracking</h2>
-                    <span className="db-section-label" style={{ padding: 0, color: 'var(--ink-tertiary)' }}>
-                      / Real-time location and SOS monitoring
-                    </span>
-                    <span className="ds-pill is-neutral" style={{ marginLeft: 8, fontSize: 10 }}>{agentList.length}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button type="button" onClick={load} disabled={refreshing}
-                      className="ds-btn is-secondary" style={{ height: 32 }} aria-label="Refresh" title="Refresh">
-                      <RefreshCw size={14} className={refreshing ? 'ds-spin' : ''} /> Refresh
-                    </button>
-                  </div>
-                </header>
-                <div className="db-card-body" style={{ padding: 0, maxHeight: 300, overflowY: 'auto' }}>
-                  {agentList.length === 0 ? (
-                    <div className="ds-empty" style={{ padding: '40px 0' }}>
-                      <Navigation2 size={24} className="ds-empty-icon" />
-                      <span className="ds-empty-title" style={{ fontSize: 13 }}>No agents on shift</span>
-                      <span className="ds-empty-sub">Officers appear here once they go live.</span>
-                    </div>
-                  ) : agentList.map(a => (
-                    <div key={a.agentId} className="db-att-row is-clickable" onClick={() => setSelected(a)}
-                      style={{
-                        borderBottom: '1px solid var(--border-subtle)', padding: '12px 20px', borderRadius: 0, cursor: 'pointer',
-                        background: openAgentIds.has(a.agentId) ? 'var(--danger-subtle)' : selected?.agentId === a.agentId ? 'var(--bg-subtle)' : 'transparent',
-                        opacity: a.online ? 1 : 0.55,
-                      }}>
-                      <span className="db-att-chip" style={{ width: 32, height: 32, flexShrink: 0, background: openAgentIds.has(a.agentId) ? 'var(--danger)' : 'var(--bg-subtle)', color: openAgentIds.has(a.agentId) ? 'var(--text-on-solid)' : 'var(--ink-solid)' }}>
-                        {`${a.agentName?.[0] ?? '?'}`.toUpperCase()}
-                      </span>
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginLeft: 12 }}>
-                        <span className="db-att-label" style={{ fontWeight: 600, color: 'var(--ink-primary)' }}>{a.agentName ?? 'Unknown'}</span>
-                        <span className="db-kpi2-foot-meta" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <MapPin size={10} /> {a.accuracy > 0 ? `±${a.accuracy.toFixed(0)}m` : 'tracking'}
-                          {!a.online && ' · offline'}
-                        </span>
+              {sidebarTab === 'incidents' ? (
+                <FieldOpsIncidentPanel
+                  incidents={incidents} loading={loading} showResolved={showResolved}
+                  openCount={openCount} firstOpenRef={firstOpenRef}
+                  resolvingId={resolvingId} resolveNotes={resolveNotes} resolveLoading={resolveLoading}
+                  setShowResolved={setShowResolved} setResolvingId={setResolvingId} setResolveNotes={setResolveNotes}
+                  doResolve={doResolve}
+                  onListen={(incidentId, agentId) => { setListeningIncidentId(incidentId); setListeningAgentId(agentId); }}
+                />
+              ) : (
+                <div className="ds-card fo-officers-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                  <div style={{ maxHeight: selected ? 260 : 420, overflowY: 'auto', transition: 'max-height 220ms var(--ease-standard)' }}>
+                    {agentList.length === 0 ? (
+                      <div className="fo-roster-empty">
+                        <span className="fo-roster-empty-icon"><Navigation2 size={20} /></span>
+                        <span className="fo-roster-empty-title">No agents on shift</span>
+                        <span className="fo-roster-empty-sub">Officers appear here once they go live.</span>
                       </div>
-                      {openAgentIds.has(a.agentId) && <span className="ds-pill is-danger" style={{ fontSize: 9, padding: '0 6px', height: 18 }}>SOS</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    ) : agentList.map(a => {
+                      const hasSos = openAgentIds.has(a.agentId);
+                      return (
+                        <div key={a.agentId}
+                          className={`fo-roster-row${hasSos ? ' is-sos' : ''}${selected?.agentId === a.agentId ? ' is-selected' : ''}${!a.online ? ' is-offline' : ''}`}
+                          onClick={() => setSelected(a)}>
+                          <span className={`fo-roster-avatar${hasSos ? ' is-sos' : ''}`}>
+                            {`${a.agentName?.[0] ?? '?'}`.toUpperCase()}
+                          </span>
+                          <div className="fo-roster-info">
+                            <span className="fo-roster-name">{a.agentName ?? 'Unknown'}</span>
+                            <span className="fo-roster-meta">
+                              {a.accuracy > 0 ? `±${a.accuracy.toFixed(0)}m` : 'tracking'}{!a.online && ' · offline'}
+                            </span>
+                          </div>
+                          {hasSos && <span className="fo-roster-sos-tag">SOS</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
 
-              {/* Selected agent detail — ported from the old LiveTrackPage's
-                  sidebar panel, shown when a map marker or list row is clicked. */}
-              {selected && (
-                <div className="ds-card db-card" style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, padding: '16px 20px', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink-primary)' }}>{selected.agentName ?? 'Unknown officer'}</span>
-                    <button type="button" onClick={() => setSelected(null)} className="ds-icon-btn is-sm" aria-label="Close">
-                      <X size={13} />
-                    </button>
-                  </div>
-                  <div className="fo-detail-grid">
-                    <div className="fo-detail-row">
-                      <span className="fo-detail-label"><Radio size={11} /> Status</span>
-                      <span style={{ fontWeight: 600, color: !selected.online ? 'var(--text-tertiary)' : selected.visitSessionId ? 'var(--success)' : 'var(--info)' }}>
-                        {!selected.online ? 'Offline' : selected.visitSessionId ? 'Active visit' : 'On shift'}
-                      </span>
-                    </div>
-                    <div className="fo-detail-row">
-                      <span className="fo-detail-label">Last update</span>
-                      <span>{relativeTime(new Date(selected.ts).toISOString())}</span>
-                    </div>
-                    <div className="fo-detail-row">
-                      <span className="fo-detail-label"><MapPin size={11} /> GPS accuracy</span>
-                      <span>±{Math.round(selected.accuracy)} m</span>
-                    </div>
-                    {selected.speed != null && (
-                      <div className="fo-detail-row">
-                        <span className="fo-detail-label"><Gauge size={11} /> Speed</span>
-                        <span>{(selected.speed * 3.6).toFixed(1)} km/h</span>
-                      </div>
+                  {/* Selected agent detail — lives inside this same card now,
+                      as a bottom section (matches DispatchAgentPanel's
+                      dd-agent-stats-footer), not a separate stacked card. */}
+                  <AnimatePresence>
+                    {selected && (
+                      <motion.div key={selected.agentId} className="fo-detail-footer"
+                        initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink-primary)' }}>{selected.agentName ?? 'Unknown officer'}</span>
+                          <button type="button" onClick={() => setSelected(null)} className="ds-icon-btn is-sm" aria-label="Close">
+                            <X size={13} />
+                          </button>
+                        </div>
+                        <div className="fo-detail-grid">
+                          <div className="fo-detail-row">
+                            <span className="fo-detail-label"><Radio size={11} /> Status</span>
+                            <span style={{ fontWeight: 600, color: !selected.online ? 'var(--text-tertiary)' : selected.visitSessionId ? 'var(--success)' : 'var(--info)' }}>
+                              {!selected.online ? 'Offline' : selected.visitSessionId ? 'Active visit' : 'On shift'}
+                            </span>
+                          </div>
+                          <div className="fo-detail-row">
+                            <span className="fo-detail-label">Last update</span>
+                            <span>{relativeTime(new Date(selected.ts).toISOString())}</span>
+                          </div>
+                          <div className="fo-detail-row">
+                            <span className="fo-detail-label"><MapPin size={11} /> GPS accuracy</span>
+                            <span>±{Math.round(selected.accuracy)} m</span>
+                          </div>
+                          {selected.speed != null && (
+                            <div className="fo-detail-row">
+                              <span className="fo-detail-label"><Gauge size={11} /> Speed</span>
+                              <span>{(selected.speed * 3.6).toFixed(1)} km/h</span>
+                            </div>
+                          )}
+                          {selected.heading != null && (
+                            <div className="fo-detail-row">
+                              <span className="fo-detail-label"><Compass size={11} /> Heading</span>
+                              <span>{Math.round(selected.heading)}°</span>
+                            </div>
+                          )}
+                          {selected.batteryLevel != null && (
+                            <div className="fo-detail-row">
+                              <span className="fo-detail-label"><Battery size={11} /> Battery</span>
+                              <span style={{
+                                color: selected.batteryLevel < 0.2 ? 'var(--danger)' : undefined,
+                                fontWeight: selected.batteryLevel < 0.2 ? 600 : 400,
+                              }}>
+                                {Math.round(selected.batteryLevel * 100)}%{selected.batteryLevel < 0.2 ? ' ⚠ Low' : ''}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {selected.mockDetected && (
+                          <div className="db-att-row is-warn" style={{ padding: '8px 10px', borderRadius: 8, fontSize: 12 }}>
+                            <AlertTriangle size={13} style={{ color: 'var(--warning)', marginRight: 6 }} /> Mock GPS detected
+                          </div>
+                        )}
+                      </motion.div>
                     )}
-                    {selected.heading != null && (
-                      <div className="fo-detail-row">
-                        <span className="fo-detail-label"><Compass size={11} /> Heading</span>
-                        <span>{Math.round(selected.heading)}°</span>
-                      </div>
-                    )}
-                    {selected.batteryLevel != null && (
-                      <div className="fo-detail-row">
-                        <span className="fo-detail-label"><Battery size={11} /> Battery</span>
-                        <span style={{
-                          color: selected.batteryLevel < 0.2 ? 'var(--danger)' : undefined,
-                          fontWeight: selected.batteryLevel < 0.2 ? 600 : 400,
-                        }}>
-                          {Math.round(selected.batteryLevel * 100)}%{selected.batteryLevel < 0.2 ? ' ⚠ Low' : ''}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {selected.mockDetected && (
-                    <div className="db-att-row is-warn" style={{ padding: '8px 10px', borderRadius: 8, fontSize: 12 }}>
-                      <AlertTriangle size={13} style={{ color: 'var(--warning)', marginRight: 6 }} /> Mock GPS detected
-                    </div>
-                  )}
+                  </AnimatePresence>
                 </div>
               )}
-
-              <FieldOpsIncidentPanel
-                incidents={incidents} loading={loading} showResolved={showResolved}
-                openCount={openCount} firstOpenRef={firstOpenRef}
-                resolvingId={resolvingId} resolveNotes={resolveNotes} resolveLoading={resolveLoading}
-                setShowResolved={setShowResolved} setResolvingId={setResolvingId} setResolveNotes={setResolveNotes}
-                doResolve={doResolve}
-                onListen={(incidentId, agentId) => { setListeningIncidentId(incidentId); setListeningAgentId(agentId); }}
-              />
             </motion.div>
+            )}
           </div>
         </motion.div>
       </div>

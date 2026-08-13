@@ -74,20 +74,9 @@ export default function AppSidebar({
   const toggleGroup = (label: string) =>
     setToggledGroups(prev => ({ ...prev, [label]: !isGroupOpen(label) }));
 
-  /** Open when the route is the parent or one of its children, unless the user
-   *  has toggled it since. Auto-open therefore costs no state and no effect. */
-  const isGroupOpen = (label: string): boolean => {
-    if (label in toggledGroups) return toggledGroups[label];
-    const path = location.pathname;
-    for (const section of sections) {
-      for (const item of section.items) {
-        if (item.label !== label || !item.children?.length) continue;
-        return path === item.to.split('?')[0]
-          || item.children.some(c => path === c.to.split('?')[0]);
-      }
-    }
-    return false;
-  };
+  /** Closed by default, regardless of the active route — a submenu only opens
+   *  once the user explicitly clicks the parent or its chevron. */
+  const isGroupOpen = (label: string): boolean => toggledGroups[label] ?? false;
 
   const rippleConfirm = useRipple<HTMLButtonElement>();
   const rippleCancel  = useRipple<HTMLButtonElement>();
@@ -131,6 +120,16 @@ export default function AppSidebar({
   }, [sections, location.pathname]);
 
   const computeActive = (to: string) => pendingTo !== null ? pendingTo === to : to === activePath;
+
+  // Submenu items are matched on pathname AND query string — several platform-
+  // admin submenus (Platform Setup, Feature Flags, Lucien) share one pathname
+  // across tabs (e.g. /platform/feature-flags vs ?tab=overrides), so matching
+  // on pathname alone made every sibling light up active at once.
+  const computeChildActive = (to: string) => {
+    const [path, query = ''] = to.split('?');
+    if (location.pathname !== path) return false;
+    return location.search.replace(/^\?/, '') === query;
+  };
 
   const showTip = useCallback((e: RMouseEvent<HTMLElement>, label: string) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -222,19 +221,15 @@ export default function AppSidebar({
                     const kids = item.children ?? [];
                     const hasKids = kids.length > 0 && expanded;
                     const isParentExpanded = hasKids && isGroupOpen(item.label);
-                    const shouldShowActive = isActive && !isParentExpanded;
 
                     return (
                       <li key={item.to} style={{ position: 'relative' }}>
                         <NavLink
                           to={item.to}
-                          className={`asb-nav-item${shouldShowActive ? ' is-active' : ''}`}
+                          className={`asb-nav-item${isActive ? ' is-active' : ''}`}
                           aria-current={isActive ? 'page' : undefined}
                           aria-label={collapsed ? label : undefined}
-                          onClick={() => {
-                            setPendingTo(item.to);
-                            if (hasKids) toggleGroup(item.label);
-                          }}
+                          onClick={() => setPendingTo(item.to)}
                           onMouseEnter={(e) => { prefetchRoute(item.to); if (collapsed) showTip(e, label); }}
                           onMouseLeave={hideTip}
                           onFocus={() => prefetchRoute(item.to)}
@@ -280,7 +275,7 @@ export default function AppSidebar({
                                 <NavLink
                                   to={child.to}
                                   end
-                                  className={({ isActive: childActive }) => `asb-nav-item asb-sub-item${childActive ? ' is-active' : ''}`}
+                                  className={`asb-nav-item asb-sub-item${computeChildActive(child.to) ? ' is-active' : ''}`}
                                   onClick={() => setPendingTo(child.to)}
                                   onMouseEnter={() => prefetchRoute(child.to)}
                                   onFocus={() => prefetchRoute(child.to)}

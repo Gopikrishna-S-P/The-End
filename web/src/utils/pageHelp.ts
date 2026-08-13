@@ -87,7 +87,6 @@ const REGISTRY: Record<string, PageHelp> = {
     ],
     links: [
       { label: 'Assignments',          to: '/app/assignments' },
-      { label: 'Unassigned Cases',     to: '/app/cases/unassigned' },
       { label: 'Borrowers Directory',  to: '/app/borrowers' },
       { label: 'Fraud cases tracker',  to: '/app/fraud-cases' },
       { label: 'Promise to Pay (PTP)', to: '/app/ptps' },

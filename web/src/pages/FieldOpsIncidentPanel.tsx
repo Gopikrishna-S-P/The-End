@@ -3,6 +3,7 @@ import type { IncidentReportResponse } from '../types';
 import { AlertTriangle, ShieldCheck, Headphones, Loader2, Check, MapPin, X } from 'lucide-react';
 import { initials, relativeTime } from './FieldOpsUtils';
 import './Dashboard.css';
+import '../styles/FieldOpsMap.css';
 
 interface Props {
   incidents: IncidentReportResponse[];
@@ -26,7 +27,7 @@ export function FieldOpsIncidentPanel({
   setShowResolved, setResolvingId, setResolveNotes, doResolve, onListen,
 }: Props) {
   return (
-    <div className="ds-card db-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <div className="ds-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {openCount > 0 && (
         <div className="db-att-row is-warn" role="alert" style={{ borderRadius: '12px 12px 0 0', padding: '12px 20px', borderBottom: '1px solid var(--warning-subtle)' }}>
           <AlertTriangle size={14} style={{ color: 'var(--warning)', marginRight: 8 }} />
@@ -39,12 +40,12 @@ export function FieldOpsIncidentPanel({
       )}
 
       <header className="db-card-head" style={{ borderBottom: '1px solid var(--border-subtle)', padding: '0 20px' }}>
-        <div className="db-trend-range-toggle" style={{ margin: '12px 0' }}>
-          <button type="button" className={`db-trend-range-btn${!showResolved ? ' is-active' : ''}`} onClick={() => setShowResolved(false)}>
-            Open<span className={`ds-pill ${openCount > 0 ? 'is-danger' : 'is-neutral'}`} style={{ marginLeft: 6, fontSize: 10 }}>{openCount}</span>
+        <div className="fo-tabs" style={{ margin: '12px 0' }}>
+          <button type="button" className={`fo-tab${!showResolved ? ' is-active' : ''}`} onClick={() => setShowResolved(false)}>
+            Open<span className={`fo-tab-count${openCount > 0 ? ' is-danger' : ''}`}>{openCount}</span>
           </button>
-          <button type="button" className={`db-trend-range-btn${showResolved ? ' is-active' : ''}`} onClick={() => setShowResolved(true)}>
-            All<span className="ds-pill is-neutral" style={{ marginLeft: 6, fontSize: 10 }}>{incidents.length}</span>
+          <button type="button" className={`fo-tab${showResolved ? ' is-active' : ''}`} onClick={() => setShowResolved(true)}>
+            All<span className="fo-tab-count">{incidents.length}</span>
           </button>
         </div>
       </header>
