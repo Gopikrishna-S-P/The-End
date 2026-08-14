@@ -7,7 +7,7 @@
   padding: 0 16px;
   border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: var(--sans);
   cursor: pointer;
   transition:
@@ -43,11 +43,15 @@
   background: var(--bg-surface);
   color: var(--ink-secondary);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
 }
 .app-page-btn-secondary:hover:not(:disabled) {
   border-color: var(--ink-solid);
   color: var(--ink-solid);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
+.app-page-btn-secondary:active:not(:disabled) { transform: translateY(0); }
 
 .app-page-btn-ghost {
   background: none;

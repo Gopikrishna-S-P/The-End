@@ -1,0 +1,1552 @@
+[
+  {
+    "file": "FeatureFlagAdminController.java",
+    "endpoint": "GET /api/v1/admin/feature-flags",
+    "auth": "none"
+  },
+  {
+    "file": "FeatureFlagAdminController.java",
+    "endpoint": "PUT /api/v1/admin/feature-flags",
+    "auth": "none"
+  },
+  {
+    "file": "FeatureFlagAdminController.java",
+    "endpoint": "DELETE /api/v1/admin/feature-flags/{flagKey}",
+    "auth": "none"
+  },
+  {
+    "file": "RagDocumentAdminController.java",
+    "endpoint": "POST /api/v1/admin/rag-documents",
+    "auth": "none"
+  },
+  {
+    "file": "RagDocumentAdminController.java",
+    "endpoint": "GET /api/v1/admin/rag-documents",
+    "auth": "none"
+  },
+  {
+    "file": "RagDocumentAdminController.java",
+    "endpoint": "PUT /api/v1/admin/rag-documents/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "RagDocumentAdminController.java",
+    "endpoint": "DELETE /api/v1/admin/rag-documents/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/sync",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/shifts/start",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/shifts/end",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "GET /api/v1/agent/shifts/current",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/location",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/sos",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/incidents/{id}/cancel",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "POST /api/v1/agent/sos/audio",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "PATCH /api/v1/agent/incidents/{id}/resolve",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "GET /api/v1/agent/active",
+    "auth": "none"
+  },
+  {
+    "file": "AgentFieldController.java",
+    "endpoint": "GET /api/v1/agent/incidents",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "GET /api/v1/allocations",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "POST /api/v1/allocations/bulk-assign",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "GET /api/v1/allocations/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "PATCH /api/v1/allocations/{id}/status",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "PATCH /api/v1/allocations/{id}/disposition",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "DELETE /api/v1/allocations/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "GET /api/v1/allocations/borrower/{borrowerId}",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationController.java",
+    "endpoint": "PATCH /api/v1/allocations/{id}/borrower",
+    "auth": "none"
+  },
+  {
+    "file": "AllocationOptimizerController.java",
+    "endpoint": "POST /api/v1/assignments/optimize-order",
+    "auth": "none"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "POST /api/v1/assignments/bulk",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "PATCH /api/v1/assignments/{id}/reassign",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/{id}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/agent/{agentId}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/summary/agent/{agentId}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/summary/date",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/capacity/agent/{agentId}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/allocation/{allocationId}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "GET /api/v1/assignments/my-cases",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "PATCH /api/v1/assignments/{id}/cancel",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AssignmentController.java",
+    "endpoint": "DELETE /api/v1/assignments/{id}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AttendanceController.java",
+    "endpoint": "POST /api/v1/attendance/check-in",
+    "auth": "none"
+  },
+  {
+    "file": "AttendanceController.java",
+    "endpoint": "GET /api/v1/attendance",
+    "auth": "none"
+  },
+  {
+    "file": "AttendanceController.java",
+    "endpoint": "GET /api/v1/attendance/me",
+    "auth": "none"
+  },
+  {
+    "file": "AuditLogController.java",
+    "endpoint": "GET /api/v1/audit-logs",
+    "auth": "none"
+  },
+  {
+    "file": "AuditLogController.java",
+    "endpoint": "GET /api/v1/audit-logs/assignment/{assignmentId}",
+    "auth": "none"
+  },
+  {
+    "file": "AuditLogController.java",
+    "endpoint": "GET /api/v1/audit-logs/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "AuditLogController.java",
+    "endpoint": "GET /api/v1/audit-logs/user/{userId}",
+    "auth": "none"
+  },
+  {
+    "file": "AuditLogController.java",
+    "endpoint": "GET /api/v1/audit-logs/actions/user/{userId}",
+    "auth": "none"
+  },
+  {
+    "file": "AuditLogController.java",
+    "endpoint": "GET /api/v1/audit-logs/actions",
+    "auth": "none"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "GET /api/v1/auth/me",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/login",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/refresh",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/logout",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/logout-all",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "GET /api/v1/auth/sessions",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "DELETE /api/v1/auth/sessions/{id}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/forgot-password",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/verify-reset-otp",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/reset-password",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/change-password",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/mfa/setup",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/mfa/enable",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "AuthController.java",
+    "endpoint": "POST /api/v1/auth/mfa/disable",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "POST /api/v1/borrowers",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "GET /api/v1/borrowers/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "GET /api/v1/borrowers",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "POST /api/v1/borrowers/{id}/consent",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "DELETE /api/v1/borrowers/{id}/consent/{purpose}/{scope}",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "GET /api/v1/borrowers/{id}/consents",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "POST /api/v1/borrowers/{id}/erasure-request",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "GET /api/v1/borrowers/{id}/erasure-requests",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "PATCH /api/v1/borrowers/{id}/erasure-requests/{requestId}/execute",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "POST /api/v1/borrowers/{id}/nominee",
+    "auth": "none"
+  },
+  {
+    "file": "BorrowerController.java",
+    "endpoint": "GET /api/v1/borrowers/{id}/nominee",
+    "auth": "none"
+  },
+  {
+    "file": "CalendarController.java",
+    "endpoint": "POST /api/v1/calendar/holidays",
+    "auth": "none"
+  },
+  {
+    "file": "CalendarController.java",
+    "endpoint": "DELETE /api/v1/calendar/holidays/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "CalendarController.java",
+    "endpoint": "GET /api/v1/calendar/holidays",
+    "auth": "none"
+  },
+  {
+    "file": "CalendarController.java",
+    "endpoint": "GET /api/v1/calendar/check",
+    "auth": "none"
+  },
+  {
+    "file": "CalendarController.java",
+    "endpoint": "PUT /api/v1/calendar/config",
+    "auth": "none"
+  },
+  {
+    "file": "CalendarController.java",
+    "endpoint": "GET /api/v1/calendar/config",
+    "auth": "none"
+  },
+  {
+    "file": "CallLogController.java",
+    "endpoint": "POST /api/v1/call-logs/start",
+    "auth": "none"
+  },
+  {
+    "file": "CallLogController.java",
+    "endpoint": "POST /api/v1/call-logs/{id}/recording",
+    "auth": "none"
+  },
+  {
+    "file": "CallLogController.java",
+    "endpoint": "PATCH /api/v1/call-logs/{id}/complete",
+    "auth": "none"
+  },
+  {
+    "file": "CallLogController.java",
+    "endpoint": "GET /api/v1/call-logs/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "CallLogController.java",
+    "endpoint": "GET /api/v1/call-logs",
+    "auth": "none"
+  },
+  {
+    "file": "CallLogController.java",
+    "endpoint": "GET /api/v1/call-logs/{id}/recording",
+    "auth": "none"
+  },
+  {
+    "file": "CasesController.java",
+    "endpoint": "GET /api/v1/cases/{allocationId}/timeline",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "POST /api/v1/collections",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "PATCH /api/v1/collections/{id}/approval",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "PATCH /api/v1/collections/{id}/deposit",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections/export",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections/reports/agent/{agentId}/daily",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections/reports/agent/{agentId}/all-time",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "GET /api/v1/collections/ledger/balances",
+    "auth": "none"
+  },
+  {
+    "file": "CollectionController.java",
+    "endpoint": "PATCH /api/v1/collections/{id}/cancel",
+    "auth": "none"
+  },
+  {
+    "file": "ColumnSchemaController.java",
+    "endpoint": "POST /api/v1/column-schemas",
+    "auth": "none"
+  },
+  {
+    "file": "ColumnSchemaController.java",
+    "endpoint": "PUT /api/v1/column-schemas/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "ColumnSchemaController.java",
+    "endpoint": "GET /api/v1/column-schemas",
+    "auth": "none"
+  },
+  {
+    "file": "ColumnSchemaController.java",
+    "endpoint": "DELETE /api/v1/column-schemas/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "ContactController.java",
+    "endpoint": "POST /api/v1/contact",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "DailyDispatchController.java",
+    "endpoint": "POST /api/v1/daily-dispatch",
+    "auth": "none"
+  },
+  {
+    "file": "DailyDispatchController.java",
+    "endpoint": "GET /api/v1/daily-dispatch/me",
+    "auth": "none"
+  },
+  {
+    "file": "DailyDispatchController.java",
+    "endpoint": "GET /api/v1/daily-dispatch/agent/{agentId}",
+    "auth": "none"
+  },
+  {
+    "file": "DailyDispatchController.java",
+    "endpoint": "DELETE /api/v1/daily-dispatch/case",
+    "auth": "none"
+  },
+  {
+    "file": "DailyDispatchController.java",
+    "endpoint": "GET /api/v1/daily-dispatch/org/summary",
+    "auth": "none"
+  },
+  {
+    "file": "DocumentController.java",
+    "endpoint": "POST /api/v1/collections/{collectionId}/documents",
+    "auth": "none"
+  },
+  {
+    "file": "DocumentController.java",
+    "endpoint": "GET /api/v1/collections/{collectionId}/documents",
+    "auth": "none"
+  },
+  {
+    "file": "DocumentController.java",
+    "endpoint": "GET /api/v1/collections/{collectionId}/documents/{documentId}/download",
+    "auth": "none"
+  },
+  {
+    "file": "DocumentController.java",
+    "endpoint": "DELETE /api/v1/collections/{collectionId}/documents/{documentId}",
+    "auth": "none"
+  },
+  {
+    "file": "ExportController.java",
+    "endpoint": "GET /api/v1/reports/export/jobs/{jobId}/download",
+    "auth": "none"
+  },
+  {
+    "file": "FeatureFlagController.java",
+    "endpoint": "GET /api/v1/feature-flags",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "FieldAgentDashboardController.java",
+    "endpoint": "GET /api/v1/dashboard/field-agent/{agentId}",
+    "auth": "none"
+  },
+  {
+    "file": "FileUploadController.java",
+    "endpoint": "POST /api/v1/file-uploads",
+    "auth": "none"
+  },
+  {
+    "file": "FileUploadController.java",
+    "endpoint": "GET /api/v1/file-uploads/template",
+    "auth": "none"
+  },
+  {
+    "file": "FileUploadController.java",
+    "endpoint": "GET /api/v1/file-uploads/{id}/status",
+    "auth": "none"
+  },
+  {
+    "file": "FileUploadController.java",
+    "endpoint": "GET /api/v1/file-uploads",
+    "auth": "none"
+  },
+  {
+    "file": "FileUploadController.java",
+    "endpoint": "GET /api/v1/file-uploads/{id}/errors",
+    "auth": "none"
+  },
+  {
+    "file": "FileUploadController.java",
+    "endpoint": "DELETE /api/v1/file-uploads/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "FraudCaseController.java",
+    "endpoint": "POST /api/v1/fraud-cases",
+    "auth": "none"
+  },
+  {
+    "file": "FraudCaseController.java",
+    "endpoint": "PATCH /api/v1/fraud-cases/{id}/transition",
+    "auth": "none"
+  },
+  {
+    "file": "FraudCaseController.java",
+    "endpoint": "POST /api/v1/fraud-cases/{id}/cfr-lookup",
+    "auth": "none"
+  },
+  {
+    "file": "FraudCaseController.java",
+    "endpoint": "GET /api/v1/fraud-cases/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "FraudCaseController.java",
+    "endpoint": "GET /api/v1/fraud-cases",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "POST /api/v1/grievances",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "POST /api/v1/grievances/{id}/acknowledge",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "POST /api/v1/grievances/{id}/investigate",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "POST /api/v1/grievances/{id}/escalate",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "POST /api/v1/grievances/{id}/resolve",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "POST /api/v1/grievances/{id}/close",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "GET /api/v1/grievances/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "GET /api/v1/grievances/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceController.java",
+    "endpoint": "GET /api/v1/grievances",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceOfficerController.java",
+    "endpoint": "PUT /api/v1/grievance-officers",
+    "auth": "none"
+  },
+  {
+    "file": "GrievanceOfficerController.java",
+    "endpoint": "GET /api/v1/grievance-officers",
+    "auth": "none"
+  },
+  {
+    "file": "KfsController.java",
+    "endpoint": "POST /api/v1/kfs",
+    "auth": "none"
+  },
+  {
+    "file": "KfsController.java",
+    "endpoint": "GET /api/v1/kfs/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "KfsController.java",
+    "endpoint": "GET /api/v1/kfs/{id}/pdf",
+    "auth": "none"
+  },
+  {
+    "file": "KfsController.java",
+    "endpoint": "GET /api/v1/kfs/restructure-proposal/{restructureProposalId}",
+    "auth": "none"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/sessions",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/chat",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/sessions/{sessionId}/confirm",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/sessions/{sessionId}/ambient-turn",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/sessions/{sessionId}/help",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/sessions/{sessionId}/confirm-visit",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/sessions/{sessionId}/close",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "GET /api/v1/lucien/sessions/{sessionId}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "GET /api/v1/lucien/sessions/{sessionId}/history",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "GET /api/v1/lucien/agents/{agentId}/sessions",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/speak",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "POST /api/v1/lucien/transcribe",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "LucienController.java",
+    "endpoint": "DELETE /api/v1/lucien/sessions/{sessionId}",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "MessageTemplateController.java",
+    "endpoint": "GET /api/v1/message-templates",
+    "auth": "none"
+  },
+  {
+    "file": "MessageTemplateController.java",
+    "endpoint": "GET /api/v1/message-templates/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "MessageTemplateController.java",
+    "endpoint": "POST /api/v1/message-templates/{id}/submit-for-dlt",
+    "auth": "none"
+  },
+  {
+    "file": "MessageTemplateController.java",
+    "endpoint": "POST /api/v1/message-templates/{id}/activate",
+    "auth": "none"
+  },
+  {
+    "file": "MessageTemplateController.java",
+    "endpoint": "POST /api/v1/message-templates/{id}/retire",
+    "auth": "none"
+  },
+  {
+    "file": "NonContactableController.java",
+    "endpoint": "POST /api/v1/non-contactables",
+    "auth": "none"
+  },
+  {
+    "file": "NonContactableController.java",
+    "endpoint": "GET /api/v1/non-contactables/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "NonContactableController.java",
+    "endpoint": "GET /api/v1/non-contactables/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "NonContactableController.java",
+    "endpoint": "GET /api/v1/non-contactables",
+    "auth": "none"
+  },
+  {
+    "file": "NonContactableController.java",
+    "endpoint": "DELETE /api/v1/non-contactables/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "GET /api/v1/notifications",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "GET /api/v1/notifications/unread-count",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "PATCH /api/v1/notifications/read-all",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "PATCH /api/v1/notifications/{id}/read",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "PATCH /api/v1/notifications/{id}/dismiss",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "PATCH /api/v1/notifications/{id}/snooze",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NotificationController.java",
+    "endpoint": "POST /api/v1/notifications/stream/ticket",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "NpaController.java",
+    "endpoint": "POST /api/v1/reports/npa/flag",
+    "auth": "none"
+  },
+  {
+    "file": "NpaController.java",
+    "endpoint": "GET /api/v1/reports/npa",
+    "auth": "none"
+  },
+  {
+    "file": "NpaController.java",
+    "endpoint": "GET /api/v1/reports/npa/records",
+    "auth": "none"
+  },
+  {
+    "file": "NpaController.java",
+    "endpoint": "PATCH /api/v1/reports/npa/records/{id}/resolve",
+    "auth": "none"
+  },
+  {
+    "file": "OrganizationController.java",
+    "endpoint": "GET /api/v1/organizations/me",
+    "auth": "none"
+  },
+  {
+    "file": "OrganizationController.java",
+    "endpoint": "PATCH /api/v1/organizations/me",
+    "auth": "none"
+  },
+  {
+    "file": "PaymentController.java",
+    "endpoint": "POST /api/v1/payments/intents",
+    "auth": "none"
+  },
+  {
+    "file": "PaymentController.java",
+    "endpoint": "GET /api/v1/payments/intents/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "PaymentController.java",
+    "endpoint": "POST /api/v1/payments/links",
+    "auth": "none"
+  },
+  {
+    "file": "PaymentLinkResolveController.java",
+    "endpoint": "GET /p/{token}",
+    "auth": "permitAll()"
+  },
+  {
+    "file": "PermissionController.java",
+    "endpoint": "GET /api/v1/permissions",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformAnalyticsController.java",
+    "endpoint": "GET /api/v1/platform/analytics",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "GET /api/v1/platform/organizations",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "GET /api/v1/platform/organizations/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "GET /api/v1/platform/organizations/{id}/users",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "POST /api/v1/platform/organizations",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "PATCH /api/v1/platform/organizations/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "PATCH /api/v1/platform/organizations/{id}/admin",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "DELETE /api/v1/platform/organizations/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformOrganizationController.java",
+    "endpoint": "PATCH /api/v1/platform/organizations/{id}/active",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSetupController.java",
+    "endpoint": "POST /api/v1/platform/users",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSetupController.java",
+    "endpoint": "GET /api/v1/platform/users",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformStatsController.java",
+    "endpoint": "GET /api/v1/platform/stats",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "GET /api/v1/platform/subscriptions",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "GET /api/v1/platform/subscriptions/revenue-trend",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "GET /api/v1/platform/subscriptions/{orgId}/invoices",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "PUT /api/v1/platform/subscriptions/{orgId}/comp",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "DELETE /api/v1/platform/subscriptions/{orgId}/comp",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "POST /api/v1/platform/subscriptions/backfill-invoices",
+    "auth": "none"
+  },
+  {
+    "file": "PlatformSubscriptionController.java",
+    "endpoint": "PUT /api/v1/platform/subscriptions/{orgId}/plan",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "POST /api/v1/ptps",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps/{id}/history",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps/allocation/{allocationId}/history",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps/agents/{agentId}/statistics",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "GET /api/v1/ptps/export",
+    "auth": "none"
+  },
+  {
+    "file": "PtpController.java",
+    "endpoint": "PATCH /api/v1/ptps/{id}/status",
+    "auth": "none"
+  },
+  {
+    "file": "ReconciliationController.java",
+    "endpoint": "POST /api/v1/reconciliation/runs",
+    "auth": "none"
+  },
+  {
+    "file": "ReconciliationController.java",
+    "endpoint": "GET /api/v1/reconciliation/runs",
+    "auth": "none"
+  },
+  {
+    "file": "ReconciliationController.java",
+    "endpoint": "GET /api/v1/reconciliation/runs/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "ReconciliationController.java",
+    "endpoint": "GET /api/v1/reconciliation/runs/{id}/rows",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/agent/{agentId}/performance",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/agent/rankings",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/team/performance",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/visit-completion/daily",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/collection-efficiency",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/reassignment-frequency",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/loan-book/history",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/loan-book",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/bank-reconciliation",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "POST /api/v1/reports/generate",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/jobs/{jobId}",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/fo-day",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/mis-eod",
+    "auth": "none"
+  },
+  {
+    "file": "ReportingController.java",
+    "endpoint": "GET /api/v1/reports/jobs",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "POST /api/v1/restructure-proposals",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "POST /api/v1/restructure-proposals/{id}/propose-to-lender",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "POST /api/v1/restructure-proposals/{id}/lender-approve",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "POST /api/v1/restructure-proposals/{id}/lender-reject",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "POST /api/v1/restructure-proposals/{id}/borrower-accept",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "GET /api/v1/restructure-proposals/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "GET /api/v1/restructure-proposals/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "RestructureProposalController.java",
+    "endpoint": "GET /api/v1/restructure-proposals",
+    "auth": "none"
+  },
+  {
+    "file": "RiskScoringController.java",
+    "endpoint": "GET /api/v1/risk/borrowers/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "RiskScoringController.java",
+    "endpoint": "POST /api/v1/risk/borrowers/{id}/score",
+    "auth": "none"
+  },
+  {
+    "file": "RiskScoringController.java",
+    "endpoint": "POST /api/v1/risk/borrowers/{id}/score-with-features",
+    "auth": "none"
+  },
+  {
+    "file": "RoleController.java",
+    "endpoint": "GET /api/v1/roles",
+    "auth": "none"
+  },
+  {
+    "file": "RoleController.java",
+    "endpoint": "GET /api/v1/roles/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "RoleController.java",
+    "endpoint": "POST /api/v1/roles",
+    "auth": "none"
+  },
+  {
+    "file": "RoleController.java",
+    "endpoint": "PATCH /api/v1/roles/{id}/permissions",
+    "auth": "none"
+  },
+  {
+    "file": "RoleController.java",
+    "endpoint": "DELETE /api/v1/roles/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "RoleController.java",
+    "endpoint": "GET /api/v1/roles/permissions",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "POST /api/v1/settlement-offers",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "POST /api/v1/settlement-offers/{id}/approve",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "POST /api/v1/settlement-offers/{id}/reject",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "POST /api/v1/settlement-offers/{id}/propose",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "POST /api/v1/settlement-offers/{id}/borrower-accept",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "POST /api/v1/settlement-offers/{id}/mark-paid",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "GET /api/v1/settlement-offers/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "GET /api/v1/settlement-offers/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "SettlementOfferController.java",
+    "endpoint": "GET /api/v1/settlement-offers",
+    "auth": "none"
+  },
+  {
+    "file": "StripeWebhookController.java",
+    "endpoint": "POST /api/v1/webhooks/stripe",
+    "auth": "none"
+  },
+  {
+    "file": "SubscriptionController.java",
+    "endpoint": "GET /api/v1/subscription",
+    "auth": "none"
+  },
+  {
+    "file": "SubscriptionController.java",
+    "endpoint": "POST /api/v1/subscription/free",
+    "auth": "none"
+  },
+  {
+    "file": "SubscriptionController.java",
+    "endpoint": "POST /api/v1/subscription/checkout",
+    "auth": "none"
+  },
+  {
+    "file": "SubscriptionController.java",
+    "endpoint": "POST /api/v1/subscription/portal",
+    "auth": "none"
+  },
+  {
+    "file": "SystemPromptAdminController.java",
+    "endpoint": "GET /api/v1/friday/admin/prompts/{promptKey}",
+    "auth": "none"
+  },
+  {
+    "file": "SystemPromptAdminController.java",
+    "endpoint": "PUT /api/v1/friday/admin/prompts/{promptKey}",
+    "auth": "none"
+  },
+  {
+    "file": "SystemPromptAdminController.java",
+    "endpoint": "DELETE /api/v1/friday/admin/prompts/{promptKey}",
+    "auth": "none"
+  },
+  {
+    "file": "UnifiedDashboardController.java",
+    "endpoint": "GET /api/v1/analytics/dashboard",
+    "auth": "isAuthenticated()"
+  },
+  {
+    "file": "UploadDataController.java",
+    "endpoint": "GET /api/v1/file-uploads/{uploadId}/rows",
+    "auth": "none"
+  },
+  {
+    "file": "UploadDataController.java",
+    "endpoint": "POST /api/v1/file-uploads/{uploadId}/rows",
+    "auth": "none"
+  },
+  {
+    "file": "UploadDataController.java",
+    "endpoint": "PUT /api/v1/file-uploads/{uploadId}/rows/{rowId}",
+    "auth": "none"
+  },
+  {
+    "file": "UploadDataController.java",
+    "endpoint": "DELETE /api/v1/file-uploads/{uploadId}/rows/{rowId}",
+    "auth": "none"
+  },
+  {
+    "file": "UploadDataController.java",
+    "endpoint": "POST /api/v1/file-uploads/{uploadId}/columns",
+    "auth": "none"
+  },
+  {
+    "file": "UploadDataController.java",
+    "endpoint": "DELETE /api/v1/file-uploads/{uploadId}/columns/{columnName}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "GET /api/v1/users/by-role/{roleName}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "GET /api/v1/users/me",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "GET /api/v1/users/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "GET /api/v1/users",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "POST /api/v1/users",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "PATCH /api/v1/users/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "POST /api/v1/users/{id}/roles",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "DELETE /api/v1/users/{id}/roles/{roleName}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "PATCH /api/v1/users/{id}/enable",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "PATCH /api/v1/users/{id}/disable",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "DELETE /api/v1/users/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "GET /api/v1/users/{id}/permissions",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "POST /api/v1/users/{id}/permissions/{permissionName}",
+    "auth": "none"
+  },
+  {
+    "file": "UserController.java",
+    "endpoint": "DELETE /api/v1/users/{id}/permissions/{permissionName}",
+    "auth": "none"
+  },
+  {
+    "file": "UserCreationRequestController.java",
+    "endpoint": "POST /api/v1/user-requests",
+    "auth": "none"
+  },
+  {
+    "file": "UserCreationRequestController.java",
+    "endpoint": "GET /api/v1/user-requests/pending",
+    "auth": "none"
+  },
+  {
+    "file": "UserCreationRequestController.java",
+    "endpoint": "GET /api/v1/user-requests/mine",
+    "auth": "none"
+  },
+  {
+    "file": "UserCreationRequestController.java",
+    "endpoint": "GET /api/v1/user-requests/pending-count",
+    "auth": "none"
+  },
+  {
+    "file": "UserCreationRequestController.java",
+    "endpoint": "PATCH /api/v1/user-requests/{id}/review",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "POST /api/v1/visit-logs",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "POST /api/v1/visit-logs/import",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/today",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/allocation/{allocationId}",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/allocation/{allocationId}/last-location",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/allocation/{allocationId}/last-address",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/agent/{agentId}",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "PATCH /api/v1/visit-logs/{id}/approve",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "GET /api/v1/visit-logs/{id}/image/{seq}/url",
+    "auth": "none"
+  },
+  {
+    "file": "VisitLogController.java",
+    "endpoint": "DELETE /api/v1/visit-logs/{id}",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "POST /api/v1/visit-sessions",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "POST /api/v1/visit-sessions/{id}/reached",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "POST /api/v1/visit-sessions/{id}/waiting",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "POST /api/v1/visit-sessions/{id}/ping",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "POST /api/v1/visit-sessions/{id}/close",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "POST /api/v1/visit-sessions/{id}/abandon",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "GET /api/v1/visit-sessions/active",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "GET /api/v1/visit-sessions/today",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "GET /api/v1/visit-sessions/by-visit-log/{visitLogId}",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "GET /api/v1/visit-sessions/team-status",
+    "auth": "none"
+  },
+  {
+    "file": "VisitSessionController.java",
+    "endpoint": "GET /api/v1/visit-sessions/distance-summary",
+    "auth": "none"
+  }
+]
