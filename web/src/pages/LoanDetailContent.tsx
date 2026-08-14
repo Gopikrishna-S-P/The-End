@@ -36,11 +36,11 @@ interface Props {
   onMenuKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   dispositionUpdating: boolean;
   requestDisposition: (d: string) => void;
+  activeTab?: 'details' | 'activity';
 }
 
 export default function LoanDetailContent(p: Props) {
-  const { allocation: a } = p;
-  const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details');
+  const { allocation: a, activeTab = 'details' } = p;
   const [dispositionOpen, setDispositionOpen] = useState(false);
   const dispositionRef = useRef<HTMLDivElement>(null);
 
@@ -82,128 +82,120 @@ export default function LoanDetailContent(p: Props) {
       <header className="ld-head">
 
 
-        <div className="ld-head-top">
-          <div className="ld-identity">
-            <h1 className="db-detail-title">{a.borrowerName || 'Loan case'}</h1>
-            <span className="ld-loan-ref">{a.loanNumber || a.loanAccountNo || '—'}</span>
-          </div>
-
-          {/* Disposition sits beside the name — it is the case's current state */}
-          <div className="ld-head-pills">
-            {p.canChangeStatus ? (
-              <div ref={dispositionRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setDispositionOpen(v => !v)}
-                  disabled={p.dispositionUpdating}
-                  className="ld-disposition-btn"
-                  aria-label="Change disposition"
-                  aria-expanded={dispositionOpen}
-                >
-                  {dispositionValue ? <Pill status={dispositionValue} /> : <span className="ds-pill">Set disposition</span>}
-                  {p.dispositionUpdating ? <Loader2 size={12} className="ds-spin" /> : <ChevronDown size={12} style={{ color: 'var(--ink-tertiary)' }} />}
-                </button>
-                {dispositionOpen && (
-                  <div className="alloc-dropdown-menu" style={{ left: 0, right: 'auto' }}>
-                    {ALL_DISPOSITIONS.map(d => (
+        <div className="ld-head-top" style={{ position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: p.canChangeStatus && a.assignedToUserId ? 110 : 0 }}>
+            <div className="ld-identity">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <h1 className="db-detail-title" style={{ margin: 0 }}>{a.borrowerName || 'Loan case'}</h1>
+                <div className="ld-head-pills">
+                  {p.canChangeStatus ? (
+                    <div ref={dispositionRef} style={{ position: 'relative' }}>
                       <button
-                        key={d}
                         type="button"
-                        className={`alloc-dropdown-item${d === dispositionValue ? ' is-active' : ''}`}
-                        onClick={() => { p.requestDisposition(d); setDispositionOpen(false); }}
-                        disabled={d === dispositionValue}
+                        onClick={() => setDispositionOpen(v => !v)}
+                        disabled={p.dispositionUpdating}
+                        className="ld-disposition-btn"
+                        aria-label="Change disposition"
+                        aria-expanded={dispositionOpen}
                       >
-                        {d.replace(/_/g, ' ')}
+                        {dispositionValue ? <Pill status={dispositionValue} /> : <span className="ds-pill">Set disposition</span>}
+                        {p.dispositionUpdating ? <Loader2 size={12} className="ds-spin" /> : <ChevronDown size={12} style={{ color: 'var(--ink-tertiary)' }} />}
                       </button>
-                    ))}
+                      {dispositionOpen && (
+                        <div className="alloc-dropdown-menu" style={{ left: 0, right: 'auto' }}>
+                          {ALL_DISPOSITIONS.map(d => (
+                            <button
+                              key={d}
+                              type="button"
+                              className={`alloc-dropdown-item${d === dispositionValue ? ' is-active' : ''}`}
+                              onClick={() => { p.requestDisposition(d); setDispositionOpen(false); }}
+                              disabled={d === dispositionValue}
+                            >
+                              {d.replace(/_/g, ' ')}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    dispositionValue && <Pill status={dispositionValue} />
+                  )}
+                  {(bktTagValue || bucket) && (
+                    <span className={`ds-pill is-${bucket?.tone ?? 'neutral'}`}>{bktTagValue ?? bucket!.label}</span>
+                  )}
+                  {a.npaFlagged && (
+                    <span className="ds-pill is-danger" style={{ fontWeight: 600 }}>
+                      <AlertCircle size={12} style={{ marginRight: 4 }} /> NPA
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span className="ld-loan-ref" style={{ marginTop: 4, display: 'block' }}>{a.loanNumber || a.loanAccountNo || '—'}</span>
+
+              {/* Facts strip placed directly underneath customer name and loan ref */}
+              <div className="ld-facts" style={{ marginTop: 16, borderTop: 'none', padding: 0 }}>
+                {posAmt != null && (
+                  <div className="ld-fact is-lead">
+                    <span className="ld-fact-label"><IndianRupee size={11} /> POS outstanding</span>
+                    <span className="ld-fact-value">{fmtCurrency(posAmt)}</span>
+                    {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
+                      <span className="ld-fact-note is-danger">
+                        {a.npaFlagged ? 'NPA flagged' : `${p.daysOverdue} d overdue`}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {a.assignedToUserId && (
+                  <div className="ld-fact">
+                    <span className="ld-fact-label">Assigned to</span>
+                    <span className="ld-fact-value">
+                      <User size={12} className="alloc-agent-icon" style={{ marginRight: 6 }} />
+                      {p.agentName ?? '—'}
+                    </span>
+                    {a.assignedAt && (
+                      <span className="ld-fact-note" title={fmtDT(a.assignedAt)}>since {fmtRelative(a.assignedAt)}</span>
+                    )}
+                  </div>
+                )}
+                {fieldExecutiveValue && (
+                  <div className="ld-fact">
+                    <span className="ld-fact-label">Field Executive</span>
+                    <span className="ld-fact-value">{fieldExecutiveValue}</span>
+                  </div>
+                )}
+                {a.totalDue != null && (
+                  <div className="ld-fact">
+                    <span className="ld-fact-label">Total due</span>
+                    <span className="ld-fact-value">{fmtCurrency(Number(a.totalDue))}</span>
+                    {p.dueDateIso && <span className="ld-fact-note">Due {fmtDate(p.dueDateIso)}</span>}
+                  </div>
+                )}
+                {securitizationValue && (
+                  <div className="ld-fact">
+                    <span className="ld-fact-label">Securitization</span>
+                    <span className="ld-fact-value">{securitizationValue}</span>
+                  </div>
+                )}
+
+                {mapsHref && (
+                  <div className="ld-head-actions">
+                    <a href={mapsHref} target="_blank" rel="noreferrer"
+                      className="ds-btn is-secondary is-sm" style={{ textDecoration: 'none' }}>
+                      <MapPin size={12} />
+                      {p.lastKnownLocation ? 'Last GPS' : 'Maps'}
+                    </a>
                   </div>
                 )}
               </div>
-            ) : (
-              dispositionValue && <Pill status={dispositionValue} />
-            )}
-            {(bktTagValue || bucket) && (
-              <span className={`ds-pill is-${bucket?.tone ?? 'neutral'}`}>{bktTagValue ?? bucket!.label}</span>
-            )}
-            {a.npaFlagged && (
-              <span className="ds-pill is-danger" style={{ fontWeight: 600 }}>
-                <AlertCircle size={12} style={{ marginRight: 4 }} /> NPA
-              </span>
-            )}
+            </div>
           </div>
 
-          <div className="db-kpi-toggle ld-head-tabs">
-            {[
-              { id: 'details', label: 'Details' },
-              { id: 'activity', label: 'Activity' }
-            ].map(tab => (
-              <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id as 'details' | 'activity')}
-                className={`db-kpi-toggle-btn${activeTab === tab.id ? ' is-active' : ''}`}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Facts strip — one type scale, no per-item bespoke sizing */}
-        <div className="ld-facts">
-          {posAmt != null && (
-            <div className="ld-fact is-lead">
-              <span className="ld-fact-label"><IndianRupee size={11} /> POS outstanding</span>
-              <span className="ld-fact-value">{fmtCurrency(posAmt)}</span>
-              {(a.npaFlagged || (p.daysOverdue != null && p.daysOverdue > 0)) && (
-                <span className="ld-fact-note is-danger">
-                  {a.npaFlagged ? 'NPA flagged' : `${p.daysOverdue} d overdue`}
-                </span>
-              )}
-            </div>
+          {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
+            <button type="button" className="ds-btn is-secondary is-sm" onClick={p.onReassign}
+              style={{ position: 'absolute', top: 20, right: 24, zIndex: 2 }}>
+              <ArrowRightLeft size={13} /> Reassign
+            </button>
           )}
-          {a.totalDue != null && (
-            <div className="ld-fact">
-              <span className="ld-fact-label">Total due</span>
-              <span className="ld-fact-value">{fmtCurrency(Number(a.totalDue))}</span>
-              {p.dueDateIso && <span className="ld-fact-note">Due {fmtDate(p.dueDateIso)}</span>}
-            </div>
-          )}
-          {a.assignedToUserId && (
-            <div className="ld-fact">
-              <span className="ld-fact-label">Assigned to</span>
-              <span className="ld-fact-value">
-                <User size={12} className="alloc-agent-icon" style={{ marginRight: 6 }} />
-                {p.agentName ?? '—'}
-              </span>
-              {a.assignedAt && (
-                <span className="ld-fact-note" title={fmtDT(a.assignedAt)}>since {fmtRelative(a.assignedAt)}</span>
-              )}
-            </div>
-          )}
-          {fieldExecutiveValue && (
-            <div className="ld-fact">
-              <span className="ld-fact-label">Field Executive</span>
-              <span className="ld-fact-value">{fieldExecutiveValue}</span>
-            </div>
-          )}
-          {securitizationValue && (
-            <div className="ld-fact">
-              <span className="ld-fact-label">Securitization</span>
-              <span className="ld-fact-value">{securitizationValue}</span>
-            </div>
-          )}
-
-          <div className="ld-head-actions">
-            {p.canChangeStatus && a.assignedToUserId && p.onReassign && (
-              <button type="button" className="ds-btn is-secondary is-sm" onClick={p.onReassign}>
-                <ArrowRightLeft size={13} /> Reassign
-              </button>
-            )}
-            {mapsHref && (
-              <a href={mapsHref} target="_blank" rel="noreferrer"
-                className="ds-btn is-secondary is-sm" style={{ textDecoration: 'none' }}>
-                <MapPin size={12} />
-                {p.lastKnownLocation ? 'Last GPS' : 'Maps'}
-              </a>
-            )}
-          </div>
         </div>
       </header>
 
@@ -214,7 +206,7 @@ export default function LoanDetailContent(p: Props) {
              icon and label. No card chrome of its own: it IS the card body. */
           <div className="ld-sheet">
             {FIELD_GROUPS.map(g => {
-              const entries = p.groups![g.id];
+              const entries = p.groups?.[g.id] ?? [];
               if (entries.length === 0) return null;
               const Icon = g.icon;
               return (
@@ -232,7 +224,7 @@ export default function LoanDetailContent(p: Props) {
               );
             })}
 
-            {p.groups.other.length > 0 && (
+            {p.groups?.other && p.groups.other.length > 0 && (
               <details className="ld-more">
                 <summary>
                   <Info size={13} />

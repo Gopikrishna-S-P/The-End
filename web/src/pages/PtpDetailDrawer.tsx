@@ -22,11 +22,6 @@ export default function PtpDetailDrawer({ ptp, onClose, onChanged, canUpdate: ca
   const isPast       = new Date(ptp.promisedDate) < new Date();
   const isActionable = ptp.status === 'PENDING' || ptp.status === 'PARTIALLY_FULFILLED';
 
-  // NOTE: PtpController exposes no status-history endpoint today — PtpService
-  // (getPtpHistory/getFullAllocationHistory) has the data, but no route surfaces it.
-  // See BCR-8 in BACKEND-REQUESTS.md. The "Status history" section was removed rather
-  // than left calling a 404.
-
   return (
     <>
       <div className="ds-drawer-overlay" onClick={onClose} />

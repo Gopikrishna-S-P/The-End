@@ -130,10 +130,10 @@ export default function DispatchAgentPanel(p: Props) {
       <div className="dd-ap-header db-card-head">
         {!isSearchActive ? (
           <>
-            <span className="dd-ap-header-label">
+            <h2 className="dd-ap-header-label db-list-title">
               <Users size={12} aria-hidden="true" />
               Field Officers
-            </span>
+            </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
               {!p.agentsLoading && (
                 <span className="dd-cp-tab-count">{p.agents.length}</span>

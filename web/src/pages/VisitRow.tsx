@@ -22,19 +22,18 @@ export function VisitRow({ visit: v, isSelected, onToggle, variants }: Props) {
       aria-label={`Visit for ${v.borrowerName ?? 'unknown customer'} by ${v.agentName ?? 'unknown'} on ${fmtDate(v.visitDate)}`}
       aria-pressed={isSelected}
     >
-      {/* Identity — customer name with the loan number beneath it, the same
-          shape UploadsPage gives a filename + its meta line. */}
+      {/* Identity — customer name with disposition pill next to it, and loan number beneath. */}
       <div className="vis-row-id">
-        <span className="db-att-label">
+        <span className="db-att-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <User size={13} style={{ color: 'var(--ink-tertiary)', flexShrink: 0 }} />
           {v.borrowerName || 'Unknown Customer'}
+          <VisitPill status={v.disp} />
         </span>
         <span className="vis-row-loan">{v.loanNumber || 'No Loan ID'}</span>
       </div>
 
-      {/* Disposition → verify status → approval status → FO → GPS. */}
+      {/* verify status → approval status → FO → GPS. */}
       <div className="vis-row-cols">
-        <VisitPill status={v.disp} />
         <VisitPill status={v.visitStatus} />
         <VisitPill status={v.approvalStatus} />
 

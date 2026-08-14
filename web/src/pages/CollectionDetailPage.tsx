@@ -8,6 +8,7 @@ import { useAuth } from '../AuthContext';
 import type { CollectionResponse, CollectionDocumentResponse, AllocationResponse, ApprovalAction } from '../types';
 import { AlertCircle, ThumbsUp, ThumbsDown, Loader2, Banknote } from 'lucide-react';
 import { CollectionDetailContent } from './CollectionDetailContent';
+import { CollectionApprovalModal } from './CollectionApprovalModal';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../styles/LoanDetailPage.css';
@@ -49,6 +50,8 @@ export default function CollectionDetailPage() {
 
   const [remarks, setRemarks] = useState('');
   const [approving, setApproving] = useState<ApprovalAction | null>(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalModalAction, setApprovalModalAction] = useState<ApprovalAction | null>(null);
   const [depositNotes, setDepositNotes] = useState('');
   const [depositing, setDepositing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);

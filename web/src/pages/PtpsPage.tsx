@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { apiClient, unwrapApiResponse } from '../client';
 import { ptpsApi } from '../api/ptpsApi';
@@ -129,6 +129,7 @@ function KpiCard({ label, value, footer, icon: Icon, accent, warn, danger, onCli
 
 export default function PtpsPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isBankView  = location.pathname.startsWith('/bank');
   const isAgentView = location.pathname.startsWith('/agent');
@@ -440,7 +441,14 @@ export default function PtpsPage() {
                       key={ptp.id}
                       ptp={ptp}
                       isSelected={selectedPtp?.id === ptp.id}
-                      onSelect={setSelectedPtp}
+                      onSelect={(ptp) => {
+                        const prefix = location.pathname.startsWith('/bank')
+                          ? '/bank'
+                          : location.pathname.startsWith('/agent')
+                          ? '/agent'
+                          : '/app';
+                        navigate(`${prefix}/ptps/${ptp.id}`);
+                      }}
                       variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...((fadeUp.show as any)?.transition || {}), delay: idx * 0.03 } } }}
                     />
                   ))}

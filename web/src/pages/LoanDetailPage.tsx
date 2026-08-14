@@ -58,9 +58,12 @@ export default function LoanDetailPage() {
   const menuRef        = useRef<HTMLDivElement>(null);
   const confirmCancelRef = useRef<HTMLButtonElement>(null);
 
+  const [activeTab, setActiveTab] = useState<'details' | 'activity'>('details');
+
   useEffect(() => {
     setAlloc(null); setAgentName(null); setError(null);
     setNotFound(false); setDrop(false); setConfirming(null);
+    setActiveTab('details');
   }, [id]);
 
   const loadAllocation = useCallback(async () => {
@@ -226,19 +229,43 @@ export default function LoanDetailPage() {
             </div>
           )}
           {loading && !allocation ? <DetailSkeleton /> : allocation ? (
-            <motion.div variants={fadeUp} className="alloc-detail-split" style={{ display: 'flex', flexDirection: 'column' }}>
-              <LoanDetailContent
-                allocation={allocation} agentName={agentName} lastKnownLocation={lastKnownLocation}
-                canChangeStatus={canChangeStatus} groups={groups}
-                outstandingTone={outstandingTone} daysOverdueTone={daysOverdueTone}
-                dueDateIso={dueDateIso} daysOverdue={daysOverdue} nextAction={nextAction}
-                statusUpdating={statusUpdating} statusDropdown={statusDropdown} setDrop={setDrop}
-                triggerRef={triggerRef} menuRef={menuRef}
-                requestStatus={requestStatus} onMenuKeyDown={onMenuKeyDown}
-                onReassign={() => setReassignOpen(true)}
-                dispositionUpdating={dispositionUpdating} requestDisposition={requestDisposition}
-              />
-            </motion.div>
+            <>
+              <div className="db-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginTop: 0, marginBottom: 16 }}>
+                <p className="dd-page-context" style={{ margin: 0 }}>
+                  Detailed loan account information and case overview
+                </p>
+                <div className="db-kpi-toggle">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('details')}
+                    className={`db-kpi-toggle-btn${activeTab === 'details' ? ' is-active' : ''}`}
+                  >
+                    Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('activity')}
+                    className={`db-kpi-toggle-btn${activeTab === 'activity' ? ' is-active' : ''}`}
+                  >
+                    Activity
+                  </button>
+                </div>
+              </div>
+              <motion.div variants={fadeUp} className="alloc-detail-split" style={{ display: 'flex', flexDirection: 'column' }}>
+                <LoanDetailContent
+                  allocation={allocation} agentName={agentName} lastKnownLocation={lastKnownLocation}
+                  canChangeStatus={canChangeStatus} groups={groups}
+                  outstandingTone={outstandingTone} daysOverdueTone={daysOverdueTone}
+                  dueDateIso={dueDateIso} daysOverdue={daysOverdue} nextAction={nextAction}
+                  statusUpdating={statusUpdating} statusDropdown={statusDropdown} setDrop={setDrop}
+                  triggerRef={triggerRef} menuRef={menuRef}
+                  requestStatus={requestStatus} onMenuKeyDown={onMenuKeyDown}
+                  onReassign={() => setReassignOpen(true)}
+                  dispositionUpdating={dispositionUpdating} requestDisposition={requestDisposition}
+                  activeTab={activeTab}
+                />
+              </motion.div>
+            </>
           ) : null}
         </motion.div>
       </div>

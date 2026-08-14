@@ -25,6 +25,7 @@ import AgentsPage from './pages/AgentsPage';
 import ReportsPage from './pages/ReportsPage';
 import AuditPage from './pages/AuditPage';
 import PtpsPage from './pages/PtpsPage';
+import PtpDetailPage from './pages/PtpDetailPage';
 import AgentDetailPage from './pages/AgentDetailPage';
 import ColumnSchemaPage from './pages/ColumnSchemaPage';
 import RoleManagementPage from './pages/RoleManagementPage';
@@ -194,6 +195,7 @@ function App() {
                   <Route path="/app/visits" element={<VisitsPage />} />
                   <Route path="/app/visits/:id" element={<VisitDetailPage />} />
                   <Route path="/app/ptps" element={<PtpsPage />} />
+                  <Route path="/app/ptps/:id" element={<PtpDetailPage />} />
                   <Route path="/app/today" element={<TodayVisitsPage />} />
                   <Route path="/app/visits/:caseId/submit" element={<VisitSubmitPage />} />
                   <Route path="/app/visits/:caseId/interview" element={<VisitInterviewPage />} />

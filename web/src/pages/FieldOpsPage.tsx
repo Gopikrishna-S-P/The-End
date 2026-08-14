@@ -211,6 +211,12 @@ export default function FieldOpsPage() {
                 />
               ) : (
                 <div className="ds-card fo-officers-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                  <div className="dd-cases-head" style={{ padding: '12px 16px', borderBottom: 'none', background: 'var(--bg-surface, #fff)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h2 className="dd-ap-header-label db-list-title" style={{ margin: 0 }}>
+                      Field Officers
+                    </h2>
+                    <span className="dd-cp-tab-count">{agentList.length}</span>
+                  </div>
                   <div style={{ maxHeight: selected ? 260 : 420, overflowY: 'auto', transition: 'max-height 220ms var(--ease-standard)' }}>
                     {agentList.length === 0 ? (
                       <div className="fo-roster-empty">

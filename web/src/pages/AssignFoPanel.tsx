@@ -22,10 +22,10 @@ export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, o
   return (
     <div className="dd-officers-card ds-card is-overflow-hidden">
       <div className="dd-ap-header db-card-head">
-        <span className="dd-ap-header-label">
+        <h2 className="dd-ap-header-label db-list-title">
           <Users size={12} aria-hidden="true" />
           Field Officers
-        </span>
+        </h2>
         {!fosLoading && (
           <span className="dd-cp-tab-count" style={{ marginLeft: 'auto' }}>
             {fos.length}

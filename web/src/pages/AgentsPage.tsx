@@ -62,19 +62,18 @@ export default function AgentsPage() {
     <div className="dd-page">
       <div className="dd-page-header">
         <div className="dd-page-titles">
-          <h1 className="dd-page-title">Field Agents</h1>
-          <span className="dd-page-context">
-            {!loading && misEod ? `${misEod.activeAgents} active today` : 'Manage field team'}
-          </span>
+          <p className="dd-page-context">
+            {!loading && misEod ? (
+              <>You have <strong>{misEod.activeAgents} active field officers</strong> logged in today.</>
+            ) : (
+              'Manage field team, attendance, and daily performance metrics.'
+            )}
+          </p>
         </div>
         <div className="dd-page-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button type="button" onClick={() => navigate('/app/field-ops')}
-            className="ds-btn is-secondary" title="Field Ops (live map + SOS & incidents)" aria-label="Field Ops">
-            <ShieldAlert size={14} style={{ marginRight: 6 }} /> Field Ops
-          </button>
-          <button type="button" onClick={() => navigate('/app/attendance')}
-            className="ds-btn is-secondary" title="Attendance" aria-label="Attendance">
-            <ClipboardCheck size={14} />
+          <button type="button" onClick={exportMis} disabled={!misEod || misEod.foBreakdown.length === 0}
+            className="ds-btn is-success" title="Export MIS report">
+            <Download size={14} style={{ marginRight: 6 }} /> Export
           </button>
           <button type="button" onClick={load} disabled={loading}
             className="ds-btn is-secondary" aria-label="Refresh" title="Refresh">
@@ -86,18 +85,11 @@ export default function AgentsPage() {
       <div className="dd-main-container">
         <div style={{ marginBottom: 24 }}>
           <div className="ds-card dd-cases-card is-overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="dd-cases-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>MIS — Today</span>
-              <button type="button" onClick={exportMis} disabled={!misEod || misEod.foBreakdown.length === 0}
-                className="ds-btn is-success is-sm">
-                <Download size={13} /> Export
-              </button>
-            </div>
 
             <div className="ds-table-wrap" style={{ border: 'none', borderRadius: 0 }}>
               <table className="ds-table">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <thead style={{ background: 'var(--bg-surface, #fff)' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface, #fff)' }}>
                     <th style={{ padding: '10px 16px', paddingLeft: 24 }}>Agent</th>
                     <th style={{ padding: '10px 16px' }}>Login</th>
                     <th style={{ padding: '10px 16px' }}>Logout</th>

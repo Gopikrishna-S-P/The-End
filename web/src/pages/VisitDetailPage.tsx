@@ -9,6 +9,7 @@ import type { VisitLogResponse, AllocationResponse } from '../types';
 import type { VisitSession } from '../types/visitSession';
 import { X, AlertCircle, ThumbsUp, ThumbsDown, Loader2, Trash2 } from 'lucide-react';
 import { VisitDetailContent } from './VisitDetailContent';
+import { VisitApprovalModal } from '../components/VisitApprovalModal';
 import '../styles/AppPage.css';
 import './Dashboard.css';
 import '../styles/LoanDetailPage.css';
@@ -52,6 +53,7 @@ export default function VisitDetailPage() {
   const [proofLoading, setProofLoading] = useState(false);
   const [remarks, setRemarks] = useState('');
   const [approving, setApproving] = useState<'APPROVE' | 'REJECT' | null>(null);
+  const [approvalModalAction, setApprovalModalAction] = useState<'APPROVE' | 'REJECT' | null>(null);
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
