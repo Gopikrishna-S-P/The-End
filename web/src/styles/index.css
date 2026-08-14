@@ -225,12 +225,6 @@ var {
   gap: 2px;
 }
 
-.up-page-ellipsis {
-  padding: 0 3px;
-  color: var(--text-tertiary);
-  font-size: 12px;
-}
-
 /* Apply consistent backdrop blur styling to all popup, modal, and drawer backdrops */
 .asb-signout-overlay,
 .app-topbar-custom-backdrop,

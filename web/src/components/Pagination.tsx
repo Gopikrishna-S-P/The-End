@@ -121,8 +121,6 @@ export const Pagination = ({
         </button>
 
         <div className="up-page-numbers">
-          {adjustedStart > 0 && <span className="up-page-ellipsis" aria-hidden="true">…</span>}
-
           {pageNumbers.map(p => (
             <button
               key={p}
@@ -136,8 +134,6 @@ export const Pagination = ({
               {p + 1}
             </button>
           ))}
-
-          {adjustedStart + count < totalPages && <span className="up-page-ellipsis" aria-hidden="true">…</span>}
         </div>
 
         <button
