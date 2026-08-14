@@ -135,23 +135,11 @@ export const NAV_SECTIONS: NavSection[] = [
       // with its own cross-org picker, so it was fully built for this role and
       // just missing the link — same gap ORG_ADMIN had below before that fix.
       { label: 'Dashboard',      to: '/platform/dashboard',     icon: LayoutDashboard, alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'],
-        children: [
-          { label: 'Organizations', to: '/platform/setup',            icon: Building2, alwaysFor: ['PLATFORM_ADMIN'] },
-          { label: 'Users',         to: '/platform/setup?tab=users',  icon: Users,     alwaysFor: ['PLATFORM_ADMIN'] },
-        ] },
-      { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'],
-        children: [
-          { label: 'Flags',     to: '/platform/feature-flags',                 icon: Flag,      alwaysFor: ['PLATFORM_ADMIN'] },
-          { label: 'Overrides', to: '/platform/feature-flags?tab=overrides',   icon: Settings2, alwaysFor: ['PLATFORM_ADMIN'] },
-        ] },
+      { label: 'Platform Setup', to: '/platform/setup',         icon: Building2,       alwaysFor: ['PLATFORM_ADMIN'] },
+      { label: 'Feature Flags',  to: '/platform/feature-flags', icon: Flag,            alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'File Uploads',   to: '/app/uploads',            icon: Upload,          alwaysFor: ['PLATFORM_ADMIN'] },
       { label: 'Billing',        to: '/platform/subscriptions', icon: CreditCard,      alwaysFor: ['PLATFORM_ADMIN'] },
-      { label: 'Lucien',         to: '/app/lucien/admin',       icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'],
-        children: [
-          { label: 'System prompt', to: '/app/lucien/admin',           icon: Sparkles, alwaysFor: ['PLATFORM_ADMIN'] },
-          { label: 'RAG documents', to: '/app/lucien/admin?tab=rag',   icon: Layers,   alwaysFor: ['PLATFORM_ADMIN'] },
-        ] },
+      { label: 'Lucien',         to: '/app/lucien/admin',       icon: Sparkles,        alwaysFor: ['PLATFORM_ADMIN'] },
     ],
   },
 ];

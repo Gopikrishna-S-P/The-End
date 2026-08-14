@@ -12,6 +12,7 @@ import { useScrollReveal } from "./hooks/public-motion";
 // own ripple handler bound to the CTA's onClick. Importing the global
 // installer would double-fire.
 import { getUserCache } from "./api";
+import { ROLE_REDIRECT } from "./pages/LoginTypes";
 import "./styles/LandingPage.css";
 import "./styles/public-motion.css";
 
@@ -46,6 +47,7 @@ const GUARANTEES = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [dashboardRoute, setDashboardRoute] = useState("/app/dashboard");
   const [scrollProgress, setScrollProgress] = useState(0);
   const ripple = useRipple();
 
@@ -65,7 +67,14 @@ export default function LandingPage() {
 
   useEffect(() => {
     const userStr = getUserCache();
-    if (userStr) { try { JSON.parse(userStr); setIsAuthenticated(true); } catch { /* ignore */ } }
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setIsAuthenticated(true);
+        const rawRole = user.roles?.[0]?.name || '';
+        setDashboardRoute(ROLE_REDIRECT[rawRole] || '/app/dashboard');
+      } catch { /* ignore */ }
+    }
   }, []);
 
   useEffect(() => {
@@ -83,7 +92,7 @@ export default function LandingPage() {
   const handleCta = (e: React.MouseEvent<HTMLButtonElement>) => {
     ripple(e);
     if (isAuthenticated) {
-      setTimeout(() => navigate("/app/dashboard"), 160);
+      setTimeout(() => navigate(dashboardRoute), 160);
     } else {
       setTimeout(() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" }), 160);
     }
@@ -101,7 +110,7 @@ export default function LandingPage() {
           <Link to="/terms"    className="landing-nav-link">Terms</Link>
           <Link to="/download" className="landing-nav-link">Download</Link>
           {isAuthenticated
-            ? <Link to="/app/dashboard" className="landing-nav-cta">Go to Dashboard <ArrowRight size={14} /></Link>
+            ? <Link to={dashboardRoute} className="landing-nav-cta">Go to Dashboard <ArrowRight size={14} /></Link>
             : <Link to="/login"         className="landing-nav-cta">Sign In</Link>
           }
         </div>

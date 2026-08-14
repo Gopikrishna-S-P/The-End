@@ -261,8 +261,11 @@
   padding: 8px 16px;
 }
 .dd-case-row.is-list-row {
-  padding: 10px 16px;
+  padding: 12px 16px;
   border-bottom-color: var(--border-subtle);
+}
+.dd-case-row.is-list-row .dd-case-info {
+  gap: 10px;
 }
 /* Row text — dd-case-row's own baked-in typography below (13px/500 label,
    mono/10px meta, mono/13px/700 amount) predates this pattern and is weaker
@@ -282,6 +285,16 @@
 .dd-case-row.is-list-row .dd-case-amount {
   font-weight: 600;
   letter-spacing: normal;
+}
+
+/* Case Assignments page — extra breathing room between the borrower name and
+   the loan/DPD meta row below it, and between the amount and its POS label.
+   Scoped to this page only, so Daily Dispatch's own case list is unaffected. */
+.dd-case-assignments-page .dd-case-row.is-list-row .dd-case-info {
+  gap: 14px;
+}
+.dd-case-assignments-page .dd-case-amount-col {
+  gap: 10px;
 }
 
 /* ── Case row ────────────────────────────────────────────────────────────────── */
@@ -343,13 +356,13 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 8px;
 }
 
 .dd-case-borrower {
   font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--ink-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -425,7 +438,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 1px;
+  gap: 6px;
 }
 
 .dd-case-amount {
@@ -441,11 +454,11 @@
 
 .dd-case-amount-lbl {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 600;
   color: var(--ink-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
 }
 
 .dd-undo-btn {

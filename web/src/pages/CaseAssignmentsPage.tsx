@@ -208,7 +208,7 @@ export default function CaseAssignmentsPage() {
                       key="search-btn"
                       initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.15 }}
                       type="button" onClick={() => setIsSearchActive(true)}
-                      style={{ width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8, cursor: 'pointer', color: 'var(--ink-secondary)', marginLeft: 'auto' }}
+                      style={{ width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: '1px solid transparent', borderRadius: 8, cursor: 'pointer', color: 'var(--ink-secondary)', marginLeft: 'auto' }}
                       aria-label="Open search"
                     >
                       <Search size={14} />

@@ -102,7 +102,7 @@ export function UsersTable({
                 type="button"
                 style={{ 
                   width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 8,
+                  backgroundColor: 'transparent', border: '1px solid transparent', borderRadius: 8,
                   cursor: 'pointer', color: 'var(--ink-secondary)'
                 }}
                 onClick={() => setIsSearchOpen(true)}

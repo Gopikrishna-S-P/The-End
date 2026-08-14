@@ -13,7 +13,7 @@ import './Dashboard.css';
 type Tab = 'orgs' | 'users';
 
 export default function PlatformSetupPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tab = (searchParams.get('tab') as Tab) || 'orgs';
   const [orgs, setOrgs] = useState<OrganizationSummary[]>([]);
   const [showCreateOrg, setShowCreateOrg] = useState(false);
@@ -34,6 +34,42 @@ export default function PlatformSetupPage() {
             <p className="dd-page-context">
               Manage organizations and platform users
             </p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setSearchParams({ tab: 'orgs' })}
+                style={{
+                  background: tab === 'orgs' ? 'var(--brand)' : 'transparent',
+                  color: tab === 'orgs' ? 'var(--text-on-solid, #fff)' : 'var(--ink-secondary)',
+                  border: tab === 'orgs' ? '1px solid var(--brand)' : '1px solid var(--border-color)',
+                  borderRadius: 6,
+                  padding: '6px 14px',
+                  fontSize: 13,
+                  fontWeight: tab === 'orgs' ? 600 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Organizations
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchParams({ tab: 'users' })}
+                style={{
+                  background: tab === 'users' ? 'var(--brand)' : 'transparent',
+                  color: tab === 'users' ? 'var(--text-on-solid, #fff)' : 'var(--ink-secondary)',
+                  border: tab === 'users' ? '1px solid var(--brand)' : '1px solid var(--border-color)',
+                  borderRadius: 6,
+                  padding: '6px 14px',
+                  fontSize: 13,
+                  fontWeight: tab === 'users' ? 600 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Users
+              </button>
+            </div>
           </div>
           <AnimatePresence mode="wait">
             <motion.div

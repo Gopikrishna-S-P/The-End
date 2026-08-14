@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { allocationsApi } from '../api/allocationsApi';
 import type { AllocationResponse, UserResponse } from '../types';
 import { UserCheck, Loader2, CheckCircle2, Check, UserPlus, Send } from 'lucide-react';
@@ -30,23 +30,6 @@ interface Props {
   onAssign: (pickedIds: string[]) => void;
   externalSearch?: string;
 }
-
-// ── Motion variants ────────────────────────────────────────────────────────────
-
-const stagger: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.04, delayChildren: 0.02 } },
-};
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
-};
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.22, ease: 'easeOut' as const } },
-};
 
 // ── Ripple hook ────────────────────────────────────────────────────────────────
 
@@ -141,8 +124,7 @@ export default function AssignCasePanel({
     <>
       <div className="dd-cp-list-wrap" ref={containerRef}>
         <div className="dd-cp-list">
-          <AnimatePresence mode="wait">
-          <motion.div key="assign-list" variants={fadeIn} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
             {casesLoading ? (
               Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.1 }}>
@@ -155,25 +137,25 @@ export default function AssignCasePanel({
                 </div>
               ))
             ) : !selectedFo ? (
-              <motion.div className="ds-empty" variants={fadeUp} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+              <div className="ds-empty" style={{ padding: '80px 0' }}>
                 <UserCheck size={32} className="ds-empty-icon" />
                 <span className="ds-empty-title">Select an officer</span>
                 <span className="ds-empty-sub">Pick a field officer from the panel on the left to begin assigning.</span>
-              </motion.div>
+              </div>
             ) : cases.length === 0 ? (
-              <motion.div className="ds-empty" variants={fadeUp} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+              <div className="ds-empty" style={{ padding: '80px 0' }}>
                 <CheckCircle2 size={32} className="ds-empty-icon" style={{ color: 'var(--success)' }} />
                 <span className="ds-empty-title">{searchTerm || externalSearch ? 'No matches' : 'All clear'}</span>
                 <span className="ds-empty-sub">{searchTerm || externalSearch ? 'Try a different search term or clear it.' : 'Every case in the pool has been assigned.'}</span>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div variants={stagger} initial="hidden" animate="show">
+              <div>
                 {cases.map((c, idx) => {
                   const isPicked = picked.has(c.id);
                   const amt = resolveAmount(c);
                   const disposition = resolveDisposition(c);
                   return (
-                    <motion.div key={c.id} variants={fadeUp}
+                    <div key={c.id}
                       className={`db-att-row dd-case-row is-list-row${isPicked ? ' is-picked' : ''}`}
                       onClick={canPick ? (e) => { ripple(e as any); toggle(c.id); } : undefined}
                       style={{ cursor: canPick ? 'pointer' : 'default', opacity: canPick ? 1 : 0.6, boxShadow: isPicked ? 'none' : undefined }}
@@ -205,13 +187,12 @@ export default function AssignCasePanel({
                           {amt != null && <span className="dd-case-amount-lbl">POS</span>}
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
-                </motion.div>
+                </div>
               )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
         </div>
       </div>
 

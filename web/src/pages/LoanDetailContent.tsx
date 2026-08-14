@@ -81,9 +81,6 @@ export default function LoanDetailContent(p: Props) {
              give every field below its context. Nothing here scrolls. ───── */}
       <header className="ld-head">
 
-        <div className="ld-card-head">
-          <h2 className="db-list-title">Loan case</h2>
-        </div>
 
         <div className="ld-head-top">
           <div className="ld-identity">

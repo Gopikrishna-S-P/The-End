@@ -189,20 +189,58 @@ export default function FeatureFlagsPage() {
       <div className="db-content">
 
         <motion.div className="db-inner" variants={stagger} initial="hidden" animate="show">
-          <motion.div variants={fadeUp} className="db-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-            <p className="dd-page-context">
+          <motion.div variants={fadeUp} className="db-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: '1px solid var(--border-color)', paddingBottom: 12, marginBottom: 20 }}>
+            <p className="dd-page-context" style={{ margin: 0 }}>
               Manage feature flags for the platform and individual organizations
             </p>
-            {tab === 'overrides' && (
-              <div className="ps-select-wrap" style={{ maxWidth: 340, minWidth: 240 }}>
-                <select value={selectedOrgId} onChange={e => setSelectedOrgId(e.target.value)}
-                  className="ds-select" style={{ width: '100%' }}>
-                  <option value="">Select an organization…</option>
-                  {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                </select>
-                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              {tab === 'overrides' && (
+                <div className="ps-select-wrap" style={{ maxWidth: 340, minWidth: 220, position: 'relative' }}>
+                  <select value={selectedOrgId} onChange={e => setSelectedOrgId(e.target.value)}
+                    className="ds-select" style={{ width: '100%' }}>
+                    <option value="">Select an organization…</option>
+                    {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </select>
+                  <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-tertiary)', pointerEvents: 'none' }} />
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setTab('global')}
+                  style={{
+                    background: tab === 'global' ? 'var(--brand)' : 'transparent',
+                    color: tab === 'global' ? 'var(--text-on-solid, #fff)' : 'var(--ink-secondary)',
+                    border: tab === 'global' ? '1px solid var(--brand)' : '1px solid var(--border-color)',
+                    borderRadius: 6,
+                    padding: '6px 14px',
+                    fontSize: 13,
+                    fontWeight: tab === 'global' ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  Flags
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('overrides')}
+                  style={{
+                    background: tab === 'overrides' ? 'var(--brand)' : 'transparent',
+                    color: tab === 'overrides' ? 'var(--text-on-solid, #fff)' : 'var(--ink-secondary)',
+                    border: tab === 'overrides' ? '1px solid var(--brand)' : '1px solid var(--border-color)',
+                    borderRadius: 6,
+                    padding: '6px 14px',
+                    fontSize: 13,
+                    fontWeight: tab === 'overrides' ? 600 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  Overrides
+                </button>
               </div>
-            )}
+            </div>
           </motion.div>
 
           {showAdd && (

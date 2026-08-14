@@ -95,7 +95,7 @@ function AgentStats({ cases, dispatched, dispatchPct, casesLoading }: {
   // so dispatch progress reads identically to the org-level chart.
   const slices = [
     { label: 'Sent', value: dispatched.length,                  color: 'var(--dbc-1)' },
-    { label: 'Left', value: cases.length - dispatched.length,   color: 'var(--dbn-2)' },
+    { label: 'Left', value: cases.length - dispatched.length,   color: '#D4EBE2' },
   ];
 
   return (

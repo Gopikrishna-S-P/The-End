@@ -229,7 +229,7 @@ export default function Dashboard() {
   // takes the neutral rather than a categorical slot of its own.
   const assignSlices: ChartSlice[] = [
     { label: 'Assigned',   value: orgOverview?.assignedAllocations ?? 0,   color: C_SLOT_1 },
-    { label: 'Unassigned', value: orgOverview?.unassignedAllocations ?? 0, color: C_NONE },
+    { label: 'Unassigned', value: orgOverview?.unassignedAllocations ?? 0, color: '#D4EBE2' },
   ];
 
   const ptpFulfilled = ptpSummary?.fulfilledPtpsThisMonth ?? 0;

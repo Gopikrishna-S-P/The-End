@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { allocationsApi } from '../api/allocationsApi';
 import { assignmentsApi } from '../api/assignmentsApi';
 import { usePermissions } from '../hooks/usePermissions';
@@ -26,23 +25,6 @@ interface Props {
   onOpenReassign: (assignmentId: string, allocationId: string, caseName: string | null) => void;
   externalSearch?: string;
 }
-
-// ── Motion variants ────────────────────────────────────────────────────────────
-
-const stagger: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.04, delayChildren: 0.02 } },
-};
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
-};
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.22, ease: 'easeOut' as const } },
-};
 
 export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, onOpenReassign, externalSearch = '' }: Props) {
   const { hasAnyRole } = usePermissions();
@@ -110,14 +92,13 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
     <>
       <div className="dd-cp-list-wrap">
         <div className="dd-cp-list">
-          <AnimatePresence mode="wait">
-            <motion.div key="reassign-list" variants={fadeIn} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
             {!selectedFo ? (
-              <motion.div className="ds-empty" variants={fadeUp} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+              <div className="ds-empty" style={{ padding: '80px 0' }}>
                 <UserCheck size={32} className="ds-empty-icon" />
                 <span className="ds-empty-title">Select an officer</span>
                 <span className="ds-empty-sub">Pick an officer from the left panel to view their assigned cases.</span>
-              </motion.div>
+              </div>
             ) : assignedLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="dd-case-skel" style={{ opacity: 1 - i * 0.1 }}>
@@ -130,7 +111,7 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
                 </div>
               ))
             ) : filtered.length === 0 ? (
-              <motion.div className="ds-empty" variants={fadeUp} initial="hidden" animate="show" style={{ padding: '80px 0' }}>
+              <div className="ds-empty" style={{ padding: '80px 0' }}>
                 <CheckCircle2 size={32} className="ds-empty-icon" style={{ color: 'var(--success)' }} />
                 <span className="ds-empty-title">{externalSearch ? 'No matches' : 'No active cases'}</span>
                 <span className="ds-empty-sub">
@@ -138,14 +119,14 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
                     ? 'No cases match your search term.'
                     : `${selectedFoObj?.firstName ?? 'This agent'} has no cases currently assigned.`}
                 </span>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div variants={stagger} initial="hidden" animate="show">
+              <div>
                 {filtered.map(c => {
                   const amt = resolveAmount(c);
                   const disposition = resolveDisposition(c);
                   return (
-                  <motion.div key={c.id} variants={fadeUp}
+                  <div key={c.id}
                     className="db-att-row dd-case-row is-list-row"
                   >
                     <div className="dd-case-info">
@@ -211,13 +192,12 @@ export default function ReassignPanel({ selectedFo, selectedFoObj, onFeedback, o
                         </>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                   );
                 })}
-              </motion.div>
+              </div>
             )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserCheck, CheckCircle2, Users, Briefcase } from 'lucide-react';
 import type { UserResponse } from '../types';
 import { hashColor } from '../utils/navConfig';
@@ -16,23 +16,6 @@ interface Props {
 
 const initials = (f: UserResponse) =>
   `${f.firstName?.[0] ?? ''}${f.lastName?.[0] ?? ''}`.toUpperCase() || '?';
-
-// ── Motion variants ────────────────────────────────────────────────────────────
-
-const stagger: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.045, delayChildren: 0.02 } },
-};
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
-};
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { duration: 0.20, ease: 'easeOut' as const } },
-};
 
 export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, onSelect }: Props) {
 
@@ -64,7 +47,7 @@ export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, o
             <span className="ds-empty-title">No officers match</span>
           </div>
         ) : (
-          <motion.div className="dd-agent-list" variants={stagger} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 0' }}>
+          <div className="dd-agent-list" style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 0' }}>
             {fos.map(f => {
               const isActive = selectedFo === f.id;
               const stats = fosStats.get(f.id);
@@ -96,7 +79,7 @@ export default function AssignFoPanel({ fos, fosLoading, fosStats, selectedFo, o
                 </button>
               );
             })}
-          </motion.div>
+          </div>
         )}
       </div>
 

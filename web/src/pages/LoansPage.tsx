@@ -239,7 +239,7 @@ export default function LoansPage() {
           <div className="db-span-12" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div className="ds-card is-overflow-hidden db-card is-list-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <header className="db-card-head db-list-head" style={{ borderBottom: 'none' }}>
-              <h3 className="db-list-title">Portfolio</h3>
+              <h3 className="db-list-title">Active Loans</h3>
 
               <div className="db-list-head-actions">
                 <AnimatePresence initial={false}>

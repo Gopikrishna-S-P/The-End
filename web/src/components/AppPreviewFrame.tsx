@@ -74,7 +74,7 @@ const ATTENTION = {
 
 const ASSIGN_SLICES: DonutSlice[] = [
   { label: 'Assigned',   value: 1_284, color: 'var(--brand)' },
-  { label: 'Unassigned', value: 148,   color: 'var(--brand-subtle)' },
+  { label: 'Unassigned', value: 148,   color: '#D4EBE2' },
 ];
 
 const PTP = { fulfilled: 214, broken: 61, active: 96 };
