@@ -31,6 +31,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +48,8 @@ class StripeWebhookServiceTest {
     private FeatureFlagService featureFlagService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private NotificationService notificationService;
 
     private StripeConfig stripeConfig;
     private StripeWebhookService webhookService;
@@ -59,7 +63,7 @@ class StripeWebhookServiceTest {
 
         webhookService = new StripeWebhookService(
                 processedEventRepository, subscriptionRepository, invoiceRepository,
-                featureFlagService, stripeConfig, auditService);
+                featureFlagService, stripeConfig, auditService, notificationService);
     }
 
     @Test
@@ -214,7 +218,31 @@ class StripeWebhookServiceTest {
         webhookService.handleInvoicePaymentFailed(invoice);
 
         assertThat(sub.getStatus()).isEqualTo(OrgSubscription.Status.PAST_DUE);
+        assertThat(sub.getPastDueSince()).isNotNull();
         verify(featureFlagService).provisionFlagsFor(sub);
+        verify(notificationService).createForOrgRole(eq(sub.getOrgId()), anyString(),
+                eq(com.recoverpro.server.enums.NotificationType.ORG_PAYMENT_FAILED), anyString(), anyString());
+    }
+
+    @Test
+    void handleInvoicePaymentFailed_alreadyPastDue_doesNotResetClockOrReNotify() {
+        Instant firstFailure = Instant.now().minus(3, ChronoUnit.DAYS);
+        OrgSubscription sub = OrgSubscription.builder()
+                .orgId(UUID.randomUUID())
+                .stripeCustomerId("cus_7")
+                .status(OrgSubscription.Status.PAST_DUE)
+                .plan(OrgSubscription.Plan.GROWTH)
+                .pastDueSince(firstFailure)
+                .build();
+        when(subscriptionRepository.findByStripeCustomerId("cus_7")).thenReturn(Optional.of(sub));
+
+        Invoice invoice = new Invoice();
+        invoice.setCustomer("cus_7");
+
+        webhookService.handleInvoicePaymentFailed(invoice);
+
+        assertThat(sub.getPastDueSince()).isEqualTo(firstFailure);
+        verify(notificationService, never()).createForOrgRole(any(), anyString(), any(), anyString(), anyString());
     }
 
     @Test

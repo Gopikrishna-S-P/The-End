@@ -79,6 +79,12 @@ public class PlatformInvoice {
     @Column(name = "paid_at")
     private Instant paidAt;
 
+    /** Stripe PaymentIntent id (or a future provider's own payment reference) this invoice was
+     *  settled by -- what Refund actually refunds, resolved once here at mirror time rather than
+     *  requiring provider-SDK knowledge at refund time. Null until the invoice has a payment. */
+    @Column(name = "provider_payment_ref", length = 100)
+    private String providerPaymentRef;
+
     @Column(name = "hosted_invoice_url", columnDefinition = "TEXT")
     private String hostedInvoiceUrl;
 

@@ -54,6 +54,68 @@ public class FeatureFlagService {
         return resolved;
     }
 
+    /**
+     * Reads a numeric entitlement (e.g. {@code MAX_USERS}). Empty means unlimited -- either the
+     * key was never a numeric-limit key for this plan (Enterprise), or no row exists at all.
+     * Deliberately uncached, unlike {@link #isEnabled}: limit checks happen far less often than
+     * routine feature gates, and reusing the boolean "1"/"0" Redis cache format for a numeric
+     * value would require a second cache key scheme for no real benefit at RecoverPro's scale.
+     */
+    public java.util.Optional<Long> getLimit(UUID organizationId, String limitKey) {
+        if (limitKey == null || limitKey.isBlank()) return java.util.Optional.empty();
+        if (organizationId != null) {
+            var tenant = repository.findByOrganizationIdAndFlagKey(organizationId, limitKey);
+            if (tenant.isPresent() && tenant.get().getLimitValue() != null) {
+                return java.util.Optional.of(tenant.get().getLimitValue());
+            }
+        }
+        var global = repository.findGlobalByFlagKey(limitKey);
+        if (global.isPresent() && global.get().getLimitValue() != null) {
+            return java.util.Optional.of(global.get().getLimitValue());
+        }
+        return java.util.Optional.empty();
+    }
+
+    /** Writer counterpart to {@link #getLimit}. {@code limitValue == null} means unlimited. */
+    @Transactional
+    public FeatureFlag setLimit(UUID organizationId, String limitKey, Long limitValue,
+                                String description, UUID actingUserId, FeatureFlag.FlagSource source) {
+        FeatureFlag flag = (organizationId == null
+                ? repository.findGlobalByFlagKey(limitKey)
+                : repository.findByOrganizationIdAndFlagKey(organizationId, limitKey))
+                .orElseGet(() -> FeatureFlag.builder()
+                        .organizationId(organizationId)
+                        .flagKey(limitKey)
+                        .enabled(false)
+                        .build());
+        Long before = flag.getLimitValue();
+        flag.setLimitValue(limitValue);
+        if (description != null) flag.setDescription(description);
+        flag.setUpdatedByUserId(actingUserId);
+        flag.setSource(source);
+        FeatureFlag saved = repository.save(flag);
+        String scope = organizationId == null ? "GLOBAL" : organizationId.toString();
+        if (actingUserId != null) {
+            auditLogService.logUserAction(actingUserId, "FEATURE_FLAG_CHANGED",
+                    "limit=" + limitKey + " org=" + scope + " before=" + before + " after=" + limitValue
+                            + " source=" + source);
+        }
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.FEATURE_FLAG_CHANGED)
+                .resourceType(AuditResourceType.FEATURE_FLAG)
+                .resourceId(limitKey)
+                .actorUserIdOverride(actingUserId)
+                .actorTypeOverride(actingUserId == null ? AuditActorType.SYSTEM : null)
+                .organizationIdOverride(organizationId)
+                .beforeState(Map.of("limitValue", String.valueOf(before)))
+                .afterState(Map.of("limitValue", String.valueOf(limitValue)))
+                .metadata(Map.of("source", source.name()))
+                .build());
+        log.info("Entitlement limit {} = {} for {} (source={}, by {})",
+                limitKey, limitValue, scope, source, actingUserId);
+        return saved;
+    }
+
     @Transactional
     public FeatureFlag set(UUID organizationId, String flagKey, boolean enabled,
                            String description, UUID actingUserId) {
@@ -124,6 +186,12 @@ public class FeatureFlagService {
             if (existing.isPresent() && existing.get().getSource() == FeatureFlag.FlagSource.MANUAL) continue;
             boolean shouldEnable = PlanFeatureMatrix.includes(effective, flagKey);
             set(sub.getOrgId(), flagKey, shouldEnable, null, null, FeatureFlag.FlagSource.PLAN);
+        }
+        for (String limitKey : PlanFeatureMatrix.ALL_LIMIT_KEYS) {
+            var existing = repository.findByOrganizationIdAndFlagKey(sub.getOrgId(), limitKey);
+            if (existing.isPresent() && existing.get().getSource() == FeatureFlag.FlagSource.MANUAL) continue;
+            Long limit = PlanFeatureMatrix.limitFor(effective, limitKey);
+            setLimit(sub.getOrgId(), limitKey, limit, null, null, FeatureFlag.FlagSource.PLAN);
         }
         log.info("Provisioned feature flags for org {} (status={}, plan={}, comp={}, effective={})",
                 sub.getOrgId(), sub.getStatus(), sub.getPlan(), comp, effective);

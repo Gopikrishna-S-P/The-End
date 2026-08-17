@@ -1,5 +1,6 @@
 package com.recoverpro.server.entity;
 
+import com.recoverpro.server.enums.PaymentProviderType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +12,9 @@ import java.util.UUID;
 @Table(name = "org_subscriptions", indexes = {
         @Index(name = "idx_sub_org_id", columnList = "org_id", unique = true),
         @Index(name = "idx_sub_stripe_customer", columnList = "stripe_customer_id"),
-        @Index(name = "idx_sub_stripe_sub", columnList = "stripe_subscription_id")
+        @Index(name = "idx_sub_stripe_sub", columnList = "stripe_subscription_id"),
+        @Index(name = "idx_sub_razorpay_customer", columnList = "razorpay_customer_id"),
+        @Index(name = "idx_sub_razorpay_sub", columnList = "razorpay_subscription_id")
 })
 @Getter
 @Setter
@@ -41,6 +44,20 @@ public class OrgSubscription {
     @Column(name = "stripe_subscription_id")
     private String stripeSubscriptionId;
 
+    @Column(name = "razorpay_customer_id", length = 64)
+    private String razorpayCustomerId;
+
+    @Column(name = "razorpay_subscription_id", length = 64)
+    private String razorpaySubscriptionId;
+
+    /** Which gateway owns this org's billing. Defaults STRIPE for all pre-migration rows;
+     *  new signups can be routed to RAZORPAY once Razorpay is live (Billing Ledger design doc
+     *  migration path -- a deliberate, separate cutover decision, not flipped by any migration). */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private PaymentProviderType provider = PaymentProviderType.STRIPE;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -65,6 +82,12 @@ public class OrgSubscription {
     @Column(name = "cancel_at_period_end")
     @Builder.Default
     private Boolean cancelAtPeriodEnd = false;
+
+    /** Set when status first becomes PAST_DUE, cleared on recovery back to ACTIVE. Drives
+     *  DunningScheduler's grace-period countdown -- never reset by a repeat payment-retry
+     *  failure within the same PAST_DUE episode, only by entering PAST_DUE from ACTIVE. */
+    @Column(name = "past_due_since")
+    private Instant pastDueSince;
 
     /* ── Admin-granted access ────────────────────────────────────────────────
      * Written only by the platform-admin comp endpoints. StripeWebhookService

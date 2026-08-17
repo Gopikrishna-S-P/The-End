@@ -2,6 +2,7 @@ package com.recoverpro.server.controller;
 
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.exception.BusinessException;
+import com.recoverpro.server.common.exception.PaymentProviderException;
 import com.recoverpro.server.dto.response.SubscriptionResponse;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.OrgSubscription.Plan;
@@ -9,8 +10,7 @@ import com.recoverpro.server.entity.OrgSubscription.Status;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FeatureFlagService;
-import com.recoverpro.server.service.StripeService;
-import com.stripe.exception.StripeException;
+import com.recoverpro.server.service.PaymentProviderResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ import java.util.UUID;
 public class SubscriptionController {
 
     private final OrgSubscriptionRepository subRepo;
-    private final StripeService stripeService;
+    private final PaymentProviderResolver paymentProviderResolver;
     private final FeatureFlagService featureFlagService;
 
     @GetMapping
@@ -96,11 +96,11 @@ public class SubscriptionController {
         String plan = body.getOrDefault("plan", "STARTER");
         UUID orgId = requireOrgContext(caller);
         try {
-            String url = stripeService.createCheckoutUrl(orgId, plan);
+            String url = paymentProviderResolver.resolveForOrg(orgId).createCheckoutUrl(orgId, plan);
             return ResponseEntity.ok(ApiResponse.success(Map.of("url", url)));
-        } catch (StripeException e) {
-            log.error("Stripe checkout error for org {}: {}", orgId, e.getMessage());
-            return ResponseEntity.badRequest().body(ApiResponse.of("Stripe error: " + e.getMessage(), null));
+        } catch (PaymentProviderException e) {
+            log.error("Checkout error for org {}: {}", orgId, e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
         }
@@ -113,11 +113,11 @@ public class SubscriptionController {
 
         UUID orgId = requireOrgContext(caller);
         try {
-            String url = stripeService.createPortalUrl(orgId);
+            String url = paymentProviderResolver.resolveForOrg(orgId).createPortalUrl(orgId);
             return ResponseEntity.ok(ApiResponse.success(Map.of("url", url)));
-        } catch (StripeException e) {
-            log.error("Stripe portal error for org {}: {}", orgId, e.getMessage());
-            return ResponseEntity.badRequest().body(ApiResponse.of("Stripe error: " + e.getMessage(), null));
+        } catch (PaymentProviderException e) {
+            log.error("Portal error for org {}: {}", orgId, e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
         }

@@ -5,12 +5,14 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.dto.response.InvoiceResponse;
 import com.recoverpro.server.dto.response.PlatformSubscriptionResponse;
+import com.recoverpro.server.dto.response.RefundResponse;
 import com.recoverpro.server.dto.response.RevenueTrendPointResponse;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.OrgSubscription.Plan;
 import com.recoverpro.server.entity.OrgSubscription.Status;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.entity.PlatformInvoice;
+import com.recoverpro.server.entity.Refund;
 import com.recoverpro.server.enums.AuditAction;
 import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
@@ -21,6 +23,7 @@ import com.recoverpro.server.service.AuditEventRequest;
 import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FeatureFlagService;
 import com.recoverpro.server.service.PlatformAnalyticsService;
+import com.recoverpro.server.service.RefundService;
 import com.recoverpro.server.service.StripeService;
 import com.recoverpro.server.service.StripeWebhookService;
 import com.recoverpro.server.service.UserActionAuditService;
@@ -71,6 +74,7 @@ public class PlatformSubscriptionController {
     private final FeatureFlagService featureFlagService;
     private final UserActionAuditService auditLogService;
     private final AuditService auditService;
+    private final RefundService refundService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlatformSubscriptionResponse>>> list() {
@@ -154,6 +158,45 @@ public class PlatformSubscriptionController {
             log.error("Stripe invoice list error for org {}: {}", orgId, e.getMessage());
             throw new BusinessException("Could not fetch invoices from Stripe: " + e.getMessage());
         }
+    }
+
+    /**
+     * Full or partial refund against a specific invoice. Body: {@code amountMinorUnits}
+     * (required, paise), {@code reason} (required). Validation (refundable balance, no
+     * duplicate-in-flight refund) happens in {@link RefundService}; this endpoint is just the
+     * platform-admin entry point and actor resolution.
+     */
+    @PostMapping("/{orgId}/invoices/{invoiceId}/refund")
+    public ResponseEntity<ApiResponse<RefundResponse>> refundInvoice(
+            @PathVariable UUID orgId,
+            @PathVariable UUID invoiceId,
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal UserPrincipal caller) {
+
+        String amountRaw = body.get("amountMinorUnits");
+        if (amountRaw == null || amountRaw.isBlank()) {
+            throw new BusinessException("amountMinorUnits is required");
+        }
+        long amountMinorUnits;
+        try {
+            amountMinorUnits = Long.parseLong(amountRaw);
+        } catch (NumberFormatException e) {
+            throw new BusinessException("amountMinorUnits must be a whole number of minor units");
+        }
+        String reason = body.get("reason");
+
+        Refund refund = refundService.initiateRefund(invoiceId, amountMinorUnits, reason, caller.getId());
+        log.info("Platform admin {} refunded invoice {} for org {}: amount={}",
+                caller.getId(), invoiceId, orgId, amountMinorUnits);
+
+        return ResponseEntity.ok(ApiResponse.success(RefundResponse.builder()
+                .id(refund.getId())
+                .invoiceId(refund.getInvoiceId())
+                .amountMinorUnits(refund.getAmountMinorUnits())
+                .reason(refund.getReason())
+                .status(refund.getStatus().name())
+                .providerRefundId(refund.getProviderRefundId())
+                .build()));
     }
 
     /**

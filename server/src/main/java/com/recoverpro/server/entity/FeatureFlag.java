@@ -37,6 +37,11 @@ public class FeatureFlag {
     @Builder.Default
     private Boolean enabled = false;
 
+    /** Null = boolean-only flag (existing behavior). Non-null = a numeric entitlement
+     *  (e.g. max_users), read via {@code EntitlementService.getLimit()}. */
+    @Column(name = "limit_value")
+    private Long limitValue;
+
     @Column(name = "description", length = 500)
     private String description;
 

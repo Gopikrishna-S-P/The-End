@@ -12,6 +12,15 @@ public class AppProperties {
     private String baseUrl = "http://localhost:5173";
     private Jwt jwt = new Jwt();
     private Security security = new Security();
+    private Billing billing = new Billing();
+
+    @Data
+    public static class Billing {
+        /** Days a subscription may stay PAST_DUE, with access retained, before dunning
+         *  auto-cancels it (Billing Ledger design doc §12/§13). Placeholder default pending
+         *  business confirmation, same as every other dunning default in that design doc. */
+        private int dunningGracePeriodDays = 7;
+    }
 
     @Data
     public static class Jwt {

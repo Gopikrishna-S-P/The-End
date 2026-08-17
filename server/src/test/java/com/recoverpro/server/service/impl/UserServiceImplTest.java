@@ -18,6 +18,7 @@ import com.recoverpro.server.repository.UserPermissionRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AuditService;
+import com.recoverpro.server.service.EntitlementService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.EmailService;
 import org.junit.jupiter.api.AfterEach;
@@ -63,6 +64,7 @@ class UserServiceImplTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private UserActionAuditService auditLogService;
     @Mock private AuditService auditService;
+    @Mock private EntitlementService entitlementService;
     @Mock private EmailService emailService;
     @Mock private AppProperties appProperties;
 
@@ -72,7 +74,8 @@ class UserServiceImplTest {
     void setUp() {
         service = new UserServiceImpl(userRepository, roleRepository, permissionRepository,
                 userPermissionRepository, passwordResetTokenRepository, userMapper, passwordEncoder,
-                auditLogService, auditService, emailService, appProperties);
+                auditLogService, auditService, entitlementService, emailService, appProperties);
+        lenient().when(entitlementService.canCreateUser(any())).thenReturn(true);
     }
 
     @AfterEach
@@ -281,6 +284,23 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> service.createUser(orgId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("permissions you don't hold");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUser_orgAtUserLimit_throwsAndDoesNotSaveUser() {
+        UUID orgId = UUID.randomUUID();
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(entitlementService.canCreateUser(orgId)).thenReturn(false);
+
+        CreateUserRequest request = new CreateUserRequest();
+        request.setEmail("one.more@example.com");
+        request.setFirstName("One");
+        request.setLastName("More");
+
+        assertThatThrownBy(() -> service.createUser(orgId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("limit reached");
         verify(userRepository, never()).save(any());
     }
 

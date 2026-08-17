@@ -11,6 +11,7 @@ import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.service.AuditService;
+import com.recoverpro.server.service.EntitlementService;
 import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileStorageService;
 import com.recoverpro.server.service.NotificationService;
@@ -26,6 +27,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +53,7 @@ class FileProcessingServiceImplTest {
     @Mock private FileUploadPostProcessingService fileUploadPostProcessingService;
     @Mock private NotificationService notificationService;
     @Mock private AuditService auditService;
+    @Mock private EntitlementService entitlementService;
     @Mock private EntityImportProcessor<Object> allocationProcessor;
 
     private FileProcessingServiceImpl service;
@@ -59,8 +63,9 @@ class FileProcessingServiceImplTest {
         service = new FileProcessingServiceImpl(fileUploadRepository, allocationRepository,
                 columnSchemaRepository, fileProcessingErrorRepository, organizationRepository,
                 userRepository, fileParsingService, fileStorageService,
-                fileUploadPostProcessingService, notificationService, auditService,
+                fileUploadPostProcessingService, notificationService, auditService, entitlementService,
                 List.of(allocationProcessor));
+        lenient().when(entitlementService.canCreateAllocations(any(), anyLong())).thenReturn(true);
     }
 
     @Test

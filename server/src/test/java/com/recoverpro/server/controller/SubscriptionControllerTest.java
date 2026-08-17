@@ -5,7 +5,7 @@ import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.FeatureFlagService;
-import com.recoverpro.server.service.StripeService;
+import com.recoverpro.server.service.PaymentProviderResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,11 +34,11 @@ import static org.mockito.Mockito.when;
 class SubscriptionControllerTest {
 
     @Mock private OrgSubscriptionRepository subRepo;
-    @Mock private StripeService stripeService;
+    @Mock private PaymentProviderResolver paymentProviderResolver;
     @Mock private FeatureFlagService featureFlagService;
 
     private SubscriptionController newController() {
-        return new SubscriptionController(subRepo, stripeService, featureFlagService);
+        return new SubscriptionController(subRepo, paymentProviderResolver, featureFlagService);
     }
 
     private UserPrincipal principalWithOrg(UUID orgId) {

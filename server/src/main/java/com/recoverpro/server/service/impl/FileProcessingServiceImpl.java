@@ -14,6 +14,7 @@ import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.service.AuditEventRequest;
 import com.recoverpro.server.service.AuditService;
+import com.recoverpro.server.service.EntitlementService;
 import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileProcessingService;
 import com.recoverpro.server.service.FileStorageService;
@@ -59,6 +60,7 @@ public class FileProcessingServiceImpl implements FileProcessingService {
     private final FileUploadPostProcessingService fileUploadPostProcessingService;
     private final NotificationService notificationService;
     private final AuditService auditService;
+    private final EntitlementService entitlementService;
     private final List<EntityImportProcessor<?>> importProcessors;
 
     private Map<UploadType, EntityImportProcessor<?>> processorsByType;
@@ -123,6 +125,15 @@ public class FileProcessingServiceImpl implements FileProcessingService {
 
             if (allRows.size() > maxRows) {
                 throw new BusinessException("File exceeds maximum allowed rows of " + maxRows);
+            }
+
+            // Checked upfront against the whole file, not per-row: rejecting the entire import
+            // with a clear reason is better than silently truncating partway through a batch.
+            if (uploadType == UploadType.ALLOCATION
+                    && !entitlementService.canCreateAllocations(organizationId, allRows.size())) {
+                throw new BusinessException(
+                        "This import would exceed your plan's active-loan limit. Reduce the file "
+                                + "size, close out existing cases, or upgrade your plan.");
             }
 
             if (!allRows.isEmpty()) {

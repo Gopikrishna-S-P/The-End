@@ -33,6 +33,9 @@
         <shedlock.version>6.2.0</shedlock.version>
         <springdoc.version>2.7.0</springdoc.version>
         <stripe.version>25.3.0</stripe.version>
+        <!-- Latest known-stable per training data (no live Maven Central access in this
+             environment to confirm); verify against Maven Central before deploying. -->
+        <razorpay.version>1.4.4</razorpay.version>
         <awssdk.version>2.29.26</awssdk.version>
     </properties>
 
@@ -175,6 +178,13 @@
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>${stripe.version}</version>
+        </dependency>
+
+        <!-- Razorpay -->
+        <dependency>
+            <groupId>com.razorpay</groupId>
+            <artifactId>razorpay-java</artifactId>
+            <version>${razorpay.version}</version>
         </dependency>
 
         <!-- Lombok -->

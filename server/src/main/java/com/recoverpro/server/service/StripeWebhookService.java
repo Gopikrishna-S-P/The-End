@@ -1,6 +1,7 @@
 package com.recoverpro.server.service;
 
 import com.recoverpro.server.common.exception.BusinessException;
+import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.config.StripeConfig;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.PlatformInvoice;
@@ -9,6 +10,7 @@ import com.recoverpro.server.enums.AuditAction;
 import com.recoverpro.server.enums.AuditActorType;
 import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.enums.AuditResult;
+import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.repository.ProcessedStripeEventRepository;
@@ -43,6 +45,7 @@ public class StripeWebhookService {
     private final FeatureFlagService featureFlagService;
     private final StripeConfig stripeConfig;
     private final AuditService auditService;
+    private final NotificationService notificationService;
 
     /**
      * Atomically claims an event id so it is processed exactly once under Stripe's
@@ -125,9 +128,13 @@ public class StripeWebhookService {
         subscriptionRepository.findByStripeCustomerId(invoice.getCustomer()).ifPresent(sub -> {
             if (sub.getStatus() == OrgSubscription.Status.PAST_DUE) {
                 sub.setStatus(OrgSubscription.Status.ACTIVE);
+                sub.setPastDueSince(null);
                 subscriptionRepository.save(sub);
                 featureFlagService.provisionFlagsFor(sub);
                 log.info("Stripe subscription recovered from PAST_DUE: org={}", sub.getOrgId());
+                notificationService.createForOrgRole(sub.getOrgId(), PlatformConstants.ROLE_ORG_ADMIN,
+                        NotificationType.ORG_PAYMENT_RECOVERED,
+                        "Payment received", "Your subscription is active again -- thanks for settling up.");
             }
         });
     }
@@ -136,10 +143,24 @@ public class StripeWebhookService {
     public void handleInvoicePaymentFailed(Invoice invoice) {
         upsertInvoice(invoice);
         subscriptionRepository.findByStripeCustomerId(invoice.getCustomer()).ifPresent(sub -> {
+            // Only stamp pastDueSince (and notify) on the transition into PAST_DUE -- Stripe's own
+            // retry schedule can fire this webhook again while already PAST_DUE, which must not
+            // reset the dunning clock or re-spam the same notification (Billing Ledger §12).
+            boolean enteringPastDue = sub.getStatus() != OrgSubscription.Status.PAST_DUE;
+            if (enteringPastDue) {
+                sub.setPastDueSince(Instant.now());
+            }
             sub.setStatus(OrgSubscription.Status.PAST_DUE);
             subscriptionRepository.save(sub);
             featureFlagService.provisionFlagsFor(sub);
             log.warn("Stripe invoice payment failed, org marked PAST_DUE: org={}", sub.getOrgId());
+            if (enteringPastDue) {
+                notificationService.createForOrgRole(sub.getOrgId(), PlatformConstants.ROLE_ORG_ADMIN,
+                        NotificationType.ORG_PAYMENT_FAILED,
+                        "Payment failed",
+                        "We couldn't process your latest payment. We'll retry automatically -- "
+                                + "please update your payment method to avoid any service interruption.");
+            }
             auditService.record(AuditEventRequest.builder()
                     .action(AuditAction.INVOICE_PAYMENT_FAILED)
                     .resourceType(AuditResourceType.INVOICE)
@@ -192,6 +213,7 @@ public class StripeWebhookService {
         row.setIssuedAt(toInstant(invoice.getCreated()));
         row.setHostedInvoiceUrl(invoice.getHostedInvoiceUrl());
         row.setInvoicePdfUrl(invoice.getInvoicePdf());
+        row.setProviderPaymentRef(invoice.getPaymentIntent());
 
         // paid_at drives every revenue aggregation, so it is set only on a real
         // settlement and cleared again if Stripe later voids the invoice.

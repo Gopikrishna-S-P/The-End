@@ -28,6 +28,7 @@ import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AuditEventRequest;
 import com.recoverpro.server.service.AuditService;
+import com.recoverpro.server.service.EntitlementService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.UserService;
@@ -62,6 +63,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserActionAuditService auditLogService;
     private final AuditService auditService;
+    private final EntitlementService entitlementService;
     private final EmailService emailService;
     private final AppProperties appProperties;
 
@@ -104,6 +106,10 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(email)) {
             log.warn("Duplicate user creation attempt email hash={}", email.hashCode());
             throw new BusinessException("A user with that email already exists");
+        }
+        if (!entitlementService.canCreateUser(callerOrgId)) {
+            throw new BusinessException(
+                    "User limit reached for this organization's plan. Upgrade your plan or contact support.");
         }
 
         User user = User.builder()

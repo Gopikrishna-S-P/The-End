@@ -37,6 +37,7 @@ public class SecurityConfig {
         "/api/v1/auth/**",
         "/api/v1/contact",
         "/api/v1/webhooks/stripe/**",
+        "/api/v1/webhooks/razorpay/**",
         "/p/**",
         "/actuator/health",
         "/v3/api-docs/**",
