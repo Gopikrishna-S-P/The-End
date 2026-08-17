@@ -1,6 +1,7 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.common.exception.PaymentProviderException;
+import com.recoverpro.server.config.StripeConfig;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.service.PaymentProvider;
@@ -30,6 +31,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     private final StripeService stripeService;
     private final OrgSubscriptionRepository subRepo;
+    private final StripeConfig stripeConfig;
 
     @Override
     public String createCheckoutUrl(UUID orgId, String planName) {
@@ -67,6 +69,57 @@ public class StripePaymentProvider implements PaymentProvider {
         } catch (StripeException e) {
             throw new PaymentProviderException("Stripe cancellation error: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Upgrade: {@code proration_behavior=create_prorations} -- Stripe computes and adds a
+     * prorated invoice item for the difference automatically (billed on the next regular
+     * invoice under this account's default invoicing settings; whether it's instead invoiced
+     * immediately depends on account-level configuration this codebase has no visibility into
+     * and does not assume). Downgrade: {@code proration_behavior=none} -- the price changes
+     * immediately with no prorated credit for the unused higher-tier time, matching the
+     * documented policy in {@link PaymentProvider#changePlan}.
+     * <p>
+     * Both API calls verified against the actual stripe-java 25.3.0 SDK (decompiled and read,
+     * not assumed from memory) -- {@code Subscription.getItems().getData().get(0).getId()} for
+     * the subscription item id, {@code SubscriptionUpdateParams.Item.builder().setId(...)
+     * .setPrice(...)}, {@code ProrationBehavior.CREATE_PRORATIONS}/{@code .NONE}.
+     */
+    @Override
+    public void changePlan(UUID orgId, String newPlanName, boolean upgrade) {
+        OrgSubscription sub = subRepo.findByOrgId(orgId)
+                .orElseThrow(() -> new IllegalStateException("No subscription found for org: " + orgId));
+        if (sub.getStripeSubscriptionId() == null) {
+            throw new IllegalStateException(
+                    "No existing Stripe subscription linked to org: " + orgId + " -- use checkout instead.");
+        }
+        try {
+            Subscription current = Subscription.retrieve(sub.getStripeSubscriptionId());
+            String itemId = current.getItems().getData().get(0).getId();
+            String newPriceId = resolvePriceId(newPlanName);
+
+            SubscriptionUpdateParams params = SubscriptionUpdateParams.builder()
+                    .addItem(SubscriptionUpdateParams.Item.builder()
+                            .setId(itemId)
+                            .setPrice(newPriceId)
+                            .build())
+                    .setProrationBehavior(upgrade
+                            ? SubscriptionUpdateParams.ProrationBehavior.CREATE_PRORATIONS
+                            : SubscriptionUpdateParams.ProrationBehavior.NONE)
+                    .build();
+            current.update(params);
+            log.info("Stripe subscription plan changed: org={}, newPlan={}, upgrade={}", orgId, newPlanName, upgrade);
+        } catch (StripeException e) {
+            throw new PaymentProviderException("Stripe plan-change error: " + e.getMessage(), e);
+        }
+    }
+
+    private String resolvePriceId(String planName) {
+        return switch (planName.toUpperCase()) {
+            case "GROWTH"     -> stripeConfig.getPriceGrowth();
+            case "ENTERPRISE" -> stripeConfig.getPriceEnterprise();
+            default           -> stripeConfig.getPriceStarter();
+        };
     }
 
     @Override

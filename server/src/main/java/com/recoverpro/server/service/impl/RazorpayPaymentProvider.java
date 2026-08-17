@@ -96,6 +96,42 @@ public class RazorpayPaymentProvider implements PaymentProvider {
         }
     }
 
+    /**
+     * Razorpay's subscription update has no proration-BILLING equivalent to Stripe's
+     * create_prorations -- {@code schedule_change_at} only controls WHEN the plan swap applies,
+     * not whether a prorated charge/credit is generated. RecoverPro does not attempt to compute
+     * or charge a manual proration difference for Razorpay-billed orgs: an upgrade applies
+     * immediately ({@code schedule_change_at=now}) with no additional charge until the next
+     * regular cycle bills the new plan's amount; a downgrade is deferred to
+     * {@code schedule_change_at=cycle_end} by Razorpay itself, so the org keeps its current
+     * tier's entitlements until the cycle actually turns over -- a genuinely different customer
+     * experience from Stripe's downgrade path (immediate, no credit) for the same {@code upgrade}
+     * flag, because the two providers don't offer equivalent primitives here. Confirmed via the
+     * SDK's method signature ({@code SubscriptionClient.update(String, JSONObject)}); the exact
+     * field names ({@code plan_id}, {@code schedule_change_at}) follow Razorpay's public API docs
+     * as of this codebase's authoring date and carry the same verify-before-production caveat as
+     * the rest of this class.
+     */
+    @Override
+    public void changePlan(UUID orgId, String newPlanName, boolean upgrade) {
+        RazorpayClient client = requireClient();
+        OrgSubscription sub = subRepo.findByOrgId(orgId)
+                .orElseThrow(() -> new IllegalStateException("No subscription found for org: " + orgId));
+        if (sub.getRazorpaySubscriptionId() == null) {
+            throw new IllegalStateException(
+                    "No existing Razorpay subscription linked to org: " + orgId + " -- use checkout instead.");
+        }
+        try {
+            JSONObject request = new JSONObject();
+            request.put("plan_id", resolvePlanId(newPlanName));
+            request.put("schedule_change_at", upgrade ? "now" : "cycle_end");
+            client.subscriptions.update(sub.getRazorpaySubscriptionId(), request);
+            log.info("Razorpay subscription plan changed: org={}, newPlan={}, upgrade={}", orgId, newPlanName, upgrade);
+        } catch (RazorpayException e) {
+            throw new PaymentProviderException("Razorpay plan-change error: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     public RefundResult refundPayment(String providerPaymentRef, Long amountMinorUnits, String reason) {
         RazorpayClient client = requireClient();

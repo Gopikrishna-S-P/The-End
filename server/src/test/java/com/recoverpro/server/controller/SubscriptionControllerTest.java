@@ -4,7 +4,9 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FeatureFlagService;
+import com.recoverpro.server.service.PaymentProvider;
 import com.recoverpro.server.service.PaymentProviderResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +17,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,9 +40,10 @@ class SubscriptionControllerTest {
     @Mock private OrgSubscriptionRepository subRepo;
     @Mock private PaymentProviderResolver paymentProviderResolver;
     @Mock private FeatureFlagService featureFlagService;
+    @Mock private AuditService auditService;
 
     private SubscriptionController newController() {
-        return new SubscriptionController(subRepo, paymentProviderResolver, featureFlagService);
+        return new SubscriptionController(subRepo, paymentProviderResolver, featureFlagService, auditService);
     }
 
     private UserPrincipal principalWithOrg(UUID orgId) {
@@ -84,5 +89,70 @@ class SubscriptionControllerTest {
         UserPrincipal admin = principalWithOrg(null);
 
         assertThrows(BusinessException.class, () -> controller.portal(admin));
+    }
+
+    @Test
+    void changePlan_growthToEnterprise_detectedAsUpgrade() {
+        SubscriptionController controller = newController();
+        UUID orgId = UUID.randomUUID();
+        UserPrincipal orgAdmin = principalWithOrg(orgId);
+        OrgSubscription sub = OrgSubscription.builder().orgId(orgId).plan(OrgSubscription.Plan.GROWTH).build();
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.of(sub));
+        PaymentProvider provider = mock(PaymentProvider.class);
+        when(paymentProviderResolver.resolveForOrg(orgId)).thenReturn(provider);
+
+        controller.changePlan(Map.of("plan", "ENTERPRISE"), orgAdmin);
+
+        verify(provider).changePlan(orgId, "ENTERPRISE", true);
+        verify(auditService).record(any());
+    }
+
+    @Test
+    void changePlan_enterpriseToGrowth_detectedAsDowngrade() {
+        SubscriptionController controller = newController();
+        UUID orgId = UUID.randomUUID();
+        UserPrincipal orgAdmin = principalWithOrg(orgId);
+        OrgSubscription sub = OrgSubscription.builder().orgId(orgId).plan(OrgSubscription.Plan.ENTERPRISE).build();
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.of(sub));
+        PaymentProvider provider = mock(PaymentProvider.class);
+        when(paymentProviderResolver.resolveForOrg(orgId)).thenReturn(provider);
+
+        controller.changePlan(Map.of("plan", "GROWTH"), orgAdmin);
+
+        verify(provider).changePlan(orgId, "GROWTH", false);
+    }
+
+    @Test
+    void changePlan_samePlanRequested_throwsWithoutCallingProvider() {
+        SubscriptionController controller = newController();
+        UUID orgId = UUID.randomUUID();
+        UserPrincipal orgAdmin = principalWithOrg(orgId);
+        OrgSubscription sub = OrgSubscription.builder().orgId(orgId).plan(OrgSubscription.Plan.GROWTH).build();
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.of(sub));
+
+        assertThrows(BusinessException.class,
+                () -> controller.changePlan(Map.of("plan", "GROWTH"), orgAdmin));
+
+        verify(paymentProviderResolver, never()).resolveForOrg(any());
+    }
+
+    @Test
+    void changePlan_noExistingSubscription_throwsGuidingToCheckout() {
+        SubscriptionController controller = newController();
+        UUID orgId = UUID.randomUUID();
+        UserPrincipal orgAdmin = principalWithOrg(orgId);
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class,
+                () -> controller.changePlan(Map.of("plan", "GROWTH"), orgAdmin));
+    }
+
+    @Test
+    void changePlan_platformAdmin_throwsCleanBusinessException() {
+        SubscriptionController controller = newController();
+        UserPrincipal admin = principalWithOrg(null);
+
+        assertThrows(BusinessException.class,
+                () -> controller.changePlan(Map.of("plan", "GROWTH"), admin));
     }
 }

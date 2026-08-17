@@ -3,6 +3,7 @@ package com.recoverpro.server.service;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.recoverpro.server.repository.PaymentRepository;
 import com.recoverpro.server.repository.ProcessedRazorpayEventRepository;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ class RazorpayWebhookServiceTest {
 
     @Mock private ProcessedRazorpayEventRepository processedEventRepository;
     @Mock private OrgSubscriptionRepository subscriptionRepository;
+    @Mock private PaymentRepository paymentRepository;
     @Mock private FeatureFlagService featureFlagService;
     @Mock private AuditService auditService;
     @Mock private NotificationService notificationService;
@@ -37,7 +39,8 @@ class RazorpayWebhookServiceTest {
     @BeforeEach
     void setUp() {
         service = new RazorpayWebhookService(
-                processedEventRepository, subscriptionRepository, featureFlagService, auditService, notificationService);
+                processedEventRepository, subscriptionRepository, paymentRepository, featureFlagService,
+                auditService, notificationService);
         orgId = UUID.randomUUID();
     }
 
@@ -133,5 +136,62 @@ class RazorpayWebhookServiceTest {
         service.handleSubscriptionEvent("subscription.charged", new JSONObject());
 
         verify(subscriptionRepository, never()).findByRazorpaySubscriptionId(any());
+    }
+
+    /* ── Payment mirroring ───────────────────────────────────────────────── */
+
+    @Test
+    void handleSubscriptionEvent_chargedWithPaymentEntity_mirrorsCapturedPayment() {
+        OrgSubscription sub = subWith(OrgSubscription.Status.ACTIVE);
+        when(subscriptionRepository.findByRazorpaySubscriptionId("sub_xyz")).thenReturn(Optional.of(sub));
+        when(paymentRepository.findByProviderAndProviderPaymentId(any(), anyString())).thenReturn(Optional.empty());
+
+        JSONObject paymentEntity = new JSONObject()
+                .put("id", "pay_1").put("amount", 299900L).put("currency", "INR")
+                .put("status", "captured").put("method", "upi");
+
+        service.handleSubscriptionEvent("subscription.charged", subscriptionEntity(), paymentEntity);
+
+        com.recoverpro.server.entity.Payment saved = capturedPayment();
+        assertThat(saved.getProvider()).isEqualTo(com.recoverpro.server.enums.PaymentProviderType.RAZORPAY);
+        assertThat(saved.getProviderPaymentId()).isEqualTo("pay_1");
+        assertThat(saved.getOrganizationId()).isEqualTo(orgId);
+        assertThat(saved.getAmountMinorUnits()).isEqualTo(299900L);
+        assertThat(saved.getPaymentMethodType()).isEqualTo("upi");
+        assertThat(saved.getCapturedAt()).isNotNull();
+    }
+
+    @Test
+    void handleSubscriptionEvent_paymentFailed_stampsFailureReason() {
+        OrgSubscription sub = subWith(OrgSubscription.Status.ACTIVE);
+        when(subscriptionRepository.findByRazorpaySubscriptionId("sub_xyz")).thenReturn(Optional.of(sub));
+        when(paymentRepository.findByProviderAndProviderPaymentId(any(), anyString())).thenReturn(Optional.empty());
+
+        JSONObject paymentEntity = new JSONObject()
+                .put("id", "pay_2").put("amount", 299900L).put("currency", "INR")
+                .put("status", "failed").put("error_description", "Insufficient funds");
+
+        service.handleSubscriptionEvent("subscription.charged", subscriptionEntity(), paymentEntity);
+
+        com.recoverpro.server.entity.Payment saved = capturedPayment();
+        assertThat(saved.getFailedAt()).isNotNull();
+        assertThat(saved.getFailureReason()).isEqualTo("Insufficient funds");
+    }
+
+    @Test
+    void handleSubscriptionEvent_noPaymentEntity_skipsPaymentMirror() {
+        OrgSubscription sub = subWith(OrgSubscription.Status.ACTIVE);
+        when(subscriptionRepository.findByRazorpaySubscriptionId("sub_xyz")).thenReturn(Optional.of(sub));
+
+        service.handleSubscriptionEvent("subscription.charged", subscriptionEntity());
+
+        verify(paymentRepository, never()).save(any());
+    }
+
+    private com.recoverpro.server.entity.Payment capturedPayment() {
+        org.mockito.ArgumentCaptor<com.recoverpro.server.entity.Payment> captor =
+                org.mockito.ArgumentCaptor.forClass(com.recoverpro.server.entity.Payment.class);
+        verify(paymentRepository).save(captor.capture());
+        return captor.getValue();
     }
 }

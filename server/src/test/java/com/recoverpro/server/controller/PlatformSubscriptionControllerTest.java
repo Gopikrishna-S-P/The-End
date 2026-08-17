@@ -12,6 +12,7 @@ import com.recoverpro.server.service.RefundService;
 import com.recoverpro.server.service.StripeService;
 import com.recoverpro.server.service.StripeWebhookService;
 import com.recoverpro.server.service.UserActionAuditService;
+import com.recoverpro.server.service.tax.GstInvoiceLineItemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +52,7 @@ class PlatformSubscriptionControllerTest {
     @Mock private UserActionAuditService auditLogService;
     @Mock private AuditService auditService;
     @Mock private RefundService refundService;
+    @Mock private GstInvoiceLineItemService gstInvoiceLineItemService;
 
     private PlatformSubscriptionController controller;
     private UUID orgId;
@@ -60,7 +62,7 @@ class PlatformSubscriptionControllerTest {
     void setUp() {
         controller = new PlatformSubscriptionController(
                 subRepo, orgRepo, stripeService, invoiceRepo, stripeWebhookService, featureFlagService,
-                auditLogService, auditService, refundService);
+                auditLogService, auditService, refundService, gstInvoiceLineItemService);
         orgId = UUID.randomUUID();
         caller = mock(UserPrincipal.class);
         lenient().when(caller.getId()).thenReturn(UUID.randomUUID());

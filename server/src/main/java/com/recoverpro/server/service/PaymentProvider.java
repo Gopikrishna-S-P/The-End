@@ -19,9 +19,11 @@ import java.util.UUID;
  */
 public interface PaymentProvider {
 
-    /** Starts a hosted checkout flow for a new or plan-changing subscription; returns the URL to
-     *  redirect the caller to. Implicitly creates a provider customer for the org if one doesn't
-     *  exist yet. */
+    /** Starts a hosted checkout flow for a brand-new subscription; returns the URL to redirect
+     *  the caller to. Implicitly creates a provider customer for the org if one doesn't exist
+     *  yet. Calling this for an org that already has an active provider subscription creates a
+     *  SECOND, separate subscription rather than modifying the existing one -- callers with an
+     *  existing subscription must use {@link #changePlan} instead. */
     String createCheckoutUrl(UUID orgId, String planName) throws PaymentProviderException;
 
     /** Returns a hosted self-service billing management URL for an org that already has a
@@ -31,6 +33,19 @@ public interface PaymentProvider {
     /** {@code atPeriodEnd = true} lets the current billing period run out before cancelling
      *  (the default, expected path); {@code false} cancels immediately. */
     void cancelSubscription(UUID orgId, boolean atPeriodEnd) throws PaymentProviderException;
+
+    /**
+     * Changes an org's EXISTING subscription to a different plan in place -- the counterpart to
+     * {@link #createCheckoutUrl} for an org that's already subscribed. Policy (Billing Ledger
+     * design doc §9/§10): upgrades apply immediately using the provider's own proration where it
+     * has one; downgrades apply without a prorated credit for the unused higher-tier time, rather
+     * than RecoverPro computing or crediting a manual proration amount itself.
+     * <p>
+     * {@code upgrade} does NOT mean identical timing across providers -- see each implementation's
+     * javadoc for the real difference between what Stripe and Razorpay can actually do here; this
+     * interface does not paper over a capability gap that genuinely exists.
+     */
+    void changePlan(UUID orgId, String newPlanName, boolean upgrade) throws PaymentProviderException;
 
     /** {@code providerPaymentRef} is the provider's own payment reference (a Stripe PaymentIntent
      *  id, a Razorpay payment id) -- callers resolve which payment a refund applies to before

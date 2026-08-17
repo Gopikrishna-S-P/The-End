@@ -3,10 +3,12 @@ package com.recoverpro.server.controller;
 import com.recoverpro.server.common.dto.response.ApiResponse;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
+import com.recoverpro.server.dto.response.InvoiceLineItemResponse;
 import com.recoverpro.server.dto.response.InvoiceResponse;
 import com.recoverpro.server.dto.response.PlatformSubscriptionResponse;
 import com.recoverpro.server.dto.response.RefundResponse;
 import com.recoverpro.server.dto.response.RevenueTrendPointResponse;
+import com.recoverpro.server.entity.InvoiceLineItem;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.OrgSubscription.Plan;
 import com.recoverpro.server.entity.OrgSubscription.Status;
@@ -27,6 +29,7 @@ import com.recoverpro.server.service.RefundService;
 import com.recoverpro.server.service.StripeService;
 import com.recoverpro.server.service.StripeWebhookService;
 import com.recoverpro.server.service.UserActionAuditService;
+import com.recoverpro.server.service.tax.GstInvoiceLineItemService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Invoice;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +78,7 @@ public class PlatformSubscriptionController {
     private final UserActionAuditService auditLogService;
     private final AuditService auditService;
     private final RefundService refundService;
+    private final GstInvoiceLineItemService gstInvoiceLineItemService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlatformSubscriptionResponse>>> list() {
@@ -196,6 +200,56 @@ public class PlatformSubscriptionController {
                 .reason(refund.getReason())
                 .status(refund.getStatus().name())
                 .providerRefundId(refund.getProviderRefundId())
+                .build()));
+    }
+
+    /**
+     * Computes and persists a GST-compliant line item for an invoice. Body:
+     * {@code description} (required), {@code taxableAmountMinorUnits} (required, paise --
+     * the pre-tax amount; this endpoint does not attempt to derive it from the invoice total
+     * itself, see {@link com.recoverpro.server.service.tax.GstInvoiceLineItemService}'s javadoc
+     * for why). Requires the org to have a valid GSTIN on file and RecoverPro's own GST supplier
+     * profile to be configured -- both enforced in the service layer, not here.
+     */
+    @PostMapping("/{orgId}/invoices/{invoiceId}/gst-line-item")
+    public ResponseEntity<ApiResponse<InvoiceLineItemResponse>> generateGstLineItem(
+            @PathVariable UUID orgId,
+            @PathVariable UUID invoiceId,
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal UserPrincipal caller) {
+
+        String description = body.get("description");
+        if (description == null || description.isBlank()) {
+            throw new BusinessException("description is required");
+        }
+        String amountRaw = body.get("taxableAmountMinorUnits");
+        if (amountRaw == null || amountRaw.isBlank()) {
+            throw new BusinessException("taxableAmountMinorUnits is required");
+        }
+        long taxableAmountMinorUnits;
+        try {
+            taxableAmountMinorUnits = Long.parseLong(amountRaw);
+        } catch (NumberFormatException e) {
+            throw new BusinessException("taxableAmountMinorUnits must be a whole number of minor units");
+        }
+
+        InvoiceLineItem lineItem = gstInvoiceLineItemService.generate(
+                invoiceId, description, taxableAmountMinorUnits, caller.getId());
+        log.info("Platform admin {} generated GST line item for invoice {} (org {}): taxable={}",
+                caller.getId(), invoiceId, orgId, taxableAmountMinorUnits);
+
+        return ResponseEntity.ok(ApiResponse.success(InvoiceLineItemResponse.builder()
+                .id(lineItem.getId())
+                .invoiceId(lineItem.getInvoiceId())
+                .description(lineItem.getDescription())
+                .unitAmount(lineItem.getUnitAmount())
+                .taxRateBps(lineItem.getTaxRateBps())
+                .cgstAmount(lineItem.getCgstAmount())
+                .sgstAmount(lineItem.getSgstAmount())
+                .igstAmount(lineItem.getIgstAmount())
+                .placeOfSupplyStateCode(lineItem.getPlaceOfSupplyStateCode())
+                .lineTotal(lineItem.getLineTotal())
+                .currency(lineItem.getCurrency())
                 .build()));
     }
 

@@ -73,6 +73,16 @@ public class OrgSubscription {
     @Column(name = "plan_amount", precision = 12, scale = 2)
     private BigDecimal planAmount;
 
+    /** GST identification number for this org, required before any GST-compliant invoice line
+     *  item can be generated for them (see GstInvoiceLineItemService). Also the source of the
+     *  org's place-of-supply state code -- see Gstin.stateCode(), not a separately stored field. */
+    @Column(name = "gstin", length = 15)
+    private String gstin;
+
+    /** Legal entity name for GST invoicing purposes -- may differ from the org's display name. */
+    @Column(name = "billing_legal_name", length = 255)
+    private String billingLegalName;
+
     @Column(name = "trial_ends_at")
     private Instant trialEndsAt;
 

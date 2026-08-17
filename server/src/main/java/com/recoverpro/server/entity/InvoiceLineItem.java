@@ -7,10 +7,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Breakdown row for a {@link PlatformInvoice}, populated from the provider's own invoice
- * line data at webhook-mirror time. Additive detail only -- PlatformInvoice remains the
- * flat-total mirror and system of record; this exists for GST reporting and any future
- * proration line items.
+ * Breakdown row for a {@link PlatformInvoice}. Additive detail only -- PlatformInvoice remains
+ * the flat-total mirror and system of record. Currently populated only via
+ * {@code GstInvoiceLineItemService} (an explicit, platform-admin-triggered action) rather than
+ * automatically at webhook-mirror time -- see that service's javadoc for why automatic
+ * computation isn't wired into the Stripe/Razorpay webhook flow yet.
  */
 @Entity
 @Table(name = "invoice_line_items", indexes = {
@@ -44,6 +45,23 @@ public class InvoiceLineItem {
     /** Basis points, e.g. 1800 = 18% GST. Null when not tax-applicable. */
     @Column(name = "tax_rate_bps")
     private Integer taxRateBps;
+
+    /** GST breakdown -- see GstCalculator. cgst/sgst are zero for an inter-state supply, igst is
+     *  zero for an intra-state supply; all three are zero when tax_rate_bps is null. */
+    @Column(name = "cgst_amount", nullable = false)
+    @Builder.Default
+    private Long cgstAmount = 0L;
+
+    @Column(name = "sgst_amount", nullable = false)
+    @Builder.Default
+    private Long sgstAmount = 0L;
+
+    @Column(name = "igst_amount", nullable = false)
+    @Builder.Default
+    private Long igstAmount = 0L;
+
+    @Column(name = "place_of_supply_state_code", length = 2)
+    private String placeOfSupplyStateCode;
 
     @Column(name = "line_total", nullable = false)
     private Long lineTotal;

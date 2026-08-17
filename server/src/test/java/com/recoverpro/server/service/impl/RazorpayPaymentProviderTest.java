@@ -137,6 +137,46 @@ class RazorpayPaymentProviderTest {
     }
 
     @Test
+    void changePlan_noExistingRazorpaySubscription_throwsIllegalState() {
+        OrgSubscription sub = OrgSubscription.builder().orgId(orgId).razorpaySubscriptionId(null).build();
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.of(sub));
+
+        assertThatThrownBy(() -> provider.changePlan(orgId, "GROWTH", true))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No existing Razorpay subscription linked");
+    }
+
+    @Test
+    void changePlan_upgrade_appliesNow() throws RazorpayException {
+        OrgSubscription sub = OrgSubscription.builder().orgId(orgId).razorpaySubscriptionId("sub_xyz").build();
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.of(sub));
+        when(subscriptionClient.update(org.mockito.ArgumentMatchers.eq("sub_xyz"), any()))
+                .thenReturn(new Subscription(new JSONObject().put("id", "sub_xyz")));
+
+        provider.changePlan(orgId, "GROWTH", true);
+
+        ArgumentCaptor<JSONObject> captor = ArgumentCaptor.forClass(JSONObject.class);
+        org.mockito.Mockito.verify(subscriptionClient).update(org.mockito.ArgumentMatchers.eq("sub_xyz"), captor.capture());
+        assertThat(captor.getValue().getString("plan_id")).isEqualTo("plan_growth_123");
+        assertThat(captor.getValue().getString("schedule_change_at")).isEqualTo("now");
+    }
+
+    @Test
+    void changePlan_downgrade_deferredToCycleEnd() throws RazorpayException {
+        OrgSubscription sub = OrgSubscription.builder().orgId(orgId).razorpaySubscriptionId("sub_xyz").build();
+        when(subRepo.findByOrgId(orgId)).thenReturn(Optional.of(sub));
+        when(subscriptionClient.update(org.mockito.ArgumentMatchers.eq("sub_xyz"), any()))
+                .thenReturn(new Subscription(new JSONObject().put("id", "sub_xyz")));
+
+        provider.changePlan(orgId, "STARTER", false);
+
+        ArgumentCaptor<JSONObject> captor = ArgumentCaptor.forClass(JSONObject.class);
+        org.mockito.Mockito.verify(subscriptionClient).update(org.mockito.ArgumentMatchers.eq("sub_xyz"), captor.capture());
+        assertThat(captor.getValue().getString("plan_id")).isEqualTo("plan_starter_123");
+        assertThat(captor.getValue().getString("schedule_change_at")).isEqualTo("cycle_end");
+    }
+
+    @Test
     void refundPayment_processedStatus_mapsToSucceededTrue() throws RazorpayException {
         Refund refund = new Refund(new JSONObject().put("id", "rfnd_1").put("status", "processed"));
         when(paymentClient.refund(org.mockito.ArgumentMatchers.eq("pay_123"), any())).thenReturn(refund);

@@ -6,6 +6,7 @@ import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.PlatformInvoice;
 import com.recoverpro.server.entity.ProcessedStripeEvent;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.recoverpro.server.repository.PaymentRepository;
 import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.repository.ProcessedStripeEventRepository;
 import com.stripe.model.Invoice;
@@ -45,6 +46,8 @@ class StripeWebhookServiceTest {
     @Mock
     private PlatformInvoiceRepository invoiceRepository;
     @Mock
+    private PaymentRepository paymentRepository;
+    @Mock
     private FeatureFlagService featureFlagService;
     @Mock
     private AuditService auditService;
@@ -62,7 +65,7 @@ class StripeWebhookServiceTest {
         setField(stripeConfig, "priceEnterprise", "price_enterprise_123");
 
         webhookService = new StripeWebhookService(
-                processedEventRepository, subscriptionRepository, invoiceRepository,
+                processedEventRepository, subscriptionRepository, invoiceRepository, paymentRepository,
                 featureFlagService, stripeConfig, auditService, notificationService);
     }
 
@@ -424,6 +427,78 @@ class StripeWebhookServiceTest {
         // Revenue must still be recorded even though the subscription was already ACTIVE.
         verify(invoiceRepository).save(any(PlatformInvoice.class));
         verify(subscriptionRepository, never()).save(any());
+    }
+
+    /* ── Payment mirroring ───────────────────────────────────────────────── */
+
+    @Test
+    void upsertInvoice_paymentIntentPresent_mirrorsPaymentRow() {
+        UUID orgId = UUID.randomUUID();
+        stubSubscription("cus_20", orgId);
+        when(invoiceRepository.findByStripeInvoiceId("in_20")).thenReturn(Optional.empty());
+        when(invoiceRepository.save(any(PlatformInvoice.class))).thenAnswer(inv -> {
+            PlatformInvoice row = inv.getArgument(0);
+            row.setId(UUID.randomUUID());
+            return row;
+        });
+        when(paymentRepository.findByProviderAndProviderPaymentId(any(), anyString())).thenReturn(Optional.empty());
+
+        Invoice invoice = invoiceFixture("in_20", "cus_20", "paid", "ABCD-0020", 299900L, 299900L);
+        invoice.setPaymentIntent("pi_20");
+        invoice.setStatusTransitions(paidAt(1_800_002_000L));
+
+        webhookService.upsertInvoice(invoice);
+
+        com.recoverpro.server.entity.Payment saved = capturedPayment();
+        assertThat(saved.getProvider()).isEqualTo(com.recoverpro.server.enums.PaymentProviderType.STRIPE);
+        assertThat(saved.getProviderPaymentId()).isEqualTo("pi_20");
+        assertThat(saved.getOrganizationId()).isEqualTo(orgId);
+        assertThat(saved.getAmountMinorUnits()).isEqualTo(299900L);
+        assertThat(saved.getStatus()).isEqualTo("paid");
+        assertThat(saved.getCapturedAt()).isEqualTo(Instant.ofEpochSecond(1_800_002_000L));
+    }
+
+    @Test
+    void upsertInvoice_noPaymentIntentYet_skipsPaymentMirror() {
+        UUID orgId = UUID.randomUUID();
+        stubSubscription("cus_21b", orgId);
+        when(invoiceRepository.findByStripeInvoiceId("in_21b")).thenReturn(Optional.empty());
+
+        Invoice invoice = invoiceFixture("in_21b", "cus_21b", "open", "ABCD-0021", 299900L, 0L);
+
+        webhookService.upsertInvoice(invoice);
+
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void upsertInvoice_uncollectible_stampsFailedAtOnce() {
+        UUID orgId = UUID.randomUUID();
+        stubSubscription("cus_22", orgId);
+        when(invoiceRepository.findByStripeInvoiceId("in_22")).thenReturn(Optional.empty());
+        when(invoiceRepository.save(any(PlatformInvoice.class))).thenAnswer(inv -> {
+            PlatformInvoice row = inv.getArgument(0);
+            row.setId(UUID.randomUUID());
+            return row;
+        });
+        when(paymentRepository.findByProviderAndProviderPaymentId(any(), anyString())).thenReturn(Optional.empty());
+
+        Invoice invoice = invoiceFixture("in_22", "cus_22", "uncollectible", "ABCD-0022", 299900L, 0L);
+        invoice.setPaymentIntent("pi_22");
+
+        webhookService.upsertInvoice(invoice);
+
+        com.recoverpro.server.entity.Payment saved = capturedPayment();
+        assertThat(saved.getStatus()).isEqualTo("uncollectible");
+        assertThat(saved.getFailedAt()).isNotNull();
+        assertThat(saved.getFailureReason()).isNotBlank();
+    }
+
+    private com.recoverpro.server.entity.Payment capturedPayment() {
+        ArgumentCaptor<com.recoverpro.server.entity.Payment> captor =
+                ArgumentCaptor.forClass(com.recoverpro.server.entity.Payment.class);
+        verify(paymentRepository).save(captor.capture());
+        return captor.getValue();
     }
 
     private void stubSubscription(String customerId, UUID orgId) {

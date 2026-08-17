@@ -2,12 +2,15 @@ package com.recoverpro.server.service;
 
 import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.entity.OrgSubscription;
+import com.recoverpro.server.entity.Payment;
 import com.recoverpro.server.entity.ProcessedRazorpayEvent;
 import com.recoverpro.server.enums.AuditAction;
 import com.recoverpro.server.enums.AuditActorType;
 import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.enums.NotificationType;
+import com.recoverpro.server.enums.PaymentProviderType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.recoverpro.server.repository.PaymentRepository;
 import com.recoverpro.server.repository.ProcessedRazorpayEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +45,7 @@ public class RazorpayWebhookService {
 
     private final ProcessedRazorpayEventRepository processedEventRepository;
     private final OrgSubscriptionRepository subscriptionRepository;
+    private final PaymentRepository paymentRepository;
     private final FeatureFlagService featureFlagService;
     private final AuditService auditService;
     private final NotificationService notificationService;
@@ -77,6 +81,11 @@ public class RazorpayWebhookService {
      */
     @Transactional
     public void handleSubscriptionEvent(String eventType, JSONObject subscriptionEntity) {
+        handleSubscriptionEvent(eventType, subscriptionEntity, null);
+    }
+
+    @Transactional
+    public void handleSubscriptionEvent(String eventType, JSONObject subscriptionEntity, JSONObject paymentEntity) {
         String razorpaySubscriptionId = subscriptionEntity.optString("id", null);
         if (razorpaySubscriptionId == null) {
             log.warn("Razorpay {} event carried no subscription id, skipping", eventType);
@@ -98,6 +107,53 @@ public class RazorpayWebhookService {
             case "subscription.cancelled" -> handleCancelled(sub);
             default -> log.debug("Unhandled Razorpay subscription event type: {}", eventType);
         }
+
+        if (paymentEntity != null) {
+            mirrorPayment(sub, paymentEntity);
+        }
+    }
+
+    /**
+     * Mirrors a {@link Payment} row from {@code payload.payment.entity} (Billing Ledger design
+     * doc §24), keyed on the payment's own id so repeat deliveries for the same payment (e.g. a
+     * webhook retry) upsert in place. There is no local {@code PlatformInvoice} equivalent on the
+     * Razorpay side to link {@code invoiceId} against ({@link RazorpayWebhookService}'s class
+     * javadoc already flags Razorpay invoice mirroring as a separate, un-started gap), so
+     * {@code invoiceId} is left null here.
+     * <p>
+     * Field names ({@code amount}, {@code currency}, {@code status}, {@code method},
+     * {@code error_description}) follow Razorpay's public Payments API docs as of this codebase's
+     * authoring date -- same unverified-against-a-live-payload caveat as the rest of this class
+     * and {@link com.recoverpro.server.service.impl.RazorpayPaymentProvider}.
+     */
+    private void mirrorPayment(OrgSubscription sub, JSONObject paymentEntity) {
+        String providerPaymentId = paymentEntity.optString("id", null);
+        if (providerPaymentId == null) {
+            return;
+        }
+        Payment payment = paymentRepository
+                .findByProviderAndProviderPaymentId(PaymentProviderType.RAZORPAY, providerPaymentId)
+                .orElseGet(() -> Payment.builder()
+                        .provider(PaymentProviderType.RAZORPAY)
+                        .providerPaymentId(providerPaymentId)
+                        .build());
+        String status = paymentEntity.optString("status", "unknown");
+        payment.setOrganizationId(sub.getOrgId());
+        payment.setAmountMinorUnits(paymentEntity.optLong("amount", 0L));
+        payment.setCurrency(paymentEntity.optString("currency", "INR"));
+        payment.setStatus(status);
+        payment.setPaymentMethodType(paymentEntity.isNull("method") ? null : paymentEntity.optString("method", null));
+        if ("captured".equals(status) && payment.getCapturedAt() == null) {
+            payment.setCapturedAt(Instant.now());
+        }
+        if ("failed".equals(status) && payment.getFailedAt() == null) {
+            payment.setFailedAt(Instant.now());
+            payment.setFailureReason(paymentEntity.isNull("error_description")
+                    ? null : paymentEntity.optString("error_description", null));
+        }
+        paymentRepository.save(payment);
+        log.info("Razorpay payment mirrored: org={}, payment={}, status={}",
+                sub.getOrgId(), providerPaymentId, status);
     }
 
     private void handleRecovered(OrgSubscription sub) {

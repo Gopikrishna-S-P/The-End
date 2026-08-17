@@ -4,6 +4,7 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.config.StripeConfig;
 import com.recoverpro.server.entity.OrgSubscription;
+import com.recoverpro.server.entity.Payment;
 import com.recoverpro.server.entity.PlatformInvoice;
 import com.recoverpro.server.entity.ProcessedStripeEvent;
 import com.recoverpro.server.enums.AuditAction;
@@ -11,7 +12,9 @@ import com.recoverpro.server.enums.AuditActorType;
 import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.enums.NotificationType;
+import com.recoverpro.server.enums.PaymentProviderType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
+import com.recoverpro.server.repository.PaymentRepository;
 import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.repository.ProcessedStripeEventRepository;
 import com.stripe.model.Invoice;
@@ -42,6 +45,7 @@ public class StripeWebhookService {
     private final ProcessedStripeEventRepository processedEventRepository;
     private final OrgSubscriptionRepository subscriptionRepository;
     private final PlatformInvoiceRepository invoiceRepository;
+    private final PaymentRepository paymentRepository;
     private final FeatureFlagService featureFlagService;
     private final StripeConfig stripeConfig;
     private final AuditService auditService;
@@ -233,6 +237,48 @@ public class StripeWebhookService {
         invoiceRepository.save(row);
         log.info("Stripe invoice mirrored: org={}, invoice={}, status={}, paid={} paise",
                 sub.getOrgId(), invoice.getId(), invoice.getStatus(), row.getAmountPaid());
+
+        mirrorPayment(sub.getOrgId(), row, invoice);
+    }
+
+    /**
+     * Mirrors a {@link Payment} row keyed on the invoice's PaymentIntent id, alongside the
+     * {@link PlatformInvoice} mirror above (Billing Ledger design doc §24). Skipped entirely
+     * when Stripe hasn't attempted payment yet ({@code invoice.getPaymentIntent()} is null,
+     * e.g. a just-finalized invoice awaiting its first charge attempt).
+     * <p>
+     * Deliberately mirrors the raw invoice-level status ("paid"/"open"/"void"/"uncollectible")
+     * rather than a normalized success/fail flag: {@code Invoice} stays "open" through Stripe's
+     * entire dunning retry cycle (see {@link #handleInvoicePaymentFailed}), so a specific failed
+     * ATTEMPT cannot be distinguished from "not yet attempted" without expanding the
+     * PaymentIntent itself, which this webhook path does not fetch. {@code paymentMethodType} is
+     * left null for the same reason -- it lives on the PaymentIntent/Charge, not the Invoice.
+     * Only {@code capturedAt} (on "paid") and {@code failedAt} (on "uncollectible", i.e. Stripe's
+     * own retries exhausted) are populated from data already on hand.
+     */
+    private void mirrorPayment(UUID orgId, PlatformInvoice invoiceRow, Invoice invoice) {
+        String paymentIntentId = invoice.getPaymentIntent();
+        if (paymentIntentId == null) {
+            return;
+        }
+        Payment payment = paymentRepository
+                .findByProviderAndProviderPaymentId(PaymentProviderType.STRIPE, paymentIntentId)
+                .orElseGet(() -> Payment.builder()
+                        .provider(PaymentProviderType.STRIPE)
+                        .providerPaymentId(paymentIntentId)
+                        .build());
+        payment.setOrganizationId(orgId);
+        payment.setInvoiceId(invoiceRow.getId());
+        payment.setAmountMinorUnits(invoiceRow.getAmountPaid() != null && invoiceRow.getAmountPaid() > 0
+                ? invoiceRow.getAmountPaid() : invoiceRow.getAmountDue());
+        payment.setCurrency(invoiceRow.getCurrency());
+        payment.setStatus(invoice.getStatus());
+        payment.setCapturedAt("paid".equals(invoice.getStatus()) ? invoiceRow.getPaidAt() : null);
+        if ("uncollectible".equals(invoice.getStatus()) && payment.getFailedAt() == null) {
+            payment.setFailedAt(Instant.now());
+            payment.setFailureReason("Stripe dunning retries exhausted");
+        }
+        paymentRepository.save(payment);
     }
 
     /** Webhook-driven -- no HTTP session, no SecurityContext -- so actor is always SYSTEM and

@@ -91,7 +91,13 @@ public class RazorpayWebhookController {
             log.warn("Razorpay event {} had no payload.subscription.entity, skipping", eventType);
             return;
         }
-        razorpayWebhookService.handleSubscriptionEvent(eventType, subscriptionEntity);
+        // subscription.charged carries the triggering payment alongside the subscription entity
+        // in the same envelope (payload.payment.entity) -- extracted here too so the service layer
+        // can mirror a Payment row off it. Other subscription.* events (pending/halted/cancelled)
+        // don't reliably carry a payment entity, so this is commonly null for those.
+        JSONObject paymentWrapper = payload.optJSONObject("payment");
+        JSONObject paymentEntity = paymentWrapper == null ? null : paymentWrapper.optJSONObject("entity");
+        razorpayWebhookService.handleSubscriptionEvent(eventType, subscriptionEntity, paymentEntity);
     }
 
     private static String resourceIdFor(JSONObject envelope) {

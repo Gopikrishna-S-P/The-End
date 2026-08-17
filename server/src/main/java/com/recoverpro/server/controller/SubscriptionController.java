@@ -7,8 +7,12 @@ import com.recoverpro.server.dto.response.SubscriptionResponse;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.OrgSubscription.Plan;
 import com.recoverpro.server.entity.OrgSubscription.Status;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FeatureFlagService;
 import com.recoverpro.server.service.PaymentProviderResolver;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +36,7 @@ public class SubscriptionController {
     private final OrgSubscriptionRepository subRepo;
     private final PaymentProviderResolver paymentProviderResolver;
     private final FeatureFlagService featureFlagService;
+    private final AuditService auditService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ORG_ADMIN', 'PLATFORM_ADMIN', 'MANAGER', 'TL', 'FO', 'CALLER', 'TRACER')")
@@ -104,6 +109,67 @@ public class SubscriptionController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
         }
+    }
+
+    /**
+     * Changes an EXISTING subscription's plan, distinct from {@code /checkout} (which is only
+     * for a brand-new subscription and would create a duplicate one if used against an org
+     * that's already subscribed). Body: {@code plan} (required, e.g. "GROWTH").
+     * <p>
+     * Upgrade/downgrade is determined by {@link Plan}'s own declared ordinal order
+     * (NONE &lt; STARTER &lt; GROWTH &lt; ENTERPRISE) -- policy and provider-specific timing
+     * differences are documented on {@link com.recoverpro.server.service.PaymentProvider#changePlan}.
+     */
+    @PutMapping("/plan")
+    @PreAuthorize("hasAnyRole('ORG_ADMIN', 'PLATFORM_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> changePlan(
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal UserPrincipal caller) {
+
+        UUID orgId = requireOrgContext(caller);
+        String planName = body.get("plan");
+        if (planName == null || planName.isBlank()) {
+            throw new BusinessException("plan is required");
+        }
+        Plan newPlan;
+        try {
+            newPlan = Plan.valueOf(planName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Unknown plan: " + planName);
+        }
+
+        OrgSubscription sub = subRepo.findByOrgId(orgId)
+                .orElseThrow(() -> new BusinessException(
+                        "No existing subscription to change -- use /checkout to start one."));
+        Plan previousPlan = sub.getPlan();
+        if (newPlan == previousPlan) {
+            throw new BusinessException("Already on the " + newPlan + " plan");
+        }
+        boolean upgrade = newPlan.ordinal() > previousPlan.ordinal();
+
+        try {
+            paymentProviderResolver.resolveForOrg(orgId).changePlan(orgId, planName, upgrade);
+        } catch (PaymentProviderException e) {
+            log.error("Plan-change error for org {}: {}", orgId, e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.of(e.getMessage(), null));
+        }
+
+        // The provider is the source of truth for plan/status (StripeWebhookService/
+        // RazorpayWebhookService sync OrgSubscription from the resulting webhook) -- this audit
+        // record captures who REQUESTED the change and when, not a claim that it already applied.
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.SUBSCRIPTION_CHANGED)
+                .resourceType(AuditResourceType.SUBSCRIPTION)
+                .resourceId(orgId.toString())
+                .beforeState(Map.of("plan", previousPlan.name()))
+                .afterState(Map.of("plan", newPlan.name()))
+                .metadata(Map.of("upgrade", String.valueOf(upgrade)))
+                .build());
+
+        log.info("Org {} requested plan change {} -> {} (upgrade={})", orgId, previousPlan, newPlan, upgrade);
+        return ResponseEntity.ok(ApiResponse.success("Plan change requested"));
     }
 
     @PostMapping("/portal")
