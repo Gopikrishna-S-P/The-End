@@ -11,11 +11,13 @@ import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class AbstractIntegrationTest {
 
@@ -147,8 +150,22 @@ public abstract class AbstractIntegrationTest {
     void cleanupIntegrationTestData() {
         SecurityContextHolder.clearContext();
         RlsOrgIdHolder.clear();
-        userRepository.deleteAllByIdInBatch(createdUserIds);
-        organizationRepository.deleteAllByIdInBatch(createdOrgIds);
+        // A test that exercises a genuinely audited action (file processing, a role change, a
+        // subscription event, ...) leaves a permanent unified_audit_events/settlement_audit_logs-
+        // style row referencing the user/org it created, via an immutable, RESTRICT-style FK --
+        // by design, same as the audit trail surviving deletion of what it documents in
+        // production. That's expected, not a test bug, so a cleanup failure here is swallowed
+        // (with a warning) rather than failing a test whose actual assertions already passed.
+        try {
+            userRepository.deleteAllByIdInBatch(createdUserIds);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Skipping test user cleanup for {}: referenced by an immutable audit row", createdUserIds);
+        }
+        try {
+            organizationRepository.deleteAllByIdInBatch(createdOrgIds);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Skipping test org cleanup for {}: referenced by an immutable audit row", createdOrgIds);
+        }
         createdUserIds.clear();
         createdOrgIds.clear();
     }

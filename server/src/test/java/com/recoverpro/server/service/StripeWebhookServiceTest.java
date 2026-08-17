@@ -44,6 +44,8 @@ class StripeWebhookServiceTest {
     private PlatformInvoiceRepository invoiceRepository;
     @Mock
     private FeatureFlagService featureFlagService;
+    @Mock
+    private AuditService auditService;
 
     private StripeConfig stripeConfig;
     private StripeWebhookService webhookService;
@@ -57,7 +59,7 @@ class StripeWebhookServiceTest {
 
         webhookService = new StripeWebhookService(
                 processedEventRepository, subscriptionRepository, invoiceRepository,
-                featureFlagService, stripeConfig);
+                featureFlagService, stripeConfig, auditService);
     }
 
     @Test

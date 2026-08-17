@@ -9,6 +9,7 @@ import com.recoverpro.server.exception.InvalidOtpException;
 import com.recoverpro.server.repository.PasswordResetTokenRepository;
 import com.recoverpro.server.repository.RefreshTokenRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.util.RateLimiter;
@@ -47,6 +48,7 @@ class PasswordResetServiceImplTest {
     @Mock private EmailService emailService;
     @Mock private RateLimiter rateLimiter;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
     @Mock private StringRedisTemplate redisTemplate;
 
     private PasswordResetServiceImpl service;
@@ -56,7 +58,7 @@ class PasswordResetServiceImplTest {
     void setUp() {
         service = new PasswordResetServiceImpl(userRepository, passwordResetTokenRepository,
                 refreshTokenRepository, passwordEncoder, emailService, rateLimiter, new AppProperties(),
-                auditLogService, redisTemplate);
+                auditLogService, auditService, redisTemplate);
         user = User.builder().id(UUID.randomUUID()).email("agent@example.com").build();
         lenient().when(rateLimiter.isAllowed(any(), anyInt(), anyInt())).thenReturn(true);
     }

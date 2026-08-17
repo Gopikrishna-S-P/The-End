@@ -5,6 +5,7 @@ import com.recoverpro.server.enums.ExportFormat;
 import com.recoverpro.server.enums.ReportStatus;
 import com.recoverpro.server.enums.ReportType;
 import com.recoverpro.server.repository.ReportJobRepository;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.ExportService;
 import com.recoverpro.server.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,12 +30,13 @@ class ReportJobExecutorTest {
     @Mock private ReportJobRepository reportJobRepository;
     @Mock private ExportService exportService;
     @Mock private NotificationService notificationService;
+    @Mock private AuditService auditService;
 
     private ReportJobExecutor executor;
 
     @BeforeEach
     void setUp() {
-        executor = new ReportJobExecutor(reportJobRepository, exportService, notificationService);
+        executor = new ReportJobExecutor(reportJobRepository, exportService, notificationService, auditService);
     }
 
     @Test

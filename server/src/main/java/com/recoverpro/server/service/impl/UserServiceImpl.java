@@ -23,7 +23,11 @@ import com.recoverpro.server.repository.PermissionRepository;
 import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserPermissionRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.UserService;
@@ -57,6 +61,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final EmailService emailService;
     private final AppProperties appProperties;
 
@@ -143,6 +148,11 @@ public class UserServiceImpl implements UserService {
         sendWelcomeOtp(saved);
         auditLogService.logUserAction(callerId(), "USER_CREATED",
                 "Created user id=" + saved.getId() + " in org=" + callerOrgId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.USER_CREATED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(String.valueOf(saved.getId()))
+                .build());
         return userMapper.toResponse(saved);
     }
 
@@ -177,6 +187,11 @@ public class UserServiceImpl implements UserService {
         }
         User saved = userRepository.save(user);
         auditLogService.logUserAction(callerId(), "USER_UPDATED", "Updated user id=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.USER_UPDATED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .build());
         return userMapper.toResponse(saved);
     }
 
@@ -208,6 +223,12 @@ public class UserServiceImpl implements UserService {
         User saved = userRepository.save(target);
         auditLogService.logUserAction(callerId(), "ROLE_GRANTED",
                 "Granted " + role.getName() + " to user=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.ROLE_GRANTED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .afterState(Map.of("role", role.getName()))
+                .build());
         return userMapper.toResponse(saved);
     }
 
@@ -229,6 +250,12 @@ public class UserServiceImpl implements UserService {
         User saved = userRepository.save(target);
         auditLogService.logUserAction(callerId(), "ROLE_REVOKED",
                 "Revoked " + roleName + " from user=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.ROLE_REVOKED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .beforeState(Map.of("role", role.getName()))
+                .build());
         return userMapper.toResponse(saved);
     }
 
@@ -241,6 +268,11 @@ public class UserServiceImpl implements UserService {
         user.setFailedLoginAttempts(0);
         userRepository.save(user);
         auditLogService.logUserAction(callerId(), "USER_ENABLED", "Enabled user id=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.USER_REACTIVATED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .build());
     }
 
     @Override
@@ -251,6 +283,11 @@ public class UserServiceImpl implements UserService {
         user.setEnabled(false);
         userRepository.save(user);
         auditLogService.logUserAction(callerId(), "USER_DISABLED", "Disabled user id=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.USER_DEACTIVATED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .build());
     }
 
     @Override
@@ -266,6 +303,15 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         auditLogService.logUserAction(callerId(), "USER_DELETED",
                 "Soft-deleted user id=" + targetUserId + " in org=" + callerOrgId);
+        // No dedicated USER_DELETED taxonomy entry -- deleteUser() is a soft-delete that also
+        // disables the account, so it's recorded as a deactivation with deleted=true in metadata
+        // rather than adding a near-duplicate action.
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.USER_DEACTIVATED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .metadata(Map.of("deleted", "true"))
+                .build());
     }
 
     @Override
@@ -311,6 +357,12 @@ public class UserServiceImpl implements UserService {
 
         auditLogService.logUserAction(callerId(), "PERMISSION_GRANTED",
                 "Granted " + permissionName + " to user=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.PERMISSION_GRANTED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .afterState(Map.of("permission", permissionName))
+                .build());
         return buildPermissionsResponse(userRepository.findById(target.getId()).orElse(target));
     }
 
@@ -328,6 +380,12 @@ public class UserServiceImpl implements UserService {
 
         auditLogService.logUserAction(callerId(), "PERMISSION_REVOKED",
                 "Revoked direct permission " + permissionName + " from user=" + targetUserId);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.PERMISSION_REVOKED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(targetUserId.toString())
+                .beforeState(Map.of("permission", permissionName))
+                .build());
         return buildPermissionsResponse(target);
     }
 

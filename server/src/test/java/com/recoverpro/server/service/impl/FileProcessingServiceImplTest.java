@@ -10,6 +10,7 @@ import com.recoverpro.server.repository.FileProcessingErrorRepository;
 import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileStorageService;
 import com.recoverpro.server.service.NotificationService;
@@ -48,6 +49,7 @@ class FileProcessingServiceImplTest {
     @Mock private FileStorageService fileStorageService;
     @Mock private FileUploadPostProcessingService fileUploadPostProcessingService;
     @Mock private NotificationService notificationService;
+    @Mock private AuditService auditService;
     @Mock private EntityImportProcessor<Object> allocationProcessor;
 
     private FileProcessingServiceImpl service;
@@ -57,7 +59,8 @@ class FileProcessingServiceImplTest {
         service = new FileProcessingServiceImpl(fileUploadRepository, allocationRepository,
                 columnSchemaRepository, fileProcessingErrorRepository, organizationRepository,
                 userRepository, fileParsingService, fileStorageService,
-                fileUploadPostProcessingService, notificationService, List.of(allocationProcessor));
+                fileUploadPostProcessingService, notificationService, auditService,
+                List.of(allocationProcessor));
     }
 
     @Test

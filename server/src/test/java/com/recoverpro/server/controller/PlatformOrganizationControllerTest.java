@@ -12,6 +12,7 @@ import com.recoverpro.server.repository.PasswordResetTokenRepository;
 import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.UserActionAuditService;
@@ -50,6 +51,7 @@ class PlatformOrganizationControllerTest {
     @Mock private RoleRepository roleRepo;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
     @Mock private EmailService emailService;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepo;
     @Mock private UserMapper userMapper;
@@ -62,7 +64,7 @@ class PlatformOrganizationControllerTest {
     void setUp() {
         appProperties = new AppProperties();
         controller = new PlatformOrganizationController(
-                orgRepo, userRepo, roleRepo, passwordEncoder, auditLogService,
+                orgRepo, userRepo, roleRepo, passwordEncoder, auditLogService, auditService,
                 emailService, passwordResetTokenRepo, appProperties, userMapper, notificationService);
 
         when(orgRepo.existsByCode(any())).thenReturn(false);

@@ -6,6 +6,8 @@ import com.recoverpro.server.dto.response.FileProcessingErrorResponse;
 import com.recoverpro.server.dto.response.FileUploadResponse;
 import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.entity.Organization;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.enums.FileUploadStatus;
 import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.mapper.FileProcessingErrorMapper;
@@ -42,6 +44,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     private final FileProcessingErrorMapper fileProcessingErrorMapper;
     private final FileStorageService fileStorageService;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -86,6 +89,15 @@ public class FileUploadServiceImpl implements FileUploadService {
         auditLogService.logUserAction(userId, "FILE_UPLOAD_INITIATED",
                 String.format("File: %s, Size: %d bytes, Org: %s",
                         file.getOriginalFilename(), file.getSize(), organizationId));
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.FILE_UPLOAD_INITIATED)
+                .resourceType(AuditResourceType.FILE_UPLOAD)
+                .resourceId(String.valueOf(saved.getId()))
+                .organizationIdOverride(organizationId)
+                .metadata(java.util.Map.of(
+                        "filename", String.valueOf(file.getOriginalFilename()),
+                        "sizeBytes", String.valueOf(file.getSize())))
+                .build());
 
         fileStorageService.store(saved.getId(), file);
         fileUploadRepository.flush();
@@ -129,13 +141,20 @@ public class FileUploadServiceImpl implements FileUploadService {
     @Transactional
     public void softDeleteFileUpload(UUID fileUploadId, UUID userId) {
         log.info("Soft deleting fileUpload: {} by user: {}", fileUploadId, userId);
-        fileUploadRepository.findByIdAndIsDeletedFalse(fileUploadId)
+        FileUpload existing = fileUploadRepository.findByIdAndIsDeletedFalse(fileUploadId)
                 .orElseThrow(() -> new ResourceNotFoundException("FileUpload not found: " + fileUploadId));
         allocationRepository.softDeleteAllByFileUploadId(fileUploadId, userId);
         fileUploadRepository.softDelete(fileUploadId, userId);
         fileStorageService.delete(fileUploadId);
         auditLogService.logUserAction(userId, "FILE_UPLOAD_DELETED",
                 String.format("FileUpload ID: %s", fileUploadId));
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.FILE_UPLOAD_DELETED)
+                .resourceType(AuditResourceType.FILE_UPLOAD)
+                .resourceId(fileUploadId.toString())
+                .organizationIdOverride(existing.getOrganization() != null
+                        ? existing.getOrganization().getId() : null)
+                .build());
         log.info("Successfully soft deleted fileUpload: {} and all associated allocations", fileUploadId);
     }
 }

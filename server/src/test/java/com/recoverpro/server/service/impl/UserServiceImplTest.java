@@ -17,6 +17,7 @@ import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserPermissionRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.EmailService;
 import org.junit.jupiter.api.AfterEach;
@@ -61,6 +62,7 @@ class UserServiceImplTest {
     @Mock private UserMapper userMapper;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
     @Mock private EmailService emailService;
     @Mock private AppProperties appProperties;
 
@@ -70,7 +72,7 @@ class UserServiceImplTest {
     void setUp() {
         service = new UserServiceImpl(userRepository, roleRepository, permissionRepository,
                 userPermissionRepository, passwordResetTokenRepository, userMapper, passwordEncoder,
-                auditLogService, emailService, appProperties);
+                auditLogService, auditService, emailService, appProperties);
     }
 
     @AfterEach

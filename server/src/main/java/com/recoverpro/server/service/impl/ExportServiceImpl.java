@@ -3,10 +3,14 @@ package com.recoverpro.server.service.impl;
 import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.entity.ReportJob;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.enums.ExportFormat;
 import com.recoverpro.server.enums.ReportStatus;
 import com.recoverpro.server.enums.ReportType;
 import com.recoverpro.server.repository.ReportJobRepository;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.ExportService;
 import com.recoverpro.server.service.export.ExcelReportBuilder;
 import com.recoverpro.server.service.export.PdfReportBuilder;
@@ -40,6 +44,7 @@ import java.util.UUID;
 public class ExportServiceImpl implements ExportService {
 
     private final ReportJobRepository reportJobRepository;
+    private final AuditService auditService;
 
     private final ExcelReportBuilder excelReportBuilder = new ExcelReportBuilder();
     private final PdfReportBuilder pdfReportBuilder = new PdfReportBuilder();
@@ -109,6 +114,15 @@ public class ExportServiceImpl implements ExportService {
             Resource resource = new UrlResource(filePath.toUri());
             if (!resource.exists() || !resource.isReadable())
                 throw new BusinessException("Report file not accessible: " + jobId);
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.REPORT_EXPORTED)
+                    .resourceType(AuditResourceType.REPORT)
+                    .resourceId(jobId.toString())
+                    .organizationIdOverride(orgId)
+                    .metadata(java.util.Map.of(
+                            "reportType", job.getReportType().name(),
+                            "format", job.getExportFormat().name()))
+                    .build());
             return resource;
         } catch (MalformedURLException e) {
             throw new BusinessException("Invalid file path for job: " + jobId);

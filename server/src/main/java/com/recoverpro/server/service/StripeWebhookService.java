@@ -5,6 +5,10 @@ import com.recoverpro.server.config.StripeConfig;
 import com.recoverpro.server.entity.OrgSubscription;
 import com.recoverpro.server.entity.PlatformInvoice;
 import com.recoverpro.server.entity.ProcessedStripeEvent;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditActorType;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.repository.ProcessedStripeEventRepository;
@@ -19,6 +23,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
 import java.time.Instant;
 
 /**
@@ -36,6 +42,7 @@ public class StripeWebhookService {
     private final PlatformInvoiceRepository invoiceRepository;
     private final FeatureFlagService featureFlagService;
     private final StripeConfig stripeConfig;
+    private final AuditService auditService;
 
     /**
      * Atomically claims an event id so it is processed exactly once under Stripe's
@@ -79,6 +86,8 @@ public class StripeWebhookService {
         sub.setStatus(OrgSubscription.Status.ACTIVE);
         subscriptionRepository.save(sub);
         log.info("Stripe checkout completed: org={}, subscription={}", sub.getOrgId(), session.getSubscription());
+        auditSubscriptionEvent(AuditAction.SUBSCRIPTION_CREATED, sub.getOrgId(),
+                Map.of("status", sub.getStatus().name()));
     }
 
     /** {@code customer.subscription.created} and {@code .updated} carry the same
@@ -96,6 +105,8 @@ public class StripeWebhookService {
         featureFlagService.provisionFlagsFor(sub);
         log.info("Stripe subscription synced: org={}, status={}, plan={}",
                 sub.getOrgId(), sub.getStatus(), sub.getPlan());
+        auditSubscriptionEvent(AuditAction.SUBSCRIPTION_CHANGED, sub.getOrgId(),
+                Map.of("status", sub.getStatus().name(), "plan", sub.getPlan().name()));
     }
 
     @Transactional
@@ -105,6 +116,7 @@ public class StripeWebhookService {
         subscriptionRepository.save(sub);
         featureFlagService.provisionFlagsFor(sub);
         log.info("Stripe subscription cancelled: org={}", sub.getOrgId());
+        auditSubscriptionEvent(AuditAction.SUBSCRIPTION_CANCELLED, sub.getOrgId(), Map.of());
     }
 
     @Transactional
@@ -128,6 +140,15 @@ public class StripeWebhookService {
             subscriptionRepository.save(sub);
             featureFlagService.provisionFlagsFor(sub);
             log.warn("Stripe invoice payment failed, org marked PAST_DUE: org={}", sub.getOrgId());
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.INVOICE_PAYMENT_FAILED)
+                    .resourceType(AuditResourceType.INVOICE)
+                    .resourceId(invoice.getId())
+                    .result(AuditResult.FAILURE)
+                    .actorTypeOverride(AuditActorType.SYSTEM)
+                    .organizationIdOverride(sub.getOrgId())
+                    .metadata(Map.of("stripeInvoiceId", String.valueOf(invoice.getId())))
+                    .build());
         });
     }
 
@@ -190,6 +211,19 @@ public class StripeWebhookService {
         invoiceRepository.save(row);
         log.info("Stripe invoice mirrored: org={}, invoice={}, status={}, paid={} paise",
                 sub.getOrgId(), invoice.getId(), invoice.getStatus(), row.getAmountPaid());
+    }
+
+    /** Webhook-driven -- no HTTP session, no SecurityContext -- so actor is always SYSTEM and
+     *  organizationId must be supplied explicitly rather than read from RlsOrgIdHolder. */
+    private void auditSubscriptionEvent(AuditAction action, UUID orgId, Map<String, Object> metadata) {
+        auditService.record(AuditEventRequest.builder()
+                .action(action)
+                .resourceType(AuditResourceType.SUBSCRIPTION)
+                .resourceId(orgId != null ? orgId.toString() : null)
+                .actorTypeOverride(AuditActorType.SYSTEM)
+                .organizationIdOverride(orgId)
+                .metadata(metadata)
+                .build());
     }
 
     private OrgSubscription requireByCustomerId(String stripeCustomerId) {

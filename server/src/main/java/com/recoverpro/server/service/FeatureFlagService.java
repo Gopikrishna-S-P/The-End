@@ -4,6 +4,9 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.config.PlanFeatureMatrix;
 import com.recoverpro.server.entity.FeatureFlag;
 import com.recoverpro.server.entity.OrgSubscription;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditActorType;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.repository.FeatureFlagRepository;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,7 @@ public class FeatureFlagService {
     private final FeatureFlagRepository repository;
     private final StringRedisTemplate redis;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final OrgSubscriptionRepository orgSubscriptionRepository;
 
     public boolean isEnabled(UUID organizationId, String flagKey, boolean defaultIfMissing) {
@@ -83,6 +87,17 @@ public class FeatureFlagService {
             auditLogService.logUserAction(actingUserId, "FEATURE_FLAG_CHANGED",
                     "flag=" + flagKey + " org=" + scope + " before=" + before + " after=" + enabled + " source=" + source);
         }
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.FEATURE_FLAG_CHANGED)
+                .resourceType(AuditResourceType.FEATURE_FLAG)
+                .resourceId(flagKey)
+                .actorUserIdOverride(actingUserId)
+                .actorTypeOverride(actingUserId == null ? AuditActorType.SYSTEM : null)
+                .organizationIdOverride(organizationId)
+                .beforeState(Map.of("enabled", String.valueOf(before)))
+                .afterState(Map.of("enabled", String.valueOf(enabled)))
+                .metadata(Map.of("source", source.name()))
+                .build());
         log.info("Feature flag {} = {} for {} (source={}, by {})", flagKey, enabled, scope, source, actingUserId);
         return saved;
     }

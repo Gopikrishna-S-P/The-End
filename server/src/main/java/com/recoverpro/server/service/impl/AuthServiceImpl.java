@@ -11,10 +11,15 @@ import com.recoverpro.server.dto.response.MfaSetupResponse;
 import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.exception.*;
 import com.recoverpro.server.mapper.UserMapper;
 import com.recoverpro.server.repository.RefreshTokenRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.AuthService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.UserActionAuditService;
@@ -58,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
     private final AppProperties appProperties;
     private final UserMapper userMapper;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final ObjectMapper objectMapper;
     private final EmailService emailService;
     private final MfaService mfaService;
@@ -126,6 +132,7 @@ public class AuthServiceImpl implements AuthService {
             if (user != null) {
                 handleFailedAttempt(user);
                 auditLogService.logUserAction(user.getId(), "LOGIN_FAILED", "Invalid password from IP: " + ip);
+                auditLoginFailure(user.getId(), "Invalid password");
             }
             throw new InvalidCredentialsException("Invalid email or password");
         }
@@ -134,11 +141,13 @@ public class AuthServiceImpl implements AuthService {
         if (user.isCurrentlyLocked()) {
             long retryAfter = computeLockoutRetryAfter(user);
             auditLogService.logUserAction(user.getId(), "LOGIN_FAILED", "Account locked from IP: " + ip);
+            auditLoginFailure(user.getId(), "Account locked");
             throw new AccountLockedException("Account locked. Try again in " + retryAfter + "s", retryAfter);
         }
 
         if (mfaService.isEnforced() && mfaService.requiresMfaEnrollment(user) && !user.isMfaEnabled()) {
             auditLogService.logUserAction(user.getId(), "LOGIN_BLOCKED", "MFA enrollment required");
+            auditLoginFailure(user.getId(), "MFA enrollment required");
             throw new MfaSetupRequiredException("MFA enrollment is required for this account.");
         }
 
@@ -169,8 +178,23 @@ public class AuthServiceImpl implements AuthService {
         rateLimiter.reset(emailRateLimitKey);
         userRepository.recordSuccessfulLogin(user.getId(), Instant.now());
         auditLogService.logUserAction(user.getId(), "LOGIN", "Successful login from IP: " + ip);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_LOGIN_SUCCESS)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(user.getId().toString())
+                .build());
 
         return refreshTokenRotationService.buildFullAuthResponse(user, httpRequest);
+    }
+
+    private void auditLoginFailure(UUID userId, String reason) {
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_LOGIN_FAILED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(userId.toString())
+                .result(AuditResult.DENIED)
+                .reason(reason)
+                .build());
     }
 
     @Override
@@ -220,6 +244,13 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             auditLogService.logUserAction(userId, "PASSWORD_CHANGE_FAILED", "Incorrect current password");
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.AUTH_PASSWORD_CHANGED)
+                    .resourceType(AuditResourceType.USER)
+                    .resourceId(userId.toString())
+                    .result(AuditResult.FAILURE)
+                    .reason("Incorrect current password")
+                    .build());
             throw new InvalidCredentialsException("Current password is incorrect");
         }
 
@@ -231,6 +262,11 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
         evictUserProfileCache(userId);
         auditLogService.logUserAction(userId, "PASSWORD_CHANGE_SUCCESS", "Password changed successfully");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_PASSWORD_CHANGED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(userId.toString())
+                .build());
     }
 
     @Override

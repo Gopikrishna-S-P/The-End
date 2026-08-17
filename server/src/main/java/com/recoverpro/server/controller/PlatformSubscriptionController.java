@@ -11,10 +11,14 @@ import com.recoverpro.server.entity.OrgSubscription.Plan;
 import com.recoverpro.server.entity.OrgSubscription.Status;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.entity.PlatformInvoice;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FeatureFlagService;
 import com.recoverpro.server.service.PlatformAnalyticsService;
 import com.recoverpro.server.service.StripeService;
@@ -66,6 +70,7 @@ public class PlatformSubscriptionController {
     private final StripeWebhookService stripeWebhookService;
     private final FeatureFlagService featureFlagService;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlatformSubscriptionResponse>>> list() {
@@ -223,6 +228,15 @@ public class PlatformSubscriptionController {
         auditLogService.logUserAction(caller.getId(), "ORG_SUBSCRIPTION_COMPED",
                 "orgId=" + orgId + "; plan=" + plan + "; until=" + (until == null ? "open-ended" : until)
                         + "; reason=" + reason);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.BILLING_OVERRIDE_APPLIED)
+                .resourceType(AuditResourceType.SUBSCRIPTION)
+                .resourceId(orgId.toString())
+                .reason(reason)
+                .organizationIdOverride(orgId)
+                .afterState(Map.of("compedPlan", plan.name(),
+                        "compedUntil", until == null ? "open-ended" : until.toString()))
+                .build());
         log.info("Platform admin {} comped org {} to {} until {} ({})",
                 caller.getId(), orgId, plan, until == null ? "open-ended" : until, reason);
 
@@ -263,6 +277,14 @@ public class PlatformSubscriptionController {
 
         auditLogService.logUserAction(caller.getId(), "ORG_SUBSCRIPTION_COMP_REVOKED",
                 "orgId=" + orgId + "; previousPlan=" + previous);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.BILLING_OVERRIDE_APPLIED)
+                .resourceType(AuditResourceType.SUBSCRIPTION)
+                .resourceId(orgId.toString())
+                .reason("Comp revoked")
+                .organizationIdOverride(orgId)
+                .beforeState(Map.of("compedPlan", previous.name()))
+                .build());
         log.info("Platform admin {} removed {} comp from org {}", caller.getId(), previous, orgId);
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -349,6 +371,14 @@ public class PlatformSubscriptionController {
 
         auditLogService.logUserAction(caller.getId(), "ORG_SUBSCRIPTION_PLAN_FORCED",
                 "orgId=" + orgId + "; previousPlan=" + previousPlan + "; newPlan=" + plan);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.BILLING_OVERRIDE_APPLIED)
+                .resourceType(AuditResourceType.SUBSCRIPTION)
+                .resourceId(orgId.toString())
+                .organizationIdOverride(orgId)
+                .beforeState(Map.of("plan", String.valueOf(previousPlan)))
+                .afterState(Map.of("plan", plan.name()))
+                .build());
         log.info("Platform admin {} force-changed org {} plan {} -> {}",
                 caller.getId(), orgId, previousPlan, plan);
 

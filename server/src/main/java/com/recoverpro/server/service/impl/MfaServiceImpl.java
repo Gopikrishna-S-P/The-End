@@ -7,10 +7,14 @@ import com.recoverpro.server.dto.response.MfaEnableResponse;
 import com.recoverpro.server.dto.response.MfaSetupResponse;
 import com.recoverpro.server.entity.MfaRecoveryCode;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.exception.InvalidTotpException;
 import com.recoverpro.server.repository.MfaRecoveryCodeRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.totp.TotpService;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.MfaService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.util.RateLimiter;
@@ -42,6 +46,7 @@ public class MfaServiceImpl implements MfaService {
     private final StringRedisTemplate redisTemplate;
     private final RateLimiter rateLimiter;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.security.mfa.enforce:false}")
@@ -109,6 +114,11 @@ public class MfaServiceImpl implements MfaService {
         List<String> plainCodes = generateAndPersistRecoveryCodes(userId);
         evictUserProfileCache(userId);
         auditLogService.logUserAction(userId, "MFA_ENABLED", "MFA successfully enabled");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_MFA_ENABLED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(userId.toString())
+                .build());
 
         return MfaEnableResponse.builder().recoveryCodes(plainCodes).build();
     }
@@ -144,6 +154,11 @@ public class MfaServiceImpl implements MfaService {
         mfaRecoveryCodeRepository.deleteAllByUserId(userId);
         evictUserProfileCache(userId);
         auditLogService.logUserAction(userId, "MFA_DISABLED", "MFA successfully disabled");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_MFA_DISABLED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(userId.toString())
+                .build());
     }
 
     @Override

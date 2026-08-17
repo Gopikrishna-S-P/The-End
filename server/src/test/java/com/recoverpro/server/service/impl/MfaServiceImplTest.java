@@ -6,6 +6,7 @@ import com.recoverpro.server.entity.User;
 import com.recoverpro.server.repository.MfaRecoveryCodeRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.security.totp.TotpService;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.util.RateLimiter;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,7 @@ class MfaServiceImplTest {
     @Mock private ValueOperations<String, String> valueOperations;
     @Mock private RateLimiter rateLimiter;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
     @Mock private PasswordEncoder passwordEncoder;
 
     private MfaServiceImpl service;
@@ -51,7 +53,7 @@ class MfaServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new MfaServiceImpl(userRepository, mfaRecoveryCodeRepository, totpService,
-                redisTemplate, rateLimiter, auditLogService, passwordEncoder);
+                redisTemplate, rateLimiter, auditLogService, auditService, passwordEncoder);
         userId = UUID.randomUUID();
     }
 

@@ -6,6 +6,7 @@ import com.recoverpro.server.repository.OrgSubscriptionRepository;
 import com.recoverpro.server.repository.OrganizationRepository;
 import com.recoverpro.server.repository.PlatformInvoiceRepository;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FeatureFlagService;
 import com.recoverpro.server.service.StripeService;
 import com.recoverpro.server.service.StripeWebhookService;
@@ -47,6 +48,7 @@ class PlatformSubscriptionControllerTest {
     @Mock private StripeWebhookService stripeWebhookService;
     @Mock private FeatureFlagService featureFlagService;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
 
     private PlatformSubscriptionController controller;
     private UUID orgId;
@@ -55,7 +57,8 @@ class PlatformSubscriptionControllerTest {
     @BeforeEach
     void setUp() {
         controller = new PlatformSubscriptionController(
-                subRepo, orgRepo, stripeService, invoiceRepo, stripeWebhookService, featureFlagService, auditLogService);
+                subRepo, orgRepo, stripeService, invoiceRepo, stripeWebhookService, featureFlagService,
+                auditLogService, auditService);
         orgId = UUID.randomUUID();
         caller = mock(UserPrincipal.class);
         lenient().when(caller.getId()).thenReturn(UUID.randomUUID());

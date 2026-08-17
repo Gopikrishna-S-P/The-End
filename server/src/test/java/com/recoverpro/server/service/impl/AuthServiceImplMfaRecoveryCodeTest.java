@@ -9,6 +9,7 @@ import com.recoverpro.server.exception.InvalidTotpException;
 import com.recoverpro.server.mapper.UserMapper;
 import com.recoverpro.server.repository.RefreshTokenRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.MfaService;
@@ -52,6 +53,7 @@ class AuthServiceImplMfaRecoveryCodeTest {
     @Mock private StringRedisTemplate redisTemplate;
     @Mock private UserMapper userMapper;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
     @Mock private EmailService emailService;
     @Mock private MfaService mfaService;
     @Mock private PasswordResetService passwordResetService;
@@ -65,7 +67,7 @@ class AuthServiceImplMfaRecoveryCodeTest {
     void setUp() {
         service = new AuthServiceImpl(userRepository, refreshTokenRepository,
                 passwordEncoder, rateLimiter, redisTemplate, new AppProperties(), userMapper,
-                auditLogService, new ObjectMapper(), emailService, mfaService, passwordResetService,
+                auditLogService, auditService, new ObjectMapper(), emailService, mfaService, passwordResetService,
                 refreshTokenRotationService);
 
         user = User.builder()

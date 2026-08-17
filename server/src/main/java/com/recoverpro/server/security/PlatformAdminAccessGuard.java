@@ -1,6 +1,11 @@
 package com.recoverpro.server.security;
 
 import com.recoverpro.server.common.exception.BusinessException;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditActorType;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.UserActionAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,6 +33,7 @@ public class PlatformAdminAccessGuard {
     public static final String CROSS_ORG_ACCESS_ACTION = "PLATFORM_ADMIN_CROSS_ORG_ACCESS";
 
     private final UserActionAuditService userActionAuditService;
+    private final AuditService auditService;
 
     /**
      * Records the access, then elevates this thread past tenant RLS for the rest of the request.
@@ -46,6 +52,16 @@ public class PlatformAdminAccessGuard {
                 adminUserId,
                 CROSS_ORG_ACCESS_ACTION,
                 "resource=" + resource + "; targetOrganizationId=" + targetOrgId + "; reason=" + reason);
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.CROSS_ORG_ACCESS)
+                .resourceType(AuditResourceType.ORGANIZATION)
+                .resourceId(targetOrgId.toString())
+                .reason(reason)
+                .actorUserIdOverride(adminUserId)
+                .actorTypeOverride(AuditActorType.USER)
+                .organizationIdOverride(targetOrgId)
+                .metadata(java.util.Map.of("resource", resource))
+                .build());
         RlsOrgIdHolder.setBypass(true);
     }
 
@@ -68,6 +84,14 @@ public class PlatformAdminAccessGuard {
                 adminUserId,
                 CROSS_ORG_ACCESS_ACTION,
                 "resource=" + resource + "; reason=<none: non-interactive path>");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.CROSS_ORG_ACCESS)
+                .resourceType(AuditResourceType.ORGANIZATION)
+                .reason("<none: non-interactive path>")
+                .actorUserIdOverride(adminUserId)
+                .actorTypeOverride(AuditActorType.USER)
+                .metadata(java.util.Map.of("resource", resource))
+                .build());
         RlsOrgIdHolder.setBypass(true);
     }
 }

@@ -7,10 +7,15 @@ import com.recoverpro.server.dto.request.ResetPasswordRequest;
 import com.recoverpro.server.dto.request.VerifyOtpRequest;
 import com.recoverpro.server.entity.PasswordResetToken;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.exception.InvalidOtpException;
 import com.recoverpro.server.repository.PasswordResetTokenRepository;
 import com.recoverpro.server.repository.RefreshTokenRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.PasswordResetService;
 import com.recoverpro.server.service.UserActionAuditService;
@@ -39,6 +44,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final RateLimiter rateLimiter;
     private final AppProperties appProperties;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final StringRedisTemplate redisTemplate;
 
     private static final String USER_PROFILE_CACHE_PREFIX = "user:profile:";
@@ -72,6 +78,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         passwordResetTokenRepository.save(token);
         emailService.sendPasswordResetOtp(user.getEmail(), otp, expiryMinutes);
         auditLogService.logUserAction(user.getId(), "PASSWORD_RESET_REQUESTED", "OTP sent to email");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_PASSWORD_RESET_REQUESTED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(user.getId().toString())
+                .build());
     }
 
     @Override
@@ -121,6 +132,13 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         if (!passwordEncoder.matches(request.getOtp(), token.getOtpHash())) {
             auditLogService.logUserAction(user.getId(), "PASSWORD_RESET_FAILED", "Invalid OTP provided");
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.AUTH_PASSWORD_RESET_COMPLETED)
+                    .resourceType(AuditResourceType.USER)
+                    .resourceId(user.getId().toString())
+                    .result(AuditResult.FAILURE)
+                    .reason("Invalid OTP provided")
+                    .build());
             throw new InvalidOtpException("Invalid or expired OTP");
         }
 
@@ -135,6 +153,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
         evictUserProfileCache(user.getId());
         auditLogService.logUserAction(user.getId(), "PASSWORD_RESET_SUCCESS", "Password changed via reset flow");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_PASSWORD_RESET_COMPLETED)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(user.getId().toString())
+                .build());
     }
 
     private void evictUserProfileCache(java.util.UUID userId) {

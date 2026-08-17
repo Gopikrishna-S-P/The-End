@@ -11,11 +11,15 @@ import com.recoverpro.server.dto.request.UpdateOrgAdminRequest;
 import com.recoverpro.server.dto.response.OrganizationSummaryResponse;
 import com.recoverpro.server.dto.response.UserResponse;
 import com.recoverpro.server.entity.*;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
 import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.OrganizationType;
 import com.recoverpro.server.mapper.UserMapper;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.security.UserPrincipal;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.EmailService;
 import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.UserActionAuditService;
@@ -46,6 +50,7 @@ public class PlatformOrganizationController {
     private final RoleRepository roleRepo;
     private final PasswordEncoder passwordEncoder;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final EmailService emailService;
     private final PasswordResetTokenRepository passwordResetTokenRepo;
     private final AppProperties appProperties;
@@ -236,6 +241,14 @@ public class PlatformOrganizationController {
 
         auditLogService.logUserAction(caller.getId(), active ? "ORG_ACTIVATED" : "ORG_DEACTIVATED",
                 "Org " + org.getCode() + " [" + id + "] active: " + previous + " → " + active);
+        auditService.record(AuditEventRequest.builder()
+                .action(active ? AuditAction.ORG_REACTIVATED : AuditAction.ORG_SUSPENDED)
+                .resourceType(AuditResourceType.ORGANIZATION)
+                .resourceId(id.toString())
+                .organizationIdOverride(id)
+                .beforeState(Map.of("active", String.valueOf(previous)))
+                .afterState(Map.of("active", String.valueOf(active)))
+                .build());
         return ResponseEntity.ok(ApiResponse.success(toSummary(org)));
     }
 

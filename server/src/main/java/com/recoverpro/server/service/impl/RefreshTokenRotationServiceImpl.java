@@ -7,6 +7,9 @@ import com.recoverpro.server.dto.response.AuthResponse;
 import com.recoverpro.server.dto.response.AuthSessionResponse;
 import com.recoverpro.server.entity.RefreshToken;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.exception.AccountDisabledException;
@@ -18,6 +21,8 @@ import com.recoverpro.server.repository.RefreshTokenRepository;
 import com.recoverpro.server.security.RlsOrgIdHolder;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.security.jwt.JwtTokenProvider;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.RefreshTokenRotationService;
 import com.recoverpro.server.service.UserActionAuditService;
@@ -51,6 +56,7 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
     private final UserMapper userMapper;
     private final StringRedisTemplate redisTemplate;
     private final UserActionAuditService auditLogService;
+    private final AuditService auditService;
     private final BusinessMetrics metrics;
     private final NotificationService notificationService;
 
@@ -143,6 +149,13 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
                         evictUserProfileCache(userId);
                         auditLogService.logUserAction(userId, "TOKEN_THEFT_DETECTED",
                                 "Revoked refresh token replayed -- all sessions invalidated");
+                        auditService.record(AuditEventRequest.builder()
+                                .action(AuditAction.AUTH_TOKEN_THEFT_DETECTED)
+                                .resourceType(AuditResourceType.USER)
+                                .resourceId(userId.toString())
+                                .result(AuditResult.DENIED)
+                                .reason("Revoked refresh token replayed -- all sessions invalidated")
+                                .build());
                         metrics.recordTokenTheftDetected();
                         log.error("SECURITY: Refresh token reuse detected for user {}. All sessions revoked.", userId);
                     });
@@ -165,6 +178,13 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
             evictUserProfileCache(user.getId());
             auditLogService.logUserAction(user.getId(), "TOKEN_THEFT_DETECTED",
                     "Concurrent refresh on a single rotation -- all sessions invalidated");
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.AUTH_TOKEN_THEFT_DETECTED)
+                    .resourceType(AuditResourceType.USER)
+                    .resourceId(user.getId().toString())
+                    .result(AuditResult.DENIED)
+                    .reason("Concurrent refresh on a single rotation -- all sessions invalidated")
+                    .build());
             metrics.recordTokenTheftDetected();
             log.error("SECURITY: Refresh-token rotation race for user {}. All sessions revoked.", user.getId());
             throw new InvalidTokenException("Refresh token is invalid or expired");
@@ -185,6 +205,12 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
         }
         evictUserProfileCache(userId);
         auditLogService.logUserAction(userId, "LOGOUT", "User logged out (single device)");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_LOGOUT)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(userId.toString())
+                .metadata(java.util.Map.of("scope", "single-device"))
+                .build());
     }
 
     @Override
@@ -194,6 +220,12 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
         refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
         evictUserProfileCache(userId);
         auditLogService.logUserAction(userId, "LOGOUT_ALL", "User logged out from all devices");
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.AUTH_LOGOUT)
+                .resourceType(AuditResourceType.USER)
+                .resourceId(userId.toString())
+                .metadata(java.util.Map.of("scope", "all-devices"))
+                .build());
     }
 
     @Override
@@ -245,6 +277,12 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
             refreshTokenRepository.save(token);
             evictUserProfileCache(userId);
             auditLogService.logUserAction(userId, "SESSION_REVOKED", "Revoked session id=" + sessionId);
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.AUTH_SESSION_REVOKED)
+                    .resourceType(AuditResourceType.USER)
+                    .resourceId(userId.toString())
+                    .metadata(java.util.Map.of("sessionId", sessionId.toString()))
+                    .build());
         }
     }
 

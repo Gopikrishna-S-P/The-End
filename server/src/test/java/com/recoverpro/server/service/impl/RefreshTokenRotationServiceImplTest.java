@@ -12,6 +12,7 @@ import com.recoverpro.server.observability.BusinessMetrics;
 import com.recoverpro.server.repository.RefreshTokenRepository;
 import com.recoverpro.server.security.jwt.JwtTokenProvider;
 import com.recoverpro.server.service.NotificationService;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.security.SessionAnomalyDetector;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +51,7 @@ class RefreshTokenRotationServiceImplTest {
     @Mock private UserMapper userMapper;
     @Mock private StringRedisTemplate redisTemplate;
     @Mock private UserActionAuditService auditLogService;
+    @Mock private AuditService auditService;
     @Mock private BusinessMetrics metrics;
     @Mock private HttpServletRequest httpRequest;
     @Mock private NotificationService notificationService;
@@ -61,7 +63,7 @@ class RefreshTokenRotationServiceImplTest {
     void setUp() {
         service = new RefreshTokenRotationServiceImpl(refreshTokenRepository, jwtTokenProvider,
                 passwordEncoder, sessionAnomalyDetector, new AppProperties(), userMapper, redisTemplate,
-                auditLogService, metrics, notificationService);
+                auditLogService, auditService, metrics, notificationService);
         user = User.builder().id(UUID.randomUUID()).enabled(true).build();
         lenient().when(userMapper.toResponse(any())).thenReturn(UserResponse.builder().build());
         lenient().when(jwtTokenProvider.generateAccessToken(any(), any())).thenReturn("access-token");

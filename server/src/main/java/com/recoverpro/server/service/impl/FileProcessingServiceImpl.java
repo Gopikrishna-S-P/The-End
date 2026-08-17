@@ -4,10 +4,16 @@ import com.recoverpro.server.common.exception.BusinessException;
 import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.config.PlatformConstants;
 import com.recoverpro.server.entity.*;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditActorType;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.enums.FileUploadStatus;
 import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.repository.*;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileProcessingService;
 import com.recoverpro.server.service.FileStorageService;
@@ -52,6 +58,7 @@ public class FileProcessingServiceImpl implements FileProcessingService {
     private final FileStorageService fileStorageService;
     private final FileUploadPostProcessingService fileUploadPostProcessingService;
     private final NotificationService notificationService;
+    private final AuditService auditService;
     private final List<EntityImportProcessor<?>> importProcessors;
 
     private Map<UploadType, EntityImportProcessor<?>> processorsByType;
@@ -91,6 +98,7 @@ public class FileProcessingServiceImpl implements FileProcessingService {
         try {
             fileUpload.setStatus(FileUploadStatus.PROCESSING);
             fileUploadRepository.save(fileUpload);
+            auditFileProcessing(fileUpload, AuditAction.FILE_PROCESSING_STARTED, AuditResult.SUCCESS, null);
 
             List<ColumnSchema> columnSchemas = columnSchemaRepository
                     .findAllActiveByOrganizationIdAndEntityType(organizationId, uploadType);
@@ -147,7 +155,39 @@ public class FileProcessingServiceImpl implements FileProcessingService {
             fileUpload.setStatus(FileUploadStatus.FAILED);
             fileUpload.setErrorMessage(e.getMessage());
             fileUploadRepository.save(fileUpload);
+            auditFileProcessing(fileUpload, AuditAction.FILE_PROCESSING_FAILED, AuditResult.FAILURE, e.getMessage());
         }
+    }
+
+    /** Bounded to counts/status, never row content -- see FILE_PROCESSING_* actions in AuditAction. */
+    private void auditFileProcessing(FileUpload fileUpload, AuditAction action, AuditResult result, String reason) {
+        auditFileProcessing(fileUpload, action, result, reason, fileUpload.getTotalRows(),
+                fileUpload.getSuccessfulRows(), fileUpload.getFailedRows());
+    }
+
+    /**
+     * Explicit-counts overload: {@code updateProgress()} writes final row counts via a bulk
+     * repository query that never touches the in-memory {@code fileUpload} entity, so the
+     * zero-arg overload above would read stale (pre-processing) counts if used after that call.
+     */
+    private void auditFileProcessing(FileUpload fileUpload, AuditAction action, AuditResult result, String reason,
+                                     Integer totalRows, Integer successfulRows, Integer failedRows) {
+        auditService.record(AuditEventRequest.builder()
+                .action(action)
+                .resourceType(AuditResourceType.FILE_UPLOAD)
+                .resourceId(fileUpload.getId().toString())
+                .result(result)
+                .reason(reason)
+                .correlationId(fileUpload.getId().toString())
+                .actorUserIdOverride(fileUpload.getUploadedByUserId())
+                .actorTypeOverride(AuditActorType.BACKGROUND_JOB)
+                .organizationIdOverride(fileUpload.getOrganization() != null
+                        ? fileUpload.getOrganization().getId() : null)
+                .metadata(Map.of(
+                        "totalRows", String.valueOf(totalRows),
+                        "successfulRows", String.valueOf(successfulRows),
+                        "failedRows", String.valueOf(failedRows)))
+                .build());
     }
 
     @SuppressWarnings("unchecked")
@@ -170,6 +210,7 @@ public class FileProcessingServiceImpl implements FileProcessingService {
             fileUpload.setSuccessfulRows(0);
             fileUpload.setFailedRows(0);
             fileUploadRepository.save(fileUpload);
+            auditFileProcessing(fileUpload, AuditAction.FILE_PROCESSING_COMPLETED, AuditResult.SUCCESS, null);
             return;
         }
 
@@ -266,6 +307,18 @@ public class FileProcessingServiceImpl implements FileProcessingService {
         updateProgress(fileUpload.getId(), totalRows, successfulRows, failedRows, finalStatus);
         log.info("Processing complete for {}. Status: {}. Success: {}, Failed: {}, Skipped as duplicate: {}",
                 fileUpload.getUploadType(), finalStatus, successfulRows, failedRows, skippedRows);
+
+        AuditAction finalAction = switch (finalStatus) {
+            case COMPLETED -> AuditAction.FILE_PROCESSING_COMPLETED;
+            case FAILED -> AuditAction.FILE_PROCESSING_FAILED;
+            default -> AuditAction.FILE_PROCESSING_PARTIALLY_FAILED;
+        };
+        AuditResult finalResult = finalStatus == FileUploadStatus.COMPLETED ? AuditResult.SUCCESS
+                : (finalStatus == FileUploadStatus.FAILED ? AuditResult.FAILURE : AuditResult.PARTIAL);
+        auditFileProcessing(fileUpload, finalAction, finalResult,
+                finalStatus == FileUploadStatus.COMPLETED ? null
+                        : failedRows + " of " + totalRows + " rows failed validation",
+                totalRows, successfulRows, failedRows);
     }
 
     /**

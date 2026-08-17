@@ -1,10 +1,16 @@
 package com.recoverpro.server.service.impl;
 
 import com.recoverpro.server.entity.ReportJob;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditActorType;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
 import com.recoverpro.server.enums.ExportFormat;
 import com.recoverpro.server.enums.NotificationType;
 import com.recoverpro.server.enums.ReportStatus;
 import com.recoverpro.server.repository.ReportJobRepository;
+import com.recoverpro.server.service.AuditEventRequest;
+import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.ExportService;
 import com.recoverpro.server.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +38,7 @@ public class ReportJobExecutor {
     private final ReportJobRepository reportJobRepository;
     private final ExportService exportService;
     private final NotificationService notificationService;
+    private final AuditService auditService;
 
     @Async("reportingTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -59,6 +66,7 @@ public class ReportJobExecutor {
             job.setCompletedAt(Instant.now());
             reportJobRepository.save(job);
             log.info("Report job completed: id={} file={}", jobId, fileName);
+            auditReportGeneration(job, AuditResult.SUCCESS, null);
 
             if (job.getRequestedBy() != null) {
                 notificationService.create(job.getRequestedBy(), job.getOrganizationId(), NotificationType.REPORT_READY,
@@ -73,6 +81,25 @@ public class ReportJobExecutor {
             job.setErrorMessage(e.getMessage());
             job.setCompletedAt(Instant.now());
             reportJobRepository.save(job);
+            auditReportGeneration(job, AuditResult.FAILURE, e.getMessage());
         }
+    }
+
+    /** Async executor thread has no SecurityContext (see AsyncConfig's task decorator), so actor
+     *  and organization are read off the job itself rather than server-side session context. */
+    private void auditReportGeneration(ReportJob job, AuditResult result, String reason) {
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.REPORT_GENERATED)
+                .resourceType(AuditResourceType.REPORT)
+                .resourceId(job.getId().toString())
+                .result(result)
+                .reason(reason)
+                .actorUserIdOverride(job.getRequestedBy())
+                .actorTypeOverride(AuditActorType.BACKGROUND_JOB)
+                .organizationIdOverride(job.getOrganizationId())
+                .metadata(java.util.Map.of(
+                        "reportType", job.getReportType().name(),
+                        "format", job.getExportFormat().name()))
+                .build());
     }
 }
