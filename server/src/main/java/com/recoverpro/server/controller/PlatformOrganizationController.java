@@ -21,11 +21,13 @@ import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AuditEventRequest;
 import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.EmailService;
+import com.recoverpro.server.service.FeatureFlagService;
 import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.UserActionAuditService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,8 +59,13 @@ public class PlatformOrganizationController {
     private final AppProperties appProperties;
     private final UserMapper userMapper;
     private final NotificationService notificationService;
+    private final OrgSubscriptionRepository orgSubscriptionRepo;
+    private final FeatureFlagService featureFlagService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    @Value("${app.subscription.trial-days:14}")
+    private int trialDays;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -118,9 +126,39 @@ public class PlatformOrganizationController {
                 .build();
         org = orgRepo.save(org);
 
+        // SYSTEM-PLAN 28.1: previously this method created no OrgSubscription at all, so a new
+        // org had no FeatureFlag rows either (nothing but a subscription event provisions them).
+        // RequiresFeatureAspect's fail-open default-if-missing then granted every paid feature,
+        // and EntitlementServiceImpl's "no limit row = unlimited" granted unlimited users/loans --
+        // a live revenue leak, not a broken-org bug. Same transaction as the org itself: a
+        // half-created org with no subscription is exactly the bug being fixed.
+        OrgSubscription subscription = OrgSubscription.builder()
+                .orgId(org.getId())
+                .status(OrgSubscription.Status.TRIAL)
+                .plan(OrgSubscription.Plan.STARTER)
+                .trialEndsAt(Instant.now().plus(trialDays, ChronoUnit.DAYS))
+                .build();
+        subscription = orgSubscriptionRepo.save(subscription);
+        featureFlagService.provisionFlagsFor(subscription);
+
+        auditService.record(AuditEventRequest.builder()
+                .action(AuditAction.SUBSCRIPTION_CREATED)
+                .resourceType(AuditResourceType.SUBSCRIPTION)
+                .resourceId(org.getId().toString())
+                .organizationIdOverride(org.getId())
+                .actorUserIdOverride(caller.getId())
+                .afterState(Map.of(
+                        "status", subscription.getStatus().name(),
+                        "plan", subscription.getPlan().name(),
+                        "trialEndsAt", String.valueOf(subscription.getTrialEndsAt())))
+                .build());
+
+        // Matches UserServiceImpl.createUser()'s invite pattern: the real credential is never
+        // client-supplied. This hash is thrown away immediately -- login only works via the
+        // welcome-OTP flow below, which the admin uses to set their own password.
         User admin = User.builder()
                 .email(request.getAdminEmail().toLowerCase().trim())
-                .passwordHash(passwordEncoder.encode(request.getAdminPassword()))
+                .passwordHash(passwordEncoder.encode(UUID.randomUUID() + UUID.randomUUID().toString()))
                 .firstName(request.getAdminFirstName())
                 .lastName(request.getAdminLastName())
                 .enabled(true)

@@ -6,6 +6,7 @@ import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.PtpStatus;
 import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.repository.PtpRepository;
+import com.recoverpro.server.service.PtpSearchIndexService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -67,6 +69,7 @@ public class PtpImportProcessor implements EntityImportProcessor<PtpRecord> {
             "broken_reason", "Reason", "", "reason", "cancellation_reason");
 
     private final PtpRepository ptpRepository;
+    private final PtpSearchIndexService ptpSearchIndexService;
 
     @Override
     public UploadType supportedType() {
@@ -153,7 +156,9 @@ public class PtpImportProcessor implements EntityImportProcessor<PtpRecord> {
                     batch.size() - fresh.size());
         }
         if (!fresh.isEmpty()) {
-            ptpRepository.saveAll(fresh);
+            List<PtpRecord> saved = ptpRepository.saveAll(fresh);
+            UUID organizationId = context.getOrganization().getId();
+            saved.forEach(ptp -> ptpSearchIndexService.reindex(ptp, organizationId));
         }
     }
 

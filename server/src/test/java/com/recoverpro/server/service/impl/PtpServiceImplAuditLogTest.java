@@ -10,6 +10,8 @@ import com.recoverpro.server.enums.PtpStatus;
 import com.recoverpro.server.mapper.PtpMapper;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.security.OrgIsolationGuard;
+import com.recoverpro.server.security.encryption.LookupHashService;
+import com.recoverpro.server.service.PtpSearchIndexService;
 import com.recoverpro.server.service.VisitLogService;
 import com.recoverpro.server.service.compliance.CoolingOffGuard;
 import com.recoverpro.server.service.compliance.PtpEscalationService;
@@ -51,6 +53,8 @@ class PtpServiceImplAuditLogTest {
     @Mock private SegmentActionPolicy segmentActionPolicy;
     @Mock private BorrowerRiskScoreRepository borrowerRiskScoreRepository;
     @Mock private OrgIsolationGuard orgIsolationGuard;
+    @Mock private PtpSearchIndexService ptpSearchIndexService;
+    @Mock private LookupHashService lookupHashService;
 
     private PtpServiceImpl service;
     private UUID orgId;
@@ -61,7 +65,7 @@ class PtpServiceImplAuditLogTest {
                 ptpRepository, ptpHistoryRepository, ptpAuditLogRepository, ptpMapper,
                 notificationService, visitLogService, allocationRepository, userRepository,
                 coolingOffGuard, ptpEscalationService, segmentActionPolicy,
-                borrowerRiskScoreRepository, orgIsolationGuard);
+                borrowerRiskScoreRepository, orgIsolationGuard, ptpSearchIndexService, lookupHashService);
         orgId = UUID.randomUUID();
     }
 

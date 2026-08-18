@@ -1,23 +1,19 @@
 package com.recoverpro.server.service.importer;
 
 import com.recoverpro.server.entity.Allocation;
-import com.recoverpro.server.entity.Borrower;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.enums.AllocationStatus;
 import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.repository.AllocationRepository;
-import com.recoverpro.server.repository.BorrowerRepository;
-import com.recoverpro.server.security.encryption.LookupHashService;
+import com.recoverpro.server.service.BorrowerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -31,10 +27,12 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
 
     private static final String[] LOAN_NUMBER = {"loan_number", "loan number", "loannumber", "loan_no"};
     private static final String[] BORROWER_NAME = {"borrower_name", "borrower name", "borrowername", "customer name", "name"};
+    private static final String[] CKYC_ID = {"ckyc_id", "ckyc", "ckycid", "ckyc number", "ckyc_number"};
+    private static final String[] PHONE = {"phone", "phone_number", "mobile", "mobile_number", "contact_number"};
+    private static final String[] EMAIL = {"email", "email_address"};
 
     private final AllocationRepository allocationRepository;
-    private final BorrowerRepository borrowerRepository;
-    private final LookupHashService lookupHashService;
+    private final BorrowerService borrowerService;
     private final com.recoverpro.server.service.AllocationSearchIndexService allocationSearchIndexService;
 
     @Override
@@ -104,11 +102,11 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
     }
 
     private Allocation buildFromRow(Map<String, String> row, int rowNumber, ImportContext context) {
-        Map<String, Object> dynamicData = new LinkedHashMap<>(row);
+        Map<String, Object> dynamicData = extraData(row);
 
         String loanNumber = ImportValues.find(row, LOAN_NUMBER);
         String borrowerName = ImportValues.find(row, BORROWER_NAME);
-        UUID borrowerId = resolveOrCreateBorrowerId(row, context.getOrganization(), borrowerName);
+        UUID borrowerId = resolveBorrowerId(row, context.getOrganization(), borrowerName);
 
         BigDecimal totalDue = ImportValues.parseDecimal(
                 ImportValues.find(row, "total_due", "totaldue", "total amount", "total_amount"));
@@ -135,14 +133,14 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
     private Allocation updateFromRow(Allocation existing, Map<String, String> row, ImportContext context) {
         Map<String, Object> dynamicData = new LinkedHashMap<>();
         if (existing.getDynamicData() != null) dynamicData.putAll(existing.getDynamicData());
-        row.forEach(dynamicData::put);
+        dynamicData.putAll(extraData(row));
         existing.setDynamicData(dynamicData);
         existing.setFileUpload(context.getFileUpload());
 
         String borrowerName = ImportValues.find(row, BORROWER_NAME);
         if (borrowerName != null && !borrowerName.isBlank()) existing.setBorrowerName(borrowerName);
 
-        UUID borrowerId = resolveOrCreateBorrowerId(row, context.getOrganization(), borrowerName);
+        UUID borrowerId = resolveBorrowerId(row, context.getOrganization(), borrowerName);
         if (borrowerId != null) existing.setBorrowerId(borrowerId);
 
         BigDecimal totalDue = ImportValues.parseDecimal(
@@ -161,56 +159,24 @@ public class AllocationImportProcessor implements EntityImportProcessor<Allocati
     }
 
     /**
-     * Upserts a Borrower keyed by CKYC id (preferred) or phone number, so the same person
-     * uploaded across multiple files/months resolves to one Borrower row - without this, every
-     * DPDP feature (consent, erasure, nominee) is unreachable for real data (SYSTEM-PLAN SP4).
-     * Returns null when the row carries neither identifier, since there's nothing safe to dedupe on.
+     * Resolves (or creates, via BorrowerService) the Borrower a row belongs to, so the same
+     * person uploaded across multiple files/months resolves to one Borrower row - without this,
+     * every DPDP feature (consent, erasure, nominee) is unreachable for real data
+     * (SYSTEM-PLAN SP4). Returns null when the row carries no stable identifier.
      */
-    private UUID resolveOrCreateBorrowerId(Map<String, String> row, Organization organization, String borrowerName) {
-        String ckycId = ImportValues.find(row, "ckyc_id", "ckyc", "ckycid", "ckyc number", "ckyc_number");
-        String phone = ImportValues.find(row, "phone", "phone_number", "mobile", "mobile_number", "contact_number");
-        String email = ImportValues.find(row, "email", "email_address");
+    private UUID resolveBorrowerId(Map<String, String> row, Organization organization, String borrowerName) {
+        String ckycId = ImportValues.find(row, CKYC_ID);
+        String phone = ImportValues.find(row, PHONE);
+        String email = ImportValues.find(row, EMAIL);
+        return borrowerService.resolveOrCreateBorrower(organization.getId(), ckycId, phone, email, borrowerName);
+    }
 
-        if (ckycId != null && !ckycId.isBlank()) {
-            Optional<Borrower> byCkyc = borrowerRepository
-                    .findByOrganizationIdAndCkycIdLookupHash(organization.getId(), lookupHashService.hash(ckycId));
-            if (byCkyc.isPresent()) return byCkyc.get().getId();
-        }
-
-        String phoneHash = (phone != null && !phone.isBlank()) ? lookupHashService.hashPhone(phone) : null;
-        if (phoneHash != null) {
-            Optional<Borrower> byPhone = borrowerRepository
-                    .findByOrganizationIdAndPhoneLookupHash(organization.getId(), phoneHash);
-            if (byPhone.isPresent()) return byPhone.get().getId();
-        }
-
-        if ((ckycId == null || ckycId.isBlank()) && phoneHash == null) {
-            // No stable identifier on this row - creating a Borrower here would risk an
-            // unmatchable duplicate on the next upload, so leave the allocation unlinked.
-            return null;
-        }
-
-        String emailHash = (email != null && !email.isBlank()) ? lookupHashService.hash(email) : null;
-        Borrower created = Borrower.builder()
-                .organizationId(organization.getId())
-                .ckycId((ckycId != null && !ckycId.isBlank()) ? ckycId : null)
-                .firstName(borrowerName != null && !borrowerName.isBlank() ? borrowerName : "UNKNOWN")
-                .phone(phone)
-                .email(email)
-                .phoneLookupHash(phoneHash)
-                .emailLookupHash(emailHash)
-                .build();
-        try {
-            return borrowerRepository.save(created).getId();
-        } catch (DataIntegrityViolationException e) {
-            // Lost a race with a concurrent upload/row creating the same borrower - re-resolve.
-            if (ckycId != null && !ckycId.isBlank()) {
-                return borrowerRepository
-                        .findByOrganizationIdAndCkycIdLookupHash(organization.getId(), lookupHashService.hash(ckycId))
-                        .map(Borrower::getId).orElse(null);
-            }
-            return borrowerRepository.findByOrganizationIdAndPhoneLookupHash(organization.getId(), phoneHash)
-                    .map(Borrower::getId).orElse(null);
-        }
+    /**
+     * Everything in the row except the columns this processor already stores in a dedicated
+     * (and, for borrower_name/ckyc_id/phone/email, encrypted) field -- dynamic_data must never
+     * carry a second, plaintext copy of a field that already has an encrypted home.
+     */
+    private Map<String, Object> extraData(Map<String, String> row) {
+        return ImportValues.stripDedicatedFields(row, fieldSpecs());
     }
 }

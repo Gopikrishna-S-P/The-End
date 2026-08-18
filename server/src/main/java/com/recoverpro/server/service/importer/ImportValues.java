@@ -63,6 +63,37 @@ public final class ImportValues {
         return false;
     }
 
+    /** Every accepted spelling, across every field a processor understands, normalised once. */
+    public static Set<String> normalizedFieldNames(List<ImportFieldSpec> specs) {
+        Set<String> names = new java.util.HashSet<>();
+        for (ImportFieldSpec spec : specs) {
+            for (String name : spec.allNames()) {
+                names.add(normalize(name));
+            }
+        }
+        return names;
+    }
+
+    /**
+     * The entries of {@code data} that do NOT belong to any dedicated field in {@code specs}.
+     * This is the single authority for what a "dynamic/extra data" column is allowed to be:
+     * a raw upload row must never carry a copy of a field that already has its own (and, for
+     * borrower name/CKYC/phone/email, encrypted) home on the entity or its linked Borrower.
+     * Always returns {@code Map<String, Object>} regardless of the input's value type, since
+     * both callers (Allocation.dynamicData, and the manual-row-entry JSON payload) need that
+     * shape rather than whatever the input happened to be declared as.
+     */
+    public static Map<String, Object> stripDedicatedFields(Map<String, ?> data, List<ImportFieldSpec> specs) {
+        Set<String> dedicated = normalizedFieldNames(specs);
+        Map<String, Object> extra = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, ?> entry : data.entrySet()) {
+            if (!dedicated.contains(normalize(entry.getKey()))) {
+                extra.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return extra;
+    }
+
     public static String findRequired(Map<String, String> row, ImportFieldSpec spec) {
         String value = find(row, spec.allNames());
         if (value == null || value.isBlank()) {

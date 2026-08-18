@@ -27,6 +27,7 @@ import com.recoverpro.server.service.NotificationService;
 import com.recoverpro.server.service.RefreshTokenRotationService;
 import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.security.SessionAnomalyDetector;
+import com.recoverpro.server.util.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +74,7 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
         String prefix = rawRefreshToken.substring(0, Math.min(16, rawRefreshToken.length()));
 
         String userAgent = request != null ? request.getHeader("User-Agent") : null;
-        String clientIp  = request != null ? extractClientIp(request) : null;
+        String clientIp  = request != null ? ClientIpResolver.resolve(request) : null;
         String deviceId  = request != null ? request.getHeader("X-Device-Id") : null;
 
         RefreshToken refreshToken = RefreshToken.builder()
@@ -315,12 +316,5 @@ public class RefreshTokenRotationServiceImpl implements RefreshTokenRotationServ
         byte[] bytes = new byte[32];
         SECURE_RANDOM.nextBytes(bytes);
         return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
-        String realIp = request.getHeader("X-Real-IP");
-        return realIp != null ? realIp.trim() : request.getRemoteAddr();
     }
 }

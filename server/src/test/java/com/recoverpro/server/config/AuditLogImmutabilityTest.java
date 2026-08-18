@@ -3,19 +3,29 @@ package com.recoverpro.server.config;
 import com.recoverpro.server.AbstractIntegrationTest;
 import com.recoverpro.server.entity.Allocation;
 import com.recoverpro.server.entity.AllocationAuditLog;
+import com.recoverpro.server.entity.AuditEvent;
 import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.entity.SettlementAuditLog;
 import com.recoverpro.server.entity.SettlementOffer;
 import com.recoverpro.server.entity.User;
+import com.recoverpro.server.entity.UserActionAuditLog;
+import com.recoverpro.server.enums.AuditAction;
+import com.recoverpro.server.enums.AuditActorType;
+import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.enums.AuditResult;
+import com.recoverpro.server.enums.AuditSeverity;
+import com.recoverpro.server.enums.AuditSource;
 import com.recoverpro.server.enums.FileUploadStatus;
 import com.recoverpro.server.enums.OrganizationType;
 import com.recoverpro.server.enums.UploadType;
 import com.recoverpro.server.repository.AllocationAuditLogRepository;
 import com.recoverpro.server.repository.AllocationRepository;
+import com.recoverpro.server.repository.AuditEventRepository;
 import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.repository.SettlementAuditLogRepository;
 import com.recoverpro.server.repository.SettlementOfferRepository;
+import com.recoverpro.server.repository.UserActionAuditLogRepository;
 import com.recoverpro.server.security.RlsOrgIdHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -34,9 +44,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Proves trg_settlement_audit_immutable / trg_allocation_audit_immutable (V084) block UPDATE and
- * DELETE the same way trg_user_action_audit_immutable etc. (V006) already do for the other four
- * audit tables, and that INSERT is unaffected.
+ * Proves every append-only audit table's immutability trigger actually blocks UPDATE and DELETE
+ * (and that INSERT is unaffected), across all three DB-level mechanisms in use:
+ * trg_settlement_audit_immutable / trg_allocation_audit_immutable (V084) and
+ * trg_unified_audit_events_immutable (V085) share {@code fn_audit_log_immutable()} (V006);
+ * user_action_audit_logs' trg_audit_immutable / {@code prevent_audit_log_update()} (V016,
+ * recreated by V028) is a separate function with a different message. See the shared helper below
+ * for how the assertions handle that difference.
  * <p>
  * Deliberately NOT wrapped in a rolled-back Spring test transaction. {@link RlsOrgIdHolder} only
  * takes effect on the next JDBC connection checkout ({@link RlsAwareDataSource}); a single outer
@@ -59,10 +73,52 @@ class AuditLogImmutabilityTest extends AbstractIntegrationTest {
     @Autowired private FileUploadRepository fileUploadRepository;
     @Autowired private AllocationRepository allocationRepository;
     @Autowired private SettlementOfferRepository settlementOfferRepository;
+    @Autowired private UserActionAuditLogRepository userActionAuditLogRepository;
+    @Autowired private AuditEventRepository auditEventRepository;
 
     @AfterEach
     void clearRlsContext() {
         RlsOrgIdHolder.clear();
+    }
+
+    /**
+     * SYSTEM-PLAN 10.1: this table's fake hash chain (previousHash/rowHash/computeHash(), never
+     * called) was deleted on the strength of this exact claim -- that
+     * trg_user_action_audit_immutable (V006) already provides real tamper-evidence, so the fake
+     * chain was redundant rather than a gap. Unlike the two tables below, that claim had never
+     * actually been exercised in code before; only asserted in this class's own header comment.
+     */
+    @Test
+    void userActionAuditLog_insertSucceeds_updateAndDeleteAreRejected() throws SQLException {
+        // Unlike allocation_audit_logs, user_action_audit_logs has a real FK to users
+        // (fk_user_action_audit_logs_user) -- a random UUID is rejected before the trigger is
+        // ever reached, so a real user row is required here.
+        Organization org = organizationRepository.save(Organization.builder()
+                .name("audit-immutable-user-action-" + UUID.randomUUID())
+                .code(("T" + UUID.randomUUID().toString().replace("-", "")).substring(0, 20))
+                .organizationType(OrganizationType.ORGANIZATION)
+                .isActive(true)
+                .lookupHashPepper(UUID.randomUUID().toString().replace("-", "")
+                        + UUID.randomUUID().toString().replace("-", ""))
+                .build());
+        User user = userRepository.save(User.builder()
+                .organizationId(org.getId())
+                .email("it-" + UUID.randomUUID() + "@test.local")
+                .passwordHash(passwordEncoder.encode("Test1234!"))
+                .firstName("Immutability")
+                .lastName("Fixture")
+                .enabled(true)
+                .roles(Set.of())
+                .build());
+
+        UserActionAuditLog saved = userActionAuditLogRepository.save(UserActionAuditLog.builder()
+                .userId(user.getId())
+                .action("STATUS_CHANGED")
+                .details("pre-tamper details")
+                .build());
+        assertThat(saved.getId()).isNotNull();
+
+        assertUpdateAndDeleteRejected("user_action_audit_logs", "details", saved.getId());
     }
 
     @Test
@@ -152,10 +208,66 @@ class AuditLogImmutabilityTest extends AbstractIntegrationTest {
     }
 
     /**
+     * SYSTEM 10 verification command specifies a manual psql check against unified_audit_events
+     * ("attempt UPDATE unified_audit_events SET reason='x' and confirm the trigger rejects it").
+     * Automated here instead of run by hand once and forgotten: trg_unified_audit_events_immutable
+     * (V085) reuses fn_audit_log_immutable() from V006, the same function
+     * allocation_audit_logs/settlement_audit_logs use (V084) -- so this is expected to hit the
+     * ORIGINAL "audit log is immutable: ..." message, not the V016/V028 one the userActionAuditLog
+     * case above hits. The shared helper only asserts the common "immutable" substring, so it
+     * doesn't matter which exact wording comes back.
+     */
+    @Test
+    void unifiedAuditEvent_insertSucceeds_updateAndDeleteAreRejected() throws SQLException {
+        // unified_audit_events' RLS USING clause (V085) is organization_id = current_org_id() OR
+        // is_platform_admin -- unlike the "OR current_org_id() IS NULL" pattern elsewhere, there is
+        // NO bypass for an unset GUC or a NULL organization_id row. A row with no org context set
+        // is invisible to UPDATE/DELETE targeting (0 rows matched, no exception) rather than
+        // reaching the trigger at all, so this needs a real org and RlsOrgIdHolder set to actually
+        // exercise the trigger -- discovered by this test failing with "no throwable raised" against
+        // an org-less row before this fixture was added.
+        Organization org = organizationRepository.save(Organization.builder()
+                .name("audit-immutable-unified-" + UUID.randomUUID())
+                .code(("T" + UUID.randomUUID().toString().replace("-", "")).substring(0, 20))
+                .organizationType(OrganizationType.ORGANIZATION)
+                .isActive(true)
+                .lookupHashPepper(UUID.randomUUID().toString().replace("-", "")
+                        + UUID.randomUUID().toString().replace("-", ""))
+                .build());
+
+        RlsOrgIdHolder.set(org.getId());
+
+        AuditEvent saved = auditEventRepository.save(AuditEvent.builder()
+                .organizationId(org.getId())
+                .actorType(AuditActorType.SYSTEM)
+                .action(AuditAction.AUTH_LOGIN_SUCCESS)
+                .resourceType(AuditResourceType.USER)
+                .severity(AuditSeverity.INFO)
+                .result(AuditResult.SUCCESS)
+                .source(AuditSource.SYSTEM)
+                .reason("pre-tamper reason")
+                .build());
+        assertThat(saved.getId()).isNotNull();
+
+        assertUpdateAndDeleteRejected("unified_audit_events", "reason", saved.getId());
+    }
+
+    /**
      * Attempts UPDATE then DELETE against the given committed row, each in its own explicit JDBC
      * transaction (rolled back immediately after, whether it throws or not), and asserts the
      * immutability trigger rejects both. {@code table}/{@code updateColumn} are hardcoded literals
-     * from the two call sites above, never external input.
+     * from the call sites above, never external input.
+     *
+     * <p>Asserted message substring is just "immutable" (lowercase), not a longer phrase: this
+     * table's trigger turned out to raise a DIFFERENT message than the other two.
+     * user_action_audit_logs' trigger is {@code trg_audit_immutable}/{@code prevent_audit_log_update()}
+     * (V016, recreated by V028's rebuild) — "%s rows are immutable" — not
+     * {@code fn_audit_log_immutable()} (V006) — "audit log is immutable: %s on %s is not
+     * permitted" — which allocation_audit_logs/settlement_audit_logs actually use (V084). V016's
+     * partitioning rebuild replaced V006's original trigger on this one table; discovered by this
+     * test actually running against the real message, not assumed from reading migrations in
+     * isolation. Both are real, working, DB-level immutability triggers -- only the message and
+     * the specific function differ.
      */
     private void assertUpdateAndDeleteRejected(String table, String updateColumn, UUID id) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
@@ -164,14 +276,14 @@ class AuditLogImmutabilityTest extends AbstractIntegrationTest {
             try (PreparedStatement ps = conn.prepareStatement(
                     "UPDATE " + table + " SET " + updateColumn + " = 'TAMPERED' WHERE id = ?")) {
                 ps.setObject(1, id);
-                assertThatThrownBy(ps::executeUpdate).hasMessageContaining("audit log is immutable");
+                assertThatThrownBy(ps::executeUpdate).hasMessageContaining("immutable");
             } finally {
                 conn.rollback();
             }
 
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + table + " WHERE id = ?")) {
                 ps.setObject(1, id);
-                assertThatThrownBy(ps::executeUpdate).hasMessageContaining("audit log is immutable");
+                assertThatThrownBy(ps::executeUpdate).hasMessageContaining("immutable");
             } finally {
                 conn.rollback();
             }

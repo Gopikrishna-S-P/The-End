@@ -80,6 +80,9 @@ public class PlatformSubscriptionController {
     private final RefundService refundService;
     private final GstInvoiceLineItemService gstInvoiceLineItemService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.subscription.trial-days:14}")
+    private int trialDays;
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlatformSubscriptionResponse>>> list() {
         Instant now = Instant.now();
@@ -419,6 +422,53 @@ public class PlatformSubscriptionController {
                 "invoicesImported=" + imported);
         log.info("Platform admin {} ran invoice backfill: {} invoices mirrored", caller.getId(), imported);
         return ResponseEntity.ok(ApiResponse.success(Map.of("imported", imported)));
+    }
+
+    /**
+     * SYSTEM-PLAN 28.1 backfill: PlatformOrganizationController.create() used to create no
+     * OrgSubscription row at all, so any org created before that fix landed has none -- and,
+     * with no FeatureFlag rows either, has had unlimited, unmetered access to every paid feature
+     * ever since (RequiresFeatureAspect's fail-open default when a flag row is missing). Every
+     * such org gets the same defined TRIAL state a brand-new org gets: the safest failure mode
+     * for an org that's already been active is a bounded grace window, not an abrupt cutoff --
+     * but this DOES start a live trial clock for orgs that may have been operating for a while,
+     * which is a real business decision, not a purely technical one. Flag for product sign-off if
+     * a different backfill state (e.g. straight to PAST_DUE, requiring immediate payment) is
+     * preferred; documented in docs/SYSTEM-28-ONBOARDING.md.
+     */
+    @PostMapping("/backfill-missing")
+    public ResponseEntity<ApiResponse<Map<String, Integer>>> backfillMissingSubscriptions(
+            @AuthenticationPrincipal UserPrincipal caller) {
+
+        int created = 0;
+        for (Organization org : orgRepo.findTenantOrgs()) {
+            if (subRepo.findByOrgId(org.getId()).isPresent()) continue;
+
+            OrgSubscription sub = OrgSubscription.builder()
+                    .orgId(org.getId())
+                    .status(Status.TRIAL)
+                    .plan(Plan.STARTER)
+                    .trialEndsAt(Instant.now().plus(trialDays, ChronoUnit.DAYS))
+                    .build();
+            sub = subRepo.save(sub);
+            featureFlagService.provisionFlagsFor(sub);
+
+            auditService.record(AuditEventRequest.builder()
+                    .action(AuditAction.SUBSCRIPTION_CREATED)
+                    .resourceType(AuditResourceType.SUBSCRIPTION)
+                    .resourceId(org.getId().toString())
+                    .organizationIdOverride(org.getId())
+                    .actorUserIdOverride(caller.getId())
+                    .reason("Backfill: org had no subscription row (SYSTEM-PLAN 28.1)")
+                    .afterState(Map.of("status", "TRIAL", "plan", "STARTER"))
+                    .build());
+            created++;
+        }
+
+        auditLogService.logUserAction(caller.getId(), "PLATFORM_SUBSCRIPTION_BACKFILL",
+                "subscriptionsCreated=" + created);
+        log.info("Platform admin {} backfilled {} missing subscriptions", caller.getId(), created);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("created", created)));
     }
 
     @PutMapping("/{orgId}/plan")

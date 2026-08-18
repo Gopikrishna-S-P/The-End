@@ -26,6 +26,7 @@ import com.recoverpro.server.service.UserActionAuditService;
 import com.recoverpro.server.service.MfaService;
 import com.recoverpro.server.service.PasswordResetService;
 import com.recoverpro.server.service.RefreshTokenRotationService;
+import com.recoverpro.server.util.ClientIpResolver;
 import com.recoverpro.server.util.RateLimiter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -110,7 +111,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
-        String ip = extractClientIp(httpRequest);
+        String ip = ClientIpResolver.resolve(httpRequest);
         String email = request.getEmail().toLowerCase().trim();
         String emailRateLimitKey = "email:" + email;
         AppProperties.Security sec = appProperties.getSecurity();
@@ -313,12 +314,5 @@ public class AuthServiceImpl implements AuthService {
                     backoffMinutes * 60);
         }
         userRepository.save(user);
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
-        String realIp = request.getHeader("X-Real-IP");
-        return realIp != null ? realIp.trim() : request.getRemoteAddr();
     }
 }

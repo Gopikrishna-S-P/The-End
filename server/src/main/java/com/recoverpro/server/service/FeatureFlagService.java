@@ -178,7 +178,7 @@ public class FeatureFlagService {
         OrgSubscription.Plan comp = sub.activeComp();
         OrgSubscription.Plan effective = comp != null
                 ? comp
-                : effectivePlan(sub.getStatus(), sub.getPlan());
+                : effectivePlan(sub);
         if (effective == null) return;
 
         for (String flagKey : PlanFeatureMatrix.ALL_GATED_FLAGS) {
@@ -213,7 +213,7 @@ public class FeatureFlagService {
             OrgSubscription.Plan comp = sub.activeComp();
             OrgSubscription.Plan effective = comp != null
                     ? comp
-                    : effectivePlan(sub.getStatus(), sub.getPlan());
+                    : effectivePlan(sub);
             if (effective == null) return;
             boolean shouldEnable = PlanFeatureMatrix.includes(effective, flagKey);
             set(organizationId, flagKey, shouldEnable, null, null, FeatureFlag.FlagSource.PLAN);
@@ -241,9 +241,21 @@ public class FeatureFlagService {
         return new ArrayList<>(byKey.values());
     }
 
-    private OrgSubscription.Plan effectivePlan(OrgSubscription.Status status, OrgSubscription.Plan plan) {
-        return switch (status) {
-            case TRIAL               -> OrgSubscription.Plan.STARTER;
+    /**
+     * SYSTEM-PLAN 28.1: TRIAL used to map straight to STARTER regardless of trialEndsAt, so an
+     * org whose trial clock had run out kept STARTER-level access until some unrelated event
+     * (a webhook, an admin action) happened to re-provision it -- nothing ever re-evaluated a
+     * TRIAL row purely because time had passed. An expired trial now resolves the same as a
+     * cancelled subscription: NONE. This makes a fresh provisioning call correct the moment it
+     * runs; SYSTEM 28 TASK 28.2's scheduled job is what makes that call actually happen promptly
+     * on expiry rather than waiting for the next unrelated subscription event.
+     */
+    private OrgSubscription.Plan effectivePlan(OrgSubscription sub) {
+        OrgSubscription.Plan plan = sub.getPlan();
+        return switch (sub.getStatus()) {
+            case TRIAL -> (sub.getTrialEndsAt() != null && sub.getTrialEndsAt().isBefore(java.time.Instant.now()))
+                    ? OrgSubscription.Plan.NONE
+                    : OrgSubscription.Plan.STARTER;
             case ACTIVE              -> plan;
             case PAST_DUE            -> null;
             case CANCELLED, INACTIVE -> OrgSubscription.Plan.NONE;

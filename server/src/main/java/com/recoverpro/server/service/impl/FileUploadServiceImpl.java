@@ -27,6 +27,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -135,6 +136,39 @@ public class FileUploadServiceImpl implements FileUploadService {
                 .orElseThrow(() -> new ResourceNotFoundException("FileUpload not found: " + fileUploadId));
         var page = fileProcessingErrorRepository.findAllByFileUploadId(fileUploadId, pageable);
         return PagedResponse.from(page.map(fileProcessingErrorMapper::toResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String buildProcessingErrorsCsv(UUID fileUploadId) {
+        fileUploadRepository.findByIdAndIsDeletedFalse(fileUploadId)
+                .orElseThrow(() -> new ResourceNotFoundException("FileUpload not found: " + fileUploadId));
+        List<com.recoverpro.server.entity.FileProcessingError> errors =
+                fileProcessingErrorRepository.findAllByFileUploadIdOrderByRowNumberAsc(fileUploadId);
+
+        StringBuilder csv = new StringBuilder("Row,Column,Error,Raw Value\n");
+        for (com.recoverpro.server.entity.FileProcessingError error : errors) {
+            csv.append(error.getRowNumber() != null ? error.getRowNumber() : "").append(',')
+                    .append(csvField(error.getColumnName())).append(',')
+                    .append(csvField(error.getErrorMessage())).append(',')
+                    .append(csvField(error.getRawValue())).append('\n');
+        }
+        return csv.toString();
+    }
+
+    /**
+     * columnName/errorMessage/rawValue can all echo attacker-controlled content straight from an
+     * uploaded file's cells (rawValue especially -- it IS the raw cell). A value starting with
+     * =, +, -, @, tab or CR is a formula-injection payload in Excel/Sheets once this CSV is
+     * opened there, so it's neutralised with a leading apostrophe before the normal CSV quoting.
+     */
+    private static String csvField(String value) {
+        if (value == null || value.isEmpty()) return "";
+        if ("=+-@\t\r".indexOf(value.charAt(0)) >= 0) {
+            value = "'" + value;
+        }
+        boolean needsQuoting = value.contains(",") || value.contains("\"") || value.contains("\n");
+        return needsQuoting ? '"' + value.replace("\"", "\"\"") + '"' : value;
     }
 
     @Override

@@ -18,6 +18,8 @@ import com.recoverpro.server.common.exception.ResourceNotFoundException;
 import com.recoverpro.server.mapper.PtpMapper;
 import com.recoverpro.server.repository.*;
 import com.recoverpro.server.security.OrgIsolationGuard;
+import com.recoverpro.server.security.encryption.LookupHashService;
+import com.recoverpro.server.service.PtpSearchIndexService;
 import com.recoverpro.server.service.PtpService;
 import com.recoverpro.server.service.VisitLogService;
 import com.recoverpro.server.service.compliance.CoolingOffGuard;
@@ -60,6 +62,8 @@ public class PtpServiceImpl implements PtpService {
     private final SegmentActionPolicy segmentActionPolicy;
     private final BorrowerRiskScoreRepository borrowerRiskScoreRepository;
     private final OrgIsolationGuard orgIsolationGuard;
+    private final PtpSearchIndexService ptpSearchIndexService;
+    private final LookupHashService lookupHashService;
 
     @Override
     @Transactional
@@ -111,6 +115,7 @@ public class PtpServiceImpl implements PtpService {
         }
 
         PtpRecord saved = ptpRepository.save(ptpRecord);
+        ptpSearchIndexService.reindex(saved, targetAllocation.getOrganization().getId());
 
         if (request.getVisitId() != null) {
             try {
@@ -133,7 +138,10 @@ public class PtpServiceImpl implements PtpService {
     @Override
     @Transactional(readOnly = true)
     public Page<PtpResponse> getAllPtps(PtpFilterRequest filter, Pageable pageable) {
-        return ptpRepository.findAll(PtpSpecification.withFilters(filter), pageable)
+        String borrowerNameHash = (filter.getBorrowerName() != null && !filter.getBorrowerName().isBlank())
+                ? lookupHashService.hash(filter.getBorrowerName().trim())
+                : null;
+        return ptpRepository.findAll(PtpSpecification.withFilters(filter, borrowerNameHash), pageable)
                 .map(ptpMapper::toResponse);
     }
 

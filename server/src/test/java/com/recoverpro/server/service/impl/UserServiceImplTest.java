@@ -16,6 +16,7 @@ import com.recoverpro.server.repository.PermissionRepository;
 import com.recoverpro.server.repository.RoleRepository;
 import com.recoverpro.server.repository.UserPermissionRepository;
 import com.recoverpro.server.repository.UserRepository;
+import com.recoverpro.server.security.CustomUserDetailsService;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AuditService;
 import com.recoverpro.server.service.EntitlementService;
@@ -67,6 +68,7 @@ class UserServiceImplTest {
     @Mock private EntitlementService entitlementService;
     @Mock private EmailService emailService;
     @Mock private AppProperties appProperties;
+    @Mock private CustomUserDetailsService customUserDetailsService;
 
     private UserServiceImpl service;
 
@@ -74,7 +76,8 @@ class UserServiceImplTest {
     void setUp() {
         service = new UserServiceImpl(userRepository, roleRepository, permissionRepository,
                 userPermissionRepository, passwordResetTokenRepository, userMapper, passwordEncoder,
-                auditLogService, auditService, entitlementService, emailService, appProperties);
+                auditLogService, auditService, entitlementService, emailService, appProperties,
+                customUserDetailsService);
         lenient().when(entitlementService.canCreateUser(any())).thenReturn(true);
     }
 

@@ -26,8 +26,4 @@ public class CreateOrganizationRequest {
     @NotBlank
     @Size(max = 100)
     private String adminLastName;
-
-    @NotBlank
-    @Size(min = 8, max = 100)
-    private String adminPassword;
 }

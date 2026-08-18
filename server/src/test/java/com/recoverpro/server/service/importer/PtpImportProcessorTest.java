@@ -7,6 +7,7 @@ import com.recoverpro.server.entity.PtpRecord;
 import com.recoverpro.server.entity.User;
 import com.recoverpro.server.enums.PtpStatus;
 import com.recoverpro.server.repository.PtpRepository;
+import com.recoverpro.server.service.PtpSearchIndexService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PtpImportProcessorTest {
 
     @Mock private PtpRepository ptpRepository;
+    @Mock private PtpSearchIndexService ptpSearchIndexService;
 
     private PtpImportProcessor processor;
     private ImportContext context;
@@ -38,7 +40,7 @@ class PtpImportProcessorTest {
 
     @BeforeEach
     void setUp() {
-        processor = new PtpImportProcessor(ptpRepository);
+        processor = new PtpImportProcessor(ptpRepository, ptpSearchIndexService);
         orgId = UUID.randomUUID();
 
         Organization org = new Organization();

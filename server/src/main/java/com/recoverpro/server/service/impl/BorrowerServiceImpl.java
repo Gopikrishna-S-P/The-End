@@ -201,6 +201,52 @@ public class BorrowerServiceImpl implements BorrowerService {
         return toErasureResponse(saved);
     }
 
+    @Override
+    public UUID resolveOrCreateBorrower(
+            UUID organizationId, String ckycId, String phone, String email, String displayName) {
+        if (ckycId != null && !ckycId.isBlank()) {
+            Optional<Borrower> byCkyc = borrowerRepository
+                    .findByOrganizationIdAndCkycIdLookupHash(organizationId, lookupHashService.hash(ckycId));
+            if (byCkyc.isPresent()) return byCkyc.get().getId();
+        }
+
+        String phoneHash = (phone != null && !phone.isBlank()) ? lookupHashService.hashPhone(phone) : null;
+        if (phoneHash != null) {
+            Optional<Borrower> byPhone = borrowerRepository
+                    .findByOrganizationIdAndPhoneLookupHash(organizationId, phoneHash);
+            if (byPhone.isPresent()) return byPhone.get().getId();
+        }
+
+        if ((ckycId == null || ckycId.isBlank()) && phoneHash == null) {
+            // No stable identifier on this row - creating a Borrower here would risk an
+            // unmatchable duplicate on the next write, so leave the record unlinked.
+            return null;
+        }
+
+        String emailHash = (email != null && !email.isBlank()) ? lookupHashService.hash(email) : null;
+        Borrower created = Borrower.builder()
+                .organizationId(organizationId)
+                .ckycId((ckycId != null && !ckycId.isBlank()) ? ckycId : null)
+                .firstName(displayName != null && !displayName.isBlank() ? displayName : "UNKNOWN")
+                .phone(phone)
+                .email(email)
+                .phoneLookupHash(phoneHash)
+                .emailLookupHash(emailHash)
+                .build();
+        try {
+            return borrowerRepository.save(created).getId();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Lost a race with a concurrent write creating the same borrower - re-resolve.
+            if (ckycId != null && !ckycId.isBlank()) {
+                return borrowerRepository
+                        .findByOrganizationIdAndCkycIdLookupHash(organizationId, lookupHashService.hash(ckycId))
+                        .map(Borrower::getId).orElse(null);
+            }
+            return borrowerRepository.findByOrganizationIdAndPhoneLookupHash(organizationId, phoneHash)
+                    .map(Borrower::getId).orElse(null);
+        }
+    }
+
     private Borrower load(UUID id) {
         Borrower b = borrowerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrower not found: " + id));

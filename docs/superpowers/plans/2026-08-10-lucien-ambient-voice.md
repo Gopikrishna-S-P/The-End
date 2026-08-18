@@ -1,5 +1,33 @@
 # Lucien Ambient Voice Assistant — Production Plan
 
+> **AMENDMENT — 2026-08-18, user decision:** Deployment target is confirmed as **OCI** (Task 3
+> below stands as written). The self-hosted-LLM premise is **reversed**: instead of moving Ollama
+> to a RunPod GPU endpoint, Lucien's AI backend uses **Sarvam AI's hosted APIs** (called over the
+> network, not deployed/self-run). This directly supersedes:
+> - The "No third-party hosted LLM/TTS API — self-hosted only" line under Global Constraints below.
+> - **Task 1** (RunPod account/Serverless endpoint) — not needed at all; there is no self-hosted
+>   GPU endpoint to provision.
+> - **Task 2** (point `docker-compose.yml`/`LlamaClientAdapter` at RunPod) — instead, a new adapter
+>   implementing `ModelClientPort` (`server/src/main/java/com/recoverpro/server/port/`) should call
+>   Sarvam AI's chat API; `LlamaClientAdapter`
+>   (`server/src/main/java/com/recoverpro/server/client/LlamaClientAdapter.java`) is the existing
+>   swap point — its own javadoc already anticipated this ("Swap this adapter... without touching
+>   LucienAgentLoop"). Concrete request/response mapping is not designed yet — needs Sarvam AI's
+>   actual API docs before implementation.
+> - Likely also resolves the "Multi-language activation" follow-up noted at the end of this plan
+>   (IndicF5 TTS measured "not viable for real usage" on CPU, faster-whisper STT) if Sarvam AI's
+>   API covers Indian-language STT/TTS too, which would remove the GPU-hosting need for those as
+>   well — not yet confirmed which Sarvam AI products (chat / STT / TTS) are in scope; assumed all
+>   three until narrowed.
+> - Not yet designed: Sarvam AI credential storage/rotation (fits the existing
+>   `docs/RUNBOOK-SECRETS.md` pattern from SYSTEM 04 of the production tasklist), and cost/rate-limit
+>   behavior under doorstep-visit call volume.
+>
+> This plan's Task 3 (OCI provisioning) and Task 4 (stray debug file cleanup) are unaffected and
+> still apply as written. Everything above Task 1 (goal, architecture prose, tech stack, file
+> structure) still describes the ambient-mode *feature* correctly — only the LLM-hosting mechanism
+> changes.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Get RecoverPro's backend/DB/AI infra onto free-tier-safe production hosting, and add the ambient (continuously-listening, speak-only-when-warranted) doorstep interaction mode to Lucien — English only for now.

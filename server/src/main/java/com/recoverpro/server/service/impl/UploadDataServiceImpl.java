@@ -9,7 +9,10 @@ import com.recoverpro.server.entity.FileUpload;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
+import com.recoverpro.server.service.BorrowerService;
 import com.recoverpro.server.service.UploadDataService;
+import com.recoverpro.server.service.importer.AllocationImportProcessor;
+import com.recoverpro.server.service.importer.ImportValues;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +34,8 @@ public class UploadDataServiceImpl implements UploadDataService {
     private final FileUploadRepository fileUploadRepo;
     private final OrgIsolationGuard orgIsolationGuard;
     private final com.recoverpro.server.service.AllocationSearchIndexService allocationSearchIndexService;
+    private final BorrowerService borrowerService;
+    private final AllocationImportProcessor allocationImportProcessor;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,6 +72,7 @@ public class UploadDataServiceImpl implements UploadDataService {
         String loanNumber = extractString(data, "loan_number", "loanNumber",
                 "MAN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         String borrowerName = extractString(data, "borrower_name", "borrowerName", "New Entry");
+        UUID borrowerId = resolveBorrowerId(data, upload, borrowerName);
 
         Integer maxRow = allocationRepo.findMaxRowNumberByFileUploadId(uploadId);
         int nextRow = (maxRow != null ? maxRow : 0) + 1;
@@ -76,8 +82,9 @@ public class UploadDataServiceImpl implements UploadDataService {
                 .organization(upload.getOrganization())
                 .loanNumber(loanNumber)
                 .borrowerName(borrowerName)
+                .borrowerId(borrowerId)
                 .rowNumber(nextRow)
-                .dynamicData(new HashMap<>(data))
+                .dynamicData(extraData(data))
                 .build();
 
         // Must use save()'s returned instance, not the original `allocation` reference: Allocation's
@@ -95,7 +102,7 @@ public class UploadDataServiceImpl implements UploadDataService {
 
     @Override
     public UploadRowResponse updateRow(UUID uploadId, UUID rowId, Map<String, Object> data) {
-        requireUpload(uploadId);
+        FileUpload upload = requireUpload(uploadId);
         Allocation allocation = allocationRepo.findByIdAndIsDeletedFalse(rowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Row not found: " + rowId));
 
@@ -103,13 +110,16 @@ public class UploadDataServiceImpl implements UploadDataService {
             throw new BusinessException("Row does not belong to this upload");
         }
 
-        allocation.setDynamicData(new HashMap<>(data));
+        allocation.setDynamicData(extraData(data));
 
         String loanNumber = extractString(data, "loan_number", "loanNumber", null);
         if (loanNumber != null) allocation.setLoanNumber(loanNumber);
 
         String borrowerName = extractString(data, "borrower_name", "borrowerName", null);
         if (borrowerName != null) allocation.setBorrowerName(borrowerName);
+
+        UUID borrowerId = resolveBorrowerId(data, upload, borrowerName);
+        if (borrowerId != null) allocation.setBorrowerId(borrowerId);
 
         Allocation saved = allocationRepo.saveAndFlush(allocation);
         allocationSearchIndexService.reindex(saved);
@@ -166,5 +176,27 @@ public class UploadDataServiceImpl implements UploadDataService {
         if (v == null) v = data.get(key2);
         if (v instanceof String s && !s.isBlank()) return s;
         return fallback;
+    }
+
+    /**
+     * Manual row entry is the second writer of Allocation.dynamic_data (the first is the file
+     * importer) and must strip the same dedicated fields for the same reason: borrower_name,
+     * ckyc_id, phone and email each already have an encrypted home, and dynamic_data must never
+     * hold a second, plaintext copy. AllocationImportProcessor.fieldSpecs() is the one place that
+     * lists those dedicated fields, so this reuses it rather than keeping a second list in sync.
+     */
+    private Map<String, Object> extraData(Map<String, Object> data) {
+        return ImportValues.stripDedicatedFields(data, allocationImportProcessor.fieldSpecs());
+    }
+
+    /** Resolves the same Borrower the file-import path would, so a phone/email/CKYC value typed
+     *  here is preserved in its encrypted column instead of silently dropped by extraData(). */
+    private UUID resolveBorrowerId(Map<String, Object> data, FileUpload upload, String borrowerName) {
+        String ckycId = extractString(data, "ckyc_id", "ckycId", null);
+        String phone = extractString(data, "phone", "phoneNumber", null);
+        String email = extractString(data, "email", "emailAddress", null);
+        if (ckycId == null && phone == null && email == null) return null;
+        return borrowerService.resolveOrCreateBorrower(
+                upload.getOrganization().getId(), ckycId, phone, email, borrowerName);
     }
 }

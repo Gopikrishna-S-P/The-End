@@ -25,6 +25,7 @@ import com.recoverpro.server.repository.UserPermissionRepository;
 import com.recoverpro.server.repository.UserRepository;
 import com.recoverpro.server.enums.AuditAction;
 import com.recoverpro.server.enums.AuditResourceType;
+import com.recoverpro.server.security.CustomUserDetailsService;
 import com.recoverpro.server.security.UserPrincipal;
 import com.recoverpro.server.service.AuditEventRequest;
 import com.recoverpro.server.service.AuditService;
@@ -41,6 +42,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -66,6 +69,7 @@ public class UserServiceImpl implements UserService {
     private final EntitlementService entitlementService;
     private final EmailService emailService;
     private final AppProperties appProperties;
+    private final CustomUserDetailsService customUserDetailsService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -178,6 +182,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse updateUser(UUID callerOrgId, UUID targetUserId, UpdateUserRequest request) {
         User user = requireSameOrg(callerOrgId, targetUserId);
+        String originalEmail = user.getEmail();
         if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
             user.setFirstName(request.getFirstName().strip());
         }
@@ -198,6 +203,8 @@ public class UserServiceImpl implements UserService {
                 .resourceType(AuditResourceType.USER)
                 .resourceId(targetUserId.toString())
                 .build());
+        evictUserCacheAfterCommit(originalEmail);
+        evictUserCacheAfterCommit(saved.getEmail());
         return userMapper.toResponse(saved);
     }
 
@@ -235,6 +242,7 @@ public class UserServiceImpl implements UserService {
                 .resourceId(targetUserId.toString())
                 .afterState(Map.of("role", role.getName()))
                 .build());
+        evictUserCacheAfterCommit(saved.getEmail());
         return userMapper.toResponse(saved);
     }
 
@@ -262,6 +270,7 @@ public class UserServiceImpl implements UserService {
                 .resourceId(targetUserId.toString())
                 .beforeState(Map.of("role", role.getName()))
                 .build());
+        evictUserCacheAfterCommit(saved.getEmail());
         return userMapper.toResponse(saved);
     }
 
@@ -279,6 +288,7 @@ public class UserServiceImpl implements UserService {
                 .resourceType(AuditResourceType.USER)
                 .resourceId(targetUserId.toString())
                 .build());
+        evictUserCacheAfterCommit(user.getEmail());
     }
 
     @Override
@@ -294,6 +304,7 @@ public class UserServiceImpl implements UserService {
                 .resourceType(AuditResourceType.USER)
                 .resourceId(targetUserId.toString())
                 .build());
+        evictUserCacheAfterCommit(user.getEmail());
     }
 
     @Override
@@ -301,6 +312,7 @@ public class UserServiceImpl implements UserService {
         User user = requireSameOrg(callerOrgId, targetUserId);
         requireNotSelf(targetUserId, "delete");
         requireNotLastPlatformAdmin(user, "delete");
+        String originalEmail = user.getEmail();
         user.setEmail("deleted-" + user.getId() + "@recoverpro.internal");
         user.setFirstName("[Deleted]");
         user.setLastName("[User]");
@@ -318,6 +330,7 @@ public class UserServiceImpl implements UserService {
                 .resourceId(targetUserId.toString())
                 .metadata(Map.of("deleted", "true"))
                 .build());
+        evictUserCacheAfterCommit(originalEmail);
     }
 
     @Override
@@ -369,6 +382,7 @@ public class UserServiceImpl implements UserService {
                 .resourceId(targetUserId.toString())
                 .afterState(Map.of("permission", permissionName))
                 .build());
+        evictUserCacheAfterCommit(target.getEmail());
         return buildPermissionsResponse(userRepository.findById(target.getId()).orElse(target));
     }
 
@@ -392,6 +406,7 @@ public class UserServiceImpl implements UserService {
                 .resourceId(targetUserId.toString())
                 .beforeState(Map.of("permission", permissionName))
                 .build());
+        evictUserCacheAfterCommit(target.getEmail());
         return buildPermissionsResponse(target);
     }
 
@@ -487,6 +502,40 @@ public class UserServiceImpl implements UserService {
         if (isPlatformAdmin(target)
                 && userRepository.countByRoleNameAndEnabledTrue(PlatformConstants.ROLE_PLATFORM_ADMIN) <= 1) {
             throw new BusinessException("Cannot " + action + " the last active platform admin");
+        }
+    }
+
+    /**
+     * SYSTEM-PLAN 15.1: CustomUserDetailsService.evictUserCache() existed but was never called
+     * from anywhere -- a revoked role or a deactivated user kept being honoured from the
+     * "userDetails" cache (read on every authenticated request via JwtAuthenticationFilter ->
+     * loadUserByUsername) until its TTL expired. Every method here that changes a user's
+     * identity, roles, permissions, or active status must call this with the affected email(s).
+     *
+     * <p>Evicts AFTER commit, never inside the transaction: evicting first and then rolling back
+     * leaves the cache technically correct but wastes work; more importantly, evicting before
+     * commit lets a concurrent read on another thread repopulate the cache with the OLD value
+     * before this transaction's write is even durable.
+     *
+     * <p>Cross-instance staleness: {@code evictUserCache()} clears both L1 (this instance's
+     * Caffeine) and L2 (shared Redis) via {@link com.recoverpro.server.config.cache.TwoTierCache},
+     * but a DIFFERENT instance's own L1 entry is untouched by that call -- there is no cross-
+     * instance broadcast. Deliberately not adding Redis pub/sub for this: "userDetails" L1 is
+     * already configured with a 30-second TTL (see RedisCacheConfig), which bounds every other
+     * instance's worst-case staleness window to 30 seconds regardless of this fix. That is the
+     * documented choice TASK 15.1.d asks for, not an oversight.
+     */
+    private void evictUserCacheAfterCommit(String email) {
+        if (email == null || email.isBlank()) return;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    customUserDetailsService.evictUserCache(email);
+                }
+            });
+        } else {
+            customUserDetailsService.evictUserCache(email);
         }
     }
 }

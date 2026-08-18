@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -15,6 +16,9 @@ public interface FileProcessingErrorRepository extends JpaRepository<FileProcess
 
     @Query("SELECT e FROM FileProcessingError e WHERE e.fileUpload.id = :fileUploadId ORDER BY e.rowNumber ASC")
     Page<FileProcessingError> findAllByFileUploadId(@Param("fileUploadId") UUID fileUploadId, Pageable pageable);
+
+    @Query("SELECT e FROM FileProcessingError e WHERE e.fileUpload.id = :fileUploadId ORDER BY e.rowNumber ASC")
+    List<FileProcessingError> findAllByFileUploadIdOrderByRowNumberAsc(@Param("fileUploadId") UUID fileUploadId);
 
     @Query("SELECT COUNT(e) FROM FileProcessingError e WHERE e.fileUpload.id = :fileUploadId")
     long countByFileUploadId(@Param("fileUploadId") UUID fileUploadId);

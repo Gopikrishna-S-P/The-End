@@ -92,7 +92,9 @@ class FileProcessingServiceImplTest {
         when(columnSchemaRepository.findAllActiveByOrganizationIdAndEntityType(orgId, UploadType.ALLOCATION))
                 .thenReturn(List.of());
         when(fileStorageService.retrieve(fileUploadId)).thenReturn("data".getBytes());
-        when(fileParsingService.parseFile(any())).thenReturn(List.of());
+        // fileParsingService.streamFile() is intentionally left unstubbed: Mockito's default
+        // no-op for a void method means the scan/processing RowHandlers are never invoked,
+        // which is exactly an empty-file parse (zero headers, zero rows).
 
         service.processFileAsync(fileUploadId, orgId);
 

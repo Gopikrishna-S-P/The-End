@@ -19,6 +19,7 @@ import com.recoverpro.server.service.FileParsingService;
 import com.recoverpro.server.service.FileProcessingService;
 import com.recoverpro.server.service.FileStorageService;
 import com.recoverpro.server.service.NotificationService;
+import com.recoverpro.server.service.RowHandler;
 import com.recoverpro.server.service.importer.EntityImportProcessor;
 import com.recoverpro.server.service.importer.ImportContext;
 import com.recoverpro.server.service.importer.ImportFieldSpec;
@@ -116,34 +117,49 @@ public class FileProcessingServiceImpl implements FileProcessingService {
             MultipartFile multipartFile = new ByteArrayMultipartFile(
                     fileBytes, fileUpload.getOriginalFilename(), fileUpload.getContentType());
 
-            List<Map<String, String>> allRows = fileParsingService.parseFile(multipartFile);
-            log.info("Parsed {} rows from file: {}", allRows.size(), fileUpload.getOriginalFilename());
+            // Pass 1: a lightweight scan for the row count and the loan-number/agent-email
+            // values needed for bulk prefetch. Each row is handed to the scan callback and
+            // discarded immediately -- unlike the old parseFile(), nothing here accumulates a
+            // full List<Map<String,String>> for the file's duration (see FileProcessingServiceImplTest
+            // and SYSTEM-PLAN 35.3 for why: that list, not the parse step itself, was what grew
+            // proportional to file size and stayed live for the whole processing run).
+            ScanResult scan = scanFile(multipartFile, processor);
+            log.info("Scanned {} rows from file: {}. Headers: {}",
+                    scan.totalRows, fileUpload.getOriginalFilename(), scan.headers);
 
-            if (!allRows.isEmpty()) {
-                log.info("File headers: {}", allRows.get(0).keySet());
-            }
-
-            if (allRows.size() > maxRows) {
+            if (scan.totalRows > maxRows) {
                 throw new BusinessException("File exceeds maximum allowed rows of " + maxRows);
             }
 
             // Checked upfront against the whole file, not per-row: rejecting the entire import
             // with a clear reason is better than silently truncating partway through a batch.
             if (uploadType == UploadType.ALLOCATION
-                    && !entitlementService.canCreateAllocations(organizationId, allRows.size())) {
+                    && !entitlementService.canCreateAllocations(organizationId, scan.totalRows)) {
                 throw new BusinessException(
                         "This import would exceed your plan's active-loan limit. Reduce the file "
                                 + "size, close out existing cases, or upgrade your plan.");
             }
 
-            if (!allRows.isEmpty()) {
-                assertRequiredHeadersPresent(processor, allRows.get(0).keySet());
+            if (scan.totalRows > 0) {
+                assertRequiredHeadersPresent(processor, new LinkedHashSet<>(scan.headers));
             }
 
-            fileUpload.setTotalRows(allRows.size());
+            fileUpload.setTotalRows(scan.totalRows);
             fileUploadRepository.save(fileUpload);
 
-            processRows(processor, fileUpload, organization, columnSchemas, allRows);
+            if (scan.totalRows == 0) {
+                finalizeEmptyFile(fileUpload);
+            } else {
+                Map<String, Allocation> allocationsByLoanNumber = processor.requiresAllocationLookup()
+                        ? prefetchAllocationsByNumbers(organizationId, scan.loanNumbers) : Map.of();
+                Map<String, User> usersByEmail = processor.requiresAgentLookup()
+                        ? prefetchAgentsByEmails(scan.agentEmails) : Map.of();
+
+                // Pass 2: the real processing pass, streaming the same in-memory bytes a second
+                // time (ByteArrayMultipartFile.getInputStream() is cheaply re-readable).
+                processRowsStreaming(processor, fileUpload, organization, columnSchemas, multipartFile,
+                        scan.headers, scan.totalRows, allocationsByLoanNumber, usersByEmail);
+            }
 
             // Auto-assignment and carry-over cleanup are allocation-book operations. Running
             // cancelDroppedLoanAssignments after, say, a collections import would cancel every
@@ -201,13 +217,124 @@ public class FileProcessingServiceImpl implements FileProcessingService {
                 .build());
     }
 
-    @SuppressWarnings("unchecked")
-    private void processRows(EntityImportProcessor<?> processor, FileUpload fileUpload, Organization organization,
-                             List<ColumnSchema> columnSchemas, List<Map<String, String>> allRows) {
-        processRowsInBatches((EntityImportProcessor<Object>) processor,
-                fileUpload, organization, columnSchemas, allRows);
+    /** Mutable running counts shared between the List-based and streaming processing paths. */
+    private static final class RowCounters {
+        int processedRows;
+        int successfulRows;
+        int failedRows;
+        int skippedRows;
     }
 
+    /**
+     * Validates and maps exactly one row, updating {@code counters} and appending to
+     * {@code batch}/{@code batchErrors}. Extracted so the List-based path
+     * ({@link #processRowsInBatches}, still called directly with a hand-built list by
+     * FileProcessingBorrowerLinkTest) and the streaming path ({@link #processRowsStreaming}) run
+     * the exact same per-row logic instead of two copies that could drift apart.
+     */
+    private <T> void handleRow(EntityImportProcessor<T> processor, ImportContext context,
+                               List<ColumnSchema> columnSchemas, Map<String, String> headerMappings,
+                               FileUpload fileUpload, Map<String, String> rowData, int displayRowNumber,
+                               List<T> batch, List<FileProcessingError> batchErrors, RowCounters counters) {
+        try {
+            List<FileProcessingError> rowErrors = validateRowDynamic(
+                    rowData, columnSchemas, headerMappings, fileUpload, displayRowNumber);
+
+            if (!rowErrors.isEmpty()) {
+                batchErrors.addAll(rowErrors);
+                counters.failedRows++;
+            } else {
+                T entity = processor.mapRow(rowData, displayRowNumber, context);
+                if (entity == null) {
+                    // Already imported by an earlier upload - not an error, just nothing to do.
+                    counters.skippedRows++;
+                    counters.successfulRows++;
+                } else {
+                    batch.add(entity);
+                    counters.successfulRows++;
+                }
+            }
+        } catch (RowValidationException e) {
+            for (RowValidationException.FieldError fe : e.getFieldErrors()) {
+                batchErrors.add(buildError(fileUpload, displayRowNumber,
+                        fe.column(), fe.message(), fe.rawValue()));
+            }
+            counters.failedRows++;
+        } catch (Exception e) {
+            log.warn("Error processing row {}: {}", displayRowNumber, e.getMessage());
+            batchErrors.add(FileProcessingError.builder()
+                    .fileUpload(fileUpload)
+                    .rowNumber(displayRowNumber)
+                    .errorMessage("Unexpected error: " + e.getMessage())
+                    .build());
+            counters.failedRows++;
+        }
+        counters.processedRows++;
+    }
+
+    /** Flushes a full batch/error-batch and reports progress, shared by both processing paths. */
+    private <T> void maybeFlush(EntityImportProcessor<T> processor, ImportContext context,
+                                List<T> batch, List<FileProcessingError> batchErrors,
+                                RowCounters counters, FileUpload fileUpload) {
+        if (batch.size() >= batchSize) {
+            processor.persistBatch(batch, context);
+            batch.clear();
+        }
+        if (batchErrors.size() >= batchSize) {
+            fileProcessingErrorRepository.saveAll(batchErrors);
+            batchErrors.clear();
+        }
+        if (counters.processedRows % batchSize == 0) {
+            updateProgress(fileUpload.getId(), counters.processedRows, counters.successfulRows,
+                    counters.failedRows, FileUploadStatus.PROCESSING);
+            log.info("Progress: {} rows processed", counters.processedRows);
+        }
+    }
+
+    private void finalizeEmptyFile(FileUpload fileUpload) {
+        fileUpload.setStatus(FileUploadStatus.COMPLETED);
+        fileUpload.setTotalRows(0);
+        fileUpload.setSuccessfulRows(0);
+        fileUpload.setFailedRows(0);
+        fileUploadRepository.save(fileUpload);
+        auditFileProcessing(fileUpload, AuditAction.FILE_PROCESSING_COMPLETED, AuditResult.SUCCESS, null);
+    }
+
+    /** Flushes any remainder, computes the final status, and audits -- shared tail of both paths. */
+    private <T> void finalizeProcessing(EntityImportProcessor<T> processor, ImportContext context,
+                                        FileUpload fileUpload, List<T> batch, List<FileProcessingError> batchErrors,
+                                        RowCounters counters, int totalRows) {
+        if (!batch.isEmpty()) processor.persistBatch(batch, context);
+        if (!batchErrors.isEmpty()) fileProcessingErrorRepository.saveAll(batchErrors);
+
+        FileUploadStatus finalStatus = counters.failedRows == 0
+                ? FileUploadStatus.COMPLETED
+                : (counters.successfulRows == 0 ? FileUploadStatus.FAILED : FileUploadStatus.PARTIALLY_COMPLETED);
+
+        updateProgress(fileUpload.getId(), totalRows, counters.successfulRows, counters.failedRows, finalStatus);
+        log.info("Processing complete for {}. Status: {}. Success: {}, Failed: {}, Skipped as duplicate: {}",
+                fileUpload.getUploadType(), finalStatus, counters.successfulRows, counters.failedRows,
+                counters.skippedRows);
+
+        AuditAction finalAction = switch (finalStatus) {
+            case COMPLETED -> AuditAction.FILE_PROCESSING_COMPLETED;
+            case FAILED -> AuditAction.FILE_PROCESSING_FAILED;
+            default -> AuditAction.FILE_PROCESSING_PARTIALLY_FAILED;
+        };
+        AuditResult finalResult = finalStatus == FileUploadStatus.COMPLETED ? AuditResult.SUCCESS
+                : (finalStatus == FileUploadStatus.FAILED ? AuditResult.FAILURE : AuditResult.PARTIAL);
+        auditFileProcessing(fileUpload, finalAction, finalResult,
+                finalStatus == FileUploadStatus.COMPLETED ? null
+                        : counters.failedRows + " of " + totalRows + " rows failed validation",
+                totalRows, counters.successfulRows, counters.failedRows);
+    }
+
+    /**
+     * List-based processing entry point. Kept with this exact signature and behaviour --
+     * FileProcessingBorrowerLinkTest calls it directly with a hand-built list -- but its body now
+     * shares {@link #handleRow}/{@link #maybeFlush}/{@link #finalizeProcessing} with the streaming
+     * path used by real uploads (see {@link #processRowsStreaming}) rather than duplicating them.
+     */
     @Transactional
     public <T> void processRowsInBatches(EntityImportProcessor<T> processor,
                                          FileUpload fileUpload,
@@ -216,19 +343,9 @@ public class FileProcessingServiceImpl implements FileProcessingService {
                                          List<Map<String, String>> allRows) {
         int totalRows = allRows.size();
         if (totalRows == 0) {
-            fileUpload.setStatus(FileUploadStatus.COMPLETED);
-            fileUpload.setTotalRows(0);
-            fileUpload.setSuccessfulRows(0);
-            fileUpload.setFailedRows(0);
-            fileUploadRepository.save(fileUpload);
-            auditFileProcessing(fileUpload, AuditAction.FILE_PROCESSING_COMPLETED, AuditResult.SUCCESS, null);
+            finalizeEmptyFile(fileUpload);
             return;
         }
-
-        int processedRows = 0;
-        int successfulRows = 0;
-        int failedRows = 0;
-        int skippedRows = 0;
 
         List<String> columnOrder = new ArrayList<>(allRows.get(0).keySet());
         fileUpload.setColumnOrder(columnOrder);
@@ -252,84 +369,114 @@ public class FileProcessingServiceImpl implements FileProcessingService {
 
         List<T> batch = new ArrayList<>();
         List<FileProcessingError> batchErrors = new ArrayList<>();
+        RowCounters counters = new RowCounters();
 
         for (int rowIndex = 0; rowIndex < totalRows; rowIndex++) {
-            Map<String, String> rowData = allRows.get(rowIndex);
-            int displayRowNumber = rowIndex + 2;
-
-            try {
-                List<FileProcessingError> rowErrors = validateRowDynamic(
-                        rowData, columnSchemas, headerMappings, fileUpload, displayRowNumber);
-
-                if (!rowErrors.isEmpty()) {
-                    batchErrors.addAll(rowErrors);
-                    failedRows++;
-                } else {
-                    T entity = processor.mapRow(rowData, displayRowNumber, context);
-                    if (entity == null) {
-                        // Already imported by an earlier upload - not an error, just nothing to do.
-                        skippedRows++;
-                        successfulRows++;
-                    } else {
-                        batch.add(entity);
-                        successfulRows++;
-                    }
-                }
-            } catch (RowValidationException e) {
-                for (RowValidationException.FieldError fe : e.getFieldErrors()) {
-                    batchErrors.add(buildError(fileUpload, displayRowNumber,
-                            fe.column(), fe.message(), fe.rawValue()));
-                }
-                failedRows++;
-            } catch (Exception e) {
-                log.warn("Error processing row {}: {}", displayRowNumber, e.getMessage());
-                batchErrors.add(FileProcessingError.builder()
-                        .fileUpload(fileUpload)
-                        .rowNumber(displayRowNumber)
-                        .errorMessage("Unexpected error: " + e.getMessage())
-                        .build());
-                failedRows++;
-            }
-
-            processedRows++;
-
-            if (batch.size() >= batchSize) {
-                processor.persistBatch(batch, context);
-                batch.clear();
-            }
-            if (batchErrors.size() >= batchSize) {
-                fileProcessingErrorRepository.saveAll(batchErrors);
-                batchErrors.clear();
-            }
-            if (processedRows % batchSize == 0) {
-                updateProgress(fileUpload.getId(), processedRows, successfulRows, failedRows,
-                        FileUploadStatus.PROCESSING);
-                log.info("Progress: {}/{} rows processed", processedRows, totalRows);
-            }
+            handleRow(processor, context, columnSchemas, headerMappings, fileUpload,
+                    allRows.get(rowIndex), rowIndex + 2, batch, batchErrors, counters);
+            maybeFlush(processor, context, batch, batchErrors, counters, fileUpload);
         }
 
-        if (!batch.isEmpty()) processor.persistBatch(batch, context);
-        if (!batchErrors.isEmpty()) fileProcessingErrorRepository.saveAll(batchErrors);
+        finalizeProcessing(processor, context, fileUpload, batch, batchErrors, counters, totalRows);
+    }
 
-        FileUploadStatus finalStatus = failedRows == 0
-                ? FileUploadStatus.COMPLETED
-                : (successfulRows == 0 ? FileUploadStatus.FAILED : FileUploadStatus.PARTIALLY_COMPLETED);
+    /** Wildcard entry point for the real upload path -- see {@link #streamProcessRows} for the typed body. */
+    @SuppressWarnings("unchecked")
+    private void processRowsStreaming(EntityImportProcessor<?> processor, FileUpload fileUpload,
+                                      Organization organization, List<ColumnSchema> columnSchemas,
+                                      MultipartFile multipartFile, List<String> headers, int totalRows,
+                                      Map<String, Allocation> allocationsByLoanNumber, Map<String, User> usersByEmail) {
+        streamProcessRows((EntityImportProcessor<Object>) processor, fileUpload, organization, columnSchemas,
+                multipartFile, headers, totalRows, allocationsByLoanNumber, usersByEmail);
+    }
 
-        updateProgress(fileUpload.getId(), totalRows, successfulRows, failedRows, finalStatus);
-        log.info("Processing complete for {}. Status: {}. Success: {}, Failed: {}, Skipped as duplicate: {}",
-                fileUpload.getUploadType(), finalStatus, successfulRows, failedRows, skippedRows);
+    /**
+     * The memory-safe path real uploads take: streams the file a second time (the scan pass
+     * already happened in {@link #scanFile}) instead of iterating a pre-built List, so
+     * batch/batchErrors -- capped at {@code batchSize} -- are the only state that doesn't scale
+     * with file size, regardless of whether the file has 50 rows or the configured max.
+     */
+    @Transactional
+    public <T> void streamProcessRows(EntityImportProcessor<T> processor, FileUpload fileUpload,
+                                      Organization organization, List<ColumnSchema> columnSchemas,
+                                      MultipartFile multipartFile, List<String> headers, int totalRows,
+                                      Map<String, Allocation> allocationsByLoanNumber, Map<String, User> usersByEmail) {
+        fileUpload.setColumnOrder(headers);
+        fileUploadRepository.save(fileUpload);
 
-        AuditAction finalAction = switch (finalStatus) {
-            case COMPLETED -> AuditAction.FILE_PROCESSING_COMPLETED;
-            case FAILED -> AuditAction.FILE_PROCESSING_FAILED;
-            default -> AuditAction.FILE_PROCESSING_PARTIALLY_FAILED;
-        };
-        AuditResult finalResult = finalStatus == FileUploadStatus.COMPLETED ? AuditResult.SUCCESS
-                : (finalStatus == FileUploadStatus.FAILED ? AuditResult.FAILURE : AuditResult.PARTIAL);
-        auditFileProcessing(fileUpload, finalAction, finalResult,
-                finalStatus == FileUploadStatus.COMPLETED ? null
-                        : failedRows + " of " + totalRows + " rows failed validation",
-                totalRows, successfulRows, failedRows);
+        Map<String, String> headerMappings = buildHeaderMappings(new LinkedHashSet<>(headers), columnSchemas);
+        log.info("Header mappings: {}", headerMappings);
+
+        ImportContext context = ImportContext.builder()
+                .organization(organization)
+                .fileUpload(fileUpload)
+                .importedByUserId(fileUpload.getUploadedByUserId())
+                .historicalImport(Boolean.TRUE.equals(fileUpload.getIsHistoricalImport()))
+                .columnSchemas(columnSchemas)
+                .headerMappings(headerMappings)
+                .allocationsByLoanNumber(allocationsByLoanNumber)
+                .usersByEmail(usersByEmail)
+                .build();
+
+        List<T> batch = new ArrayList<>();
+        List<FileProcessingError> batchErrors = new ArrayList<>();
+        RowCounters counters = new RowCounters();
+
+        fileParsingService.streamFile(multipartFile, new RowHandler() {
+            @Override public void onHeaders(List<String> ignoredHeaders) {
+                // Already captured by the scan pass; nothing to do here.
+            }
+
+            @Override public void onRow(Map<String, String> row, int dataRowIndex) {
+                handleRow(processor, context, columnSchemas, headerMappings, fileUpload,
+                        row, dataRowIndex + 2, batch, batchErrors, counters);
+                maybeFlush(processor, context, batch, batchErrors, counters, fileUpload);
+            }
+        });
+
+        finalizeProcessing(processor, context, fileUpload, batch, batchErrors, counters, totalRows);
+    }
+
+    /** Result of the lightweight pre-scan pass: {@link #scanFile}. */
+    private static final class ScanResult {
+        List<String> headers = List.of();
+        int totalRows;
+        final Set<String> loanNumbers = new LinkedHashSet<>();
+        final Set<String> agentEmails = new LinkedHashSet<>();
+    }
+
+    /**
+     * Streams the file once to learn the row count and the loan-number/agent-email values the
+     * bulk prefetch needs, without holding any row beyond the callback that receives it -- this
+     * is what lets {@link #processFileAsync} learn totalRows (for the maxRows and entitlement
+     * checks) up front without materializing every row first.
+     */
+    private ScanResult scanFile(MultipartFile file, EntityImportProcessor<?> processor) {
+        ScanResult result = new ScanResult();
+        boolean wantLoanNumbers = processor.requiresAllocationLookup();
+        boolean wantEmails = processor.requiresAgentLookup();
+        fileParsingService.streamFile(file, new RowHandler() {
+            @Override public void onHeaders(List<String> headers) {
+                result.headers = headers;
+            }
+
+            @Override public void onRow(Map<String, String> row, int dataRowIndex) {
+                result.totalRows++;
+                if (wantLoanNumbers) {
+                    String loanNumber = ImportValues.find(row, LOAN_NUMBER_ALIASES);
+                    if (loanNumber != null && !loanNumber.isBlank()) {
+                        result.loanNumbers.add(loanNumber.trim());
+                    }
+                }
+                if (wantEmails) {
+                    String email = ImportValues.find(row, AGENT_EMAIL_ALIASES);
+                    if (email != null && !email.isBlank()) {
+                        result.agentEmails.add(email.trim().toLowerCase());
+                    }
+                }
+            }
+        });
+        return result;
     }
 
     /**
@@ -352,34 +499,38 @@ public class FileProcessingServiceImpl implements FileProcessingService {
     }
 
     private Map<String, Allocation> prefetchAllocations(UUID organizationId, List<Map<String, String>> allRows) {
-        List<String> loanNumbers = allRows.stream()
+        Set<String> loanNumbers = allRows.stream()
                 .map(row -> ImportValues.find(row, LOAN_NUMBER_ALIASES))
                 .filter(s -> s != null && !s.isBlank())
                 .map(String::trim)
-                .distinct()
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return prefetchAllocationsByNumbers(organizationId, loanNumbers);
+    }
 
+    private Map<String, User> prefetchAgents(List<Map<String, String>> allRows) {
+        Set<String> emails = allRows.stream()
+                .map(row -> ImportValues.find(row, AGENT_EMAIL_ALIASES))
+                .filter(s -> s != null && !s.isBlank())
+                .map(s -> s.trim().toLowerCase())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return prefetchAgentsByEmails(emails);
+    }
+
+    private Map<String, Allocation> prefetchAllocationsByNumbers(UUID organizationId, Set<String> loanNumbers) {
         if (loanNumbers.isEmpty()) return Map.of();
 
         Map<String, Allocation> byLoanNumber = allocationRepository
-                .findByOrganizationIdAndLoanNumberIn(organizationId, loanNumbers)
+                .findByOrganizationIdAndLoanNumberIn(organizationId, new ArrayList<>(loanNumbers))
                 .stream()
                 .collect(Collectors.toMap(Allocation::getLoanNumber, a -> a, (a, b) -> a));
         log.info("Resolved {} of {} referenced loan numbers", byLoanNumber.size(), loanNumbers.size());
         return byLoanNumber;
     }
 
-    private Map<String, User> prefetchAgents(List<Map<String, String>> allRows) {
-        List<String> emails = allRows.stream()
-                .map(row -> ImportValues.find(row, AGENT_EMAIL_ALIASES))
-                .filter(s -> s != null && !s.isBlank())
-                .map(s -> s.trim().toLowerCase())
-                .distinct()
-                .collect(Collectors.toList());
-
+    private Map<String, User> prefetchAgentsByEmails(Set<String> emails) {
         if (emails.isEmpty()) return Map.of();
 
-        return userRepository.findByEmailIgnoreCaseIn(emails).stream()
+        return userRepository.findByEmailIgnoreCaseIn(new ArrayList<>(emails)).stream()
                 .collect(Collectors.toMap(u -> u.getEmail().toLowerCase(), u -> u, (a, b) -> a));
     }
 

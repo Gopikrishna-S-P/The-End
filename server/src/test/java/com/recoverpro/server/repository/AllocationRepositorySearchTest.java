@@ -84,7 +84,8 @@ class AllocationRepositorySearchTest extends AbstractIntegrationTest {
         assertThat(byName.getContent()).extracting(Allocation::getId).containsExactly(smithAllocation.getId());
 
         Page<Allocation> byLoanNumber = allocationRepository.findAllWithFilters(
-                managedOrg.getId(), null, null, null, smithLoan.substring(0, smithLoan.length() - 3), null,
+                managedOrg.getId(), null, null, null,
+                smithLoan.substring(0, smithLoan.length() - 3).toLowerCase() + "%", null,
                 PageRequest.of(0, 20));
         assertThat(byLoanNumber.getContent()).extracting(Allocation::getId).containsExactly(smithAllocation.getId());
 

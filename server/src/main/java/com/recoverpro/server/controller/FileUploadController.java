@@ -112,6 +112,20 @@ public class FileUploadController {
         return ResponseEntity.ok(ApiResponse.success(fileUploadService.getProcessingErrors(id, pageable)));
     }
 
+    /** Every processing error for this upload in one file, unlike the paginated JSON endpoint above. */
+    @GetMapping(value = "/{id}/errors/download", produces = "text/csv")
+    @PreAuthorize(READERS)
+    public ResponseEntity<String> downloadProcessingErrors(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        FileUploadResponse upload = fileUploadService.getUploadStatus(id);
+        assertSameTenant(upload.getOrganizationId(), principal);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"file-upload-" + id + "-errors.csv\"")
+                .body(fileUploadService.buildProcessingErrorsCsv(id));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize(WRITERS)
     public ResponseEntity<ApiResponse<Void>> deleteFileUpload(

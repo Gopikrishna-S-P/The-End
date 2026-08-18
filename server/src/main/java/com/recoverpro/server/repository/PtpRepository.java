@@ -26,6 +26,12 @@ public interface PtpRepository extends JpaRepository<PtpRecord, UUID>, JpaSpecif
 
     Page<PtpRecord> findAllByIsDeletedFalse(Pageable pageable);
 
+    /** SYSTEM-PLAN 26.1 backfill: PtpRecord has no organization_id of its own, so org scope is
+     *  derived via allocation_id -> allocations.organization_id, mirroring rls_ptp_records_isolation. */
+    @Query("SELECT p FROM PtpRecord p WHERE p.allocationId IN " +
+            "(SELECT a.id FROM Allocation a WHERE a.organization.id = :orgId) AND p.isDeleted = false")
+    Page<PtpRecord> findAllByOrganizationIdPaged(@Param("orgId") UUID orgId, Pageable pageable);
+
     List<PtpRecord> findAllByAllocationIdAndIsDeletedFalse(UUID allocationId);
 
     /** Batch dedup for historical imports - narrows on both axes so the fetch stays bounded. */

@@ -6,6 +6,8 @@ import com.recoverpro.server.entity.Organization;
 import com.recoverpro.server.repository.AllocationRepository;
 import com.recoverpro.server.repository.FileUploadRepository;
 import com.recoverpro.server.security.OrgIsolationGuard;
+import com.recoverpro.server.service.BorrowerService;
+import com.recoverpro.server.service.importer.AllocationImportProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +36,8 @@ class UploadDataServiceImplTest {
     @Mock private FileUploadRepository fileUploadRepo;
     @Mock private OrgIsolationGuard orgIsolationGuard;
     @Mock private com.recoverpro.server.service.AllocationSearchIndexService allocationSearchIndexService;
+    @Mock private BorrowerService borrowerService;
+    @Mock private AllocationImportProcessor allocationImportProcessor;
 
     private UploadDataServiceImpl service;
     private UUID uploadId;
@@ -40,7 +45,8 @@ class UploadDataServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new UploadDataServiceImpl(allocationRepo, fileUploadRepo, orgIsolationGuard, allocationSearchIndexService);
+        service = new UploadDataServiceImpl(allocationRepo, fileUploadRepo, orgIsolationGuard,
+                allocationSearchIndexService, borrowerService, allocationImportProcessor);
         uploadId = UUID.randomUUID();
         Organization org = new Organization();
         org.setId(UUID.randomUUID());
@@ -48,6 +54,7 @@ class UploadDataServiceImplTest {
 
         lenient().when(fileUploadRepo.findByIdAndIsDeletedFalse(uploadId)).thenReturn(Optional.of(upload));
         lenient().when(orgIsolationGuard.belongsToOrg(org.getId())).thenReturn(true);
+        lenient().when(allocationImportProcessor.fieldSpecs()).thenReturn(List.of());
     }
 
     @Test

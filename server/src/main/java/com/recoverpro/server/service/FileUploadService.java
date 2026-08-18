@@ -20,5 +20,8 @@ public interface FileUploadService {
 
     PagedResponse<FileProcessingErrorResponse> getProcessingErrors(UUID fileUploadId, Pageable pageable);
 
+    /** Every processing error for this upload, as a downloadable CSV (row, column, error, raw value). */
+    String buildProcessingErrorsCsv(UUID fileUploadId);
+
     void softDeleteFileUpload(UUID fileUploadId, UUID userId);
 }
