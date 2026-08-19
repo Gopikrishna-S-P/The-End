@@ -34,7 +34,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -74,7 +75,8 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,

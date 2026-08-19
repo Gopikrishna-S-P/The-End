@@ -16,5 +16,6 @@ public enum AuditResourceType {
     SUBSCRIPTION,
     INVOICE,
     REPORT,
-    FEATURE_FLAG
+    FEATURE_FLAG,
+    CALL_LOG
 }

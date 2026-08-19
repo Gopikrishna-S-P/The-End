@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync,
 } from 'expo-audio';
-import { Phone, Mic, MicOff } from 'lucide-react-native';
+import { Phone, Mic, MicOff, Pause, Play } from 'lucide-react-native';
 import CallRecording from 'call-recording';
 import { useTheme } from '@/theme/useTheme';
 import {
@@ -34,6 +34,7 @@ export default function CallScreen() {
   const [phase, setPhase] = useState<Phase>('starting');
   const [error, setError] = useState<string | null>(null);
   const [micActive, setMicActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [outcome, setOutcome] = useState<CallOutcome | undefined>();
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export default function CallScreen() {
   const startedAtRef = useRef<number | null>(null);
   const durationRef = useRef<number | undefined>(undefined);
   const recordingActiveRef = useRef(false);
+  const pausedRef = useRef(false);
   const hasLeftRef = useRef(false);
 
   const beginRecording = async () => {
@@ -63,9 +65,29 @@ export default function CallScreen() {
     if (recordingActiveRef.current) {
       try { await recorder.stop(); } catch { /* already stopped */ }
       recordingActiveRef.current = false;
+      pausedRef.current = false;
       setMicActive(false);
+      setIsPaused(false);
     }
     await CallRecording.stopForegroundRecording().catch(() => {});
+  };
+
+  const pauseRecording = () => {
+    if (!recordingActiveRef.current || pausedRef.current) return;
+    try {
+      recorder.pause();
+      pausedRef.current = true;
+      setIsPaused(true);
+    } catch { /* ignore */ }
+  };
+
+  const resumeRecording = () => {
+    if (!recordingActiveRef.current || !pausedRef.current) return;
+    try {
+      recorder.record();
+      pausedRef.current = false;
+      setIsPaused(false);
+    } catch { /* ignore */ }
   };
 
   useEffect(() => {
@@ -113,6 +135,17 @@ export default function CallScreen() {
       recorder.stop().catch(() => {});
       CallRecording.stopForegroundRecording().catch(() => {});
     }
+  }, []);
+
+  // Mirrors the Pause/Resume/Stop actions on the persistent recording notification, so control
+  // works the same whether the agent is in-app or has backgrounded it to use the phone dialer.
+  useEffect(() => {
+    const subs = [
+      CallRecording.addPauseRequestedListener(pauseRecording),
+      CallRecording.addResumeRequestedListener(resumeRecording),
+      CallRecording.addStopRequestedListener(() => { stopRecording(); }),
+    ];
+    return () => subs.forEach((sub) => sub.remove());
   }, []);
 
   const onSubmitOutcome = async () => {
@@ -170,9 +203,22 @@ export default function CallScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
             {micActive ? <Mic size={16} color={colors.ink3} /> : <MicOff size={16} color={colors.ink3} />}
             <Text variant="caption" color="secondary">
-              {micActive ? 'Recording for audit' : 'Recording unavailable — proceeding without it'}
+              {!micActive && 'Recording unavailable — proceeding without it'}
+              {micActive && isPaused && 'Recording paused'}
+              {micActive && !isPaused && 'Recording for audit'}
             </Text>
           </View>
+          {micActive ? (
+            <Button
+              label={isPaused ? 'Resume recording' : 'Pause recording'}
+              variant="secondary"
+              fullWidth={false}
+              icon={isPaused
+                ? <Play size={18} color={colors.ink1} />
+                : <Pause size={18} color={colors.ink1} />}
+              onPress={isPaused ? resumeRecording : pauseRecording}
+            />
+          ) : null}
         </View>
       </Screen>
     );

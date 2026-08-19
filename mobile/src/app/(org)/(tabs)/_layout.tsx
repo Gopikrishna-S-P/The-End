@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Home, Banknote, Briefcase, Bell, User, ClipboardCheck, IndianRupee, MoreHorizontal } from 'lucide-react-native';
+import { LayoutDashboard, Layers, Briefcase, Bell, User, ClipboardCheck, IndianRupee, Menu, Phone } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/useTheme';
 import { useNotificationsBadge } from '@/hooks/useNotificationsBadge';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +9,7 @@ export default function TabsLayout() {
   const { colors } = useTheme();
   const unreadCount = useNotificationsBadge();
   const { role } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Role-aware tab setup.
   const isFieldRole = role === 'FO' || role === 'CALLER' || role === 'TRACER';
@@ -22,8 +24,8 @@ export default function TabsLayout() {
         tabBarStyle: { 
           backgroundColor: colors.surface, 
           borderTopColor: colors.border,
-          height: 64,
-          paddingBottom: 10,
+          height: 64 + insets.bottom,
+          paddingBottom: 10 + insets.bottom,
           paddingTop: 8
         },
         tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 11 },
@@ -34,7 +36,7 @@ export default function TabsLayout() {
         name="index"
         options={{ 
           title: 'Home',
-          tabBarIcon: ({ color, size, focused }) => <Home color={color} fill={focused ? color : 'none'} size={size - 3} /> 
+          tabBarIcon: ({ color, size, focused }) => <LayoutDashboard color={color} size={size - 3} /> 
         }}
       />
 
@@ -42,7 +44,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="cases"
         options={{ 
-          title: 'My Cases', 
+          title: 'Cases', 
           tabBarIcon: ({ color, size }) => <Briefcase color={color} size={size - 3} />,
           href: isFieldRole ? undefined : null // hide if not field role
         }}
@@ -53,7 +55,7 @@ export default function TabsLayout() {
         name="loans"
         options={{
           title: 'Loans',
-          tabBarIcon: ({ color, size }) => <Banknote color={color} size={size - 3} />,
+          tabBarIcon: ({ color, size }) => <Layers color={color} size={size - 3} />,
           href: isLeadOrAdmin ? undefined : null // hide if not lead/admin
         }}
       />
@@ -68,6 +70,16 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* 3b. Call history (field roles only — they're the ones placing calls) */}
+      <Tabs.Screen
+        name="calls"
+        options={{
+          title: 'Calls',
+          tabBarIcon: ({ color, size }) => <Phone color={color} size={size - 3} />,
+          href: isFieldRole ? undefined : null
+        }}
+      />
+
       {/* 4. Alerts / Notifications */}
       <Tabs.Screen
         name="notifications"
@@ -75,6 +87,7 @@ export default function TabsLayout() {
           title: 'Alerts',
           tabBarIcon: ({ color, size }) => <Bell color={color} size={size - 3} />,
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          href: null,
         }}
       />
 
@@ -83,7 +96,7 @@ export default function TabsLayout() {
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: ({ color, size }) => <MoreHorizontal color={color} size={size - 3} />,
+          tabBarIcon: ({ color, size }) => <Menu color={color} size={size - 3} />,
         }}
       />
 
