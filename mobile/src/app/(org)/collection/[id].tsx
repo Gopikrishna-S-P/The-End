@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, ScrollView, SafeAreaView } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Banknote, ChevronLeft, Calendar, CreditCard, User, FileText, Hash, Building2, Smartphone, Receipt, AlertCircle, CheckCircle2, Clock } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
-import { Text, Badge, Divider, Button } from '@/components/ui';
+import { Screen, Text, Badge, Divider, Button } from '@/components/ui';
 import { formatCurrency } from '@/utils/allocationHeuristics';
 import { formatDate, formatDateTime } from '@/utils/date';
 import type { CollectionResponse } from '@/types/domain';
@@ -77,16 +79,24 @@ export default function CollectionDetailScreen() {
   const amount = (selectedCol as any).amountCollected ?? selectedCol.amount;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.s4, paddingVertical: spacing.s3, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
-        <Button
-          variant="ghost"
-          icon={<ChevronLeft size={24} color={colors.ink1} />}
-          onPress={() => router.back()}
-          style={{ padding: 0, marginRight: spacing.s3 }}
-        />
-        <Text variant="headline">Collection Details</Text>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.s4,
+        paddingTop: spacing.s3,
+        paddingBottom: spacing.s3,
+        borderBottomWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: 'transparent',
+      }}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={{ padding: 4, marginRight: spacing.s2 }}>
+          <ChevronLeft size={24} color={colors.ink1} />
+        </Pressable>
+        <Text variant="headline" style={{ fontWeight: '700' }}>Collection Details</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: spacing.s4, gap: spacing.s4, paddingBottom: 40 }}>
@@ -155,5 +165,7 @@ export default function CollectionDetailScreen() {
 
       </ScrollView>
     </SafeAreaView>
+    </View>
   );
 }
+

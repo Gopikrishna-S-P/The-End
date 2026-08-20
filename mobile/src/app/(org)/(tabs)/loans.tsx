@@ -1,17 +1,20 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, View, StyleSheet, TextInput, Pressable } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { Search, WifiOff, X, Layers } from 'lucide-react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Search, WifiOff, X, Layers, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, EmptyState, LoadingView, Card } from '@/components/ui';
 import { CaseRow } from '@/components/CaseRow';
 import { allocationsApi } from '@/api/allocationsApi';
 import type { AllocationResponse } from '@/types/domain';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoansScreen() {
   const { user } = useAuth();
   const { colors, spacing, radius } = useTheme();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,6 +37,12 @@ export default function LoansScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load])
   );
 
@@ -52,9 +61,14 @@ export default function LoansScreen() {
   if (loading) return <LoadingView label="Loading loans…" />;
 
   return (
-    <Screen scroll={false} padded={false} edges={['top']}>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s2, gap: spacing.s4 }}>
-        <View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
+          <Pressable onPress={() => router.replace('/(org)/(tabs)/cases')} hitSlop={8} style={{ padding: 4 }}>
+            <ChevronLeft size={22} color={colors.ink1} />
+          </Pressable>
           <Text style={{ fontSize: 13, fontWeight: '400', color: colors.ink3, fontFamily: 'Inter_400Regular' }}>Loans & allocations</Text>
         </View>
 
@@ -99,7 +113,9 @@ export default function LoansScreen() {
             )
           }
         />
-    </Screen>
+    </SafeAreaView>
+    </View>
   );
 }
 const styles = StyleSheet.create({});
+

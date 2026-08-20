@@ -10,6 +10,7 @@ import { allocationsApi } from '@/api/allocationsApi';
 import { resolveDPD } from '@/utils/allocationHeuristics';
 import type { AllocationResponse } from '@/types/domain';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function MyCasesScreen() {
   const { user } = useAuth();
@@ -36,6 +37,12 @@ export default function MyCasesScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load]),
   );
 
@@ -56,20 +63,22 @@ export default function MyCasesScreen() {
   if (loading) return <LoadingView label="Loading your cases…" />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }} edges={['top']}>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s4, gap: spacing.s4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
-            <Pressable onPress={() => router.back()} hitSlop={8}>
+            <Pressable onPress={() => router.replace('/(org)/(tabs)')} hitSlop={8}>
               <ChevronLeft size={22} color="#374151" />
             </Pressable>
-            <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'Inter_500Medium' }}>Cases</Text>
+            <Text style={{ fontSize: 13, color: '#000000', fontFamily: 'Inter_500Medium' }}>Cases</Text>
           </View>
           <Pressable
             onPress={() => router.push('/(org)/(tabs)/loans')}
-            style={{ backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}
+            style={{ backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#0AA550' }}
           >
-            <Text style={{ fontSize: 12, color: '#6B7280', fontFamily: 'Inter_500Medium' }}>All Cases</Text>
+            <Text style={{ fontSize: 12, color: '#0AA550', fontFamily: 'Inter_500Medium' }}>All Cases</Text>
           </Pressable>
         </View>
         <View style={{
@@ -114,5 +123,6 @@ export default function MyCasesScreen() {
         }
       />
     </SafeAreaView>
+    </View>
   );
 }

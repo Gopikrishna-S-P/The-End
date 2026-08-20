@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { FlatList, View, StyleSheet, TouchableOpacity, Share, Modal, Pressable, ScrollView, SafeAreaView, TextInput } from 'react-native';
+import { FlatList, View, StyleSheet, TouchableOpacity, Share, Modal, Pressable, ScrollView, TextInput } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { DollarSign, WifiOff, X, Banknote, FileText, CreditCard, Calendar, User, CheckCircle2, Download, Search } from 'lucide-react-native';
+import { DollarSign, WifiOff, X, Banknote, FileText, CreditCard, Calendar, User, CheckCircle2, Download, Search, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Screen, Text, Card, Badge, EmptyState, LoadingView, Divider, Button } from '@/components/ui';
@@ -10,6 +10,8 @@ import { formatCurrency } from '@/utils/allocationHeuristics';
 import { formatDate, formatDateTime } from '@/utils/date';
 import { useToast } from '@/context/ToastContext';
 import type { CollectionResponse } from '@/types/domain';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CollectionsHubScreen() {
   const { user } = useAuth();
@@ -49,6 +51,12 @@ export default function CollectionsHubScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load])
   );
 
@@ -101,15 +109,22 @@ export default function CollectionsHubScreen() {
   if (loading) return <LoadingView label="Loading collections…" />;
 
   return (
-    <Screen scroll={false} padded={false} edges={['top']}>
-      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s2, gap: spacing.s4 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Text style={{ fontSize: 13, fontWeight: '400', color: colors.ink3, fontFamily: 'Inter_400Regular' }}>Collections</Text>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s4, gap: spacing.s4 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
+            <Pressable onPress={() => router.replace('/(org)/(tabs)')} hitSlop={8} style={{ padding: 4 }}>
+              <ChevronLeft size={22} color={colors.ink1} />
+            </Pressable>
+            <Text style={{ fontSize: 13, fontWeight: '400', color: '#000000', fontFamily: 'Inter_400Regular' }}>Collections</Text>
+          </View>
           <Pressable 
             onPress={() => setShowExportModal(true)} 
             style={{ padding: 4, marginTop: -4 }}
           >
-            <Download size={20} color={colors.ink2} />
+            <Download size={20} color="#0AA550" />
           </Pressable>
         </View>
 
@@ -202,7 +217,7 @@ export default function CollectionsHubScreen() {
           </View>
         </Pressable>
       </Modal>
-
-    </Screen>
+    </SafeAreaView>
+    </View>
   );
 }

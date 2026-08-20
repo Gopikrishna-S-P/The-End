@@ -1,5 +1,7 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { FlatList, View, StyleSheet, Modal, Pressable, ScrollView, SafeAreaView, TextInput, Animated, Dimensions } from 'react-native';
+import { FlatList, View, StyleSheet, Modal, Pressable, ScrollView, TextInput, Animated, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { TrendingUp, WifiOff, X, AlertTriangle, Clock, Calendar, User, FileText, CheckCircle2, Search, SlidersHorizontal, Download, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -64,6 +66,12 @@ export default function PtpListScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load])
   );
 
@@ -123,36 +131,44 @@ export default function PtpListScreen() {
   if (loading) return <LoadingView label="Loading Promises to Pay…" />;
 
   return (
-    <Screen edges={['top']}>
-      <View style={{ gap: spacing.s4, paddingBottom: spacing.s4 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3, flex: 1 }}>
-            <Pressable onPress={() => router.back()} hitSlop={8}>
-              <ChevronLeft size={24} color={colors.ink1} />
-            </Pressable>
-            <View>
-              <Text variant="title">Promises to Pay</Text>
-              <Text variant="caption" color="secondary">{filteredPtps.length} active promises</Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', gap: spacing.s3, alignItems: 'center' }}>
-            <Pressable 
-              onPress={() => setShowFilterModal(true)} 
-              style={{ padding: 4, position: 'relative' }}
-            >
-              <SlidersHorizontal size={20} color={filterStatus || searchQuery ? colors.accent : colors.ink2} />
-              {(filterStatus !== '' || searchQuery !== '') && (
-                <View style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, borderWidth: 1, borderColor: colors.canvas }} />
-              )}
-            </Pressable>
-            <Pressable 
-              onPress={() => setShowExportModal(true)} 
-              style={{ padding: 4 }}
-            >
-              <Download size={20} color={colors.ink2} />
-            </Pressable>
-          </View>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      {/* Header */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: spacing.s4,
+        paddingTop: spacing.s3,
+        paddingBottom: spacing.s3,
+        borderBottomWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: 'transparent',
+      }}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={{ padding: 4, marginRight: spacing.s2 }}>
+          <ChevronLeft size={24} color={colors.ink1} />
+        </Pressable>
+        <Text variant="headline" style={{ fontWeight: '700', flex: 1 }}>Promises to Pay</Text>
+        <View style={{ flexDirection: 'row', gap: spacing.s3, alignItems: 'center' }}>
+          <Pressable
+            onPress={() => setShowFilterModal(true)}
+            style={{ padding: 4, position: 'relative' }}
+          >
+            <SlidersHorizontal size={20} color="#0AA550" />
+            {(filterStatus !== '' || searchQuery !== '') && (
+              <View style={{ position: 'absolute', top: 2, right: 2, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, borderWidth: 1, borderColor: colors.canvas }} />
+            )}
+          </Pressable>
+          <Pressable
+            onPress={() => setShowExportModal(true)}
+            style={{ padding: 4 }}
+          >
+            <Download size={20} color="#0AA550" />
+          </Pressable>
         </View>
+      </View>
+
+      <View style={{ flex: 1, gap: spacing.s4, paddingBottom: spacing.s4, paddingTop: spacing.s4, paddingHorizontal: spacing.s4 }}>
 
         <FlatList
           data={filteredPtps}
@@ -437,6 +453,8 @@ export default function PtpListScreen() {
         </View>
       </Modal>
 
-    </Screen>
+    </SafeAreaView>
+    </View>
   );
 }
+

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Search, WifiOff, X, ClipboardCheck, Calendar, Clock } from 'lucide-react-native';
+import { Search, WifiOff, X, ClipboardCheck, Calendar, Clock, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Text, EmptyState, LoadingView, Card, Badge, Divider } from '@/components/ui';
@@ -89,7 +89,10 @@ export default function VisitedCasesScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }} edges={['top']}>
       <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s2, gap: spacing.s4 }}>
-        <View style={{ marginTop: -8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2, marginTop: -8 }}>
+          <Pressable onPress={() => router.back()} hitSlop={8} style={{ padding: 4 }}>
+            <ChevronLeft size={22} color={colors.ink1} />
+          </Pressable>
           <Text style={{ fontSize: 13, fontWeight: '400', color: colors.ink3, fontFamily: 'Inter_400Regular' }}>Visited logs</Text>
         </View>
 

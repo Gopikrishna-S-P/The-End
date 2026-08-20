@@ -2,8 +2,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Search, WifiOff, X, Phone, PhoneOff, Clock, Mic,
+  Search, WifiOff, X, Phone, PhoneOff, Clock, Mic, ChevronLeft
 } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import {
@@ -66,6 +67,12 @@ export default function CallsScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load]),
   );
 
@@ -87,10 +94,15 @@ export default function CallsScreen() {
   if (loading) return <LoadingView label="Loading calls…" />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }} edges={['top']}>
-      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s2, gap: spacing.s4 }}>
-        <View style={{ marginTop: -8 }}>
-          <Text style={{ fontSize: 13, fontWeight: '400', color: colors.ink3, fontFamily: 'Inter_400Regular' }}>Call history</Text>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s4, gap: spacing.s4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2, marginTop: -8 }}>
+          <Pressable onPress={() => router.replace('/(org)/(tabs)')} hitSlop={8} style={{ padding: 4 }}>
+            <ChevronLeft size={22} color={colors.ink1} />
+          </Pressable>
+          <Text style={{ fontSize: 13, fontWeight: '400', color: '#000000', fontFamily: 'Inter_400Regular' }}>Call history</Text>
         </View>
 
         <View style={{
@@ -177,5 +189,6 @@ export default function CallsScreen() {
         }
       />
     </SafeAreaView>
+    </View>
   );
 }

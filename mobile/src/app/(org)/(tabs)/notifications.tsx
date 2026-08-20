@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { BellOff, WifiOff, X } from 'lucide-react-native';
+import { useFocusEffect, router } from 'expo-router';
+import { BellOff, WifiOff, X, ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
-import { Text, Badge, EmptyState, LoadingView } from '@/components/ui';
+import { Text, Badge, EmptyState, LoadingView, Screen } from '@/components/ui';
 import { notificationsApi } from '@/api/notificationsApi';
 import { formatDateTime } from '@/utils/date';
 import type { ServerNotification } from '@/types/domain';
@@ -32,6 +32,12 @@ export default function NotificationsScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load]),
   );
 
@@ -55,9 +61,12 @@ export default function NotificationsScreen() {
   if (loading) return <LoadingView label="Loading alerts…" />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }} edges={['top']}>
-      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s2, paddingBottom: spacing.s2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View style={{ marginTop: -8 }}>
+    <Screen scroll={false} padded={false} edges={['top']}>
+      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s4, paddingBottom: spacing.s2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
+          <Pressable onPress={() => router.replace('/(org)/(tabs)')} hitSlop={8} style={{ padding: 4 }}>
+            <ChevronLeft size={22} color={colors.ink1} />
+          </Pressable>
           <Text style={{ fontSize: 13, fontWeight: '400', color: colors.ink3, fontFamily: 'Inter_400Regular' }}>Alerts</Text>
         </View>
         {items.length > 0 ? (
@@ -110,6 +119,6 @@ export default function NotificationsScreen() {
             : <EmptyState icon={BellOff} title="You're all caught up" message="New alerts about your cases will show up here." />
         }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }

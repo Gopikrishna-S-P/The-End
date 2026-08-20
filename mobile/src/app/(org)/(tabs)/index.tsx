@@ -87,6 +87,12 @@ export default function HomeScreen() {
     useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
+
+      const timer = setInterval(() => {
+        load();
+      }, 60000);
+
+      return () => clearInterval(timer);
     }, [load]),
   );
 
@@ -136,6 +142,9 @@ export default function HomeScreen() {
     <Screen onRefresh={onRefresh} refreshing={refreshing} padded={false} edges={['left', 'right']}>
       <StatusBar style="dark" />
       
+      {/* Background color block at the top */}
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 280, backgroundColor: '#E6F6E2' }} />
+
       <View style={{ paddingHorizontal: spacing.s4, paddingTop: insets.top + spacing.s4, paddingBottom: spacing.s2 }}>
         {/* Header: Welcome text on left, Avatar on right */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s6 }}>
@@ -143,7 +152,7 @@ export default function HomeScreen() {
             <Text variant="body" style={{ color: '#4B5563', marginBottom: 2 }}>Welcome back,</Text>
             <Text
               style={{
-                color: '#6B7280',
+                color: '#064E3B',
                 fontFamily: 'Inter_700Bold',
                 fontSize: 32,
                 lineHeight: 40,
@@ -158,7 +167,7 @@ export default function HomeScreen() {
             {/* Search Icon */}
             <Pressable
               onPress={() => router.push('/(org)/search')}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}
             >
               <Search size={20} color="#374151" />
             </Pressable>
@@ -166,7 +175,7 @@ export default function HomeScreen() {
             {/* Bell Icon */}
             <Pressable
               onPress={() => router.push('/(org)/(tabs)/notifications')}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}
             >
               <Bell size={20} color="#374151" />
               {unreadCount > 0 ? (
@@ -177,15 +186,13 @@ export default function HomeScreen() {
             {/* Circular Avatar */}
             <Pressable
               onPress={() => router.push('/(org)/(tabs)/profile')}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#0AA550', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+              style={{ width: 44, height: 44, borderRadius: 22, overflow: 'hidden' }}
             >
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={{ width: 44, height: 44 }} />
-              ) : (
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' }}>
-                  {(user?.firstName?.[0] ?? 'F') + (user?.lastName?.[0] ?? 'O')}
-                </Text>
-              )}
+              <Image 
+                source={{ uri: avatarUri || 'https://static.vecteezy.com/system/resources/previews/036/280/651/non_2x/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-illustration-vector.jpg' }} 
+                style={{ width: 44, height: 44 }} 
+                resizeMode="contain"
+              />
             </Pressable>
           </View>
         </View>
@@ -270,9 +277,9 @@ export default function HomeScreen() {
             <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.s3 }}>
               <IndianRupee size={20} color="#0AA550" />
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? formatCurrency(dashboard.collectedAmountToday).replace('₹', '₹ ') : '₹ 0'}</Text>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? String(dashboard.collectionsSubmittedToday) : '0'}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
-              <Text style={{ color: '#6B7280', fontSize: 13 }}>Collected today</Text>
+              <Text style={{ color: '#6B7280', fontSize: 13 }}>Collections today</Text>
               <Pressable
                 onPress={() => router.push('/(org)/(tabs)/cases')}
                 style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}
@@ -289,7 +296,7 @@ export default function HomeScreen() {
             </View>
             <Text style={{ fontSize: 24, fontWeight: '700', color: '#111827' }}>{dashboard ? String(dashboard.ptpsDueToday) : '0'}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
-              <Text style={{ color: '#6B7280', fontSize: 13 }}>PTPs due today</Text>
+              <Text style={{ color: '#6B7280', fontSize: 13 }}>PTPs today</Text>
               <Pressable
                 onPress={() => router.push('/(org)/ptps')}
                 style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}
@@ -304,7 +311,7 @@ export default function HomeScreen() {
         <View style={{ marginTop: spacing.s5, backgroundColor: '#FFFFFF', borderRadius: 16, padding: spacing.s4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, gap: spacing.s3 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.s2 }}>
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>Today&apos;s visits</Text>
-            <Pressable onPress={() => router.push('/(org)/(tabs)/cases')}>
+            <Pressable onPress={() => router.push('/(org)/(tabs)/loans')}>
               <Text style={{ fontSize: 14, color: '#0AA550', fontWeight: '500' }}>View all cases</Text>
             </Pressable>
           </View>
@@ -343,3 +350,4 @@ export default function HomeScreen() {
     </Screen>
   );
 }
+

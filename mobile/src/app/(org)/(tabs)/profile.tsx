@@ -1,12 +1,14 @@
 import { useState, useCallback } from 'react';
-import { View, Pressable, Image, Alert, Modal } from 'react-native';
+import { View, Pressable, Image, Alert, Modal, ScrollView } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { LogOut, Mail, ShieldCheck, Building2, Camera, FolderOpen, Lock, type LucideIcon } from 'lucide-react-native';
+import { LogOut, Mail, ShieldCheck, Building2, Camera, FolderOpen, Lock, ChevronLeft, type LucideIcon } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme, type Theme } from '@/theme/useTheme';
 import { Screen, Text, Button, Card, Avatar, Divider, Badge } from '@/components/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
   const { user, role, logout } = useAuth();
@@ -91,16 +93,24 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Screen>
-      <View style={{ gap: spacing.s5 }}>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <ScrollView contentContainerStyle={{ gap: spacing.s5, padding: spacing.s4, paddingBottom: 40 }}>
+        {/* Back chevron */}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Pressable onPress={() => router.replace('/(org)/(tabs)/more')} hitSlop={8} style={{ padding: 4 }}>
+            <ChevronLeft size={22} color={colors.ink1} />
+          </Pressable>
+        </View>
         <View style={{ alignItems: 'center', gap: spacing.s3, paddingTop: spacing.s4 }}>
 
           <Pressable onPress={handleSelectAvatar} style={{ position: 'relative' }}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={{ width: 72, height: 72, borderRadius: 36 }} />
-            ) : (
-              <Avatar firstName={user?.firstName} lastName={user?.lastName} size={72} />
-            )}
+            <Image 
+              source={{ uri: avatarUri || 'https://static.vecteezy.com/system/resources/previews/036/280/651/non_2x/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-illustration-vector.jpg' }} 
+              style={{ width: 72, height: 72, borderRadius: 36 }}
+              resizeMode="contain"
+            />
             {/* Edit/Camera Button Overlay */}
             <View style={{
               position: 'absolute',
@@ -147,7 +157,7 @@ export default function ProfileScreen() {
         <Button label="Log out" variant="danger" onPress={onLogout} loading={loggingOut} icon={<LogOut size={16} color="#FFFFFF" />} />
 
         <Text variant="caption" color="tertiary" style={{ textAlign: 'center' }}>RecoverPro Field · v1.0.0</Text>
-      </View>
+      </ScrollView>
 
       {/* Bottom Sheet Modal for Profile Photo Options */}
       <Modal
@@ -212,7 +222,8 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </Screen>
+    </SafeAreaView>
+    </View>
   );
 }
 
@@ -241,3 +252,4 @@ function Row({ icon: Icon, label, value, colors, spacing }: RowProps) {
     </View>
   );
 }
+

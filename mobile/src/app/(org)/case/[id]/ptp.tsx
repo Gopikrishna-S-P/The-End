@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
@@ -19,7 +20,7 @@ function tomorrow(): Date {
 export default function PtpFormScreen() {
   const { id, visitId } = useLocalSearchParams<{ id: string; visitId?: string }>();
   const { user } = useAuth();
-  const { spacing } = useTheme();
+  const { spacing, colors } = useTheme();
 
   const [allocation, setAllocation] = useState<AllocationResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,12 +78,7 @@ export default function PtpFormScreen() {
 
   return (
     <Screen>
-      <View style={{ gap: spacing.s4 }}>
-        <View>
-          <Text variant="title" style={{ fontSize: 20 }}>Promise to pay</Text>
-          <Text variant="caption" color="secondary">{allocation?.borrowerName} · {allocation?.loanNumber}</Text>
-        </View>
-
+      <View style={{ gap: spacing.s4, paddingTop: spacing.s4 }}>
         <Card style={{ gap: spacing.s4 }}>
           <DateField label="Promised date" required value={promisedDate} onChange={setPromisedDate} minimumDate={tomorrow()} />
           <TextField label="Promised amount" required keyboardType="decimal-pad" value={promisedAmount} onChangeText={setPromisedAmount} placeholder="0" />

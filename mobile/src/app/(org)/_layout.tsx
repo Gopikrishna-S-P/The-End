@@ -27,7 +27,7 @@ export default function OrgLayout() {
         />
         <Stack.Screen
           name="case/[id]/ptp"
-          options={{ headerShown: true, title: 'Promise to pay', presentation: 'modal' }}
+          options={{ headerShown: false, presentation: 'modal' }}
         />
         <Stack.Screen
           name="case/[id]/collection"
@@ -63,7 +63,7 @@ export default function OrgLayout() {
         />
         <Stack.Screen
           name="ptps"
-          options={{ headerShown: true, title: 'Promises to Pay', presentation: 'card' }}
+          options={{ headerShown: false, presentation: 'card' }}
         />
         <Stack.Screen
           name="collections/trend"

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, TextInput, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/theme/useTheme';
 import { Text } from '@/components/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { 
-  Search, ChevronRight, Briefcase, Layers, Users, MapPin, Map, 
+  Search, ChevronRight, ChevronLeft, Briefcase, Layers, Users, MapPin, Map, 
   AlertTriangle, ClipboardCheck, Calendar, TrendingUp, DollarSign, 
   Link, FileText, ShieldAlert, PieChart, History, Settings, UserPlus, 
   Shield, Building, Mail, CreditCard, HelpCircle
@@ -106,11 +108,22 @@ export default function MoreScreen() {
     .filter(section => section.links.length > 0);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas, paddingTop: role === 'FO' ? 56 : 0 }]}>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      {/* Back chevron header */}
+      <View style={{ paddingHorizontal: spacing.s4, paddingTop: spacing.s2, gap: spacing.s4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s2 }}>
+          <Pressable onPress={() => router.replace('/(org)/(tabs)')} hitSlop={8} style={{ padding: 4 }}>
+            <ChevronLeft size={22} color={colors.ink1} />
+          </Pressable>
+          <Text style={{ fontSize: 13, fontWeight: '400', color: '#000000', fontFamily: 'Inter_400Regular' }}>More</Text>
+        </View>
+      </View>
+
       {/* Search Header */}
       {role !== 'FO' && (
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Text variant="headline" style={styles.headerTitle}>More Features</Text>
           <View style={[styles.searchBar, { backgroundColor: colors.subtle, borderRadius: radius.md }]}>
             <Search size={20} color={colors.ink3} style={styles.searchIcon} />
             <TextInput
@@ -154,17 +167,17 @@ export default function MoreScreen() {
           </View>
         ))}
       </ScrollView>
+    </SafeAreaView>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 56,
+    paddingTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
@@ -217,3 +230,5 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 });
+
+

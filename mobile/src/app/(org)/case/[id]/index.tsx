@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
-import { View, Modal, Image, Pressable } from 'react-native';
+import { View, Modal, Image, Pressable, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
   Handshake, Link2, Receipt, AlertTriangle, CloudOff, X, ImageIcon, Phone, MessageSquare, Layers
@@ -84,8 +86,10 @@ export default function CaseDetailScreen() {
   const amount = resolveAmount(allocation);
 
   return (
-    <Screen>
-      <View style={{ gap: spacing.s5 }}>
+    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+      <LinearGradient colors={['#E6F6E2', 'transparent']} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 250 }} />
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <ScrollView contentContainerStyle={{ gap: spacing.s5, padding: spacing.s4, paddingBottom: 40 }}>
         {savedOffline === '1' ? (
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.s3 }}>
             <CloudOff size={18} color={colors.warnBorder} />
@@ -256,7 +260,7 @@ export default function CaseDetailScreen() {
             </Card>
           )}
         </View>
-      </View>
+      </ScrollView>
 
       <Modal visible={!!viewerUrl} transparent animationType="fade" onRequestClose={() => setViewerUrl(null)}>
         <Pressable
@@ -277,6 +281,8 @@ export default function CaseDetailScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </Screen>
+    </SafeAreaView>
+    </View>
   );
 }
+
